@@ -117,7 +117,7 @@ public class TriangleFillTests
             new(0xFF999999), new(0xFFCCCCCC), new(0xFFFFFFFF),
         ];
 
-        IColourQuantiser quantiser = new OrderedDitherQuantiser(new PaletteQuantiser(greys));
+        OrderedDitherQuantiser quantiser = new(new PaletteQuantiser(greys));
 
         // A colour between two palette entries, so the dither actually
         // alternates rather than landing on one entry everywhere.

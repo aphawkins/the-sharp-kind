@@ -149,7 +149,7 @@ public class QuantiserTests
     [Fact]
     public void ADithersAnswerRepeatsEveryPeriodPixels()
     {
-        IColourQuantiser quantiser = new OrderedDitherQuantiser(new PaletteQuantiser(s_greys));
+        OrderedDitherQuantiser quantiser = new(new PaletteQuantiser(s_greys));
         FastColor colour = new(0xFF5A5A5A);
 
         for (int y = 0; y < 4; y++)

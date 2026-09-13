@@ -21,7 +21,7 @@ public class QuantiserBenchmarks
     private readonly IColourQuantiser _channelGrid = new ChannelGridQuantiser(4);
     private readonly IColourQuantiser _palette = new PaletteQuantiser(SixteenEntries());
     private readonly IColourQuantiser _ditheredGrid;
-    private readonly IColourQuantiser _ditheredPalette;
+    private readonly OrderedDitherQuantiser _ditheredPalette;
 
     public QuantiserBenchmarks()
     {
