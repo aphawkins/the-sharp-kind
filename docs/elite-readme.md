@@ -82,7 +82,6 @@ Optional, and entirely alongside the keyboard. Only flight and fire are
 mapped: everything else Elite can do - docking, hyperspace, missiles, ECM,
 the charts and the trading screens - has no room on a one-stick joystick
 and stays on the keys. A device is picked up whenever it is plugged in.
-Tested with an Xbox One controller.
 
 Buttons are numbered as the device numbers them, which for a device SDL has
 no mapping for is simply the order its buttons are wired in. Fire sits on
@@ -98,10 +97,25 @@ in both games.
 | Speed up | Button 2 | (B) or right trigger |
 | Slow down | Button 4 | (Y) or left trigger |
 
-Pitch and roll are digital, as the keys are: each held direction steps the
-ship by a fixed amount, so an analog stick has to travel past halfway
-before it counts, and a joystick - which sits at the ends of its range -
-always does.
+How pitch, roll and yaw answer depends on what the stick can say.
+
+A digital stick is a key: it sits at the ends of its range, and each held
+direction steps the ship by a fixed amount, building to the full rate of
+turn over about a second and bleeding back to level over about two. That
+ramp is the feel of the original, and it is what the keyboard uses too.
+
+An analog stick says how far it is pushed, and that is taken as the rate of
+turn itself - reached at once, and dropped at once when the stick comes
+back. Half over rolls at half rate and holds there. A tenth of the travel
+around the centre is ignored, since a worn potentiometer wanders.
+
+The two are told apart per axis, by what the axis does rather than by what
+the device claims to be: an axis that reports a position between its
+extremes can only be a potentiometer. Per axis, because one stick is
+routinely both - a SideWinder's twist is analog while its hat is switches.
+The keyboard still works while a stick is plugged in and centred.
+
+Tested with a Microsoft SideWinder Precision 2 and an Xbox One controller.
 
 ### Chart Screens
 | Key | Function |

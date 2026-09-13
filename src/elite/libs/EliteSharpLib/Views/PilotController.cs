@@ -201,6 +201,78 @@ internal sealed class PilotController : IScreenController
             _gameState.DrawLasers = _combat.FireLaser();
         }
 
+        HandlePitchControls();
+        HandleRollControls();
+        HandleYawControls();
+
+        if (WantsAccelerate() && !_gameState.IsDocked)
+        {
+            _ship.IncreaseSpeed();
+        }
+
+        if (WantsDecelerate() && !_gameState.IsDocked)
+        {
+            _ship.DecreaseSpeed();
+        }
+    }
+
+    // An analog stick is not a key held down, so it does not go through the
+    // ramp: where it is pushed to *is* the rate of turn, reached at once and
+    // dropped at once when the stick comes back. That is how a flight stick
+    // behaves, and it is only possible for a device that can report a
+    // position - a digital stick has none to give, so it keeps the ramp,
+    // which is the whole of its feel.
+    //
+    // The control is taken on the strength of the axis being analog, not of
+    // it being pushed: a centred stick is commanding a rate of zero, and it
+    // has to be able to say so. Leaving it to the deflection instead put the
+    // centre back in the hands of LevelOut, which is the damping this is
+    // here to get rid of - the ship would snap into the turn and then sag
+    // out of it over two seconds.
+    //
+    // The keyboard still wins where it is being used, so a stick plugged in
+    // and left alone cannot pin a control at zero and lock the keys out.
+    // Returns whether the axis took the control, in which case the caller
+    // leaves the key path alone rather than applying the stick twice.
+    private bool ApplyAxis(GamepadAxis axis, float maxRate, bool keysActive, Action<float> setRate)
+    {
+        if (keysActive || !_gamepad.IsAnalog(axis))
+        {
+            return false;
+        }
+
+        setRate(GamepadControls.Deflection(_gamepad, axis) * maxRate);
+        return true;
+    }
+
+    // The keyboard halves of the flight controls, apart from the stick's, so
+    // an analog axis can tell whether the pilot is using the keys instead.
+    private bool RollKeysHeld()
+        => _keyboard.IsHeld(ConsoleKey.OemComma)
+            || _keyboard.IsHeld(ConsoleKey.LeftArrow)
+            || _keyboard.IsHeld(ConsoleKey.OemPeriod)
+            || _keyboard.IsHeld(ConsoleKey.RightArrow);
+
+    private bool PitchKeysHeld()
+        => _keyboard.IsHeld(ConsoleKey.S)
+            || _keyboard.IsHeld(ConsoleKey.UpArrow)
+            || _keyboard.IsHeld(ConsoleKey.X)
+            || _keyboard.IsHeld(ConsoleKey.DownArrow);
+
+    private bool YawKeysHeld()
+        => _keyboard.IsHeld(ConsoleKey.Q) || _keyboard.IsHeld(ConsoleKey.W);
+
+    // Pitch up and down, the stick's own sense: SDL's Y is positive
+    // downwards and so is the ship's pitch, so the deflection carries
+    // straight across without a sign flip.
+    private void HandlePitchControls()
+    {
+        if (ApplyAxis(GamepadAxis.LeftY, _ship.MaxPitch, PitchKeysHeld(), rate => _ship.Pitch = rate))
+        {
+            _ship.IsPitching = true;
+            return;
+        }
+
         if (WantsPitchUp())
         {
             if (_ship.Pitch > 0)
@@ -230,25 +302,20 @@ internal sealed class PilotController : IScreenController
 
             _ship.IsPitching = true;
         }
-
-        HandleRollControls();
-        HandleYawControls();
-
-        if (WantsAccelerate() && !_gameState.IsDocked)
-        {
-            _ship.IncreaseSpeed();
-        }
-
-        if (WantsDecelerate() && !_gameState.IsDocked)
-        {
-            _ship.DecreaseSpeed();
-        }
     }
 
     // Roll left and right. A roll in the opposite direction to the current one
     // levels the ship out instead.
     private void HandleRollControls()
     {
+        // Negated: the stick's X is positive to the right, where a roll to
+        // the right is a negative rate.
+        if (ApplyAxis(GamepadAxis.LeftX, -_ship.MaxRoll, RollKeysHeld(), rate => _ship.Roll = rate))
+        {
+            _ship.IsRolling = true;
+            return;
+        }
+
         if (WantsRollLeft())
         {
             if (_ship.Roll < 0)
@@ -282,6 +349,13 @@ internal sealed class PilotController : IScreenController
     // way stops the turn rather than reversing it.
     private void HandleYawControls()
     {
+        if (DebugYaw.IsEnabled
+            && ApplyAxis(GamepadAxis.RightX, _ship.MaxYaw, YawKeysHeld(), rate => _ship.Yaw = rate))
+        {
+            _ship.IsYawing = true;
+            return;
+        }
+
         if (WantsYawLeft())
         {
             if (_ship.Yaw > 0)

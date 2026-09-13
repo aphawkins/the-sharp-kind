@@ -1,4 +1,4 @@
-// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
+﻿// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
 
 namespace SharpKind.Input;
 
@@ -7,6 +7,7 @@ public class SoftwareGamepad : IGamepad, IGamepadSink
     private readonly Dictionary<GamepadButton, bool> _heldButtons = [];
     private readonly Dictionary<GamepadButton, bool> _pressedButtons = [];
     private readonly Dictionary<GamepadAxis, float> _axes = [];
+    private readonly HashSet<GamepadAxis> _analogAxes = [];
     private readonly IInput _input;
     private int _deviceCount;
 
@@ -25,6 +26,10 @@ public class SoftwareGamepad : IGamepad, IGamepadSink
         _heldButtons.Clear();
         _pressedButtons.Clear();
         _axes.Clear();
+
+        // What kind of device an axis belongs to is not part of the input
+        // state being cleared - the same stick is still plugged in - so the
+        // analog findings survive. Disconnected() is what ends them.
     }
 
     public bool IsPressed(GamepadButton button)
@@ -48,6 +53,8 @@ public class SoftwareGamepad : IGamepad, IGamepadSink
 
     public float Axis(GamepadAxis axis) => _axes.TryGetValue(axis, out float value) ? value : 0f;
 
+    public bool IsAnalog(GamepadAxis axis) => _analogAxes.Contains(axis);
+
     public void Connected() => _deviceCount++;
 
     public void Disconnected()
@@ -62,6 +69,10 @@ public class SoftwareGamepad : IGamepad, IGamepadSink
             // A button held as the device is unplugged would otherwise stay
             // held forever, leaving the car steering with no way to stop it.
             ClearPressed();
+
+            // The next device to arrive may not be the one that left, so what
+            // was learned about this one's axes cannot be carried over to it.
+            _analogAxes.Clear();
         }
     }
 
@@ -82,7 +93,20 @@ public class SoftwareGamepad : IGamepad, IGamepadSink
         _pressedButtons[button] = false;
     }
 
-    public void AxisMoved(GamepadAxis axis, float value) => _axes[axis] = Math.Clamp(value, -1f, 1f);
+    public void AxisMoved(GamepadAxis axis, float value)
+    {
+        float clamped = Math.Clamp(value, -1f, 1f);
+
+        // A digital stick is wired as switches, so it can only ever send an
+        // end of the range or the centre; anything in between is a
+        // potentiometer, and there is no undoing that conclusion.
+        if (clamped is not (-1f or 0f or 1f))
+        {
+            _ = _analogAxes.Add(axis);
+        }
+
+        _axes[axis] = clamped;
+    }
 
     public void Poll() => _input.Poll();
 }

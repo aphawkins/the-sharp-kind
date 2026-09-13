@@ -19,6 +19,7 @@ using SharpKind.Audio;
 using SharpKind.Fakes;
 using SharpKind.Fakes.Audio;
 using SharpKind.Fakes.Input;
+using SharpKind.Input;
 
 namespace EliteSharpLib.Tests.Views;
 
@@ -113,6 +114,104 @@ public class PilotControllerTests
         Assert.False(controller.BuildModel().IsFiring);
     }
 
+    // An analog stick is a position, not a key: the ship turns at the rate
+    // the stick is pushed to, straight away, with none of the ramp a held
+    // key climbs through. Roll is negated because the stick's X is positive
+    // to the right and the roll rate is not.
+    [Theory]
+    [InlineData(1f, -31f)]
+    [InlineData(-1f, 31f)]
+    [InlineData(0.55f, -15.5f)]
+    public void AnAnalogStickRollsAtTheRateItIsPushedTo(float x, float expected)
+    {
+        PilotController controller = CreateController(
+            PilotDirection.Front, out PlayerShip ship, out _, out _, out FakeGamepad gamepad);
+        MakeAnalog(gamepad, GamepadAxis.LeftX);
+        gamepad.AxisMoved(GamepadAxis.LeftX, x);
+
+        controller.HandleInput();
+
+        Assert.Equal(expected, ship.Roll, 3);
+    }
+
+    // Pitch keeps the stick's own sense, so no negation - and it reaches the
+    // rate in one update, where a key would need fifteen.
+    [Fact]
+    public void AnAnalogStickPitchesAtTheRateItIsPushedTo()
+    {
+        PilotController controller = CreateController(
+            PilotDirection.Front, out PlayerShip ship, out _, out _, out FakeGamepad gamepad);
+        MakeAnalog(gamepad, GamepadAxis.LeftY);
+        gamepad.AxisMoved(GamepadAxis.LeftY, -1f);
+
+        controller.HandleInput();
+
+        Assert.Equal(-8f, ship.Pitch, 3);
+    }
+
+    // Released, the rate goes to nothing at once rather than bleeding away:
+    // the stick is back at centre, so the commanded rate is zero.
+    [Fact]
+    public void AnAnalogStickReleasedStopsTheTurnAtOnce()
+    {
+        PilotController controller = CreateController(
+            PilotDirection.Front, out PlayerShip ship, out _, out _, out FakeGamepad gamepad);
+        MakeAnalog(gamepad, GamepadAxis.LeftX);
+        gamepad.AxisMoved(GamepadAxis.LeftX, 1f);
+        controller.HandleInput();
+
+        gamepad.AxisMoved(GamepadAxis.LeftX, 0f);
+        controller.HandleInput();
+        ship.LevelOut();
+
+        Assert.Equal(0f, ship.Roll, 3);
+    }
+
+    // The whole point of detecting the device: a digital stick still climbs
+    // the ramp two units at a time, exactly as it did before analog existed.
+    [Fact]
+    public void ADigitalStickStillClimbsTheRamp()
+    {
+        PilotController controller = CreateController(
+            PilotDirection.Front, out PlayerShip ship, out _, out _, out FakeGamepad gamepad);
+        gamepad.AxisMoved(GamepadAxis.LeftX, -1f);
+
+        controller.HandleInput();
+
+        Assert.Equal(2f, ship.Roll, 3);
+    }
+
+    // A stick inside the deadzone is a stick at rest, so it neither turns the
+    // ship nor claims the control from the keyboard.
+    [Fact]
+    public void AnAnalogStickWithinTheDeadzoneDoesNotRoll()
+    {
+        PilotController controller = CreateController(
+            PilotDirection.Front, out PlayerShip ship, out _, out _, out FakeGamepad gamepad);
+        MakeAnalog(gamepad, GamepadAxis.LeftX);
+        gamepad.AxisMoved(GamepadAxis.LeftX, 0.03f);
+
+        controller.HandleInput();
+
+        Assert.Equal(0f, ship.Roll, 3);
+    }
+
+    // A stick left plugged in and centred commands a rate of zero, which
+    // must not lock the keyboard out of the same control.
+    [Fact]
+    public void TheKeyboardStillRollsWithACentredAnalogStickPluggedIn()
+    {
+        PilotController controller = CreateController(
+            PilotDirection.Front, out PlayerShip ship, out _, out _, out FakeGamepad gamepad, out FakeKeyboard keyboard);
+        MakeAnalog(gamepad, GamepadAxis.LeftX);
+        gamepad.AxisMoved(GamepadAxis.LeftX, 0f);
+        keyboard.KeyDown(ConsoleKey.OemComma, default);
+
+        controller.HandleInput();
+
+        Assert.Equal(2f, ship.Roll, 3);
+    }
+
     private static PilotController CreateController(PilotDirection direction, out PlayerShip ship)
         => CreateController(direction, out ship, out _);
 
@@ -121,7 +220,26 @@ public class PilotControllerTests
 
     private static PilotController CreateController(
         PilotDirection direction, out PlayerShip ship, out Space space, out GameState gameState)
+        => CreateController(direction, out ship, out space, out gameState, out _);
+
+    private static PilotController CreateController(
+        PilotDirection direction,
+        out PlayerShip ship,
+        out Space space,
+        out GameState gameState,
+        out FakeGamepad gamepad)
+        => CreateController(direction, out ship, out space, out gameState, out gamepad, out _);
+
+    private static PilotController CreateController(
+        PilotDirection direction,
+        out PlayerShip ship,
+        out Space space,
+        out GameState gameState,
+        out FakeGamepad gamepad,
+        out FakeKeyboard keyboard)
     {
+        gamepad = new FakeGamepad();
+        keyboard = new FakeKeyboard();
         ScreenManager<Screen, IScreenController> views = new(new FakeKeyboard());
         gameState = new(views, TestMissions.Registry());
         ship = new PlayerShip(gameState);
@@ -161,7 +279,7 @@ public class PilotControllerTests
             s_rendition,
             rng);
 
-        return NewController(gameState, pilot, ship, stars, space, combat, direction, draw);
+        return NewController(gameState, pilot, ship, stars, space, combat, direction, draw, gamepad, keyboard);
     }
 
     // Kept out of CreateController for the same reason CreateStars is: the
@@ -175,11 +293,13 @@ public class PilotControllerTests
         Space space,
         Combat combat,
         PilotDirection direction,
-        IEliteDraw draw)
+        IEliteDraw draw,
+        FakeGamepad gamepad,
+        FakeKeyboard keyboard)
         => new(
             gameState,
-            new FakeKeyboard(),
-            new FakeGamepad(),
+            keyboard,
+            gamepad,
             pilot,
             ship,
             stars,
@@ -194,6 +314,12 @@ public class PilotControllerTests
     // names it.
     private static Stars CreateStars(GameState gameState, FakeEliteDraw draw, PlayerShip ship)
         => new(gameState, draw, ship, s_rendition.CreateStarfieldRenderer(draw));
+
+    // An axis only counts as analog once it has reported a position between
+    // its extremes; this is that proof, and it is what the tests above need
+    // before the stick's position means anything.
+    private static void MakeAnalog(FakeGamepad gamepad, GamepadAxis axis)
+        => gamepad.AxisMoved(axis, 0.3f);
 
     private sealed class FakePilotView : IView<PilotModel>
     {

@@ -1,4 +1,4 @@
-// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
+﻿// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
 
 namespace SharpKind.Input;
 
@@ -39,6 +39,21 @@ public interface IGamepad
     /// reports only -1, 0 or +1. Reading an axis never consumes it.
     /// </summary>
     public float Axis(GamepadAxis axis);
+
+    /// <summary>
+    /// Whether this axis has been seen to report a position between its
+    /// extremes, which only an analog device can do.
+    /// </summary>
+    /// <remarks>
+    /// Per axis rather than per device, because one stick is routinely both:
+    /// a SideWinder's twist is analog while its hat - which this port feeds
+    /// into the same axes as the stick - reports nothing but -1, 0 and +1.
+    /// It answers <c>false</c> until the axis has actually moved, so a
+    /// caller gets the digital answer for an axis nothing has touched yet,
+    /// and it never reverts: an intermediate reading is proof that stands,
+    /// where a run of extremes is only the stick being at an end.
+    /// </remarks>
+    public bool IsAnalog(GamepadAxis axis);
 
     public void Poll();
 }

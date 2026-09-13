@@ -6,6 +6,7 @@
 
 #### Changes
 
+- An analog joystick now flies by stick position — how far it is pushed is the rate of turn, reached and released at once, with none of the ramp a key climbs through. A digital stick keeps that ramp, which is the original's feel
 - Ordered dithering costs nothing extra on solid faces — the same picture, at the undithered frame rate
 - Gouraud shading draws about three times as fast — the same picture, cheaper colour matching and blending
 - The 3D view no longer pays to check each pixel against its own edges — every fill in the universe is a little faster

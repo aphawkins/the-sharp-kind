@@ -7,6 +7,38 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Changed (an analog joystick flies without the damping, 2026-09-13)
+
+- **An analog stick now sets the rate of turn directly, instead of being
+  flattened to a direction.** `GamepadControls` thresholded every axis at 0.5
+  into -1/0/+1, so a SideWinder Precision 2 threw away how far it was pushed:
+  half the travel did nothing at all, 55% and 100% of deflection were the same
+  input, and both ramped on to the maximum rate while the pilot's hand stayed
+  still. Where the stick is pushed to is now the rate of turn itself - reached
+  at once, and dropped at once when the stick comes back - which is how a
+  flight stick behaves and is what the position was always carrying.
+  - **A digital stick is untouched.** The Competition Pro sits at the ends of
+    the range, has no position to report, and keeps the ramp - two units per
+    tick up, one down, with the opposite direction levelling out. That ramp is
+    the whole of its feel, and it is also what the keyboard uses.
+  - **The two are told apart per axis, by what the axis does.** `IGamepad`
+    gains `IsAnalog`, latched the first time an axis reports a position that
+    is not an end or the centre, which only a potentiometer can do. Per axis
+    rather than per device, because one stick is routinely both: a
+    SideWinder's twist is analog while its hat - which the port feeds into the
+    same axes as the stick - reports nothing but -1, 0 and +1. It is forgotten
+    when the device is unplugged, since the next one to arrive may not be it.
+  - **A deadzone of 0.1**, with the travel outside it stretched back over the
+    full range so the stick eases on from nothing rather than jumping to a
+    tenth. A Precision 2 sitting untouched reports up to 0.03 on its X axis
+    and drifts continuously, so a deadzone is not optional.
+  - **The keyboard still wins where it is being used**, so a stick left
+    plugged in and centred commands a rate of zero without locking the keys
+    out of the same control.
+  - Roll, pitch and yaw only. The hat and the throttle slider are still
+    unmapped; they remain a
+    [backlog item](docs/backlog-roadmap.md).
+
 ### Changed (the 16-bit font sheets cut to their glyphs, 2026-09-13)
 
 - **The 16-bit sheets no longer carry a 32x32 cell around a 17x16 glyph.**

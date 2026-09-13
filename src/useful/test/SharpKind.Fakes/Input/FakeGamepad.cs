@@ -1,4 +1,4 @@
-// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
+﻿// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
 
 using SharpKind.Input;
 
@@ -12,6 +12,7 @@ public sealed class FakeGamepad : IGamepad, IGamepadSink
     private readonly HashSet<GamepadButton> _heldButtons = [];
     private readonly HashSet<GamepadButton> _pressedButtons = [];
     private readonly Dictionary<GamepadAxis, float> _axes = [];
+    private readonly HashSet<GamepadAxis> _analogAxes = [];
     private int _deviceCount;
 
     public bool IsConnected => _deviceCount > 0;
@@ -31,6 +32,8 @@ public sealed class FakeGamepad : IGamepad, IGamepadSink
 
     public float Axis(GamepadAxis axis) => _axes.TryGetValue(axis, out float value) ? value : 0f;
 
+    public bool IsAnalog(GamepadAxis axis) => _analogAxes.Contains(axis);
+
     public void Connected() => _deviceCount++;
 
     public void Disconnected()
@@ -43,6 +46,7 @@ public sealed class FakeGamepad : IGamepad, IGamepadSink
         if (_deviceCount == 0)
         {
             ClearPressed();
+            _analogAxes.Clear();
         }
     }
 
@@ -63,7 +67,17 @@ public sealed class FakeGamepad : IGamepad, IGamepadSink
         _ = _pressedButtons.Remove(button);
     }
 
-    public void AxisMoved(GamepadAxis axis, float value) => _axes[axis] = Math.Clamp(value, -1f, 1f);
+    public void AxisMoved(GamepadAxis axis, float value)
+    {
+        float clamped = Math.Clamp(value, -1f, 1f);
+
+        if (clamped is not (-1f or 0f or 1f))
+        {
+            _ = _analogAxes.Add(axis);
+        }
+
+        _axes[axis] = clamped;
+    }
 
     public void Poll()
     {

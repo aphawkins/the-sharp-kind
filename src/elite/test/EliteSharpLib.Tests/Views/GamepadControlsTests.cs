@@ -125,4 +125,61 @@ public class GamepadControlsTests
         Assert.False(GamepadControls.IsAccelerating(pad));
         Assert.False(GamepadControls.IsDecelerating(pad));
     }
+
+    // A digital stick has no position to report, only an end of the range,
+    // so it yields nothing here and keeps the ramp instead.
+    [Theory]
+    [InlineData(-1f)]
+    [InlineData(0f)]
+    [InlineData(1f)]
+    public void ADigitalStickHasNoDeflection(float x)
+    {
+        FakeGamepad pad = new();
+        pad.AxisMoved(GamepadAxis.LeftX, x);
+
+        Assert.Equal(0, GamepadControls.Deflection(pad, GamepadAxis.LeftX));
+    }
+
+    // Once an axis has proved itself analog, its position is reported in
+    // full - including the ends, which on their own would have looked digital.
+    [Theory]
+    [InlineData(0.5f, 0.4444444f)]
+    [InlineData(-0.5f, -0.4444444f)]
+    [InlineData(1f, 1f)]
+    [InlineData(-1f, -1f)]
+    public void AnAnalogStickReportsItsPosition(float x, float expected)
+    {
+        FakeGamepad pad = new();
+        pad.AxisMoved(GamepadAxis.LeftX, 0.3f);
+        pad.AxisMoved(GamepadAxis.LeftX, x);
+
+        Assert.Equal(expected, GamepadControls.Deflection(pad, GamepadAxis.LeftX), 5);
+    }
+
+    // A worn potentiometer wanders around its centre - a SideWinder
+    // Precision 2 reaches 0.03 untouched - and none of that is the pilot.
+    [Theory]
+    [InlineData(0.03f)]
+    [InlineData(-0.03f)]
+    [InlineData(0.1f)]
+    [InlineData(-0.1f)]
+    public void TheDeadzoneSwallowsAStickAtRest(float x)
+    {
+        FakeGamepad pad = new();
+        pad.AxisMoved(GamepadAxis.LeftX, 0.3f);
+        pad.AxisMoved(GamepadAxis.LeftX, x);
+
+        Assert.Equal(0, GamepadControls.Deflection(pad, GamepadAxis.LeftX));
+    }
+
+    // Just outside the deadzone the stick starts from nothing rather than
+    // from a tenth, so easing off centre eases the turn on.
+    [Fact]
+    public void TheDeflectionResumesFromZeroOutsideTheDeadzone()
+    {
+        FakeGamepad pad = new();
+        pad.AxisMoved(GamepadAxis.LeftX, 0.1001f);
+
+        Assert.Equal(0, GamepadControls.Deflection(pad, GamepadAxis.LeftX), 3);
+    }
 }

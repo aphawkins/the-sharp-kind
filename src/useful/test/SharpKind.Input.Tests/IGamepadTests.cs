@@ -1,4 +1,4 @@
-// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
+﻿// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
 
 using SharpKind.Fakes.Input;
 
@@ -174,6 +174,67 @@ public class IGamepadTests
     [Fact]
     public void SoftwareGamepadRejectsANullInput()
         => Assert.Throws<ArgumentNullException>(() => new SoftwareGamepad(null!));
+
+    // The whole basis of telling the two stick kinds apart: only a
+    // potentiometer can report a position that is not an end or the centre.
+    [Theory]
+    [InlineData(-1f)]
+    [InlineData(0f)]
+    [InlineData(1f)]
+    public void AnAxisReportingOnlyItsExtremesIsDigital(float value)
+    {
+        SoftwareGamepad pad = new(new FakeInput());
+        pad.AxisMoved(GamepadAxis.LeftX, value);
+
+        Assert.False(pad.IsAnalog(GamepadAxis.LeftX));
+    }
+
+    [Fact]
+    public void AnAxisReportingAPositionBetweenIsAnalog()
+    {
+        SoftwareGamepad pad = new(new FakeInput());
+        pad.AxisMoved(GamepadAxis.LeftX, 0.3f);
+
+        Assert.True(pad.IsAnalog(GamepadAxis.LeftX));
+    }
+
+    // A run of extremes is only the stick being at an end, so it cannot
+    // withdraw a conclusion the intermediate reading already proved.
+    [Fact]
+    public void AnAnalogAxisStaysAnalogAtItsExtremes()
+    {
+        SoftwareGamepad pad = new(new FakeInput());
+        pad.AxisMoved(GamepadAxis.LeftX, 0.3f);
+        pad.AxisMoved(GamepadAxis.LeftX, 1f);
+        pad.AxisMoved(GamepadAxis.LeftX, 0f);
+
+        Assert.True(pad.IsAnalog(GamepadAxis.LeftX));
+    }
+
+    // Per axis, not per device: a SideWinder's hat reports -1/0/+1 into the
+    // same axes its analog stick uses, and one twist must not make the whole
+    // device look analog.
+    [Fact]
+    public void AnalogIsDecidedPerAxis()
+    {
+        SoftwareGamepad pad = new(new FakeInput());
+        pad.AxisMoved(GamepadAxis.RightX, 0.3f);
+
+        Assert.True(pad.IsAnalog(GamepadAxis.RightX));
+        Assert.False(pad.IsAnalog(GamepadAxis.LeftX));
+    }
+
+    // The next device to arrive may not be the one that left.
+    [Fact]
+    public void UnpluggingTheDeviceForgetsWhatItsAxesWere()
+    {
+        SoftwareGamepad pad = new(new FakeInput());
+        pad.Connected();
+        pad.AxisMoved(GamepadAxis.LeftX, 0.3f);
+        pad.Disconnected();
+
+        Assert.False(pad.IsAnalog(GamepadAxis.LeftX));
+    }
 
     // Both implementations of the interface must behave the same, so every
     // contract test runs against each. A fresh instance per case keeps the

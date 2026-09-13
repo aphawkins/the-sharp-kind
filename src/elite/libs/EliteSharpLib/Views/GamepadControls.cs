@@ -7,9 +7,15 @@ using SharpKind.Input;
 namespace EliteSharpLib.Views;
 
 // Elite's flight controls are digital - each held key steps pitch or roll by
-// a fixed amount - so an analog stick only has to say which way it is
-// pushed. A digital HID stick sits at the ends of the range, so it passes
-// the threshold whatever it is set to.
+// a fixed amount - so a digital stick only has to say which way it is
+// pushed, and sits at the ends of the range, so it passes the threshold
+// whatever it is set to.
+//
+// An analog stick says more than that, and Deflection is what carries it:
+// how far over the stick is, which the caller turns straight into a rate of
+// turn rather than feeding it to the ramp. The two live side by side here
+// because one device can be both at once - a SideWinder twists on a
+// potentiometer but hats on switches.
 //
 // Only flight and fire are mapped. Everything else Elite can do (docking,
 // hyperspace, missiles, ECM, the market and charts) has no room on a
@@ -17,6 +23,12 @@ namespace EliteSharpLib.Views;
 internal static class GamepadControls
 {
     private const float Threshold = 0.5f;
+
+    // Enough to clear a worn potentiometer's wander. A SideWinder Precision 2
+    // sitting untouched reports up to 0.03 on its X axis, drifting
+    // continuously, so anything under this is the stick's rest position
+    // rather than the pilot's hand.
+    private const float Deadzone = 0.1f;
 
     // Negative rolls left, positive right, 0 is centred.
     internal static int Roll(IGamepad gamepad) => Direction(gamepad.Axis(GamepadAxis.LeftX));
@@ -51,6 +63,29 @@ internal static class GamepadControls
 
     internal static bool IsDecelerating(IGamepad gamepad)
         => gamepad.IsHeld(GamepadButton.Y) || gamepad.Axis(GamepadAxis.LeftTrigger) >= Threshold;
+
+    // How far an analog axis is pushed, -1 to +1, with the deadzone taken out
+    // and the rest stretched back over the full range - otherwise the travel
+    // just outside the deadzone would start at a tenth rather than at nothing,
+    // and a stick eased off centre would jump.
+    //
+    // Zero for an axis that is not analog (or has never moved), which is what
+    // makes the caller fall through to the digital path: a device that cannot
+    // report a position has no position to report.
+    internal static float Deflection(IGamepad gamepad, GamepadAxis axis)
+    {
+        ArgumentNullException.ThrowIfNull(gamepad);
+
+        if (!gamepad.IsAnalog(axis))
+        {
+            return 0;
+        }
+
+        float value = gamepad.Axis(axis);
+        float magnitude = MathF.Abs(value);
+
+        return magnitude <= Deadzone ? 0 : MathF.CopySign((magnitude - Deadzone) / (1 - Deadzone), value);
+    }
 
     private static int Direction(float value) => value <= -Threshold ? -1 : value >= Threshold ? 1 : 0;
 }

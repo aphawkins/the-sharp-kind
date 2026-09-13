@@ -245,6 +245,19 @@ independent of each other.
       - **Button 3 → arm missile** (keyboard `T`); **button 4 → fire
         missile** (keyboard `M`).
 
+      **The device was surveyed on 2026-09-13** by running with
+      `ELITE_LOG_LEVEL=Debug` and working every control, which settles what
+      the item above was guessing at. A SideWinder Precision 2 enumerates as
+      `4 axes, 8 buttons, 1 hats`, with no SDL mapping:
+      - **Axis 3 is the throttle slider**, analog over the full range, and
+        nothing reads it. It is the free axis this item wants.
+      - **Axis 2 is the twist**, analog, and already yaw. Correctly mapped.
+      - **Hat events do arrive**, 8-way with the diagonals (SDL values 1, 2,
+        4, 8 and 9 were all seen). So the hat sub-item is a remap, not a
+        repair.
+      - **All 8 buttons enumerate**, 0-7, reaching `Start` - so buttons 3 and
+        4 are really there to be reassigned.
+
       **Clashes with the current mapping — all need reassigning:**
       - Hat currently feeds `GamepadAxis.LeftX`/`LeftY`
         ([SDLInput.cs:289-306](../src/useful/libs/SharpKind.SDL/SDLInput.cs)),
@@ -258,6 +271,10 @@ independent of each other.
         Freeing it for fire-missile is fine once the slider owns speed.
       - Button 2 (`B`) is currently accelerate; also freed by the slider.
       - Yaw stays on the twist axis (`RightX`), unaffected.
+      - The hat reports exactly -1/0/+1, so it reads as a digital axis to
+        `IGamepad.IsAnalog` and does not disturb the analog rate mapping
+        (see CHANGELOG, 2026-09-13). Moving the hat off `LeftX`/`LeftY`
+        leaves that mapping as it is.
 
       SCR shares `GamepadButton` A/X as its fire pair
       ([scr GamepadControls.cs](../src/scr/libs/StuntCarRacerSharpLib/Screens/GamepadControls.cs))
