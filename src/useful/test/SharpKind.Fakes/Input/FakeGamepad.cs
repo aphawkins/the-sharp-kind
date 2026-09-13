@@ -17,6 +17,8 @@ public sealed class FakeGamepad : IGamepad, IGamepadSink
 
     public bool IsConnected => _deviceCount > 0;
 
+    public string DeviceName { get; set; } = string.Empty;
+
     public void ClearPressed()
     {
         _heldButtons.Clear();
@@ -34,7 +36,11 @@ public sealed class FakeGamepad : IGamepad, IGamepadSink
 
     public bool IsAnalog(GamepadAxis axis) => _analogAxes.Contains(axis);
 
-    public void Connected() => _deviceCount++;
+    public void Connected(string name)
+    {
+        _deviceCount++;
+        DeviceName = name ?? string.Empty;
+    }
 
     public void Disconnected()
     {
@@ -47,6 +53,7 @@ public sealed class FakeGamepad : IGamepad, IGamepadSink
         {
             ClearPressed();
             _analogAxes.Clear();
+            DeviceName = string.Empty;
         }
     }
 

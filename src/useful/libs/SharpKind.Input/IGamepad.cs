@@ -17,6 +17,17 @@ public interface IGamepad
     /// </summary>
     public bool IsConnected { get; }
 
+    /// <summary>
+    /// Gets the attached device's name as its driver reports it, or empty when
+    /// nothing is attached. Games match on it to pick a control profile,
+    /// since one stick's button 1 is another's button 4.
+    /// </summary>
+    /// <remarks>
+    /// The most recently attached device wins, which is the one the player
+    /// just plugged in. Two sticks at once is not a case either game plays.
+    /// </remarks>
+    public string DeviceName { get; }
+
     public void ClearPressed();
 
     /// <summary>

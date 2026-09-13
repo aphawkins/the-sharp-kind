@@ -6,6 +6,10 @@
 
 #### Changes
 
+- The joystick hat and throttle lever now work — the hat picks the cockpit view, and a SideWinder's lever sets the speed outright
+- A SideWinder's eight buttons are now all mapped — missiles, ECM, warp jump, the docking computer and hyperspace
+- Missiles reach the stick — fire and target are on buttons, or the triggers on a pad
+- Each stick gets its own button layout, because the three supported devices disagree about every button. See the tables in the Elite readme
 - An analog joystick now flies by stick position — how far it is pushed is the rate of turn, reached and released at once, with none of the ramp a key climbs through. A digital stick keeps that ramp, which is the original's feel
 - Ordered dithering costs nothing extra on solid faces — the same picture, at the undithered frame rate
 - Gouraud shading draws about three times as fast — the same picture, cheaper colour matching and blending

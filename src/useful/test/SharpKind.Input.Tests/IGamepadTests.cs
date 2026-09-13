@@ -108,10 +108,10 @@ public class IGamepadTests
         IGamepad pad = Create(software);
         IGamepadSink sink = (IGamepadSink)pad;
 
-        sink.Connected();
+        sink.Connected("test device");
         Assert.True(pad.IsConnected);
 
-        sink.Connected();
+        sink.Connected("test device");
         sink.Disconnected();
         Assert.True(pad.IsConnected); // a second device is still attached
 
@@ -127,7 +127,7 @@ public class IGamepadTests
         IGamepad pad = Create(software);
         IGamepadSink sink = (IGamepadSink)pad;
 
-        sink.Connected();
+        sink.Connected("test device");
         sink.ButtonDown(GamepadButton.A);
         sink.AxisMoved(GamepadAxis.LeftX, -1f);
 
@@ -229,7 +229,7 @@ public class IGamepadTests
     public void UnpluggingTheDeviceForgetsWhatItsAxesWere()
     {
         SoftwareGamepad pad = new(new FakeInput());
-        pad.Connected();
+        pad.Connected("test device");
         pad.AxisMoved(GamepadAxis.LeftX, 0.3f);
         pad.Disconnected();
 

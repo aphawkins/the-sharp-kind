@@ -78,24 +78,73 @@ Use Left/Right cursor keys to scroll through ships on the ship parade screen
 
 ### Gamepad and joystick
 
-Optional, and entirely alongside the keyboard. Only flight and fire are
-mapped: everything else Elite can do - docking, hyperspace, missiles, ECM,
-the charts and the trading screens - has no room on a one-stick joystick
-and stays on the keys. A device is picked up whenever it is plugged in.
+Optional, and entirely alongside the keyboard. Flight, fire, speed,
+missiles and the cockpit views are mapped, as far as each device has
+controls for them. The rest of what Elite can do - docking, hyperspace,
+ECM, the charts and the trading screens - stays on the keys, because no
+stick here has buttons left for it. A device is picked up whenever it is
+plugged in.
 
-Buttons are numbered as the device numbers them, which for a device SDL has
-no mapping for is simply the order its buttons are wired in. Fire sits on
-the same pair as Stunt Car Racer's boost, so one stick behaves the same way
-in both games.
+Each device gets its own layout, because the three disagree about every
+button. Button 1 fires the laser on a SideWinder, fires a missile on a
+Competition Pro, and slows the ship on an Xbox pad, so there is no single
+assignment that serves all three. The device is recognised by the name its
+driver reports; anything unrecognised gets the pad layout.
 
-| Control | Joystick | Gamepad |
-| ------- | -------- | ------- |
-| Fire lasers | Button 1 or 3 | (A) or (X) |
-| Dive | Stick forward | Left stick forward |
-| Climb | Stick back | Left stick back |
-| Roll left / right | Stick left / right | Left stick |
-| Speed up | Button 2 | (B) or right trigger |
-| Slow down | Button 4 | (Y) or left trigger |
+Buttons below are numbered as the device numbers them, which for a stick
+with no SDL mapping is the order its buttons are wired in.
+
+#### Microsoft SideWinder Precision 2
+
+The only one of the three with an axis to spare for speed, and the only
+one whose buttons are all mapped. The four base buttons take the commands a
+pilot reaches for deliberately; the escape capsule is deliberately not
+among them, because a base button brushed by accident would end the run.
+
+| Control | Input |
+| ------- | ----- |
+| Fire lasers | Button 1 (trigger) |
+| Fire missile | Button 2 |
+| Un-target missile | Button 3 |
+| Target missile | Button 4 |
+| Speed | Throttle lever — forward is fast |
+| Dive / climb | Stick forward / back |
+| Roll left / right | Stick left / right |
+| Yaw left / right | Twist, with `ELITE_DEBUG_YAW` set |
+| Front / rear / left / right view | Hat up / down / left / right |
+| ECM | Button 5 |
+| Warp jump | Button 6 |
+| Docking computer, on and off | Button 7 |
+| Hyperspace | Button 8 |
+
+#### Speedlink Competition Pro Extra
+
+Four buttons and nothing else — no hat, no lever, no triggers — so
+targeting a missile stays on the keyboard's `T`.
+
+| Control | Input |
+| ------- | ----- |
+| Fire lasers | Button 3 |
+| Fire missile | Button 1 |
+| Speed up | Button 2 |
+| Slow down | Button 4 |
+| Dive / climb | Stick forward / back |
+| Roll left / right | Stick left / right |
+
+#### Xbox controller, and any unrecognised device
+
+Both face buttons are spent on speed, so the lasers move to the triggers.
+
+| Control | Input |
+| ------- | ----- |
+| Fire lasers | Right trigger |
+| Fire missile | Left trigger |
+| Target missile | Left shoulder |
+| Speed up | (B) |
+| Slow down | (A) |
+| Dive / climb | Left stick forward / back |
+| Roll left / right | Left stick |
+| Front / rear / left / right view | D-pad up / down / left / right |
 
 How pitch, roll and yaw answer depends on what the stick can say.
 
@@ -115,7 +164,8 @@ extremes can only be a potentiometer. Per axis, because one stick is
 routinely both - a SideWinder's twist is analog while its hat is switches.
 The keyboard still works while a stick is plugged in and centred.
 
-Tested with a Microsoft SideWinder Precision 2 and an Xbox One controller.
+Tested with a Microsoft SideWinder Precision 2, a Speedlink Competition Pro
+Extra and an Xbox One controller.
 
 ### Chart Screens
 | Key | Function |

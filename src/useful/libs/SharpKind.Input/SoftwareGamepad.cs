@@ -21,6 +21,8 @@ public class SoftwareGamepad : IGamepad, IGamepadSink
 
     public bool IsConnected => _deviceCount > 0;
 
+    public string DeviceName { get; private set; } = string.Empty;
+
     public void ClearPressed()
     {
         _heldButtons.Clear();
@@ -55,7 +57,11 @@ public class SoftwareGamepad : IGamepad, IGamepadSink
 
     public bool IsAnalog(GamepadAxis axis) => _analogAxes.Contains(axis);
 
-    public void Connected() => _deviceCount++;
+    public void Connected(string name)
+    {
+        _deviceCount++;
+        DeviceName = name ?? string.Empty;
+    }
 
     public void Disconnected()
     {
@@ -73,6 +79,7 @@ public class SoftwareGamepad : IGamepad, IGamepadSink
             // The next device to arrive may not be the one that left, so what
             // was learned about this one's axes cannot be carried over to it.
             _analogAxes.Clear();
+            DeviceName = string.Empty;
         }
     }
 

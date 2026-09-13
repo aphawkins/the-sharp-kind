@@ -228,58 +228,15 @@ independent of each other.
 
 ### Input
 
-- [ ] [EliteSharpLib] Fuller SideWinder (multi-axis joystick) flight mapping.
-      Today `GamepadControls`
-      ([GamepadControls.cs](../src/elite/libs/EliteSharpLib/Views/GamepadControls.cs))
-      maps only flight and fire, by deliberate choice (see the file's own
-      note); everything else stays on the keyboard. This item extends that
-      for a stick with a hat, a throttle slider and four-plus buttons:
-      - **Hat → view select** (front / left / right / rear), replacing the
-        F1-F4 keys. Wire it into the flight input path
-        (`PilotController` / `EliteMain.HandleFunctionKeys`
-        [EliteMain.cs:393-428](../src/elite/libs/EliteSharpLib/EliteMain.cs)),
-        one-shot per hat change.
-      - **Slider → speed.** Add a throttle axis (SDL joystick axis 3, which
-        the port already names `GamepadAxis.RightY` and does not use) and
-        map its position to target speed.
-      - **Button 3 → arm missile** (keyboard `T`); **button 4 → fire
-        missile** (keyboard `M`).
+Nothing open. The SideWinder mapping item was closed on 2026-09-13: the hat
+selects the view, the throttle lever sets the speed, missiles reach the
+stick, and each device gets its own button layout (see
+[CHANGELOG.md](../CHANGELOG.md) and the tables in
+[elite-readme.md](elite-readme.md)).
 
-      **The device was surveyed on 2026-09-13** by running with
-      `ELITE_LOG_LEVEL=Debug` and working every control, which settles what
-      the item above was guessing at. A SideWinder Precision 2 enumerates as
-      `4 axes, 8 buttons, 1 hats`, with no SDL mapping:
-      - **Axis 3 is the throttle slider**, analog over the full range, and
-        nothing reads it. It is the free axis this item wants.
-      - **Axis 2 is the twist**, analog, and already yaw. Correctly mapped.
-      - **Hat events do arrive**, 8-way with the diagonals (SDL values 1, 2,
-        4, 8 and 9 were all seen). So the hat sub-item is a remap, not a
-        repair.
-      - **All 8 buttons enumerate**, 0-7, reaching `Start` - so buttons 3 and
-        4 are really there to be reassigned.
-
-      **Clashes with the current mapping — all need reassigning:**
-      - Hat currently feeds `GamepadAxis.LeftX`/`LeftY`
-        ([SDLInput.cs:289-306](../src/useful/libs/SharpKind.SDL/SDLInput.cs)),
-        i.e. roll and pitch, shared with the stick. Moving the hat to view
-        select means the hat stops mirroring the stick; roll/pitch stay on
-        the stick's `LeftX`/`LeftY` only.
-      - Button 3 is `GamepadButton.X`, currently a fire-laser button
-        (`IsFiring` = `A || X`). If it arms a missile, laser fire is button
-        1 (`A`) only.
-      - Button 4 is `GamepadButton.Y`, currently decelerate (`IsDecelerating`).
-        Freeing it for fire-missile is fine once the slider owns speed.
-      - Button 2 (`B`) is currently accelerate; also freed by the slider.
-      - Yaw stays on the twist axis (`RightX`), unaffected.
-      - The hat reports exactly -1/0/+1, so it reads as a digital axis to
-        `IGamepad.IsAnalog` and does not disturb the analog rate mapping
-        (see CHANGELOG, 2026-09-13). Moving the hat off `LeftX`/`LeftY`
-        leaves that mapping as it is.
-
-      SCR shares `GamepadButton` A/X as its fire pair
-      ([scr GamepadControls.cs](../src/scr/libs/StuntCarRacerSharpLib/Screens/GamepadControls.cs))
-      — check that change here does not regress SCR, or scope the button
-      enum use per game.
+One thing was deliberately left: a Competition Pro has four buttons and
+five controls worth having, so targeting a missile stays on the keyboard's
+`T`. There is no button left to give it.
 
 ### From decisions (2026-07-27)
 

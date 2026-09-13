@@ -36,6 +36,7 @@ public sealed class EliteMain : IGame, IGameApp
     private readonly IAbstraction _abstraction;
     private readonly IGraphics _graphics;
     private readonly IKeyboard _keyboard;
+    private readonly IGamepad _gamepad;
 
     private readonly AudioController _audio;
     private readonly PlanetController _planet;
@@ -97,6 +98,7 @@ public sealed class EliteMain : IGame, IGameApp
         _abstraction = abstraction;
         _graphics = abstraction.Graphics;
         _keyboard = abstraction.Keyboard;
+        _gamepad = abstraction.Gamepad;
         _audio = audio;
         State = gameState;
         _ship = ship;
@@ -390,45 +392,36 @@ public sealed class EliteMain : IGame, IGameApp
         _missionJumpStage = (_missionJumpStage + 1) % MissionJump.Count;
     }
 
-    // F1 - F4: the cockpit views, which double as the docked screens
+    // F1 - F4, or the stick's hat, which double as the docked screens.
+    //
+    // Chained as else-if, where the keys alone did not need to be: a hat
+    // pushed to a corner reports both of its directions at once, and two
+    // SetView calls in one tick would load a view only to throw it away -
+    // each one resets its screen and flips the starfield.
     private void HandleFlightViewKeys()
     {
-        if (_keyboard.IsPressed(ConsoleKey.F1))
+        if (WantsView(ConsoleKey.F1, GamepadButton.DPadUp))
         {
-            if (State.IsDocked)
-            {
-                State.SetView(Screen.Undocking);
-            }
-            else
-            {
-                State.SetView(Screen.FrontView);
-            }
+            State.SetView(State.IsDocked ? Screen.Undocking : Screen.FrontView);
         }
-
-        if (_keyboard.IsPressed(ConsoleKey.F2) &&
-            !State.IsDocked)
+        else if (WantsView(ConsoleKey.F2, GamepadButton.DPadDown) && !State.IsDocked)
         {
             State.SetView(Screen.RearView);
         }
-
-        if (_keyboard.IsPressed(ConsoleKey.F3) &&
-            !State.IsDocked)
+        else if (WantsView(ConsoleKey.F3, GamepadButton.DPadLeft) && !State.IsDocked)
         {
             State.SetView(Screen.LeftView);
         }
-
-        if (_keyboard.IsPressed(ConsoleKey.F4))
+        else if (WantsView(ConsoleKey.F4, GamepadButton.DPadRight))
         {
-            if (State.IsDocked)
-            {
-                State.SetView(Screen.EquipShip);
-            }
-            else
-            {
-                State.SetView(Screen.RightView);
-            }
+            State.SetView(State.IsDocked ? Screen.EquipShip : Screen.RightView);
         }
     }
+
+    // A view is selected once when the hat goes over, not on every tick it
+    // is held there - the same one-shot the function keys give.
+    private bool WantsView(ConsoleKey key, GamepadButton direction)
+        => _keyboard.IsPressed(key) || GamepadControls.WasViewSelected(_gamepad, direction);
 
     // F5 - F8: the charts and market
     private void HandleChartViewKeys()

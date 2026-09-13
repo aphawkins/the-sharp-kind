@@ -39,6 +39,19 @@ internal sealed class PilotController : IScreenController
     private readonly IEliteDraw _draw;
     private readonly IView<PilotModel> _view;
 
+    // The stick's one-shot commands. The gamepad reports these as holds
+    // rather than presses, because one profile puts fire-missile on a
+    // trigger and a trigger is an axis with no press to consume, so the
+    // edge is made here for all of them rather than half here and half in
+    // the device.
+    private readonly Edge _fireMissile = new();
+    private readonly Edge _targetMissile = new();
+    private readonly Edge _untargetMissile = new();
+    private readonly Edge _ecm = new();
+    private readonly Edge _warpJump = new();
+    private readonly Edge _dockingComputer = new();
+    private readonly Edge _hyperspace = new();
+
     // How much longer the laser bolt is drawn for, in the game's own ticks
     // rather than in updates - or the beam would be a flicker a third as
     // long at sixty frames a second as at thirteen and a half.
@@ -194,6 +207,54 @@ internal sealed class PilotController : IScreenController
             && (_keyboard.IsHeld(ConsoleKey.W)
                 || GamepadControls.Yaw(_gamepad) > 0);
 
+    // The rising edge of the stick's missile controls, or the keyboard's
+    // one-shot. Read once per update, because reading is what advances the
+    // remembered state.
+    // The stick is read before the key, not after: || would short-circuit
+    // past the edge on any update the key was pressed, and the stick's
+    // state would go unrecorded.
+    private bool WantsFireMissile()
+    {
+        bool stick = _fireMissile.Pressed(GamepadControls.IsFireMissileHeld(_gamepad));
+
+        return _keyboard.IsPressed(ConsoleKey.M) || stick;
+    }
+
+    private bool WantsTargetMissile()
+    {
+        bool stick = _targetMissile.Pressed(GamepadControls.IsTargetMissileHeld(_gamepad));
+
+        return _keyboard.IsPressed(ConsoleKey.T) || stick;
+    }
+
+    private bool WantsUntargetMissile()
+    {
+        bool stick = _untargetMissile.Pressed(GamepadControls.IsUntargetMissileHeld(_gamepad));
+
+        return _keyboard.IsPressed(ConsoleKey.U) || stick;
+    }
+
+    private bool WantsEcm()
+    {
+        bool stick = _ecm.Pressed(GamepadControls.IsEcmHeld(_gamepad));
+
+        return _keyboard.IsPressed(ConsoleKey.E) || stick;
+    }
+
+    private bool WantsWarpJump()
+    {
+        bool stick = _warpJump.Pressed(GamepadControls.IsWarpJumpHeld(_gamepad));
+
+        return _keyboard.IsPressed(ConsoleKey.J) || stick;
+    }
+
+    private bool WantsHyperspace()
+    {
+        bool stick = _hyperspace.Pressed(GamepadControls.IsHyperspaceHeld(_gamepad));
+
+        return _keyboard.IsPressed(ConsoleKey.H) || stick;
+    }
+
     private void HandleFlightControls()
     {
         if (WantsFire())
@@ -205,12 +266,34 @@ internal sealed class PilotController : IScreenController
         HandleRollControls();
         HandleYawControls();
 
-        if (WantsAccelerate() && !_gameState.IsDocked)
+        HandleSpeedControls();
+    }
+
+    // A throttle lever is a position, so it sets the speed outright rather
+    // than nudging it: where the lever is set is how fast the ship goes.
+    // Only the SideWinder has one; every other device keeps the buttons,
+    // and so does the keyboard.
+    private void HandleSpeedControls()
+    {
+        if (_gameState.IsDocked)
+        {
+            return;
+        }
+
+        float? throttle = GamepadControls.Throttle(_gamepad);
+
+        if (throttle.HasValue)
+        {
+            _ship.Speed = throttle.Value * _ship.MaxSpeed;
+            return;
+        }
+
+        if (WantsAccelerate())
         {
             _ship.IncreaseSpeed();
         }
 
-        if (WantsDecelerate() && !_gameState.IsDocked)
+        if (WantsDecelerate())
         {
             _ship.DecreaseSpeed();
         }
@@ -399,7 +482,9 @@ internal sealed class PilotController : IScreenController
             _pilot.DisengageAutoPilot();
         }
 
-        if (_keyboard.IsPressed(ConsoleKey.H) && (!_gameState.IsDocked))
+        HandleDockingComputerButton();
+
+        if (WantsHyperspace() && (!_gameState.IsDocked))
         {
             // Held, not pressed: Ctrl only picks which hyperspace this is, and
             // consuming it would take it from any other Ctrl combination read
@@ -414,7 +499,7 @@ internal sealed class PilotController : IScreenController
             }
         }
 
-        if (_keyboard.IsPressed(ConsoleKey.J) &&
+        if (WantsWarpJump() &&
             (!_gameState.IsDocked)
             && (!_gameState.InWitchspace))
         {
@@ -435,6 +520,26 @@ internal sealed class PilotController : IScreenController
         }
     }
 
+    // One button for what the keyboard spends two keys on: the stick has
+    // one to spare, and which half is meant is never in doubt - if the
+    // autopilot is flying, the only thing left to want is it to stop.
+    private void HandleDockingComputerButton()
+    {
+        if (!_dockingComputer.Pressed(GamepadControls.IsDockingComputerHeld(_gamepad)))
+        {
+            return;
+        }
+
+        if (_pilot.IsAutoPilotOn)
+        {
+            _pilot.DisengageAutoPilot();
+        }
+        else if (!_gameState.IsDocked && _ship.HasDockingComputer)
+        {
+            EngageDockingComputer();
+        }
+    }
+
     // Dock instantly if configured to, otherwise fly the ship in on autopilot.
     private void EngageDockingComputer()
     {
@@ -450,26 +555,26 @@ internal sealed class PilotController : IScreenController
 
     private void HandleWeaponCommands()
     {
-        if (_keyboard.IsPressed(ConsoleKey.E) &&
+        if (WantsEcm() &&
             !_gameState.IsDocked
             && _ship.HasECM)
         {
             _combat.ActivateECM(true);
         }
 
-        if (_keyboard.IsPressed(ConsoleKey.M) &&
+        if (WantsFireMissile() &&
             !_gameState.IsDocked)
         {
             _combat.FireMissile();
         }
 
-        if (_keyboard.IsPressed(ConsoleKey.T) &&
+        if (WantsTargetMissile() &&
             !_gameState.IsDocked)
         {
             _combat.ArmMissile();
         }
 
-        if (_keyboard.IsPressed(ConsoleKey.U) &&
+        if (WantsUntargetMissile() &&
             !_gameState.IsDocked)
         {
             _combat.UnarmMissile();
@@ -489,6 +594,21 @@ internal sealed class PilotController : IScreenController
             && (!_gameState.InWitchspace))
         {
             _gameState.SetView(Screen.EscapeCapsule);
+        }
+    }
+
+    // A control that must act once per press, from a source that only says
+    // whether it is down. Held, it fires on the first update and no other.
+    private sealed class Edge
+    {
+        private bool _wasHeld;
+
+        internal bool Pressed(bool held)
+        {
+            bool pressed = held && !_wasHeld;
+            _wasHeld = held;
+
+            return pressed;
         }
     }
 }

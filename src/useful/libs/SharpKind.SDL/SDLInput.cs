@@ -1,4 +1,4 @@
-// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
+﻿// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
 
 using Microsoft.Extensions.Logging;
 using SDL;
@@ -14,6 +14,10 @@ public sealed unsafe class SDLInput(ILogger? logger) : IInput, IDisposable
     // in both event streams, so it is only ever opened as a gamepad.
     private readonly Dictionary<SDL_JoystickID, nint> _gamepads = [];
     private readonly Dictionary<SDL_JoystickID, nint> _joysticks = [];
+
+    // What each hat last reported, so a direction that has gone can be told
+    // from one that was never down.
+    private readonly Dictionary<SDL_JoystickID, byte> _hats = [];
     private IKeyboardSink? _keyboard;
     private IGamepadSink? _gamepad;
     private bool _isDisposed;
@@ -78,7 +82,31 @@ public sealed unsafe class SDLInput(ILogger? logger) : IInput, IDisposable
 
         _gamepads.Clear();
         _joysticks.Clear();
+        _hats.Clear();
         _isDisposed = true;
+    }
+
+    // Internal so the press/release edges can be tested: this is the one
+    // piece of hat handling with state behind it, and a direction left down
+    // is the failure it exists to prevent.
+    internal static void HatDirectionChanged(
+        byte was, byte now, uint direction, GamepadButton button, IGamepadSink gamepad)
+    {
+        bool down = (now & direction) != 0;
+
+        if (down == ((was & direction) != 0))
+        {
+            return;
+        }
+
+        if (down)
+        {
+            gamepad.ButtonDown(button);
+        }
+        else
+        {
+            gamepad.ButtonUp(button);
+        }
     }
 
     // SDL reports stick axes over the full signed 16-bit range and triggers
@@ -96,6 +124,10 @@ public sealed unsafe class SDLInput(ILogger? logger) : IInput, IDisposable
         SDL_GamepadButton.SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER => GamepadButton.RightShoulder,
         SDL_GamepadButton.SDL_GAMEPAD_BUTTON_BACK => GamepadButton.Back,
         SDL_GamepadButton.SDL_GAMEPAD_BUTTON_START => GamepadButton.Start,
+        SDL_GamepadButton.SDL_GAMEPAD_BUTTON_DPAD_UP => GamepadButton.DPadUp,
+        SDL_GamepadButton.SDL_GAMEPAD_BUTTON_DPAD_DOWN => GamepadButton.DPadDown,
+        SDL_GamepadButton.SDL_GAMEPAD_BUTTON_DPAD_LEFT => GamepadButton.DPadLeft,
+        SDL_GamepadButton.SDL_GAMEPAD_BUTTON_DPAD_RIGHT => GamepadButton.DPadRight,
         _ => GamepadButton.None,
     };
 
@@ -131,7 +163,7 @@ public sealed unsafe class SDLInput(ILogger? logger) : IInput, IDisposable
         0 => GamepadAxis.LeftX,
         1 => GamepadAxis.LeftY,
         2 => GamepadAxis.RightX,
-        3 => GamepadAxis.RightY,
+        3 => GamepadAxis.Throttle,
         _ => null,
     };
 
@@ -171,8 +203,9 @@ public sealed unsafe class SDLInput(ILogger? logger) : IInput, IDisposable
         }
     }
 
-    // A hat is a second way of expressing the same 8-way direction the stick
-    // gives, so it feeds the left stick axes rather than a separate control.
+    // The hat as a pair of -1/0/+1 readings, for the log only: it is what
+    // makes a hat event legible next to the axis events around it. The game
+    // sees the hat as buttons, which is what HatDirectionChanged sends.
     private static (float X, float Y) HatDirection(byte hat)
     {
         float x = 0f;
@@ -293,16 +326,26 @@ public sealed unsafe class SDLInput(ILogger? logger) : IInput, IDisposable
             return;
         }
 
-        (float x, float y) = HatDirection(sdlEvent.jhat.value);
+        byte value = sdlEvent.jhat.value;
 
         if (logger?.IsEnabled(LogLevel.Debug) == true)
         {
+            (float x, float y) = HatDirection(value);
             uint id = (uint)sdlEvent.jhat.which;
-            SDLInputLogMessages.HatEvent(logger, sdlEvent.jhat.value, x, y, id);
+            SDLInputLogMessages.HatEvent(logger, value, x, y, id);
         }
 
-        gamepad.AxisMoved(GamepadAxis.LeftX, x);
-        gamepad.AxisMoved(GamepadAxis.LeftY, y);
+        // A hat event carries the whole hat, so each direction is compared
+        // with what it was: SDL sends no separate release, and a direction
+        // left down would never come back up. The diagonals fall out of this
+        // for free - two directions are simply down at once.
+        byte was = _hats.TryGetValue(sdlEvent.jhat.which, out byte previous) ? previous : (byte)0;
+        _hats[sdlEvent.jhat.which] = value;
+
+        HatDirectionChanged(was, value, SDL_HAT_UP, GamepadButton.DPadUp, gamepad);
+        HatDirectionChanged(was, value, SDL_HAT_DOWN, GamepadButton.DPadDown, gamepad);
+        HatDirectionChanged(was, value, SDL_HAT_LEFT, GamepadButton.DPadLeft, gamepad);
+        HatDirectionChanged(was, value, SDL_HAT_RIGHT, GamepadButton.DPadRight, gamepad);
     }
 
     private void LogButton(byte index, bool down, GamepadButton button, SDL_JoystickID which)
@@ -342,10 +385,13 @@ public sealed unsafe class SDLInput(ILogger? logger) : IInput, IDisposable
 
         _gamepads[which] = handle;
 
+        // Read whatever the logger is enabled or not: the game matches on
+        // this name to pick a control profile.
+        string name = SDL_GetGamepadName((SDL_Gamepad*)handle) ?? "unnamed";
+
         if (logger?.IsEnabled(LogLevel.Information) == true)
         {
             SDL_Joystick* joystick = SDL_GetGamepadJoystick((SDL_Gamepad*)handle);
-            string name = SDL_GetGamepadName((SDL_Gamepad*)handle) ?? "unnamed";
             uint id = (uint)which;
             int axes = SDL_GetNumJoystickAxes(joystick);
             int buttons = SDL_GetNumJoystickButtons(joystick);
@@ -353,7 +399,7 @@ public sealed unsafe class SDLInput(ILogger? logger) : IInput, IDisposable
             SDLInputLogMessages.GamepadConnected(logger, name, id, axes, buttons, hats);
         }
 
-        gamepad.Connected();
+        gamepad.Connected(name);
     }
 
     private void CloseGamepad(SDL_JoystickID which, IGamepadSink gamepad)
@@ -391,10 +437,11 @@ public sealed unsafe class SDLInput(ILogger? logger) : IInput, IDisposable
 
         _joysticks[which] = handle;
 
+        string name = SDL_GetJoystickName((SDL_Joystick*)handle) ?? "unnamed";
+
         if (logger?.IsEnabled(LogLevel.Information) == true)
         {
             SDL_Joystick* joystick = (SDL_Joystick*)handle;
-            string name = SDL_GetJoystickName(joystick) ?? "unnamed";
             uint id = (uint)which;
             int axes = SDL_GetNumJoystickAxes(joystick);
             int buttons = SDL_GetNumJoystickButtons(joystick);
@@ -402,7 +449,7 @@ public sealed unsafe class SDLInput(ILogger? logger) : IInput, IDisposable
             SDLInputLogMessages.JoystickConnected(logger, name, id, axes, buttons, hats);
         }
 
-        gamepad.Connected();
+        gamepad.Connected(name);
     }
 
     private void CloseJoystick(SDL_JoystickID which, IGamepadSink gamepad)

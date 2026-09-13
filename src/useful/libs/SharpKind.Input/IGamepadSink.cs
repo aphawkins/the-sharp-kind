@@ -1,4 +1,4 @@
-// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
+﻿// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
 
 namespace SharpKind.Input;
 
@@ -9,7 +9,12 @@ namespace SharpKind.Input;
 /// </summary>
 public interface IGamepadSink
 {
-    public void Connected();
+    /// <summary>
+    /// A device has arrived, named as the driver names it. The name is what
+    /// picks a control profile, so it is carried here rather than left to
+    /// the backend to keep.
+    /// </summary>
+    public void Connected(string name);
 
     public void Disconnected();
 

@@ -7,6 +7,51 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Added (the hat, the throttle lever and per-device button layouts, 2026-09-13)
+
+- **The hat selects the cockpit view and the throttle lever sets the
+  speed**, closing the joystick half of the input backlog item. Both were
+  unreachable: the hat was wired to the same axes as the stick, so it only
+  mirrored roll and pitch, and the lever was mapped to `RightY`, which
+  nothing read.
+  - **The hat is now buttons, not axes.** `GamepadButton` gains
+    `DPadUp`/`DPadDown`/`DPadLeft`/`DPadRight`, and a pad's own D-pad maps
+    to the same four. A view is a one-shot, which a button has and an axis
+    does not. SDL sends a hat's whole state and never a separate release,
+    so each direction is compared with what it was; a corner is simply two
+    directions down at once, and the view branches are chained so a corner
+    selects one view rather than loading two.
+  - **`GamepadAxis.Throttle`** is its own axis, taken from raw joystick
+    index 3. It is not `RightY`, which a pad's right stick uses: a throttle
+    holds wherever it is put, so sharing them would let a nudged thumbstick
+    take the speed and keep it. The lever sets speed outright rather than
+    nudging it, forward is fast, and it is ignored while docked.
+- **Each device now gets its own button layout.** One shared layout cannot
+  serve the three supported sticks: button 1 fires the laser on a
+  SideWinder, fires a missile on a Competition Pro, and slows the ship on
+  an Xbox pad. `IGamepad` gains `DeviceName`, and `GamepadProfile` picks the
+  layout from it - by name, because a Competition Pro and an Xbox pad both
+  arrive as mapped SDL gamepads, so "joystick or pad" does not separate
+  them. The full tables are in
+  [elite-readme.md](docs/elite-readme.md).
+  - **Missiles reach the stick**: fire, target and un-target on buttons, or
+    on the triggers and left shoulder on a pad. Un-targeting is the
+    SideWinder's alone - the eighth control on the one stick with eight. A Competition Pro has four buttons
+    and five things worth doing, so it is the one that loses out - it keeps
+    targeting on the keyboard's `T`.
+  - **A pad fires on its right trigger, no longer on (A)**, since (A) now
+    slows the ship. An unrecognised device gets the pad layout, so one with
+    no triggers cannot fire the laser; it can still answer the "press fire"
+    prompts, which take any button.
+  - **The SideWinder's four base buttons** take ECM, warp jump, the docking
+    computer and hyperspace. The docking computer is one button for both
+    halves of what the keyboard spends `C` and `D` on - if the autopilot is
+    flying, the only thing left to want is it to stop. Galactic hyperspace
+    needs a modifier and the escape capsule would end a run if brushed, so
+    neither gets a button.
+  - Elite only. Stunt Car Racer reads its own `GamepadControls` and is
+    untouched.
+
 ### Changed (an analog joystick flies without the damping, 2026-09-13)
 
 - **An analog stick now sets the rate of turn directly, instead of being

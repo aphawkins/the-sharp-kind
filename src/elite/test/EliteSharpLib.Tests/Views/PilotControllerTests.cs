@@ -212,6 +212,116 @@ public class PilotControllerTests
         Assert.Equal(2f, ship.Roll, 3);
     }
 
+    // A throttle lever is a position, so the speed is wherever the lever is
+    // set. Forward is fast, and SDL reports forward as negative.
+    [Theory]
+    [InlineData(-1f, 40f)]
+    [InlineData(0f, 20f)]
+    [InlineData(1f, 0f)]
+    public void TheThrottleLeverSetsTheSpeedOutright(float axis, float expected)
+    {
+        PilotController controller = CreateController(
+            PilotDirection.Front, out PlayerShip ship, out _, out GameState gameState, out FakeGamepad gamepad);
+        gameState.IsDocked = false;
+        gamepad.Connected("Microsoft SideWinder Precision 2 Joystick");
+        gamepad.AxisMoved(GamepadAxis.Throttle, 0.3f);
+        gamepad.AxisMoved(GamepadAxis.Throttle, axis);
+
+        controller.HandleInput();
+
+        Assert.Equal(expected, ship.Speed, 3);
+    }
+
+    // Docked, the lever must not drive the ship. It holds its position, so
+    // without this it would set a speed the moment the game started.
+    [Fact]
+    public void TheThrottleLeverIsIgnoredWhileDocked()
+    {
+        PilotController controller = CreateController(
+            PilotDirection.Front, out PlayerShip ship, out _, out GameState gameState, out FakeGamepad gamepad);
+        gameState.IsDocked = true;
+        gamepad.Connected("Microsoft SideWinder Precision 2 Joystick");
+        gamepad.AxisMoved(GamepadAxis.Throttle, 0.3f);
+        gamepad.AxisMoved(GamepadAxis.Throttle, -1f);
+
+        controller.HandleInput();
+
+        Assert.Equal(0f, ship.Speed, 3);
+    }
+
+    // A device with no lever keeps the buttons, and must not be given a
+    // half speed by an axis that reads zero because it does not exist.
+    [Fact]
+    public void ADeviceWithNoLeverDoesNotTouchTheSpeed()
+    {
+        PilotController controller = CreateController(
+            PilotDirection.Front, out PlayerShip ship, out _, out GameState gameState, out FakeGamepad gamepad);
+        gameState.IsDocked = false;
+        gamepad.Connected("Xbox One Controller");
+
+        controller.HandleInput();
+
+        Assert.Equal(0f, ship.Speed, 3);
+    }
+
+    // The stick spends one button on what the keyboard spends two keys on,
+    // so the same button has to mean both halves in turn.
+    [Fact]
+    public void TheDockingButtonEngagesThenDisengages()
+    {
+        PilotController controller = CreateController(
+            PilotDirection.Front,
+            out PlayerShip ship,
+            out _,
+            out GameState gameState,
+            out FakeGamepad gamepad,
+            out _,
+            out Pilot pilot);
+        gameState.IsDocked = false;
+        gameState.Config.Game.InstantDock = false;
+        ship.HasDockingComputer = true;
+        gamepad.Connected("Microsoft SideWinder Precision 2 Joystick");
+
+        gamepad.ButtonDown(GamepadButton.Back);
+        controller.HandleInput();
+        Assert.True(pilot.IsAutoPilotOn);
+
+        // Released and pressed again: a held button must not toggle back on
+        // the very next update.
+        controller.HandleInput();
+        Assert.True(pilot.IsAutoPilotOn);
+
+        gamepad.ButtonUp(GamepadButton.Back);
+        controller.HandleInput();
+        gamepad.ButtonDown(GamepadButton.Back);
+        controller.HandleInput();
+
+        Assert.False(pilot.IsAutoPilotOn);
+    }
+
+    // Without a docking computer fitted the button does nothing, the same
+    // as the C key.
+    [Fact]
+    public void TheDockingButtonNeedsTheComputerFitted()
+    {
+        PilotController controller = CreateController(
+            PilotDirection.Front,
+            out PlayerShip ship,
+            out _,
+            out GameState gameState,
+            out FakeGamepad gamepad,
+            out _,
+            out Pilot pilot);
+        gameState.IsDocked = false;
+        ship.HasDockingComputer = false;
+        gamepad.Connected("Microsoft SideWinder Precision 2 Joystick");
+
+        gamepad.ButtonDown(GamepadButton.Back);
+        controller.HandleInput();
+
+        Assert.False(pilot.IsAutoPilotOn);
+    }
+
     private static PilotController CreateController(PilotDirection direction, out PlayerShip ship)
         => CreateController(direction, out ship, out _);
 
@@ -237,6 +347,16 @@ public class PilotControllerTests
         out GameState gameState,
         out FakeGamepad gamepad,
         out FakeKeyboard keyboard)
+        => CreateController(direction, out ship, out space, out gameState, out gamepad, out keyboard, out _);
+
+    private static PilotController CreateController(
+        PilotDirection direction,
+        out PlayerShip ship,
+        out Space space,
+        out GameState gameState,
+        out FakeGamepad gamepad,
+        out FakeKeyboard keyboard,
+        out Pilot pilotOut)
     {
         gamepad = new FakeGamepad();
         keyboard = new FakeKeyboard();
@@ -278,6 +398,8 @@ public class PilotControllerTests
             draw,
             s_rendition,
             rng);
+
+        pilotOut = pilot;
 
         return NewController(gameState, pilot, ship, stars, space, combat, direction, draw, gamepad, keyboard);
     }

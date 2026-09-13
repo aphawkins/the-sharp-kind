@@ -1,4 +1,4 @@
-// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
+﻿// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
 
 namespace SharpKind.Input;
 
@@ -19,4 +19,20 @@ public enum GamepadButton
     RightShoulder = 6,
     Back = 7,
     Start = 8,
+
+    /// <summary>
+    /// A hat's four directions, reported as buttons rather than as an axis
+    /// because a hat is switches and what reads it wants a press, not a
+    /// position. A joystick's hat and a pad's D-pad both arrive here.
+    /// </summary>
+    DPadUp = 9,
+
+    /// <inheritdoc cref="DPadUp"/>
+    DPadDown = 10,
+
+    /// <inheritdoc cref="DPadUp"/>
+    DPadLeft = 11,
+
+    /// <inheritdoc cref="DPadUp"/>
+    DPadRight = 12,
 }
