@@ -17,9 +17,6 @@ public class BitmapFontEntry
 
     public int Columns { get; set; }
 
-    // Width of the grid lines between cells, skipped when reading a glyph.
-    public int Padding { get; set; }
-
     // True when glyph widths vary and each glyph is terminated by a magenta
     // marker pixel; false when every glyph fills its cell.
     public bool IsProportional { get; set; }

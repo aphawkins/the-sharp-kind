@@ -9,18 +9,16 @@
     "Bitmap": {
       "Small": {
         "File": "font1.bmp",
-        "CellWidth": 32,
-        "CellHeight": 32,
+        "CellWidth": 18,
+        "CellHeight": 17,
         "Columns": 16,
-        "Padding": 1,
         "IsProportional": true
       },
       "Large": {
         "File": "font2.bmp",
-        "CellWidth": 32,
-        "CellHeight": 32,
+        "CellWidth": 15,
+        "CellHeight": 21,
         "Columns": 16,
-        "Padding": 1,
         "IsProportional": true
       }
     },

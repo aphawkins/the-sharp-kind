@@ -7,6 +7,36 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Changed (the 16-bit font sheets cut to their glyphs, 2026-09-13)
+
+- **The 16-bit sheets no longer carry a 32x32 cell around a 17x16 glyph.**
+  `font1.bmp` and `font2.bmp` were authored on a 32x32 grid with a 1px border,
+  but nothing in either is wider than 17 or taller than 20, so magenta - the
+  sheets' own "nothing here" colour - was 86% of the small sheet and 77% of
+  the large one. Each is now cut to the tightest cell its glyphs and their
+  markers need: the widest glyph plus one marker column, the glyph height plus
+  one marker row. `font1.bmp` goes 513x193 to 288x102 on an 18x17 cell,
+  `font2.bmp` to 240x126 on a 15x21 cell - about 70% off each file, and the
+  glyph pixels are copied across unchanged.
+  - **The sheet is now an exact grid of cells**: 16 columns and 6 rows fill it
+    with nothing over, where 513x193 was 16 cells plus a leftover pixel.
+  - **`Padding` is gone**, from the manifests and from `BitmapFontEntry`,
+    `BitmapFontAsset` and `BitmapFont`. It described that one-pixel border, and
+    the recut sheets were the last thing that had one - the 8-bit grid sheet
+    never did. A glyph's origin is now `column * CellWidth`, and the sheet's
+    row count is `Height / CellHeight`.
+  - Both games are cut the same way. Assets and manifests only; no rasteriser
+    change. The magenta-marker encoding, the widths it yields and the drawn
+    result are all as they were - in Elite the same key script gives
+    byte-identical frames before and after, titles included, and in Stunt Car
+    Racer every text row of the track screen is identical (the scenery band
+    above it differs between any two runs of the same build).
+  - `MeasureText` reports the cell height, so a line of small text now
+    measures 17 rather than 32, which is what the ink was all along. Text is
+    placed by width and drawn from its top-left, so nothing on screen moves;
+    the only reader of the height is the UI Gallery, which takes the larger of
+    it and its own row height.
+
 ### Fixed (a character no font sheet carries, 2026-09-13)
 
 - **A character the sheet has no glyph for no longer takes the game down.**

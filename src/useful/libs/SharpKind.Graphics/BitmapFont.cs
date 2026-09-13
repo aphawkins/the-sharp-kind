@@ -23,7 +23,7 @@ public sealed class BitmapFont
         ArgumentNullException.ThrowIfNull(image);
         ArgumentNullException.ThrowIfNull(asset);
 
-        int required = (asset.Columns * asset.CellWidth) + asset.Padding;
+        int required = asset.Columns * asset.CellWidth;
         if (image.Width < required)
         {
             throw new SharpKindException(
@@ -34,9 +34,8 @@ public sealed class BitmapFont
         CellWidth = asset.CellWidth;
         CellHeight = asset.CellHeight;
         Columns = asset.Columns;
-        Padding = asset.Padding;
         IsProportional = asset.IsProportional;
-        Rows = (image.Height - asset.Padding) / asset.CellHeight;
+        Rows = image.Height / asset.CellHeight;
     }
 
     public FastBitmap Image { get; }
@@ -46,8 +45,6 @@ public sealed class BitmapFont
     public int CellHeight { get; }
 
     public int Columns { get; }
-
-    public int Padding { get; }
 
     public int Rows { get; }
 
@@ -61,9 +58,6 @@ public sealed class BitmapFont
     // key; proportional sheets already carry an alpha channel.
     public FastColor Background => IsProportional ? BaseColors.TransparentBlack : BaseColors.Black;
 
-    // Glyphs run from space (ASCII 32) left to right, top to bottom. This is
-    // the same mapping the proportional sheets always used - (c >> 4) - 2 and
-    // c & 0xF are just this arithmetic with Columns fixed at 16.
     // A sheet only carries the cells its image has room for. Anything before
     // space, or past the last cell, has no glyph - and reading its cell would
     // read outside the image.
@@ -73,11 +67,14 @@ public sealed class BitmapFont
         return index >= 0 && index < Columns * Rows;
     }
 
+    // Glyphs run from space (ASCII 32) left to right, top to bottom. This is
+    // the same mapping the proportional sheets always used - (c >> 4) - 2 and
+    // c & 0xF are just this arithmetic with Columns fixed at 16.
     public (int X, int Y) CellOrigin(char letter)
     {
         int index = letter - ' ';
         int column = index % Columns;
         int row = index / Columns;
-        return ((column * CellWidth) + Padding, (row * CellHeight) + Padding);
+        return (column * CellWidth, row * CellHeight);
     }
 }

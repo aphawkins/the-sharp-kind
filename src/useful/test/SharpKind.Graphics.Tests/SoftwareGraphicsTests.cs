@@ -926,17 +926,17 @@ public class SoftwareGraphicsTests
         return moqAssetLocator;
     }
 
-    // The committed 16-bit sheets: 32x32 cells, 16 columns, a 1px grid line,
-    // and magenta-delimited variable widths.
+    // The committed 16-bit small sheet: 18x17 cells - the widest glyph plus
+    // its marker column, the glyph height plus its marker row - 16 columns
+    // filling the sheet exactly, and magenta-delimited variable widths.
     private static BitmapFontAsset SixteenBitFont(string path) => new(
         path,
         new BitmapFontEntry
         {
             File = path,
-            CellWidth = 32,
-            CellHeight = 32,
+            CellWidth = 18,
+            CellHeight = 17,
             Columns = 16,
-            Padding = 1,
             IsProportional = true,
         });
 }
