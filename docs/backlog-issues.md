@@ -36,24 +36,6 @@ there before starting an item that mentions a decision.
 
 ## Should
 
-- [ ] [SharpKind.Graphics] A character the font sheet has no glyph for throws
-      instead of being skipped.
-      [BitmapFont.cs](../src/useful/libs/SharpKind.Graphics/BitmapFont.cs)
-      indexes a glyph as `letter - ' '`, so anything past the sheet's last
-      cell reads outside the image and
-      `BitmapFontRasteriser.Recolour` fails in `FastBitmap.GetPixel`
-      ([BitmapFontRasteriser.cs](../src/useful/libs/SharpKind.Graphics/BitmapFontRasteriser.cs)).
-      The sheets cover ASCII from space, so any non-ASCII character in any
-      drawn string takes the game down — found 2026-09-12 by putting a degree
-      sign in an Engine Settings row, which crashed on the frame that row was
-      first drawn. Nothing shipped draws one today, which is why this is a
-      Should rather than a Must, but it is a whole-game crash from a single
-      character and any rendition or mission supplying its own text can reach
-      it. Clamp the index to the sheet and fall back to a placeholder glyph
-      (or skip the character), and test it against a string of characters no
-      sheet carries. The TrueType rasteriser should be checked for the same
-      thing while there.
-
 ## Could
 
 ## Won't

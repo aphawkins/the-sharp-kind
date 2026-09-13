@@ -33,8 +33,8 @@ public sealed class BitmapFontRasteriser : IFontRasteriser
 
         foreach (char letter in text)
         {
-            totalWidth += font.IsProportional
-                ? AppendProportionalGlyph(font, temp, totalWidth, letter, color)
+            totalWidth += !font.Has(letter) ? MissingWidth(font)
+                : font.IsProportional ? AppendProportionalGlyph(font, temp, totalWidth, letter, color)
                 : AppendGridGlyph(font, temp, totalWidth, letter, color);
         }
 
@@ -59,11 +59,19 @@ public sealed class BitmapFontRasteriser : IFontRasteriser
         int width = 0;
         foreach (char letter in text)
         {
-            width += font.IsProportional ? ProportionalGlyphWidth(font, letter) : font.CellWidth;
+            width += !font.Has(letter) ? MissingWidth(font)
+                : font.IsProportional ? ProportionalGlyphWidth(font, letter)
+                : font.CellWidth;
         }
 
         return new(width, font.CellHeight);
     }
+
+    // A character the sheet has no cell for leaves a gap the width of a space
+    // rather than a substitute glyph, as the .fon rasteriser does: the sheet
+    // says what it holds, and the line stays readable.
+    private static int MissingWidth(BitmapFont font)
+        => font.IsProportional ? ProportionalGlyphWidth(font, ' ') : font.CellWidth;
 
     // Ink takes the requested text colour, the sheet's background becomes
     // transparent, and anything else is copied through - which is what lets a

@@ -36,6 +36,7 @@ public sealed class BitmapFont
         Columns = asset.Columns;
         Padding = asset.Padding;
         IsProportional = asset.IsProportional;
+        Rows = (image.Height - asset.Padding) / asset.CellHeight;
     }
 
     public FastBitmap Image { get; }
@@ -47,6 +48,8 @@ public sealed class BitmapFont
     public int Columns { get; }
 
     public int Padding { get; }
+
+    public int Rows { get; }
 
     public bool IsProportional { get; }
 
@@ -61,6 +64,15 @@ public sealed class BitmapFont
     // Glyphs run from space (ASCII 32) left to right, top to bottom. This is
     // the same mapping the proportional sheets always used - (c >> 4) - 2 and
     // c & 0xF are just this arithmetic with Columns fixed at 16.
+    // A sheet only carries the cells its image has room for. Anything before
+    // space, or past the last cell, has no glyph - and reading its cell would
+    // read outside the image.
+    public bool Has(char letter)
+    {
+        int index = letter - ' ';
+        return index >= 0 && index < Columns * Rows;
+    }
+
     public (int X, int Y) CellOrigin(char letter)
     {
         int index = letter - ' ';

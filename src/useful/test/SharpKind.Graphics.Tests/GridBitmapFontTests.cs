@@ -1,5 +1,6 @@
 // 'SharpKind Libraries' - Andy Hawkins 2023-2026.
 
+using System.Numerics;
 using Moq;
 using SharpKind.Assets;
 
@@ -74,6 +75,63 @@ public class GridBitmapFontTests
         Assert.Equal(BaseColors.Red, frame[1]);
         Assert.Equal(BaseColors.Red, frame[2]);
         Assert.Equal(BaseColors.Red, frame[3]);
+    }
+
+    [Fact]
+    public void LeavesAGapForACharacterTheSheetHasNoCellFor()
+    {
+        // Arrange: the sheet holds two cells only - space and '!' - so any
+        // later character has no glyph and its cell is outside the image.
+        FastColor black = BaseColors.Black;
+        FastColor white = BaseColors.White;
+        FastColor[] cells =
+        [
+            black, black,
+            black, black,
+            white, white,
+            white, white,
+        ];
+        using TempImageFile sheet = TempImageFile.From(Sheet(cells));
+
+        FastColor[] frame = [];
+        using SoftwareGraphics graphics = SoftwareGraphics.Create(
+            4,
+            4,
+            b => frame = Capture(b),
+            Locator(sheet.Path));
+
+        // Act - a degree sign the sheet does not carry, then an inked '!'.
+        graphics.DrawTextLeft(new(0, 0), "°!", "TestFont", BaseColors.Red);
+        graphics.ScreenUpdate();
+
+        // Assert - the missing one drew nothing and advanced one cell, so '!'
+        // landed in the second cell rather than the first.
+        Assert.Equal(BaseColors.Black, frame[0]);
+        Assert.Equal(BaseColors.Black, frame[1]);
+        Assert.Equal(BaseColors.Red, frame[2]);
+        Assert.Equal(BaseColors.Red, frame[3]);
+    }
+
+    [Fact]
+    public void MeasuresACharacterTheSheetHasNoCellForAsOneCell()
+    {
+        // Arrange
+        FastColor white = BaseColors.White;
+        FastColor[] cells = [white, white, white, white, white, white, white, white];
+        using TempImageFile sheet = TempImageFile.From(Sheet(cells));
+
+        using SoftwareGraphics graphics = SoftwareGraphics.Create(
+            4,
+            4,
+            _ => { },
+            Locator(sheet.Path));
+
+        // Act
+        Vector2 size = graphics.MeasureText("°!", "TestFont");
+
+        // Assert - both characters advanced by the cell width.
+        Assert.Equal(4, size.X);
+        Assert.Equal(2, size.Y);
     }
 
     private static FastColor[] Capture(FastBitmap bitmap)

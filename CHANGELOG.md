@@ -7,6 +7,22 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Fixed (a character no font sheet carries, 2026-09-13)
+
+- **A character the sheet has no glyph for no longer takes the game down.**
+  `BitmapFont.CellOrigin` indexes a glyph as `letter - ' '` with no bound on
+  it ([BitmapFont.cs](src/useful/libs/SharpKind.Graphics/BitmapFont.cs)), so
+  anything past the sheet's last cell - or before space - read outside the
+  image and `BitmapFontRasteriser.Recolour` threw in `FastBitmap.GetPixel`.
+  The sheets cover ASCII from space, so one non-ASCII character anywhere in a
+  drawn string crashed the frame that string was first drawn on; found by
+  putting a degree sign in an Engine Settings row. `BitmapFont` now derives
+  `Rows` from the sheet's own height and answers `Has(letter)`, and the
+  rasteriser leaves a gap the width of a space for a character the sheet does
+  not hold - the same thing the .fon rasteriser already did, for the same
+  reason: the font says what it holds, and the line stays readable. The
+  TrueType rasteriser needed nothing; SDL_ttf substitutes its own glyph.
+
 ### Changed (the coordinate scale named, and a field of view setting, 2026-09-12)
 
 - **`IRendition.Scale` and `ViewLayout.Scale` are now `DesignScale`.** The
@@ -37,8 +53,8 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
     constant.
   - No restart marker: `Focus` reads the config every time it is used, so the
     next frame drawn is already at the new angle.
-  - Shown as bare numbers. A degree sign crashed the game - see the new entry
-    in [backlog-issues.md](docs/backlog-issues.md).
+  - Shown as bare numbers. A degree sign crashed the game - since fixed, see
+    the 2026-09-13 entry above.
 
 ### Fixed (the rear and side starfields at a wide field of view, 2026-09-12)
 
