@@ -4,14 +4,16 @@
     <File Path="docs/asset-structure.md" />
     <File Path="docs/backlog-issues.md" />
     <File Path="docs/backlog-roadmap.md" />
+    <File Path="docs/Code Complete (2nd Edition) - Steve McConnell.md" />
     <File Path="docs/decisions.md" />
+    <File Path="docs/docfx.json" />
     <File Path="docs/elite-readme.md" />
     <File Path="docs/index.md" />
     <File Path="docs/reference-sources.md" />
     <File Path="docs/release-notes.md" />
     <File Path="docs/release-process.md" />
     <File Path="docs/scr-readme.md" />
-    <File Path="docs/_config.yml" />
+    <File Path="docs/toc.yml" />
   </Folder>
   <Folder Name="/docs/images/">
     <File Path="docs/images/coverage-badge.svg" />
@@ -21,12 +23,17 @@
     <File Path="docs/images/scr-screenshot.png" />
   </Folder>
   <Folder Name="/.github/">
+    <File Path=".github/PULL_REQUEST_TEMPLATE.md" />
+  </Folder>
+  <Folder Name="/.github/ISSUE_TEMPLATE/">
     <File Path=".github/ISSUE_TEMPLATE/bug_report.md" />
     <File Path=".github/ISSUE_TEMPLATE/config.yml" />
     <File Path=".github/ISSUE_TEMPLATE/feature_request.md" />
-    <File Path=".github/PULL_REQUEST_TEMPLATE.md" />
+  </Folder>
+  <Folder Name="/.github/workflows/">
     <File Path=".github/workflows/benchmarks.yml" />
     <File Path=".github/workflows/build-and-package.yml" />
+    <File Path=".github/workflows/docs.yml" />
     <File Path=".github/workflows/release.yml" />
   </Folder>
   <Folder Name="/.vscode/">
