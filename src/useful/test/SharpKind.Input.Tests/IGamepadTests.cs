@@ -6,6 +6,12 @@ namespace SharpKind.Input.Tests;
 
 public class IGamepadTests
 {
+    // Writes now name the device they came from, so every test that presses
+    // a button attaches one first - which is what the backend does, since
+    // SDL opens a device before reporting anything it did.
+    private const int DeviceA = 1;
+    private const int DeviceB = 2;
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
@@ -26,15 +32,16 @@ public class IGamepadTests
     {
         IGamepad pad = Create(software);
         IGamepadSink sink = (IGamepadSink)pad;
+        sink.Connected(DeviceA, "test device");
 
-        sink.ButtonDown(GamepadButton.A);
+        sink.ButtonDown(DeviceA, GamepadButton.A);
 
         Assert.True(pad.IsPressed(GamepadButton.A));
         Assert.False(pad.IsPressed(GamepadButton.A)); // one-shot: consumed
         Assert.True(pad.IsHeld(GamepadButton.A));
         Assert.True(pad.IsHeld(GamepadButton.A)); // continuous: not consumed
 
-        sink.ButtonUp(GamepadButton.A);
+        sink.ButtonUp(DeviceA, GamepadButton.A);
 
         Assert.False(pad.IsHeld(GamepadButton.A));
     }
@@ -46,8 +53,9 @@ public class IGamepadTests
     {
         IGamepad pad = Create(software);
         IGamepadSink sink = (IGamepadSink)pad;
+        sink.Connected(DeviceA, "test device");
 
-        sink.ButtonDown(GamepadButton.None);
+        sink.ButtonDown(DeviceA, GamepadButton.None);
 
         Assert.False(pad.IsPressed(GamepadButton.None));
         Assert.False(pad.IsHeld(GamepadButton.None));
@@ -60,8 +68,9 @@ public class IGamepadTests
     {
         IGamepad pad = Create(software);
         IGamepadSink sink = (IGamepadSink)pad;
+        sink.Connected(DeviceA, "test device");
 
-        sink.AxisMoved(GamepadAxis.LeftX, -0.42f);
+        sink.AxisMoved(DeviceA, GamepadAxis.LeftX, -0.42f);
 
         Assert.Equal(-0.42f, pad.Axis(GamepadAxis.LeftX), 3);
         Assert.Equal(-0.42f, pad.Axis(GamepadAxis.LeftX), 3);
@@ -74,14 +83,15 @@ public class IGamepadTests
     {
         IGamepad pad = Create(software);
         IGamepadSink sink = (IGamepadSink)pad;
+        sink.Connected(DeviceA, "test device");
 
-        sink.AxisMoved(GamepadAxis.LeftX, -1f);
+        sink.AxisMoved(DeviceA, GamepadAxis.LeftX, -1f);
         Assert.Equal(-1f, pad.Axis(GamepadAxis.LeftX));
 
-        sink.AxisMoved(GamepadAxis.LeftX, 0f);
+        sink.AxisMoved(DeviceA, GamepadAxis.LeftX, 0f);
         Assert.Equal(0f, pad.Axis(GamepadAxis.LeftX));
 
-        sink.AxisMoved(GamepadAxis.LeftX, 1f);
+        sink.AxisMoved(DeviceA, GamepadAxis.LeftX, 1f);
         Assert.Equal(1f, pad.Axis(GamepadAxis.LeftX));
     }
 
@@ -92,11 +102,12 @@ public class IGamepadTests
     {
         IGamepad pad = Create(software);
         IGamepadSink sink = (IGamepadSink)pad;
+        sink.Connected(DeviceA, "test device");
 
-        sink.AxisMoved(GamepadAxis.LeftX, -3f);
+        sink.AxisMoved(DeviceA, GamepadAxis.LeftX, -3f);
         Assert.Equal(-1f, pad.Axis(GamepadAxis.LeftX));
 
-        sink.AxisMoved(GamepadAxis.LeftX, 3f);
+        sink.AxisMoved(DeviceA, GamepadAxis.LeftX, 3f);
         Assert.Equal(1f, pad.Axis(GamepadAxis.LeftX));
     }
 
@@ -108,14 +119,14 @@ public class IGamepadTests
         IGamepad pad = Create(software);
         IGamepadSink sink = (IGamepadSink)pad;
 
-        sink.Connected("test device");
+        sink.Connected(DeviceA, "test device");
         Assert.True(pad.IsConnected);
 
-        sink.Connected("test device");
-        sink.Disconnected();
-        Assert.True(pad.IsConnected); // a second device is still attached
+        sink.Connected(DeviceB, "second device");
+        sink.Disconnected(DeviceB);
+        Assert.True(pad.IsConnected); // the first is still attached
 
-        sink.Disconnected();
+        sink.Disconnected(DeviceA);
         Assert.False(pad.IsConnected);
     }
 
@@ -127,11 +138,11 @@ public class IGamepadTests
         IGamepad pad = Create(software);
         IGamepadSink sink = (IGamepadSink)pad;
 
-        sink.Connected("test device");
-        sink.ButtonDown(GamepadButton.A);
-        sink.AxisMoved(GamepadAxis.LeftX, -1f);
+        sink.Connected(DeviceA, "test device");
+        sink.ButtonDown(DeviceA, GamepadButton.A);
+        sink.AxisMoved(DeviceA, GamepadAxis.LeftX, -1f);
 
-        sink.Disconnected();
+        sink.Disconnected(DeviceA);
 
         Assert.False(pad.IsHeld(GamepadButton.A));
         Assert.False(pad.IsPressed(GamepadButton.A));
@@ -145,10 +156,11 @@ public class IGamepadTests
     {
         IGamepad pad = Create(software);
         IGamepadSink sink = (IGamepadSink)pad;
+        sink.Connected(DeviceA, "test device");
 
-        sink.ButtonDown(GamepadButton.A);
-        sink.ButtonDown(GamepadButton.B);
-        sink.AxisMoved(GamepadAxis.RightTrigger, 1f);
+        sink.ButtonDown(DeviceA, GamepadButton.A);
+        sink.ButtonDown(DeviceA, GamepadButton.B);
+        sink.AxisMoved(DeviceA, GamepadAxis.RightTrigger, 1f);
 
         pad.ClearPressed();
 
@@ -184,7 +196,8 @@ public class IGamepadTests
     public void AnAxisReportingOnlyItsExtremesIsDigital(float value)
     {
         SoftwareGamepad pad = new(new FakeInput());
-        pad.AxisMoved(GamepadAxis.LeftX, value);
+        pad.Connected(DeviceA, "test device");
+        pad.AxisMoved(DeviceA, GamepadAxis.LeftX, value);
 
         Assert.False(pad.IsAnalog(GamepadAxis.LeftX));
     }
@@ -193,7 +206,8 @@ public class IGamepadTests
     public void AnAxisReportingAPositionBetweenIsAnalog()
     {
         SoftwareGamepad pad = new(new FakeInput());
-        pad.AxisMoved(GamepadAxis.LeftX, 0.3f);
+        pad.Connected(DeviceA, "test device");
+        pad.AxisMoved(DeviceA, GamepadAxis.LeftX, 0.3f);
 
         Assert.True(pad.IsAnalog(GamepadAxis.LeftX));
     }
@@ -204,9 +218,10 @@ public class IGamepadTests
     public void AnAnalogAxisStaysAnalogAtItsExtremes()
     {
         SoftwareGamepad pad = new(new FakeInput());
-        pad.AxisMoved(GamepadAxis.LeftX, 0.3f);
-        pad.AxisMoved(GamepadAxis.LeftX, 1f);
-        pad.AxisMoved(GamepadAxis.LeftX, 0f);
+        pad.Connected(DeviceA, "test device");
+        pad.AxisMoved(DeviceA, GamepadAxis.LeftX, 0.3f);
+        pad.AxisMoved(DeviceA, GamepadAxis.LeftX, 1f);
+        pad.AxisMoved(DeviceA, GamepadAxis.LeftX, 0f);
 
         Assert.True(pad.IsAnalog(GamepadAxis.LeftX));
     }
@@ -218,7 +233,8 @@ public class IGamepadTests
     public void AnalogIsDecidedPerAxis()
     {
         SoftwareGamepad pad = new(new FakeInput());
-        pad.AxisMoved(GamepadAxis.RightX, 0.3f);
+        pad.Connected(DeviceA, "test device");
+        pad.AxisMoved(DeviceA, GamepadAxis.RightX, 0.3f);
 
         Assert.True(pad.IsAnalog(GamepadAxis.RightX));
         Assert.False(pad.IsAnalog(GamepadAxis.LeftX));
@@ -229,11 +245,136 @@ public class IGamepadTests
     public void UnpluggingTheDeviceForgetsWhatItsAxesWere()
     {
         SoftwareGamepad pad = new(new FakeInput());
-        pad.Connected("test device");
-        pad.AxisMoved(GamepadAxis.LeftX, 0.3f);
-        pad.Disconnected();
+        pad.Connected(DeviceA, "test device");
+        pad.AxisMoved(DeviceA, GamepadAxis.LeftX, 0.3f);
+        pad.Disconnected(DeviceA);
 
         Assert.False(pad.IsAnalog(GamepadAxis.LeftX));
+    }
+
+    // Two sticks attached, and only the one being flown answers. Merged,
+    // a second device resting off-centre fought the one in the hand.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void OnlyTheActiveDeviceIsRead(bool software)
+    {
+        IGamepad pad = Create(software);
+        IGamepadSink sink = (IGamepadSink)pad;
+        sink.Connected(DeviceA, "first");
+        sink.Connected(DeviceB, "second");
+
+        sink.ButtonDown(DeviceB, GamepadButton.A);
+        sink.AxisMoved(DeviceB, GamepadAxis.LeftX, 1f);
+
+        Assert.False(pad.IsHeld(GamepadButton.A));
+        Assert.Equal(0f, pad.Axis(GamepadAxis.LeftX));
+
+        pad.PreferredDevice = "second";
+
+        Assert.True(pad.IsHeld(GamepadButton.A));
+        Assert.Equal(1f, pad.Axis(GamepadAxis.LeftX));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void TheFirstAttachedDeviceIsActiveByDefault(bool software)
+    {
+        IGamepad pad = Create(software);
+        IGamepadSink sink = (IGamepadSink)pad;
+        sink.Connected(DeviceA, "first");
+        sink.Connected(DeviceB, "second");
+
+        Assert.Equal("first", pad.DeviceName);
+    }
+
+    // A stick left at home must not leave the commander with no stick at
+    // all, so an unattached preference falls back rather than going quiet.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void APreferenceForSomethingUnattachedFallsBack(bool software)
+    {
+        IGamepad pad = Create(software);
+        IGamepadSink sink = (IGamepadSink)pad;
+        sink.Connected(DeviceA, "first");
+        pad.PreferredDevice = "a stick that is not plugged in";
+
+        Assert.Equal("first", pad.DeviceName);
+    }
+
+    // The preference is a wish about whatever may be plugged in later, so
+    // the named stick takes over the moment it arrives.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ThePreferredDeviceTakesOverWhenItArrives(bool software)
+    {
+        IGamepad pad = Create(software);
+        IGamepadSink sink = (IGamepadSink)pad;
+        pad.PreferredDevice = "second";
+        sink.Connected(DeviceA, "first");
+        Assert.Equal("first", pad.DeviceName);
+
+        sink.Connected(DeviceB, "second");
+
+        Assert.Equal("second", pad.DeviceName);
+    }
+
+    // Unplugging the active device falls back to what is left, rather than
+    // leaving reads answering for a stick that has gone.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void UnpluggingTheActiveDeviceFallsBackToTheOther(bool software)
+    {
+        IGamepad pad = Create(software);
+        IGamepadSink sink = (IGamepadSink)pad;
+        sink.Connected(DeviceA, "first");
+        sink.Connected(DeviceB, "second");
+
+        sink.Disconnected(DeviceA);
+
+        Assert.Equal("second", pad.DeviceName);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void AttachedDevicesListsThemInArrivalOrder(bool software)
+    {
+        IGamepad pad = Create(software);
+        IGamepadSink sink = (IGamepadSink)pad;
+        sink.Connected(DeviceA, "first");
+        sink.Connected(DeviceB, "second");
+
+        Assert.Equal(["first", "second"], pad.AttachedDevices);
+
+        sink.Disconnected(DeviceA);
+
+        Assert.Equal(["second"], pad.AttachedDevices);
+    }
+
+    // What one stick reports must not reach another's state, or a hat on
+    // one would press a button on the other.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void DevicesDoNotShareState(bool software)
+    {
+        IGamepad pad = Create(software);
+        IGamepadSink sink = (IGamepadSink)pad;
+        sink.Connected(DeviceA, "first");
+        sink.Connected(DeviceB, "second");
+
+        sink.AxisMoved(DeviceB, GamepadAxis.LeftX, 0.3f);
+
+        Assert.False(pad.IsAnalog(GamepadAxis.LeftX));
+
+        pad.PreferredDevice = "second";
+
+        Assert.True(pad.IsAnalog(GamepadAxis.LeftX));
     }
 
     // Both implementations of the interface must behave the same, so every

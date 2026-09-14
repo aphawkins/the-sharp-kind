@@ -6,6 +6,7 @@ using EliteSharp.Abstractions.Ships;
 using EliteSharp.Abstractions.Views;
 using EliteSharp.Renditions.SixteenBit;
 using EliteSharpLib.Conflict;
+using EliteSharpLib.Controls;
 using EliteSharpLib.Fakes;
 using EliteSharpLib.Graphics;
 using EliteSharpLib.Lasers;
@@ -401,7 +402,8 @@ public class PilotControllerTests
 
         pilotOut = pilot;
 
-        return NewController(gameState, pilot, ship, stars, space, combat, direction, draw, gamepad, keyboard);
+        return NewController(
+            gameState, pilot, ship, stars, space, combat, direction, draw, ShippedControls(keyboard, gamepad), keyboard);
     }
 
     // Kept out of CreateController for the same reason CreateStars is: the
@@ -416,12 +418,12 @@ public class PilotControllerTests
         Combat combat,
         PilotDirection direction,
         IEliteDraw draw,
-        FakeGamepad gamepad,
+        EliteControlMap controls,
         FakeKeyboard keyboard)
         => new(
             gameState,
+            controls,
             keyboard,
-            gamepad,
             pilot,
             ship,
             stars,
@@ -430,6 +432,13 @@ public class PilotControllerTests
             direction,
             draw,
             new FakePilotView());
+
+    // Kept out of CreateController for the same reason CreateStars is: the
+    // map and its bindings are two more types than that method's coupling
+    // budget has room for. The shipped bindings, so the tests exercise what
+    // a commander actually gets.
+    private static EliteControlMap ShippedControls(FakeKeyboard keyboard, FakeGamepad gamepad)
+        => new(EliteControlDefaults.Create(), keyboard, gamepad);
 
     // Kept out of CreateController, which is already at CA1506's coupling
     // limit: the starfield renderer adds two more types to whichever method

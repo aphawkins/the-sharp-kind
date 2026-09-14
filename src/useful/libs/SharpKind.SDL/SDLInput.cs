@@ -90,7 +90,7 @@ public sealed unsafe class SDLInput(ILogger? logger) : IInput, IDisposable
     // piece of hat handling with state behind it, and a direction left down
     // is the failure it exists to prevent.
     internal static void HatDirectionChanged(
-        byte was, byte now, uint direction, GamepadButton button, IGamepadSink gamepad)
+        int deviceId, byte was, byte now, uint direction, GamepadButton button, IGamepadSink gamepad)
     {
         bool down = (now & direction) != 0;
 
@@ -101,11 +101,11 @@ public sealed unsafe class SDLInput(ILogger? logger) : IInput, IDisposable
 
         if (down)
         {
-            gamepad.ButtonDown(button);
+            gamepad.ButtonDown(deviceId, button);
         }
         else
         {
-            gamepad.ButtonUp(button);
+            gamepad.ButtonUp(deviceId, button);
         }
     }
 
@@ -183,23 +183,23 @@ public sealed unsafe class SDLInput(ILogger? logger) : IInput, IDisposable
         return true;
     }
 
-    private static void ButtonChanged(GamepadButton button, bool down, IGamepadSink gamepad)
+    private static void ButtonChanged(int deviceId, GamepadButton button, bool down, IGamepadSink gamepad)
     {
         if (down)
         {
-            gamepad.ButtonDown(button);
+            gamepad.ButtonDown(deviceId, button);
         }
         else
         {
-            gamepad.ButtonUp(button);
+            gamepad.ButtonUp(deviceId, button);
         }
     }
 
-    private static void AxisMoved(GamepadAxis? axis, short value, IGamepadSink gamepad)
+    private static void AxisMoved(int deviceId, GamepadAxis? axis, short value, IGamepadSink gamepad)
     {
         if (axis.HasValue)
         {
-            gamepad.AxisMoved(axis.Value, Normalise(value));
+            gamepad.AxisMoved(deviceId, axis.Value, Normalise(value));
         }
     }
 
@@ -281,7 +281,7 @@ public sealed unsafe class SDLInput(ILogger? logger) : IInput, IDisposable
         GamepadButton button = ConvertGamepadButton((SDL_GamepadButton)sdlEvent.gbutton.button);
 
         LogButton(sdlEvent.gbutton.button, down, button, sdlEvent.gbutton.which);
-        ButtonChanged(button, down, gamepad);
+        ButtonChanged((int)sdlEvent.gbutton.which, button, down, gamepad);
     }
 
     private void GamepadAxisEvent(SDL_Event sdlEvent, IGamepadSink gamepad)
@@ -289,7 +289,7 @@ public sealed unsafe class SDLInput(ILogger? logger) : IInput, IDisposable
         GamepadAxis? axis = ConvertGamepadAxis((SDL_GamepadAxis)sdlEvent.gaxis.axis);
 
         LogAxis(sdlEvent.gaxis.axis, sdlEvent.gaxis.value, axis, sdlEvent.gaxis.which);
-        AxisMoved(axis, sdlEvent.gaxis.value, gamepad);
+        AxisMoved((int)sdlEvent.gaxis.which, axis, sdlEvent.gaxis.value, gamepad);
     }
 
     private void JoystickButtonEvent(SDL_Event sdlEvent, IGamepadSink gamepad)
@@ -303,7 +303,7 @@ public sealed unsafe class SDLInput(ILogger? logger) : IInput, IDisposable
         GamepadButton button = ConvertJoystickButton(sdlEvent.jbutton.button);
 
         LogButton(sdlEvent.jbutton.button, down, button, sdlEvent.jbutton.which);
-        ButtonChanged(button, down, gamepad);
+        ButtonChanged((int)sdlEvent.jbutton.which, button, down, gamepad);
     }
 
     private void JoystickAxisEvent(SDL_Event sdlEvent, IGamepadSink gamepad)
@@ -316,7 +316,7 @@ public sealed unsafe class SDLInput(ILogger? logger) : IInput, IDisposable
         GamepadAxis? axis = ConvertJoystickAxis(sdlEvent.jaxis.axis);
 
         LogAxis(sdlEvent.jaxis.axis, sdlEvent.jaxis.value, axis, sdlEvent.jaxis.which);
-        AxisMoved(axis, sdlEvent.jaxis.value, gamepad);
+        AxisMoved((int)sdlEvent.jaxis.which, axis, sdlEvent.jaxis.value, gamepad);
     }
 
     private void JoystickHatEvent(SDL_Event sdlEvent, IGamepadSink gamepad)
@@ -341,11 +341,12 @@ public sealed unsafe class SDLInput(ILogger? logger) : IInput, IDisposable
         // for free - two directions are simply down at once.
         byte was = _hats.TryGetValue(sdlEvent.jhat.which, out byte previous) ? previous : (byte)0;
         _hats[sdlEvent.jhat.which] = value;
+        int hatDevice = (int)sdlEvent.jhat.which;
 
-        HatDirectionChanged(was, value, SDL_HAT_UP, GamepadButton.DPadUp, gamepad);
-        HatDirectionChanged(was, value, SDL_HAT_DOWN, GamepadButton.DPadDown, gamepad);
-        HatDirectionChanged(was, value, SDL_HAT_LEFT, GamepadButton.DPadLeft, gamepad);
-        HatDirectionChanged(was, value, SDL_HAT_RIGHT, GamepadButton.DPadRight, gamepad);
+        HatDirectionChanged(hatDevice, was, value, SDL_HAT_UP, GamepadButton.DPadUp, gamepad);
+        HatDirectionChanged(hatDevice, was, value, SDL_HAT_DOWN, GamepadButton.DPadDown, gamepad);
+        HatDirectionChanged(hatDevice, was, value, SDL_HAT_LEFT, GamepadButton.DPadLeft, gamepad);
+        HatDirectionChanged(hatDevice, was, value, SDL_HAT_RIGHT, GamepadButton.DPadRight, gamepad);
     }
 
     private void LogButton(byte index, bool down, GamepadButton button, SDL_JoystickID which)
@@ -399,7 +400,7 @@ public sealed unsafe class SDLInput(ILogger? logger) : IInput, IDisposable
             SDLInputLogMessages.GamepadConnected(logger, name, id, axes, buttons, hats);
         }
 
-        gamepad.Connected(name);
+        gamepad.Connected((int)which, name);
     }
 
     private void CloseGamepad(SDL_JoystickID which, IGamepadSink gamepad)
@@ -417,7 +418,7 @@ public sealed unsafe class SDLInput(ILogger? logger) : IInput, IDisposable
             SDLInputLogMessages.DeviceDisconnected(logger, id);
         }
 
-        gamepad.Disconnected();
+        gamepad.Disconnected((int)which);
     }
 
     private void OpenJoystick(SDL_JoystickID which, IGamepadSink gamepad)
@@ -449,7 +450,7 @@ public sealed unsafe class SDLInput(ILogger? logger) : IInput, IDisposable
             SDLInputLogMessages.JoystickConnected(logger, name, id, axes, buttons, hats);
         }
 
-        gamepad.Connected(name);
+        gamepad.Connected((int)which, name);
     }
 
     private void CloseJoystick(SDL_JoystickID which, IGamepadSink gamepad)
@@ -467,6 +468,10 @@ public sealed unsafe class SDLInput(ILogger? logger) : IInput, IDisposable
             SDLInputLogMessages.DeviceDisconnected(logger, id);
         }
 
-        gamepad.Disconnected();
+        gamepad.Disconnected((int)which);
+
+        // The hat's remembered state goes with the device, or a stick
+        // unplugged mid-push would leave a direction down for the next one.
+        _ = _hats.Remove(which);
     }
 }

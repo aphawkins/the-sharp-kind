@@ -7,6 +7,7 @@ using System.Numerics;
 using EliteSharp.Abstractions.Ships;
 using EliteSharp.Abstractions.Views;
 using EliteSharpLib.Conflict;
+using EliteSharpLib.Controls;
 using EliteSharpLib.Graphics;
 using EliteSharpLib.Ships;
 using SharpKind.Graphics.Rendering;
@@ -28,8 +29,12 @@ internal sealed class PilotController : IScreenController
     private const float LaserVisibleTicks = 2;
 
     private readonly GameState _gameState;
+    private readonly EliteControlMap _controls;
+
+    // Only for the Ctrl that turns hyperspace galactic. A modifier is not
+    // an action and has no place in the bindings file: it decorates another
+    // control rather than being one.
     private readonly IKeyboard _keyboard;
-    private readonly IGamepad _gamepad;
     private readonly Pilot _pilot;
     private readonly PlayerShip _ship;
     private readonly Stars _stars;
@@ -59,8 +64,8 @@ internal sealed class PilotController : IScreenController
 
     internal PilotController(
         GameState gameState,
+        EliteControlMap controls,
         IKeyboard keyboard,
-        IGamepad gamepad,
         Pilot pilot,
         PlayerShip ship,
         Stars stars,
@@ -71,8 +76,8 @@ internal sealed class PilotController : IScreenController
         IView<PilotModel> view)
     {
         _gameState = gameState;
+        _controls = controls;
         _keyboard = keyboard;
-        _gamepad = gamepad;
         _pilot = pilot;
         _ship = ship;
         _stars = stars;
@@ -159,53 +164,14 @@ internal sealed class PilotController : IScreenController
             _gameState.Config.Engine.Graphics.FillMode == FillMode.Wireframe);
     }
 
-    // Each flight control answers to a key or the pad, so the handlers below
-    // stay one branch per control rather than one branch per input device.
-    private bool WantsFire()
-        => _keyboard.IsHeld(ConsoleKey.A)
-            || GamepadControls.IsFiring(_gamepad);
+    // Every flight control is one question now - is this action wanted -
+    // and the map answers for the keyboard and whichever stick is being
+    // flown alike. Yaw is off unless the commander switched it on, so the
+    // check is here rather than in the ship: with yaw off nothing reads
+    // these controls at all.
+    private bool WantsYawLeft() => DebugYaw.IsEnabled && _controls.IsHeld(EliteAction.YawLeft);
 
-    private bool WantsPitchUp()
-        => _keyboard.IsHeld(ConsoleKey.S)
-            || _keyboard.IsHeld(ConsoleKey.UpArrow)
-            || GamepadControls.Pitch(_gamepad) < 0;
-
-    private bool WantsPitchDown()
-        => _keyboard.IsHeld(ConsoleKey.X)
-            || _keyboard.IsHeld(ConsoleKey.DownArrow)
-            || GamepadControls.Pitch(_gamepad) > 0;
-
-    private bool WantsRollLeft()
-        => _keyboard.IsHeld(ConsoleKey.OemComma)
-            || _keyboard.IsHeld(ConsoleKey.LeftArrow)
-            || GamepadControls.Roll(_gamepad) < 0;
-
-    private bool WantsRollRight()
-        => _keyboard.IsHeld(ConsoleKey.OemPeriod)
-            || _keyboard.IsHeld(ConsoleKey.RightArrow)
-            || GamepadControls.Roll(_gamepad) > 0;
-
-    private bool WantsAccelerate()
-        => _keyboard.IsHeld(ConsoleKey.Spacebar)
-            || GamepadControls.IsAccelerating(_gamepad);
-
-    private bool WantsDecelerate()
-        => _keyboard.IsHeld(ConsoleKey.Oem2)
-            || GamepadControls.IsDecelerating(_gamepad);
-
-    // Yaw left and right. Q and W, because comma and full stop are already
-    // the roll, and the stick's twist. Off unless the commander switched it
-    // on, so the check is here rather than in the ship: with yaw off nothing
-    // reads these controls at all.
-    private bool WantsYawLeft()
-        => DebugYaw.IsEnabled
-            && (_keyboard.IsHeld(ConsoleKey.Q)
-                || GamepadControls.Yaw(_gamepad) < 0);
-
-    private bool WantsYawRight()
-        => DebugYaw.IsEnabled
-            && (_keyboard.IsHeld(ConsoleKey.W)
-                || GamepadControls.Yaw(_gamepad) > 0);
+    private bool WantsYawRight() => DebugYaw.IsEnabled && _controls.IsHeld(EliteAction.YawRight);
 
     // The rising edge of the stick's missile controls, or the keyboard's
     // one-shot. Read once per update, because reading is what advances the
@@ -213,51 +179,35 @@ internal sealed class PilotController : IScreenController
     // The stick is read before the key, not after: || would short-circuit
     // past the edge on any update the key was pressed, and the stick's
     // state would go unrecorded.
-    private bool WantsFireMissile()
+    // A one-shot command, from a binding that may be a key, a button or a
+    // trigger. The map's own WasPressed covers the first two; a trigger is
+    // an axis with no press to consume, so its edge is made here.
+    //
+    // Both halves are read every update, and neither short-circuits the
+    // other: WasPressed consumes, and the Edge only sees a rising edge if
+    // it is shown every update's state.
+    private bool WasPressed(EliteAction action, Edge edge)
     {
-        bool stick = _fireMissile.Pressed(GamepadControls.IsFireMissileHeld(_gamepad));
+        bool held = edge.Pressed(_controls.IsHeld(action));
 
-        return _keyboard.IsPressed(ConsoleKey.M) || stick;
+        return _controls.WasPressed(action) || held;
     }
 
-    private bool WantsTargetMissile()
-    {
-        bool stick = _targetMissile.Pressed(GamepadControls.IsTargetMissileHeld(_gamepad));
+    private bool WantsFireMissile() => WasPressed(EliteAction.FireMissile, _fireMissile);
 
-        return _keyboard.IsPressed(ConsoleKey.T) || stick;
-    }
+    private bool WantsTargetMissile() => WasPressed(EliteAction.TargetMissile, _targetMissile);
 
-    private bool WantsUntargetMissile()
-    {
-        bool stick = _untargetMissile.Pressed(GamepadControls.IsUntargetMissileHeld(_gamepad));
+    private bool WantsUntargetMissile() => WasPressed(EliteAction.UntargetMissile, _untargetMissile);
 
-        return _keyboard.IsPressed(ConsoleKey.U) || stick;
-    }
+    private bool WantsEcm() => WasPressed(EliteAction.Ecm, _ecm);
 
-    private bool WantsEcm()
-    {
-        bool stick = _ecm.Pressed(GamepadControls.IsEcmHeld(_gamepad));
+    private bool WantsWarpJump() => WasPressed(EliteAction.WarpJump, _warpJump);
 
-        return _keyboard.IsPressed(ConsoleKey.E) || stick;
-    }
-
-    private bool WantsWarpJump()
-    {
-        bool stick = _warpJump.Pressed(GamepadControls.IsWarpJumpHeld(_gamepad));
-
-        return _keyboard.IsPressed(ConsoleKey.J) || stick;
-    }
-
-    private bool WantsHyperspace()
-    {
-        bool stick = _hyperspace.Pressed(GamepadControls.IsHyperspaceHeld(_gamepad));
-
-        return _keyboard.IsPressed(ConsoleKey.H) || stick;
-    }
+    private bool WantsHyperspace() => WasPressed(EliteAction.Hyperspace, _hyperspace);
 
     private void HandleFlightControls()
     {
-        if (WantsFire())
+        if (_controls.IsHeld(EliteAction.FireLaser))
         {
             _gameState.DrawLasers = _combat.FireLaser();
         }
@@ -280,7 +230,7 @@ internal sealed class PilotController : IScreenController
             return;
         }
 
-        float? throttle = GamepadControls.Throttle(_gamepad);
+        float? throttle = _controls.Throttle(EliteAxis.Speed);
 
         if (throttle.HasValue)
         {
@@ -288,12 +238,12 @@ internal sealed class PilotController : IScreenController
             return;
         }
 
-        if (WantsAccelerate())
+        if (_controls.IsHeld(EliteAction.SpeedUp))
         {
             _ship.IncreaseSpeed();
         }
 
-        if (WantsDecelerate())
+        if (_controls.IsHeld(EliteAction.SlowDown))
         {
             _ship.DecreaseSpeed();
         }
@@ -317,46 +267,42 @@ internal sealed class PilotController : IScreenController
     // and left alone cannot pin a control at zero and lock the keys out.
     // Returns whether the axis took the control, in which case the caller
     // leaves the key path alone rather than applying the stick twice.
-    private bool ApplyAxis(GamepadAxis axis, float maxRate, bool keysActive, Action<float> setRate)
+    private bool ApplyAxis(EliteAxis axis, float maxRate, bool keysActive, Action<float> setRate)
     {
-        if (keysActive || !_gamepad.IsAnalog(axis))
+        if (keysActive || !_controls.IsAnalog(axis))
         {
             return false;
         }
 
-        setRate(GamepadControls.Deflection(_gamepad, axis) * maxRate);
+        setRate(_controls.Deflection(axis) * maxRate);
         return true;
     }
 
-    // The keyboard halves of the flight controls, apart from the stick's, so
-    // an analog axis can tell whether the pilot is using the keys instead.
+    // The keyboard halves of the flight controls, apart from the stick's,
+    // so an analog axis can tell whether the pilot is using the keys
+    // instead. Key-only on purpose: a pushed stick also holds its direction
+    // action, and asking about that would have the stick suppress itself.
     private bool RollKeysHeld()
-        => _keyboard.IsHeld(ConsoleKey.OemComma)
-            || _keyboard.IsHeld(ConsoleKey.LeftArrow)
-            || _keyboard.IsHeld(ConsoleKey.OemPeriod)
-            || _keyboard.IsHeld(ConsoleKey.RightArrow);
+        => _controls.IsKeyHeld(EliteAction.RollLeft) || _controls.IsKeyHeld(EliteAction.RollRight);
 
     private bool PitchKeysHeld()
-        => _keyboard.IsHeld(ConsoleKey.S)
-            || _keyboard.IsHeld(ConsoleKey.UpArrow)
-            || _keyboard.IsHeld(ConsoleKey.X)
-            || _keyboard.IsHeld(ConsoleKey.DownArrow);
+        => _controls.IsKeyHeld(EliteAction.PitchUp) || _controls.IsKeyHeld(EliteAction.PitchDown);
 
     private bool YawKeysHeld()
-        => _keyboard.IsHeld(ConsoleKey.Q) || _keyboard.IsHeld(ConsoleKey.W);
+        => _controls.IsKeyHeld(EliteAction.YawLeft) || _controls.IsKeyHeld(EliteAction.YawRight);
 
     // Pitch up and down, the stick's own sense: SDL's Y is positive
     // downwards and so is the ship's pitch, so the deflection carries
     // straight across without a sign flip.
     private void HandlePitchControls()
     {
-        if (ApplyAxis(GamepadAxis.LeftY, _ship.MaxPitch, PitchKeysHeld(), rate => _ship.Pitch = rate))
+        if (ApplyAxis(EliteAxis.Pitch, _ship.MaxPitch, PitchKeysHeld(), rate => _ship.Pitch = rate))
         {
             _ship.IsPitching = true;
             return;
         }
 
-        if (WantsPitchUp())
+        if (_controls.IsHeld(EliteAction.PitchUp))
         {
             if (_ship.Pitch > 0)
             {
@@ -371,7 +317,7 @@ internal sealed class PilotController : IScreenController
             _ship.IsPitching = true;
         }
 
-        if (WantsPitchDown())
+        if (_controls.IsHeld(EliteAction.PitchDown))
         {
             if (_ship.Pitch < 0)
             {
@@ -391,15 +337,16 @@ internal sealed class PilotController : IScreenController
     // levels the ship out instead.
     private void HandleRollControls()
     {
-        // Negated: the stick's X is positive to the right, where a roll to
-        // the right is a negative rate.
-        if (ApplyAxis(GamepadAxis.LeftX, -_ship.MaxRoll, RollKeysHeld(), rate => _ship.Roll = rate))
+        // Negated here rather than in the file: a stick pushed right is
+        // positive where a roll to the right is a negative rate, and that
+        // is a fact about Elite, not about the stick.
+        if (ApplyAxis(EliteAxis.Roll, -_ship.MaxRoll, RollKeysHeld(), rate => _ship.Roll = rate))
         {
             _ship.IsRolling = true;
             return;
         }
 
-        if (WantsRollLeft())
+        if (_controls.IsHeld(EliteAction.RollLeft))
         {
             if (_ship.Roll < 0)
             {
@@ -413,7 +360,7 @@ internal sealed class PilotController : IScreenController
             }
         }
 
-        if (WantsRollRight())
+        if (_controls.IsHeld(EliteAction.RollRight))
         {
             if (_ship.Roll > 0)
             {
@@ -433,7 +380,7 @@ internal sealed class PilotController : IScreenController
     private void HandleYawControls()
     {
         if (DebugYaw.IsEnabled
-            && ApplyAxis(GamepadAxis.RightX, _ship.MaxYaw, YawKeysHeld(), rate => _ship.Yaw = rate))
+            && ApplyAxis(EliteAxis.Yaw, _ship.MaxYaw, YawKeysHeld(), rate => _ship.Yaw = rate))
         {
             _ship.IsYawing = true;
             return;
@@ -470,14 +417,14 @@ internal sealed class PilotController : IScreenController
 
     private void HandleNavigationCommands()
     {
-        if (_keyboard.IsPressed(ConsoleKey.C) &&
+        if (_controls.WasPressed(EliteAction.DockingComputerOn) &&
             !_gameState.IsDocked
             && _ship.HasDockingComputer)
         {
             EngageDockingComputer();
         }
 
-        if (_keyboard.IsPressed(ConsoleKey.D))
+        if (_controls.WasPressed(EliteAction.DockingComputerOff))
         {
             _pilot.DisengageAutoPilot();
         }
@@ -506,12 +453,12 @@ internal sealed class PilotController : IScreenController
             _space.JumpWarp();
         }
 
-        if (_keyboard.IsPressed(ConsoleKey.P))
+        if (_controls.WasPressed(EliteAction.Pause))
         {
             _gameState.IsGamePaused = true;
         }
 
-        if (_keyboard.IsPressed(ConsoleKey.Escape) &&
+        if (_controls.WasPressed(EliteAction.EscapeCapsule) &&
             (!_gameState.IsDocked)
             && _ship.HasEscapeCapsule
             && (!_gameState.InWitchspace))
@@ -525,7 +472,7 @@ internal sealed class PilotController : IScreenController
     // autopilot is flying, the only thing left to want is it to stop.
     private void HandleDockingComputerButton()
     {
-        if (!_dockingComputer.Pressed(GamepadControls.IsDockingComputerHeld(_gamepad)))
+        if (!_dockingComputer.Pressed(_controls.IsHeld(EliteAction.DockingComputerToggle)))
         {
             return;
         }
@@ -580,7 +527,7 @@ internal sealed class PilotController : IScreenController
             _combat.UnarmMissile();
         }
 
-        if (_keyboard.IsPressed(ConsoleKey.Tab) &&
+        if (_controls.WasPressed(EliteAction.EnergyBomb) &&
             (!_gameState.IsDocked)
             && _ship.HasEnergyBomb)
         {
@@ -588,7 +535,7 @@ internal sealed class PilotController : IScreenController
             _ship.HasEnergyBomb = false;
         }
 
-        if (_keyboard.IsPressed(ConsoleKey.Escape) &&
+        if (_controls.WasPressed(EliteAction.EscapeCapsule) &&
             (!_gameState.IsDocked)
             && _ship.HasEscapeCapsule
             && (!_gameState.InWitchspace))

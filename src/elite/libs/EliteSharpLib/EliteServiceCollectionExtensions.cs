@@ -7,6 +7,7 @@ using EliteSharp.Abstractions.Views;
 using EliteSharpLib.Audio;
 using EliteSharpLib.Config;
 using EliteSharpLib.Conflict;
+using EliteSharpLib.Controls;
 using EliteSharpLib.Graphics;
 using EliteSharpLib.Missions;
 using EliteSharpLib.Renditions;
@@ -75,6 +76,7 @@ public static class EliteServiceCollectionExtensions
 
             return new EliteMain(
                 sp.GetRequiredService<IAbstraction>(),
+                sp.GetRequiredService<EliteControlMap>(),
                 sp.GetRequiredService<GameState>(),
                 sp.GetRequiredService<PlayerShip>(),
                 sp.GetRequiredService<IEliteDraw>(),
@@ -278,8 +280,8 @@ public static class EliteServiceCollectionExtensions
     // rather than resolving four otherwise-identical registrations by type.
     private static PilotController CreatePilotController(IServiceProvider sp, PilotDirection direction) => new(
         sp.GetRequiredService<GameState>(),
+        sp.GetRequiredService<EliteControlMap>(),
         sp.GetRequiredService<IKeyboard>(),
-        sp.GetRequiredService<IGamepad>(),
         sp.GetRequiredService<Pilot>(),
         sp.GetRequiredService<PlayerShip>(),
         sp.GetRequiredService<Stars>(),

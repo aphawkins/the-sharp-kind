@@ -7,6 +7,76 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Added (the bindings move into elite.controls.sharp, 2026-09-13)
+
+- **The binding machinery is a SharpKind library, not Elite's.** It sits in
+  `SharpKind.Abstraction.Controls`: the file's shape (`ControlBindings`,
+  `ControllerBindings`, `AxisBinding`), the `KeyList` pair of converters,
+  the repair, and `ControlMap<TAction, TAxis>` - which is generic over the
+  game's own actions and axes and knows nothing about either. It went there
+  rather than `SharpKind.Input` because it needs `ConfigSchema` for the
+  file version, and Input sits below that.
+  - What stayed Elite's is what is a fact about Elite: the `EliteAction`
+    and `EliteAxis` names, the three shipped layouts in
+    `EliteControlDefaults`, which axis each flight direction pushes, and
+    `EliteControlMap` - a named type so the two type arguments are written
+    once rather than at every call site.
+  - **A game's actions and axes must reserve zero**, because the library
+    reads an enum's zero value as "nothing". `EliteAxis.Roll` was zero and
+    was dropped from every file until it was given a `None`.
+  - Stunt Car Racer is untouched and still reads its own `GamepadControls`;
+    adopting this is a separate item.
+
+- **Every cockpit and view control is now a line in a file** rather than a
+  branch in the code. `elite.controls.sharp` sits beside `elite.sharp` in
+  the user-data directory, is written out in full the first time the game
+  runs, and is the whole answer after that: change a line and the control
+  moves, remove one and it is unbound. Closes the input item in
+  [backlog-roadmap.md](docs/backlog-roadmap.md).
+  - **The file carries a `version`**, as `elite.sharp` does and for the same
+    reason: a later change of shape can be migrated rather than silently
+    reset. One from a later build is stamped back rather than obeyed.
+  - **A single key is written on its own rather than as a one-item list**,
+    since most actions have one and the file is meant to be hand-edited.
+    Both forms read, which needs a converter on each side - the file is
+    written with System.Text.Json and read with the configuration binder,
+    and the binder drops a bare value silently unless the type can convert
+    from one.
+  - **One `EliteAction` names every bindable control**, and both the
+    keyboard and the controllers bind to it. That is what stops the two
+    drifting apart, and it is what a rebinding screen would later read.
+  - **Scope is the cockpit and the view screens**, about 25 controls plus
+    `F1`-`F11`. Menu navigation, `Enter` and the typed commander names stay
+    in code deliberately: they are how a player gets out of a bad file.
+  - **A controller entry is matched on the device name**, with `"*"` for
+    anything unnamed, so a fourth stick is an entry rather than a build.
+    `GamepadProfile` and the seven `Is*Held` methods it needed are gone.
+  - **A bad line costs that line.** The file repairs entry by entry through
+    `ConfigFile<T>`, keeping the original as `.bad` - except an emptied
+    keyboard, which would leave the game unplayable and so goes back to the
+    defaults entire.
+  - **`invert` describes the device, not the game.** Elite's own
+    conventions - that a roll to the right is a negative rate, that a
+    throttle pushed forward is fast - stayed in the code, so a commander
+    correcting a backwards stick need not know them. Every shipped binding
+    has it off.
+  - Whether an axis is analog is still not a setting. It is settled by
+    watching what the axis reports, because it is a fact about the
+    hardware (see the 2026-09-13 analog entry below).
+- **More than one controller can be attached, and one of them flies the
+  ship.** `SoftwareGamepad` merged every device into a single set of
+  buttons and axes, so two sticks both had the ship and a second one
+  resting off-centre fought the first. State is now kept per device:
+  `IGamepadSink` carries the device id, `SDLInput` routes events by it, and
+  reads answer for the active device alone.
+  - **`EngineConfigSettings.ActiveController`** names it, with a
+    **Controller row** on the Engine Settings screen listing what is
+    attached. Unset means the first to arrive, and so does a name that is
+    not plugged in - a stick left at home should not leave the commander
+    with no stick at all. The keyboard is always live.
+  - `ChoiceSetting` now reads its labels through a delegate, because the
+    attached devices change while the screen is up.
+
 ### Added (the hat, the throttle lever and per-device button layouts, 2026-09-13)
 
 - **The hat selects the cockpit view and the throttle lever sets the

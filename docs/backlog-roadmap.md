@@ -228,15 +228,31 @@ independent of each other.
 
 ### Input
 
-Nothing open. The SideWinder mapping item was closed on 2026-09-13: the hat
-selects the view, the throttle lever sets the speed, missiles reach the
-stick, and each device gets its own button layout (see
-[CHANGELOG.md](../CHANGELOG.md) and the tables in
-[elite-readme.md](elite-readme.md)).
+Nothing open. Two items closed on 2026-09-13: the SideWinder mapping (the
+hat selects the view, the throttle lever sets the speed, missiles reach the
+stick, and each device gets its own layout), and moving all of it out of
+code into `elite.controls.sharp` with a setting for which attached
+controller is flown. See [CHANGELOG.md](../CHANGELOG.md) and
+[elite-readme.md](elite-readme.md).
 
-One thing was deliberately left: a Competition Pro has four buttons and
+- [ ] [StuntCarRacerSharpLib] Stunt Car Racer could read its controls from a
+      file too. The machinery is now a library
+      ([SharpKind.Abstraction.Controls](../src/useful/libs/SharpKind.Abstraction/Controls)),
+      generic over a game's own actions and axes, so what SCR needs is an
+      action enum, a set of defaults and the registration - the same three
+      pieces Elite keeps. It gains less than Elite did: its steering is
+      fixed at +/-15 either way, so there are no axes to bind and the file
+      would only move buttons. Worth doing for consistency rather than for
+      capability.
+
+      Note the library takes an enum's zero value to mean "nothing", so
+      SCR's own enums have to reserve it - see the Elite entry in
+      [CHANGELOG.md](../CHANGELOG.md).
+
+Two things were deliberately left. A Competition Pro has four buttons and
 five controls worth having, so targeting a missile stays on the keyboard's
-`T`. There is no button left to give it.
+`T`. And galactic hyperspace stays on `Ctrl-H`: a modifier is not an action
+and has no place in the bindings file.
 
 ### From decisions (2026-07-27)
 

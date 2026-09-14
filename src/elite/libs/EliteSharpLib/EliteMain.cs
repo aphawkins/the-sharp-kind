@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using EliteSharp.Abstractions.Views;
 using EliteSharpLib.Audio;
 using EliteSharpLib.Conflict;
+using EliteSharpLib.Controls;
 using EliteSharpLib.Graphics;
 using EliteSharpLib.Save;
 using EliteSharpLib.Ships;
@@ -37,6 +38,7 @@ public sealed class EliteMain : IGame, IGameApp
     private readonly IGraphics _graphics;
     private readonly IKeyboard _keyboard;
     private readonly IGamepad _gamepad;
+    private readonly EliteControlMap _controls;
 
     private readonly AudioController _audio;
     private readonly PlanetController _planet;
@@ -66,6 +68,7 @@ public sealed class EliteMain : IGame, IGameApp
 
     internal EliteMain(
         IAbstraction abstraction,
+        EliteControlMap controls,
         GameState gameState,
         PlayerShip ship,
         IEliteDraw draw,
@@ -99,6 +102,7 @@ public sealed class EliteMain : IGame, IGameApp
         _graphics = abstraction.Graphics;
         _keyboard = abstraction.Keyboard;
         _gamepad = abstraction.Gamepad;
+        _controls = controls;
         _audio = audio;
         State = gameState;
         _ship = ship;
@@ -152,6 +156,12 @@ public sealed class EliteMain : IGame, IGameApp
     // belongs to is the last frame-rate item's question, not this one's.
     public void Update()
     {
+        // Applied every update rather than once at startup: the commander
+        // can change it on the settings screen, and a stick can be plugged
+        // in after the game has begun. It is a string assignment - which
+        // device that names is worked out where the devices are known.
+        _gamepad.PreferredDevice = State.Config.Engine.ActiveController;
+
         if (!Simulate())
         {
             return;
@@ -400,48 +410,43 @@ public sealed class EliteMain : IGame, IGameApp
     // each one resets its screen and flips the starfield.
     private void HandleFlightViewKeys()
     {
-        if (WantsView(ConsoleKey.F1, GamepadButton.DPadUp))
+        if (_controls.WasPressed(EliteAction.FrontView))
         {
             State.SetView(State.IsDocked ? Screen.Undocking : Screen.FrontView);
         }
-        else if (WantsView(ConsoleKey.F2, GamepadButton.DPadDown) && !State.IsDocked)
+        else if (_controls.WasPressed(EliteAction.RearView) && !State.IsDocked)
         {
             State.SetView(Screen.RearView);
         }
-        else if (WantsView(ConsoleKey.F3, GamepadButton.DPadLeft) && !State.IsDocked)
+        else if (_controls.WasPressed(EliteAction.LeftView) && !State.IsDocked)
         {
             State.SetView(Screen.LeftView);
         }
-        else if (WantsView(ConsoleKey.F4, GamepadButton.DPadRight))
+        else if (_controls.WasPressed(EliteAction.RightView))
         {
             State.SetView(State.IsDocked ? Screen.EquipShip : Screen.RightView);
         }
     }
 
-    // A view is selected once when the hat goes over, not on every tick it
-    // is held there - the same one-shot the function keys give.
-    private bool WantsView(ConsoleKey key, GamepadButton direction)
-        => _keyboard.IsPressed(key) || GamepadControls.WasViewSelected(_gamepad, direction);
-
     // F5 - F8: the charts and market
     private void HandleChartViewKeys()
     {
-        if (_keyboard.IsPressed(ConsoleKey.F5))
+        if (_controls.WasPressed(EliteAction.GalacticChart))
         {
             State.SetView(Screen.GalacticChart);
         }
 
-        if (_keyboard.IsPressed(ConsoleKey.F6))
+        if (_controls.WasPressed(EliteAction.ShortRangeChart))
         {
             State.SetView(Screen.ShortRangeChart);
         }
 
-        if (_keyboard.IsPressed(ConsoleKey.F7))
+        if (_controls.WasPressed(EliteAction.PlanetData))
         {
             State.SetView(Screen.PlanetData);
         }
 
-        if (_keyboard.IsPressed(ConsoleKey.F8) && (!State.InWitchspace))
+        if (_controls.WasPressed(EliteAction.MarketPrices) && (!State.InWitchspace))
         {
             State.SetView(Screen.MarketPrices);
         }
@@ -450,17 +455,17 @@ public sealed class EliteMain : IGame, IGameApp
     // F9 - F11: commander status, inventory and options
     private void HandleStatusViewKeys()
     {
-        if (_keyboard.IsPressed(ConsoleKey.F9))
+        if (_controls.WasPressed(EliteAction.CommanderStatus))
         {
             State.SetView(Screen.CommanderStatus);
         }
 
-        if (_keyboard.IsPressed(ConsoleKey.F10))
+        if (_controls.WasPressed(EliteAction.Inventory))
         {
             State.SetView(Screen.Inventory);
         }
 
-        if (_keyboard.IsPressed(ConsoleKey.F11))
+        if (_controls.WasPressed(EliteAction.Options))
         {
             State.EnterOptions();
         }

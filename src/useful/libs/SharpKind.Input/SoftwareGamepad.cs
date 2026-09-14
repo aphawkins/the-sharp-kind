@@ -2,14 +2,23 @@
 
 namespace SharpKind.Input;
 
+/// <summary>
+/// Keeps what every attached device is doing, and answers for one of them:
+/// the active device, which <see cref="PreferredDevice"/> selects.
+/// </summary>
+/// <remarks>
+/// State is per device rather than merged. Merged, two attached sticks both
+/// flew the ship, and a second device resting off-centre fought the one in
+/// the commander's hand.
+/// </remarks>
 public class SoftwareGamepad : IGamepad, IGamepadSink
 {
-    private readonly Dictionary<GamepadButton, bool> _heldButtons = [];
-    private readonly Dictionary<GamepadButton, bool> _pressedButtons = [];
-    private readonly Dictionary<GamepadAxis, float> _axes = [];
-    private readonly HashSet<GamepadAxis> _analogAxes = [];
+    private readonly Dictionary<int, Device> _devices = [];
+
+    // Arrival order, which is what "the first attached" means and what the
+    // settings screen lists. A dictionary does not promise an order.
+    private readonly List<int> _arrivals = [];
     private readonly IInput _input;
-    private int _deviceCount;
 
     public SoftwareGamepad(IInput input)
     {
@@ -19,89 +28,112 @@ public class SoftwareGamepad : IGamepad, IGamepadSink
         _input = input;
     }
 
-    public bool IsConnected => _deviceCount > 0;
+    public bool IsConnected => _arrivals.Count > 0;
 
-    public string DeviceName { get; private set; } = string.Empty;
+    public string? PreferredDevice { get; set; }
+
+    public string DeviceName => Active?.Name ?? string.Empty;
+
+    public IReadOnlyList<string> AttachedDevices
+        => [.. _arrivals.Select(id => _devices[id].Name)];
+
+    // The device being flown: the preferred one if it is attached, and
+    // otherwise whatever arrived first. Resolved on each read rather than
+    // cached, so plugging the preferred stick in mid-game picks it up.
+    private Device? Active
+    {
+        get
+        {
+            if (_arrivals.Count == 0)
+            {
+                return null;
+            }
+
+            if (!string.IsNullOrWhiteSpace(PreferredDevice))
+            {
+                foreach (int id in _arrivals)
+                {
+                    if (string.Equals(_devices[id].Name, PreferredDevice, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return _devices[id];
+                    }
+                }
+            }
+
+            return _devices[_arrivals[0]];
+        }
+    }
 
     public void ClearPressed()
     {
-        _heldButtons.Clear();
-        _pressedButtons.Clear();
-        _axes.Clear();
-
-        // What kind of device an axis belongs to is not part of the input
-        // state being cleared - the same stick is still plugged in - so the
-        // analog findings survive. Disconnected() is what ends them.
+        foreach (Device device in _devices.Values)
+        {
+            device.ClearInput();
+        }
     }
 
     public bool IsPressed(GamepadButton button)
-    {
-        if (button == GamepadButton.None)
-        {
-            return false;
-        }
-
-        if (_pressedButtons.TryGetValue(button, out bool value) && value)
-        {
-            _pressedButtons[button] = false;
-            return true;
-        }
-
-        return false;
-    }
+        => button != GamepadButton.None && Active?.PressedButtons.Remove(button) == true;
 
     public bool IsHeld(GamepadButton button)
-        => button != GamepadButton.None && _heldButtons.TryGetValue(button, out bool value) && value;
+        => button != GamepadButton.None && Active?.HeldButtons.Contains(button) == true;
 
-    public float Axis(GamepadAxis axis) => _axes.TryGetValue(axis, out float value) ? value : 0f;
+    public float Axis(GamepadAxis axis)
+        => Active is { } active && active.Axes.TryGetValue(axis, out float value) ? value : 0f;
 
-    public bool IsAnalog(GamepadAxis axis) => _analogAxes.Contains(axis);
+    public bool IsAnalog(GamepadAxis axis) => Active?.AnalogAxes.Contains(axis) == true;
 
-    public void Connected(string name)
+    public void Connected(int deviceId, string name)
     {
-        _deviceCount++;
-        DeviceName = name ?? string.Empty;
-    }
-
-    public void Disconnected()
-    {
-        if (_deviceCount > 0)
-        {
-            _deviceCount--;
-        }
-
-        if (_deviceCount == 0)
-        {
-            // A button held as the device is unplugged would otherwise stay
-            // held forever, leaving the car steering with no way to stop it.
-            ClearPressed();
-
-            // The next device to arrive may not be the one that left, so what
-            // was learned about this one's axes cannot be carried over to it.
-            _analogAxes.Clear();
-            DeviceName = string.Empty;
-        }
-    }
-
-    public void ButtonDown(GamepadButton button)
-    {
-        if (button == GamepadButton.None)
+        if (_devices.ContainsKey(deviceId))
         {
             return;
         }
 
-        _heldButtons[button] = true;
-        _pressedButtons[button] = true;
+        _devices[deviceId] = new Device(name ?? string.Empty);
+        _arrivals.Add(deviceId);
     }
 
-    public void ButtonUp(GamepadButton button)
+    public void Disconnected(int deviceId)
     {
-        _heldButtons[button] = false;
-        _pressedButtons[button] = false;
+        // Everything the device knew goes with it - a button held as it is
+        // unplugged would otherwise stay held forever, and what was learned
+        // about its axes cannot be carried to whatever arrives next.
+        if (_devices.Remove(deviceId))
+        {
+            _ = _arrivals.Remove(deviceId);
+        }
     }
 
-    public void AxisMoved(GamepadAxis axis, float value)
+    public void ButtonDown(int deviceId, GamepadButton button)
     {
+        if (button == GamepadButton.None || !_devices.TryGetValue(deviceId, out Device? device))
+        {
+            return;
+        }
+
+        _ = device.HeldButtons.Add(button);
+        _ = device.PressedButtons.Add(button);
+    }
+
+    public void ButtonUp(int deviceId, GamepadButton button)
+    {
+        if (!_devices.TryGetValue(deviceId, out Device? device))
+        {
+            return;
+        }
+
+        _ = device.HeldButtons.Remove(button);
+        _ = device.PressedButtons.Remove(button);
+    }
+
+    public void AxisMoved(int deviceId, GamepadAxis axis, float value)
+    {
+        if (!_devices.TryGetValue(deviceId, out Device? device))
+        {
+            return;
+        }
+
         float clamped = Math.Clamp(value, -1f, 1f);
 
         // A digital stick is wired as switches, so it can only ever send an
@@ -109,11 +141,34 @@ public class SoftwareGamepad : IGamepad, IGamepadSink
         // potentiometer, and there is no undoing that conclusion.
         if (clamped is not (-1f or 0f or 1f))
         {
-            _ = _analogAxes.Add(axis);
+            _ = device.AnalogAxes.Add(axis);
         }
 
-        _axes[axis] = clamped;
+        device.Axes[axis] = clamped;
     }
 
     public void Poll() => _input.Poll();
+
+    private sealed class Device(string name)
+    {
+        internal string Name { get; } = name;
+
+        internal HashSet<GamepadButton> HeldButtons { get; } = [];
+
+        internal HashSet<GamepadButton> PressedButtons { get; } = [];
+
+        internal Dictionary<GamepadAxis, float> Axes { get; } = [];
+
+        // Not cleared with the input: what kind of device an axis belongs to
+        // is not state that goes stale between frames. Unplugging is what
+        // ends it, and that drops the whole device.
+        internal HashSet<GamepadAxis> AnalogAxes { get; } = [];
+
+        internal void ClearInput()
+        {
+            HeldButtons.Clear();
+            PressedButtons.Clear();
+            Axes.Clear();
+        }
+    }
 }

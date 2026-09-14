@@ -1,4 +1,4 @@
-// 'Elite - The Sharp Kind' - Andy Hawkins 2023-2026.
+﻿// 'Elite - The Sharp Kind' - Andy Hawkins 2023-2026.
 // 'Elite - The New Kind' - C.J.Pinder 1999-2001.
 // Elite (C) I.Bell & D.Braben 1984.
 
@@ -26,6 +26,10 @@ internal sealed class EngineSettingsController : SettingsListController
     // the setting rather than storing 53, so the projection stays exact.
     private const int ClassicFieldOfView = 53;
 
+    // What an unset ActiveController is shown as. Not a device name, so it
+    // can never collide with one a driver reports.
+    private const string KeyboardOnly = "Keyboard only";
+
     internal EngineSettingsController(
         GameState gameState,
         IKeyboard keyboard,
@@ -33,6 +37,7 @@ internal sealed class EngineSettingsController : SettingsListController
         AudioController audio,
         IConfigWriter<EliteConfig> configWriter,
         InstalledRenditions renditions,
+        IGamepad gamepad,
         IBaseView baseView,
         IEliteDraw draw,
         SettingsListStyle style)
@@ -43,7 +48,7 @@ internal sealed class EngineSettingsController : SettingsListController
             draw,
             style,
             "ENGINE SETTINGS",
-            BuildSettings(gameState, space, audio, configWriter, renditions, draw),
+            BuildSettings(gameState, space, audio, configWriter, renditions, gamepad, draw),
             "* Applies when the game is restarted")
     {
     }
@@ -54,6 +59,7 @@ internal sealed class EngineSettingsController : SettingsListController
         AudioController audio,
         IConfigWriter<EliteConfig> configWriter,
         InstalledRenditions renditions,
+        IGamepad gamepad,
         IEliteDraw draw)
     {
         ArgumentNullException.ThrowIfNull(gameState);
@@ -220,6 +226,22 @@ internal sealed class EngineSettingsController : SettingsListController
                     fov => fov.ToString(CultureInfo.InvariantCulture),
                     () => config.Engine.FieldOfView ?? ClassicFieldOfView,
                     value => config.Engine.FieldOfView = value == ClassicFieldOfView ? null : value),
+                Save),
+
+            // Which attached stick flies the ship. The list is read live,
+            // because a commander can plug one in while this screen is up,
+            // and it always offers "Keyboard only" first - which is not a
+            // device but the absence of one, and is what an empty setting
+            // means. The keyboard itself is always live either way.
+            new SavedSetting(
+                new ChoiceSetting(
+                    "Controller:",
+                    () => [KeyboardOnly, .. gamepad.AttachedDevices],
+                    () => string.IsNullOrWhiteSpace(config.Engine.ActiveController)
+                        ? KeyboardOnly
+                        : config.Engine.ActiveController,
+                    value => config.Engine.ActiveController
+                        = string.Equals(value, KeyboardOnly, StringComparison.Ordinal) ? string.Empty : value),
                 Save),
 
             // The renditions offered are the ones installed, so a commander

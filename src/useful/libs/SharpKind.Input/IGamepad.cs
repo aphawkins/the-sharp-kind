@@ -23,10 +23,28 @@ public interface IGamepad
     /// since one stick's button 1 is another's button 4.
     /// </summary>
     /// <remarks>
-    /// The most recently attached device wins, which is the one the player
-    /// just plugged in. Two sticks at once is not a case either game plays.
+    /// This is the active device's name - the one being flown. Reads below
+    /// answer for that device alone.
     /// </remarks>
     public string DeviceName { get; }
+
+    /// <summary>
+    /// Gets every attached device's name, in the order they arrived. What a
+    /// settings screen offers, and empty when nothing is attached.
+    /// </summary>
+    public IReadOnlyList<string> AttachedDevices { get; }
+
+    /// <summary>
+    /// Gets or sets the device the commander wants to fly, by name.
+    /// </summary>
+    /// <remarks>
+    /// Null or blank takes the first attached device, and so does a name
+    /// that is not attached - a stick left at home should not leave the
+    /// commander with no stick at all. Setting it never fails: a name is a
+    /// wish about whatever may be plugged in later, not an assertion that
+    /// it is plugged in now.
+    /// </remarks>
+    public string? PreferredDevice { get; set; }
 
     public void ClearPressed();
 

@@ -171,6 +171,7 @@ internal static class EliteSplitScreensServiceCollectionExtensions
             sp.GetRequiredService<AudioController>(),
             sp.GetRequiredService<ConfigFile<EliteConfig>>(),
             sp.GetRequiredService<InstalledRenditions>(),
+            sp.GetRequiredService<IGamepad>(),
             sp.GetRequiredService<RenditionRegistry>().BaseView,
             sp.GetRequiredService<IEliteDraw>(),
             sp.GetRequiredService<SettingsListStyle>()));

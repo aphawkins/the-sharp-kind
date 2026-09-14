@@ -7,6 +7,8 @@
 #### Changes
 
 - The joystick hat and throttle lever now work — the hat picks the cockpit view, and a SideWinder's lever sets the speed outright
+- Controls can be rebound — every cockpit and view control is a line in `elite.controls.sharp`, written out on first run
+- More than one controller can be plugged in, and the Engine Settings screen picks which one flies the ship
 - A SideWinder's eight buttons are now all mapped — missiles, ECM, warp jump, the docking computer and hyperspace
 - Missiles reach the stick — fire and target are on buttons, or the triggers on a pad
 - Each stick gets its own button layout, because the three supported devices disagree about every button. See the tables in the Elite readme

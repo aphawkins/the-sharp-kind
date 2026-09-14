@@ -1,4 +1,4 @@
-// 'Elite - The Sharp Kind' - Andy Hawkins 2023-2026.
+﻿// 'Elite - The Sharp Kind' - Andy Hawkins 2023-2026.
 // 'Elite - The New Kind' - C.J.Pinder 1999-2001.
 // Elite (C) I.Bell & D.Braben 1984.
 
@@ -206,19 +206,14 @@ public class EngineSettingsControllerTests
             out _, out FakeKeyboard keyboard, out _, out _);
         controller.Reset();
 
-        Assert.Equal(["1x", "2x"], controller.Settings[8].Values);
+        int scaleRow = RowNamed(controller, "Window Scale");
+        Assert.Equal(["1x", "2x"], controller.Settings[scaleRow].Values);
 
-        for (int i = 0; i < 10; i++)
-        {
-            keyboard.KeyDown(ConsoleKey.DownArrow, default);
-            controller.HandleInput();
-        }
-
-        keyboard.KeyUp(ConsoleKey.DownArrow, default);
+        MoveTo(controller, keyboard, RowNamed(controller, "Rendition"));
         keyboard.KeyDown(ConsoleKey.Enter, default);
         controller.HandleInput();
 
-        Assert.Equal(["1x", "2x", "4x"], controller.Settings[8].Values);
+        Assert.Equal(["1x", "2x", "4x"], controller.Settings[scaleRow].Values);
     }
 
     // The game's own settings belong to the other screen.
@@ -239,14 +234,8 @@ public class EngineSettingsControllerTests
         EngineSettingsController controller = CreateController(out GameState gameState, out FakeKeyboard keyboard, out _, out _);
         controller.Reset();
 
-        // Navigate to the last row - the Back row.
-        for (int i = 0; i < 11; i++)
-        {
-            keyboard.KeyDown(ConsoleKey.DownArrow, default);
-            controller.HandleInput();
-        }
-
-        keyboard.KeyUp(ConsoleKey.DownArrow, default);
+        // The Back row sits one past the settings themselves.
+        MoveTo(controller, keyboard, controller.Settings.Count);
         keyboard.KeyDown(ConsoleKey.Enter, default);
         controller.HandleInput();
 
@@ -288,8 +277,35 @@ public class EngineSettingsControllerTests
                 new SixteenBitRendition(),
                 string.Empty,
                 [new EightBitRendition(), new SixteenBitRendition()]),
+            new FakeGamepad(),
             SettingsControllerFixture.CreateBaseView(draw),
             draw,
             SettingsControllerFixture.CreateStyle(draw));
+    }
+
+    // Rows are found by name and counted at runtime: these tests used fixed
+    // indices and step counts, and every new setting silently moved them.
+    private static int RowNamed(EngineSettingsController controller, string name)
+    {
+        for (int i = 0; i < controller.Settings.Count; i++)
+        {
+            if (controller.Settings[i].Name.StartsWith(name, StringComparison.Ordinal))
+            {
+                return i;
+            }
+        }
+
+        throw new InvalidOperationException($"No settings row named '{name}'.");
+    }
+
+    private static void MoveTo(EngineSettingsController controller, FakeKeyboard keyboard, int row)
+    {
+        for (int i = 0; i < row; i++)
+        {
+            keyboard.KeyDown(ConsoleKey.DownArrow, default);
+            controller.HandleInput();
+        }
+
+        keyboard.KeyUp(ConsoleKey.DownArrow, default);
     }
 }

@@ -54,6 +54,7 @@ internal sealed class HeadlessGameHarness : HeadlessGameHarnessBase<GameStateSum
         services.AddSingleton(sp => sp.GetRequiredService<IAbstraction>().Gamepad);
         services.AddSingleton(_ => TestAssets.Locator());
         services.AddEliteConfig(_configDirectory);
+        services.AddEliteControls(_configDirectory);
         services.AddEliteMain(EliteServiceCollectionExtensions.LoadRendition("16-bit", NullLoggerFactory.Instance));
 
         // After AddEliteMain, so this wins: the container resolves the last

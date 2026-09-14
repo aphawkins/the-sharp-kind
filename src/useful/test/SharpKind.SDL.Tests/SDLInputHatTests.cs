@@ -11,6 +11,7 @@ namespace SharpKind.SDL.Tests;
 // edges that comparison exists to get right.
 public class SDLInputHatTests
 {
+    private const int Device = 1;
     private const byte Centred = (byte)SDL3.SDL_HAT_CENTERED;
     private const byte Up = (byte)SDL3.SDL_HAT_UP;
     private const byte Left = (byte)SDL3.SDL_HAT_LEFT;
@@ -20,9 +21,10 @@ public class SDLInputHatTests
     public void APushedDirectionGoesDown()
     {
         FakeGamepad pad = new();
+        pad.Connected(Device, "hat stick");
 
         SDLInput.HatDirectionChanged(
-            Centred, Up, SDL3.SDL_HAT_UP, GamepadButton.DPadUp, pad);
+            Device, Centred, Up, SDL3.SDL_HAT_UP, GamepadButton.DPadUp, pad);
 
         Assert.True(pad.IsHeld(GamepadButton.DPadUp));
     }
@@ -33,11 +35,12 @@ public class SDLInputHatTests
     public void AReleasedDirectionComesBackUp()
     {
         FakeGamepad pad = new();
+        pad.Connected(Device, "hat stick");
         SDLInput.HatDirectionChanged(
-            Centred, Up, SDL3.SDL_HAT_UP, GamepadButton.DPadUp, pad);
+            Device, Centred, Up, SDL3.SDL_HAT_UP, GamepadButton.DPadUp, pad);
 
         SDLInput.HatDirectionChanged(
-            Up, Centred, SDL3.SDL_HAT_UP, GamepadButton.DPadUp, pad);
+            Device, Up, Centred, SDL3.SDL_HAT_UP, GamepadButton.DPadUp, pad);
 
         Assert.False(pad.IsHeld(GamepadButton.DPadUp));
     }
@@ -48,12 +51,13 @@ public class SDLInputHatTests
     public void AnUnchangedDirectionIsNotPressedAgain()
     {
         FakeGamepad pad = new();
+        pad.Connected(Device, "hat stick");
         SDLInput.HatDirectionChanged(
-            Centred, Up, SDL3.SDL_HAT_UP, GamepadButton.DPadUp, pad);
+            Device, Centred, Up, SDL3.SDL_HAT_UP, GamepadButton.DPadUp, pad);
         Assert.True(pad.IsPressed(GamepadButton.DPadUp));
 
         SDLInput.HatDirectionChanged(
-            Up, Up, SDL3.SDL_HAT_UP, GamepadButton.DPadUp, pad);
+            Device, Up, Up, SDL3.SDL_HAT_UP, GamepadButton.DPadUp, pad);
 
         Assert.False(pad.IsPressed(GamepadButton.DPadUp));
     }
@@ -64,10 +68,11 @@ public class SDLInputHatTests
     public void ACornerPressesBothOfItsDirections()
     {
         FakeGamepad pad = new();
+        pad.Connected(Device, "hat stick");
         SDLInput.HatDirectionChanged(
-            Centred, Corner, SDL3.SDL_HAT_UP, GamepadButton.DPadUp, pad);
+            Device, Centred, Corner, SDL3.SDL_HAT_UP, GamepadButton.DPadUp, pad);
         SDLInput.HatDirectionChanged(
-            Centred, Corner, SDL3.SDL_HAT_LEFT, GamepadButton.DPadLeft, pad);
+            Device, Centred, Corner, SDL3.SDL_HAT_LEFT, GamepadButton.DPadLeft, pad);
 
         Assert.True(pad.IsHeld(GamepadButton.DPadUp));
         Assert.True(pad.IsHeld(GamepadButton.DPadLeft));
@@ -79,13 +84,14 @@ public class SDLInputHatTests
     public void LeavingACornerReleasesOnlyTheDirectionThatWent()
     {
         FakeGamepad pad = new();
+        pad.Connected(Device, "hat stick");
         SDLInput.HatDirectionChanged(
-            Centred, Corner, SDL3.SDL_HAT_UP, GamepadButton.DPadUp, pad);
+            Device, Centred, Corner, SDL3.SDL_HAT_UP, GamepadButton.DPadUp, pad);
         SDLInput.HatDirectionChanged(
-            Centred, Corner, SDL3.SDL_HAT_LEFT, GamepadButton.DPadLeft, pad);
+            Device, Centred, Corner, SDL3.SDL_HAT_LEFT, GamepadButton.DPadLeft, pad);
 
-        SDLInput.HatDirectionChanged(Corner, Up, SDL3.SDL_HAT_UP, GamepadButton.DPadUp, pad);
-        SDLInput.HatDirectionChanged(Corner, Up, SDL3.SDL_HAT_LEFT, GamepadButton.DPadLeft, pad);
+        SDLInput.HatDirectionChanged(Device, Corner, Up, SDL3.SDL_HAT_UP, GamepadButton.DPadUp, pad);
+        SDLInput.HatDirectionChanged(Device, Corner, Up, SDL3.SDL_HAT_LEFT, GamepadButton.DPadLeft, pad);
 
         Assert.True(pad.IsHeld(GamepadButton.DPadUp));
         Assert.False(pad.IsHeld(GamepadButton.DPadLeft));

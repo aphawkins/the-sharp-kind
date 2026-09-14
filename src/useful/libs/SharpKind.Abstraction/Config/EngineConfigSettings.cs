@@ -1,4 +1,4 @@
-// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
+﻿// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
 
 using System.Text.Json.Serialization;
 
@@ -35,6 +35,16 @@ public sealed class EngineConfigSettings
     // (SDL-accelerated). It picks the mixer as well as the rasteriser, which
     // is why it sits here rather than under Graphics.
     public Backend Backend { get; set; } = Backend.Software;
+
+    // Which attached controller is the one being flown, by the name its
+    // driver reports. More than one can be plugged in and only one of them
+    // can have the ship.
+    //
+    // Empty means the commander has not chosen, and the first device to
+    // arrive is used - and so is a name that is not attached, because a
+    // stick left at home should not leave them with no stick at all. The
+    // keyboard is always live and is never named here.
+    public string ActiveController { get; set; } = string.Empty;
 
     public GraphicsConfigSettings Graphics { get; set; } = new();
 
@@ -118,6 +128,10 @@ public sealed class EngineConfigSettings
             repaired = true;
         }
 
+        // ActiveController is not checked against what is attached: it is a
+        // wish about whatever may be plugged in later, and a stick that is
+        // not here today may well be tomorrow. Blanking it would lose the
+        // commander's choice every time they unplugged it.
         if (string.IsNullOrWhiteSpace(Rendition))
         {
             Rendition = DefaultRendition;

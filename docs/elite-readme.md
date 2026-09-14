@@ -91,6 +91,16 @@ Competition Pro, and slows the ship on an Xbox pad, so there is no single
 assignment that serves all three. The device is recognised by the name its
 driver reports; anything unrecognised gets the pad layout.
 
+The tables below are what the game ships with, not what it is stuck with -
+every one of them is a line in `elite.controls.sharp`. See
+[Rebinding the controls](#rebinding-the-controls).
+
+More than one device can be plugged in, and only one of them flies the
+ship. Which one is the **Controller** row on the Engine Settings screen, or
+`activeController` in `elite.sharp`. Left unset it is the first device that
+arrives, and so is a name that is not plugged in - a stick left at home
+does not leave you with no stick at all. The keyboard is always live.
+
 Buttons below are numbered as the device numbers them, which for a stick
 with no SDL mapping is the order its buttons are wired in.
 
@@ -166,6 +176,70 @@ The keyboard still works while a stick is plugged in and centred.
 
 Tested with a Microsoft SideWinder Precision 2, a Speedlink Competition Pro
 Extra and an Xbox One controller.
+
+### Rebinding the controls
+
+Every control above is a line in `elite.controls.sharp`, written into the
+same folder as `elite.sharp` the first time the game runs. It is the whole
+answer rather than a patch over something in the code: change a line and
+the control moves, remove one and the control is unbound.
+
+```json
+{
+  "version": 1,
+  "keyboard": {
+    "FireLaser": "A",
+    "PitchUp": [ "S", "UpArrow" ]
+  },
+  "controllers": [
+    {
+      "device": "Microsoft SideWinder Precision 2 Joystick",
+      "axes": { "Roll": { "axis": "LeftX", "invert": false } },
+      "buttons": { "FireLaser": "A", "FrontView": "DPadUp" },
+      "triggers": {}
+    }
+  ]
+}
+```
+
+- **Names are case-insensitive.** Actions are the ones in the tables above
+  with the spaces taken out; keys are .NET `ConsoleKey` names (`A`, `F1`,
+  `UpArrow`, `Spacebar`, `OemComma`); buttons and axes are the port's own
+  (`A`, `LeftShoulder`, `DPadUp`, `LeftX`, `Throttle`, `RightTrigger`).
+- **A keyboard action can take several keys**, which is why pitch answers
+  to both `S` and the up arrow. One key is written on its own and several
+  as a list; either form can be typed by hand, so a one-item list is read
+  quite happily.
+- **`version`** is the file's schema version, as `elite.sharp` carries one.
+  It is there so a later change of shape can be migrated rather than
+  silently reset; a file without one reads as the current version.
+- **`device` is matched against the name the driver reports**, so a partial
+  name is enough. `"*"` is the entry for anything no other entry names, and
+  is where the pad layout lives. Adding a fourth stick is an entry here
+  rather than a change to the game.
+- **`axes` are for controls that take a position** - the stick and the
+  throttle lever. `invert` is for a device wired backwards; it is off for
+  everything shipped, and it does not express the game's own conventions,
+  so a stick corrected here still rolls the right way.
+- **`triggers` are for a pad's analog triggers only.** Naming a stick axis
+  there is refused, because the lasers would fire whenever the stick was
+  pushed over.
+- Whether a stick is treated as analog or digital is **not** in the file.
+  It is settled by watching what the axis reports, because it is a fact
+  about the hardware rather than a preference.
+
+A line the game cannot honour - an action it does not have, a key that is
+not one - is dropped on the next run and the rest is kept, with the
+original left alongside as `elite.controls.sharp.bad`. Delete the file to
+go back to the defaults.
+
+Menu navigation, Enter, and the typed commander names are deliberately not
+bindable: they are how you get out of a mistake in this file.
+
+The file's shape, its repair and its reading are a shared library
+(`SharpKind.Abstraction.Controls`); what is Elite's own is the list of
+actions, the three shipped layouts, and which axis each flight direction
+pushes.
 
 ### Chart Screens
 | Key | Function |
