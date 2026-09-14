@@ -1,0 +1,26 @@
+- name: Home
+  href: index.md
+- name: Elite
+  href: elite-readme.md
+- name: Stunt Car Racer
+  href: scr-readme.md
+- name: Project
+  items:
+    - name: Architecture principles
+      href: architecture-principles.md
+    - name: Asset structure
+      href: asset-structure.md
+    - name: Decisions
+      href: decisions.md
+    - name: Reference sources
+      href: reference-sources.md
+    - name: Release notes
+      href: release-notes.md
+    - name: Release process
+      href: release-process.md
+    - name: Backlog - issues
+      href: backlog-issues.md
+    - name: Backlog - roadmap
+      href: backlog-roadmap.md
+- name: API
+  href: api/

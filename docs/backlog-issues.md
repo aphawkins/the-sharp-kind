@@ -23,7 +23,7 @@ How to use this file:
   or either game loop. A defect fix should also arrive with a test that fails
   without it, wherever the seam allows one.
 - When an item completes, delete it here and record it in
-  [CHANGELOG.md](../CHANGELOG.md). If the fix is significant enough that a
+  [CHANGELOG.md](https://github.com/aphawkins/the-sharp-kind/blob/main/CHANGELOG.md). If the fix is significant enough that a
   player or contributor would want to know about it at a glance, add a line
   for it to [release-notes.md](release-notes.md) too.
 
@@ -47,13 +47,13 @@ re-covered.
       **authentic, not a defect.** Pressing F5-F11 in space switches the
       screen and the universe keeps moving behind it: `SetView` is all the
       key does, and `Simulate`
-      ([EliteMain.cs:183](../src/elite/libs/EliteSharpLib/EliteMain.cs))
+      ([EliteMain.cs:183](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/libs/EliteSharpLib/EliteMain.cs))
       runs `MoveUniverse` and `UpdateInFlight` on every tick that is not
       docked, whatever screen is up. The original does the same — in space
       the BBC main loop iterates all six parts every time round, and the
       view (`QQ11`) only selects what is *drawn*; only the docked loop drops
       to parts 5 and 6
-      ([elite-source-flight.asm:24376-25007](../../../markmoxon/elite-source-code-bbc-micro-disc/1-source-files/main-sources/elite-source-flight.asm)).
+      ([elite-source-flight.asm:24376-25007](https://github.com/markmoxon/elite-source-code-bbc-micro-disc/blob/main/1-source-files/main-sources/elite-source-flight.asm)).
       So a pause here would be a deliberate deviation from the original
       rather than a fix, and the port's objective is authenticity. Noted while
       investigating 2026-09-05: the existing P/R pause could not have been
@@ -86,7 +86,7 @@ re-covered.
 - [ ] [EliteSharpLib] Buying more than 255g of Gold/Platinum doesn't work —
       authentic to the original ("broken as designed"); documented, not fixed.
 - [ ] [EliteSharpLib] Elite Intro2 parade shows 29 of ~33 ship models
-      ([ShipFactory.cs:98-129](../src/elite/libs/EliteSharpLib/Ships/ShipFactory.cs))
+      ([ShipFactory.cs:98-129](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/libs/EliteSharpLib/Ships/ShipFactory.cs))
       — Cougar, Constrictor and the Lone variants are mission-specific ships,
       deliberately excluded from the parade; confirmed intentional, not a bug.
 - [ ] [Assets] Selecting an 8-bit rendition in SCR does nothing — **not a
@@ -107,7 +107,7 @@ re-covered.
       Hyperdrive — **not a bug.** A 2026-08-04 re-derivation of the
       original's positional formula (item at `PRXS` position *N* shows once
       `planet_tech >= N - 2`, from the `EQL1` list loop at
-      [elite-source-docked.asm:16371-16408](../../../markmoxon/elite-source-code-bbc-micro-disc/1-source-files/main-sources/elite-source-docked.asm))
+      [elite-source-docked.asm:16371-16408](https://github.com/markmoxon/elite-source-code-bbc-micro-disc/blob/main/1-source-files/main-sources/elite-source-docked.asm))
       matches every one of these items' current `TechLevel` exactly. A
       prior sweep had mis-derived the formula and flagged E.C.M. as
       one-level-too-strict; that was wrong. Mining Laser and Military
@@ -127,7 +127,7 @@ re-covered.
       negative, just needs to be parallel" comment describes.
 - [ ] [EliteSharpLib] Possible missing 80-point splash damage when a
       missile self-destructs near the player — original `TA35`/`TA87`
-      ([elite-source-flight.asm:9219-9245](../../../markmoxon/elite-source-code-bbc-micro-disc/1-source-files/main-sources/elite-source-flight.asm))
+      ([elite-source-flight.asm:9219-9245](https://github.com/markmoxon/elite-source-code-bbc-micro-disc/blob/main/1-source-files/main-sources/elite-source-flight.asm))
       applies 80 damage to the player whenever a missile is destroyed *for
       any reason* while near the player, separate from the 250-damage
       direct-hit case. `TryGetMissileHeading` (`Conflict/Combat.cs:1147-1194`) has

@@ -11,7 +11,7 @@ A C# port of the classic BBC home computer game 'Elite'.  It is meant to look, f
 Currently the objective of this port is authenticity, object oriented code and cross platform compatibility using dotnet.
 The original BBC game ran its logic at a fixed 13.5 Hz. Elite now simulates and composes at the engine's configured frame rate instead (`engine.graphics.fps`, 60 by default), with its per-tick rates converted to true per-second ones — so the game plays close to the same at any rate, though feel and difficulty shift slightly away from 13.5 Hz.
 
-Part of [The Sharp Kind](../README.md), alongside [Stunt Car Racer - The Sharp Kind](scr-readme.md).
+Part of [The Sharp Kind](https://github.com/aphawkins/the-sharp-kind/blob/main/README.md), alongside [Stunt Car Racer - The Sharp Kind](scr-readme.md).
 
 ## Getting Started
 
@@ -26,7 +26,7 @@ To build and run from source, install the .NET SDK and run:
 dotnet run --project src/elite/apps/EliteSharp
 ```
 
-It can also be run and debugged directly from an IDE: open [TheSharpKind.slnx](../TheSharpKind.slnx) in Visual Studio and set `EliteSharp` as the startup project, or open the repo root in VS Code and use the "Elite" launch configuration (`.vscode/launch.json`).
+It can also be run and debugged directly from an IDE: open [TheSharpKind.slnx](https://github.com/aphawkins/the-sharp-kind/blob/main/TheSharpKind.slnx) in Visual Studio and set `EliteSharp` as the startup project, or open the repo root in VS Code and use the "Elite" launch configuration (`.vscode/launch.json`).
 
 CI also publishes self-contained single-file builds (win-x64 and linux-x64) that do not require the .NET runtime to be installed.
 
@@ -49,7 +49,7 @@ Use Left/Right cursor keys to scroll through ships on the ship parade screen
 | F9 | Commander information |
 | F10 | Inventory |
 | F11 | Options — pressed again on the options, closes them and returns to where they were opened from |
-| F12 | Dump the current frame as a BMP (needs `GAME_FRAME_DUMP_DIR` — see the [main readme](../README.md#environment-variables)) |
+| F12 | Dump the current frame as a BMP (needs `GAME_FRAME_DUMP_DIR` — see the [main readme](https://github.com/aphawkins/the-sharp-kind/blob/main/README.md#environment-variables)) |
 | P | Pause game |
 | R | Resume game |
 | Ctrl-M | Cycle the five mission briefings (needs `ELITE_DEBUG_MISSIONS`) |
@@ -291,7 +291,7 @@ Game settings are held in the `elite.sharp` file, stored in JSON format, in the 
 
 Commander saves carry a `fileType` and a `version`, and name everything they hold — the goods in the hold and on the market by name, the lasers by the mount they are on, and the legal status by its band as well as its bounty — so a save can be read and hand-edited without a copy of the code beside it. Missions are keyed by name, each with its own stage (`"missions": { "Constrictor": { "stage": "Rewarded" } }`), so they are independent of each other and a mission added later is another key rather than a renumbering. A file the game could not itself have written, whether that is the wrong version, an unknown item of cargo or mission, a stage belonging to a different mission, a legal status whose band contradicts its bounty or a value out of range, is rejected and Commander Jameson is loaded instead. Saves written before the format was versioned are not loadable.
 
-The file's `engine` element holds the settings shared by every game — the backend, the rendition, the frame rate and the graphic style among them — and is documented in the [main readme](../README.md#configuration). Elite's own settings sit alongside it under `game`, and can take the following values:
+The file's `engine` element holds the settings shared by every game — the backend, the rendition, the frame rate and the graphic style among them — and is documented in the [main readme](https://github.com/aphawkins/the-sharp-kind/blob/main/README.md#configuration). Elite's own settings sit alongside it under `game`, and can take the following values:
 
 ``` json
 {
@@ -308,7 +308,7 @@ The Game Settings screen changes all of these live, and the engine's graphic sty
 
 ### Environment variables
 
-Elite's own diagnostic opt-ins, read at runtime rather than compiled in, so they work in a Release build. The ones shared with Stunt Car Racer, `GAME_KEY_SCRIPT` and `GAME_FRAME_DUMP_DIR`, are in the [main readme](../README.md#environment-variables).
+Elite's own diagnostic opt-ins, read at runtime rather than compiled in, so they work in a Release build. The ones shared with Stunt Car Racer, `GAME_KEY_SCRIPT` and `GAME_FRAME_DUMP_DIR`, are in the [main readme](https://github.com/aphawkins/the-sharp-kind/blob/main/README.md#environment-variables).
 
 | Variable | Value | Effect |
 | -------- | ----- | ------ |

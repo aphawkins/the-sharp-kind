@@ -24,7 +24,7 @@ How to use this file:
   full solution, run the complete test suite, and smoke-test the affected
   app(s) live if the change touches shared code or either game loop.
 - When an item completes, delete it here and record it in
-  [CHANGELOG.md](../CHANGELOG.md). If it's significant enough that a player
+  [CHANGELOG.md](https://github.com/aphawkins/the-sharp-kind/blob/main/CHANGELOG.md). If it's significant enough that a player
   or contributor would want to know about it at a glance, add a line for it
   to [release-notes.md](release-notes.md) too.
 - Line numbers date from the review; verify before editing.
@@ -37,13 +37,13 @@ that mentions a decision.
 
 ## Must
 
-(none open — see [CHANGELOG.md](../CHANGELOG.md) for completed items)
+(none open — see [CHANGELOG.md](https://github.com/aphawkins/the-sharp-kind/blob/main/CHANGELOG.md) for completed items)
 
 ## Should
 
 ### Performance
 
-(none open — see [CHANGELOG.md](../CHANGELOG.md) for completed items)
+(none open — see [CHANGELOG.md](https://github.com/aphawkins/the-sharp-kind/blob/main/CHANGELOG.md) for completed items)
 
 Profiled 2026-09-06 (i5-14600K, 512x512) after a frame-rate drop was noticed
 while docking, as a Coriolis fills the view. Every item it produced has since
@@ -140,7 +140,26 @@ test the game pays.
 
 ### Release engineering (from the retired release plan)
 
-(none open — see [CHANGELOG.md](../CHANGELOG.md) for completed items)
+- [ ] [Repo] **Decide where the benchmark dashboard lives, then switch the
+      Pages source to GitHub Actions** (2026-09-14, raised by the DocFX
+      item — see CHANGELOG). The DocFX site is built and deployed by
+      [.github/workflows/docs.yml](https://github.com/aphawkins/the-sharp-kind/blob/main/.github/workflows/docs.yml),
+      but it cannot publish until the repository's Pages source changes
+      from a branch to GitHub Actions (Settings → Pages → Source). That
+      source is currently the `gh-pages` branch, which
+      [.github/workflows/benchmarks.yml](https://github.com/aphawkins/the-sharp-kind/blob/main/.github/workflows/benchmarks.yml)
+      pushes the `benchmark-action/github-action-benchmark` charts to. One
+      Pages site cannot serve both, so the switch takes the dashboard's
+      published URL with it — the history is safe on the branch, only the
+      URL is at stake. Three ways out, in the maintainer's gift: fold the
+      dashboard into the docs site as another artifact the docs workflow
+      uploads; leave the charts unpublished and read them from the branch;
+      or keep Pages on `gh-pages` and drop the docs deployment, leaving
+      `docs.yml` as a PR build gate only. Until this is decided the docs
+      workflow builds on PRs and its deploy job runs but publishes to a
+      Pages site that is not serving it. **This is a decision first and a
+      one-line settings change second** — record the call in
+      [decisions.md](decisions.md) when it is made.
 
 
 ## Could
@@ -163,7 +182,7 @@ Three decisions the maintainer settled, so none of them is reopened below:
   work — `SDLGraphics.ScreenWidth`/`ScreenHeight` are set once in the
   constructor and the render target, depth buffer and surface-id buffer are
   all sized from them
-  ([SDLGraphics.cs](../src/useful/libs/SharpKind.SDL/SDLGraphics.cs)), and
+  ([SDLGraphics.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/useful/libs/SharpKind.SDL/SDLGraphics.cs)), and
   `ViewLayout` is an immutable record every view caches its geometry against.
 - **`DesignScale` 2, the same as the 16-bit tier.** The design scale is a
   property of the artwork rather than of the resolution, so it does not have
@@ -185,8 +204,8 @@ independent of each other.
       `ViewportHeight = ScreenHeight - ScannerSize.Y`, and `ScannerViewBase`
       hardcodes the scanner's top-left as `(ViewportLeft, ViewportHeight)` in
       `DrawScanner` and `ScannerRelative`
-      ([ViewLayout.cs](../src/elite/libs/EliteSharp.Abstractions/Views/ViewLayout.cs),
-      [ScannerViewBase.cs](../src/elite/libs/EliteSharp.Abstractions/Views/ScannerViewBase.cs)),
+      ([ViewLayout.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/libs/EliteSharp.Abstractions/Views/ViewLayout.cs),
+      [ScannerViewBase.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/libs/EliteSharp.Abstractions/Views/ScannerViewBase.cs)),
       so a full-screen viewport with a centred HUD cannot be expressed. Add a
       `HudPlacement` (`Reserved` | `Overlaid`) to `IRendition`, defaulting to
       `Reserved`, and derive a `ScannerOrigin` on `ViewLayout` from it —
@@ -203,13 +222,13 @@ independent of each other.
       Screens derive from the 16-bit set and centre against `ViewportCentre`
       rather than inheriting its absolute offsets. The 640-wide scanner
       centres at x=320 of 1280, which is exact. Wire it into
-      [EliteSharp.csproj](../src/elite/apps/EliteSharp/EliteSharp.csproj)'s
+      [EliteSharp.csproj](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/apps/EliteSharp/EliteSharp.csproj)'s
       `RenditionProject`/`RenditionAsset` lists; it then appears on the
       settings screen with no settings code change, since `ChoiceSetting`
       offers whatever is installed. Smoke-test it — this is a game loop.
 - [ ] [EliteSharpLib] Log the field of view at startup. The startup settings
       line logs `rendition` and `windowScale` but not `fieldOfView`
-      ([GameApp.cs](../src/useful/libs/SharpKind.App/GameApp.cs)), so a bug
+      ([GameApp.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/useful/libs/SharpKind.App/GameApp.cs)), so a bug
       report from a commander who has widened it does not say so — and it
       changes what is on screen, which is exactly what a screenshot in a bug
       report is of. One field.
@@ -217,7 +236,7 @@ independent of each other.
       native resolution. This is what Modern is ultimately for, and it is the
       reason `ScreenWidth`/`ScreenHeight` being constructor-fixed matters:
       the render target, depth buffer and surface-id buffer are all sized from
-      them ([SDLGraphics.cs](../src/useful/libs/SharpKind.SDL/SDLGraphics.cs)).
+      them ([SDLGraphics.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/useful/libs/SharpKind.SDL/SDLGraphics.cs)).
       So it needs a resize signal, a rebuild of those buffers, and a way to
       replace the immutable `ViewLayout` every view was built against —
       `BaseView8Bit` and `BaseView16Bit` capture the record in their
@@ -232,12 +251,12 @@ Nothing open. Two items closed on 2026-09-13: the SideWinder mapping (the
 hat selects the view, the throttle lever sets the speed, missiles reach the
 stick, and each device gets its own layout), and moving all of it out of
 code into `elite.controls.sharp` with a setting for which attached
-controller is flown. See [CHANGELOG.md](../CHANGELOG.md) and
+controller is flown. See [CHANGELOG.md](https://github.com/aphawkins/the-sharp-kind/blob/main/CHANGELOG.md) and
 [elite-readme.md](elite-readme.md).
 
 - [ ] [StuntCarRacerSharpLib] Stunt Car Racer could read its controls from a
       file too. The machinery is now a library
-      ([SharpKind.Abstraction.Controls](../src/useful/libs/SharpKind.Abstraction/Controls)),
+      ([SharpKind.Abstraction.Controls](https://github.com/aphawkins/the-sharp-kind/tree/main/src/useful/libs/SharpKind.Abstraction/Controls)),
       generic over a game's own actions and axes, so what SCR needs is an
       action enum, a set of defaults and the registration - the same three
       pieces Elite keeps. It gains less than Elite did: its steering is
@@ -247,7 +266,7 @@ controller is flown. See [CHANGELOG.md](../CHANGELOG.md) and
 
       Note the library takes an enum's zero value to mean "nothing", so
       SCR's own enums have to reserve it - see the Elite entry in
-      [CHANGELOG.md](../CHANGELOG.md).
+      [CHANGELOG.md](https://github.com/aphawkins/the-sharp-kind/blob/main/CHANGELOG.md).
 
 Two things were deliberately left. A Competition Pro has four buttons and
 five controls worth having, so targeting a missile stays on the keyboard's
@@ -262,7 +281,7 @@ list below; the data-driven content item was scoped and split the
 same way on 2026-08-31.
 
 Elite's frame rate vs the 13.5Hz tick — **done 2026-08-26** (see
-[CHANGELOG.md](../CHANGELOG.md) and the two 2026-08-26 entries in
+[CHANGELOG.md](https://github.com/aphawkins/the-sharp-kind/blob/main/CHANGELOG.md) and the two 2026-08-26 entries in
 [decisions.md](decisions.md)). All seven items landed: the golden-trace and
 frame-check harness, the simulate/compose split, the housekeeping clock, the
 motion, the AI pacing, the animations, and running at the configured `Fps`.
@@ -275,7 +294,7 @@ one housekeeping step, and meet the same ships.
 The [LARGE] item was surveyed and split on 2026-08-31, and two of its
 three session-sized parts landed the same day — the ship definitions became
 a table, and `ShipType` became the ids in it (see
-[CHANGELOG.md](../CHANGELOG.md)). Only the equipment table is left.
+[CHANGELOG.md](https://github.com/aphawkins/the-sharp-kind/blob/main/CHANGELOG.md)). Only the equipment table is left.
 
 The precedent they all follow is the goods set: **the assembly is the door,
 the file is the table** (see the 2026-08-27 entries in
@@ -292,14 +311,14 @@ out to have no save-compatibility problem to solve.
 
 - [ ] [EliteSharpLib] Equipment table to a plugin: the 34-row
       `_equipmentStock` literal at
-      [EquipmentController.cs:23-58](../src/elite/libs/EliteSharpLib/Views/EquipmentController.cs)
+      [EquipmentController.cs:23-58](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/libs/EliteSharpLib/Views/EquipmentController.cs)
       is the last hardcoded content table. It goes the goods route —
       `IEquipmentSet` in `EliteSharp.Abstractions`, an
       `EliteSharp.Equipment.Classic` plugin with `equipment.json`, a
       loader beside `GoodsLoader`, and the app's csproj dropping the DLL
       into an `Equipment` folder. Unlike a good, an equipment item
       *acts* — `EquipmentType`
-      ([EquipmentType.cs](../src/elite/libs/EliteSharpLib/Equipment/EquipmentType.cs))
+      ([EquipmentType.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/libs/EliteSharpLib/Equipment/EquipmentType.cs))
       is switched on to fit an E.C.M., mount a laser, or expand the hold —
       so the enum stays as the behaviour key the game understands and the
       file states only the inert half: name, price, tech level, the
@@ -330,7 +349,7 @@ what is really missing is the `w`, not the matrices. "Frustum clipping has
 to be special-cased" is half overtaken: `ViewFrustum.FromViewport`
 already derives all six planes by reading the projection backwards, and
 Elite culls whole ships against them
-([ShipBase.IsWithinView](../src/elite/libs/EliteSharpLib/Ships/ShipBase.cs));
+([ShipBase.IsWithinView](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/libs/EliteSharpLib/Ships/ShipBase.cs));
 what no stage does is clip a *face* against the side planes. And the near
 plane is shared too — both games clip camera-space polygons through
 `NearPlaneClip`, colours and texture coordinates included. So the gap
@@ -342,21 +361,21 @@ Two things the split has to preserve, because they are the reason the
 current shape works. `PerspectiveProjector.Project` returns *pixels*
 (`Centre + Focus * x / z`), not NDC, and every caller expects pixels.
 And the renderers take a camera-space depth per point (`float[] depths`
-on [IPolygonRenderer](../src/useful/libs/SharpKind.Graphics/Rendering/IPolygonRenderer.cs)),
+on [IPolygonRenderer](https://github.com/aphawkins/the-sharp-kind/blob/main/src/useful/libs/SharpKind.Graphics/Rendering/IPolygonRenderer.cs)),
 so the z-buffer's depth is camera z, and a move to a normalised depth
 changes what is stored, not only what is computed.
 
 Sequence the whole run after the "convert angles and trig" step of the
 SCR float-physics conversion below, and build on
 `SharpKind.Graphics.PerspectiveProjector`, the first small slice of the
-same idea that landed 2026-08-09 (see [CHANGELOG.md](../CHANGELOG.md)).
+same idea that landed 2026-08-09 (see [CHANGELOG.md](https://github.com/aphawkins/the-sharp-kind/blob/main/CHANGELOG.md)).
 Parts 1 to 3 are library-only and change no game output; parts 4 and 5
 move one game each; part 6 is what the clip space was for. Only part 6
 closes the side-plane clipping entry under Won't in
 [backlog-issues.md](backlog-issues.md).
 
 - [ ] [SharpKind.Graphics] Viewport transform as its own stage: split
-      [PerspectiveProjector.cs](../src/useful/libs/SharpKind.Graphics/PerspectiveProjector.cs)
+      [PerspectiveProjector.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/useful/libs/SharpKind.Graphics/PerspectiveProjector.cs)
       into the perspective divide (camera space to NDC) and a `Viewport`
       that maps NDC to pixels, with the existing `Project` kept as the
       composition of the two. Nothing else moves — both games keep
@@ -371,7 +390,7 @@ closes the side-plane clipping entry under Won't in
       over a sweep of points, to a tolerance, so the two are known to
       agree before anything depends on it.
 - [ ] [SharpKind.Graphics] Clip in clip space: generalise
-      [NearPlaneClip.cs](../src/useful/libs/SharpKind.Graphics/NearPlaneClip.cs)
+      [NearPlaneClip.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/useful/libs/SharpKind.Graphics/NearPlaneClip.cs)
       into a Sutherland-Hodgman clipper against all six clip-space
       planes (`-w <= x, y, z <= w`), keeping the two interpolating
       overloads — a corner the clipper invents still needs its colour and
@@ -381,7 +400,7 @@ closes the side-plane clipping entry under Won't in
 - [ ] [EliteSharpLib] Move Elite onto the clip-space path: `ShipBase`
       transforms to clip space, clips there, divides, and applies the
       viewport
-      ([ShipBase.cs](../src/elite/libs/EliteSharpLib/Ships/ShipBase.cs)).
+      ([ShipBase.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/libs/EliteSharpLib/Ships/ShipBase.cs)).
       Two things resist and need deciding, not deleting: `ProjectPoint`'s
       `vec.Z <= 0` clamp, which exists only so a laser aim behind the
       camera still yields a point, and `ShowsDetail`, which reads
@@ -390,8 +409,8 @@ closes the side-plane clipping entry under Won't in
 - [ ] [StuntCarRacerSharpLib] Move SCR onto the clip-space path:
       `Scene3D.TransformPoint`/`ProjectPoint` and `TrackRenderer`'s
       per-triangle clip loop
-      ([Scene3D.cs](../src/scr/libs/StuntCarRacerSharpLib/Rendering/Scene3D.cs),
-      [TrackRenderer.cs:200-232](../src/scr/libs/StuntCarRacerSharpLib/Rendering/TrackRenderer.cs)).
+      ([Scene3D.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/scr/libs/StuntCarRacerSharpLib/Rendering/Scene3D.cs),
+      [TrackRenderer.cs:200-232](https://github.com/aphawkins/the-sharp-kind/blob/main/src/scr/libs/StuntCarRacerSharpLib/Rendering/TrackRenderer.cs)).
       Strictly after the float trig conversion below: the view transform
       is still a fixed-point 3x3 with a `>> Track.LogPrecision` rescale
       until then, and putting a matrix in front of it twice is wasted
@@ -457,7 +476,7 @@ while staying inside its assets and the Amiga's behaviour:
       `racelost.png` full-screen during the six-second result window and
       the GAME_OVER hold, with the existing flashing RACE WON / RACE
       LOST and "Press 'M'" text overlaid (timing at
-      [StuntCarRacerMain.DrawHud](../src/scr/libs/StuntCarRacerSharpLib/StuntCarRacerMain.cs)
+      [StuntCarRacerMain.DrawHud](https://github.com/aphawkins/the-sharp-kind/blob/main/src/scr/libs/StuntCarRacerSharpLib/StuntCarRacerMain.cs)
       and `StuntCarRacer.cpp:1403-1453`) — the Amiga showed these
       screens at race end.
 - [ ] [StuntCarRacerSharpLib] Wrecked screen: draw `wrecked.png` when the
@@ -481,10 +500,10 @@ either order):
       (show the current league on the menu as the remake does), and
       thread it to the physics: `CarPhysics._enginePower` 240→320 and
       the boost unit 16→12 (the "standard vs super" comments at
-      [CarPhysics.cs:105-106](../src/scr/libs/StuntCarRacerSharpLib/Cars/CarPhysics.cs)
+      [CarPhysics.cs:105-106](https://github.com/aphawkins/the-sharp-kind/blob/main/src/scr/libs/StuntCarRacerSharpLib/Cars/CarPhysics.cs)
       already mark the spots), boost reserve Standard→Super,
       `RoadCushionValue` 0→1 (exists but nothing sets it — damage
-      threshold at [CarPhysics.Motion.cs:286](../src/scr/libs/StuntCarRacerSharpLib/Cars/CarPhysics.Motion.cs)),
+      threshold at [CarPhysics.Motion.cs:286](https://github.com/aphawkins/the-sharp-kind/blob/main/src/scr/libs/StuntCarRacerSharpLib/Cars/CarPhysics.Motion.cs)),
       `OpponentPhysics._enginePower` 236→314, and the opponent speed
       +32 super-league offsets: the `Opponent_Speed_Value()` port
       landed 2026-07-19, so `OpponentData.TrackSpeedValues` already
@@ -535,7 +554,7 @@ by the traces):
       `& (MaxAngle - 1)` bitmask wraps with a float wrap helper. Decide
       the rendering boundary here too: `Scene3D.TransformPoint` consumes
       `TrigCoefficients` and `Track.LogPrecision`
-      ([Scene3D.cs:102-113](../src/scr/libs/StuntCarRacerSharpLib/Rendering/Scene3D.cs))
+      ([Scene3D.cs:102-113](https://github.com/aphawkins/the-sharp-kind/blob/main/src/scr/libs/StuntCarRacerSharpLib/Rendering/Scene3D.cs))
       — either convert its fixed-point view transform in the same step
       or leave it a shim that scales from the float trig. Issue #3
       ("System.Numerics for all matrix and vector maths") applies to SCR
@@ -547,7 +566,7 @@ by the traces):
       resolved; no separate item needed. This is also the prerequisite
       for the clip-space pipeline items above.
 - [ ] [StuntCarRacerSharpLib] Convert `CarPhysics` (four partials:
-      [CarPhysics.cs](../src/scr/libs/StuntCarRacerSharpLib/Cars/CarPhysics.cs),
+      [CarPhysics.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/scr/libs/StuntCarRacerSharpLib/Cars/CarPhysics.cs),
       `.Motion`, `.Road`, and the crane/chain-recovery `.Chains` — the
       last landed after the original three-partial estimate and also
       uses scaled `int` state, so it's in scope too) to float: fields,
@@ -582,7 +601,7 @@ widescreen half of these items applies to the modern tier alone. See
 [decisions.md](decisions.md).**):
 
 - [ ] [SharpKind.SDL] Resizable window with letterboxed scaling: add
-      `SDL_WINDOW_RESIZABLE` in [SDLWindow.cs:23-29](../src/useful/libs/SharpKind.SDL/SDLWindow.cs)
+      `SDL_WINDOW_RESIZABLE` in [SDLWindow.cs:23-29](https://github.com/aphawkins/the-sharp-kind/blob/main/src/useful/libs/SharpKind.SDL/SDLWindow.cs)
       and handle `SDL_EVENT_WINDOW_RESIZED` in the event loop, so the
       window can be any size while both games keep rendering at their
       native 512x512 / 640x400 — zero game-code changes. Most of this
@@ -650,7 +669,7 @@ have caught all three:
 
 - [ ] [EliteSharpLib] A rendition of an arbitrary size in the tests, so the
       claim above is checked rather than read. Today
-      [FakeAbstraction.cs:17-22](../src/elite/test/EliteSharpLib.Fakes/FakeAbstraction.cs)
+      [FakeAbstraction.cs:17-22](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/test/EliteSharpLib.Fakes/FakeAbstraction.cs)
       hardcodes 512x512 and says it does so to match `SDLProgram` — which
       has not decided the resolution since renditions did, so the comment is
       stale as well as the size. Give the fakes a size that is neither
@@ -660,7 +679,7 @@ have caught all three:
       [backlog-issues.md](backlog-issues.md), and the item below, from a
       reading of the code into a failing test.
 - [ ] [EliteSharpLib] Delete the square field-of-vision test in
-      [EliteDraw.DrawObject](../src/elite/libs/EliteSharpLib/Graphics/EliteDraw.cs)
+      [EliteDraw.DrawObject](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/libs/EliteSharpLib/Graphics/EliteDraw.cs)
       (`MathF.Abs(obj.Location.X) > obj.Location.Z`, and the same for Y).
       It is a hardcoded 90 degree cone from the original, and it is the one
       surviving place that assumes the viewport. Below 90 degrees across it
@@ -676,7 +695,7 @@ have caught all three:
       other two findings moved to the issues file.
 - [ ] [Repo] **Low-priority spike**: WASM build for Playwright-driven
       visual testing. Today `run-elite`/`run-scr`
-      ([sdl-drive/drive.ps1](../.claude/skills/sdl-drive/drive.ps1))
+      ([sdl-drive/drive.ps1](https://github.com/aphawkins/the-sharp-kind/blob/main/.claude/skills/sdl-drive/drive.ps1))
       drive the native SDL window via Win32 `PostMessage`/
       `CopyFromScreen`, since Playwright can't see a raw SDL window
       (no DOM, no meaningful UI Automation tree — same reason
@@ -725,7 +744,7 @@ have caught all three:
       authored. The colour-budget validator applies to whatever lands, so
       nothing has to be built first.
 - [ ] [Repo] Remaining code-complexity rules from issue #5 (closed
-      2026-07-27, see [CHANGELOG.md](../CHANGELOG.md)): `S1541`/`S3776`
+      2026-07-27, see [CHANGELOG.md](https://github.com/aphawkins/the-sharp-kind/blob/main/CHANGELOG.md)): `S1541`/`S3776`
       (method/cognitive complexity, 102 sites) and `S107` (parameter
       count, 20 sites) stay `severity = none` — the survivors are mostly
       ported 6502/Amiga reference methods that are inherently long, and
@@ -740,7 +759,7 @@ have caught all three:
       entry used to say the game "is fixed at 13.5fps by design and none of
       this is a bottleneck at that rate". That premise is gone: Elite has
       simulated *and composed* at the commander's configured rate since
-      2026-08-26 ([EliteMain.Run](../src/elite/libs/EliteSharpLib/EliteMain.cs)),
+      2026-08-26 ([EliteMain.Run](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/libs/EliteSharpLib/EliteMain.cs)),
       so 13.5Hz is the rate the simulation's maths is written against, not
       the rate frames are drawn at, and frames are drawn as fast as the
       setting asks. What replaces it is a measurement rather than an
@@ -778,4 +797,4 @@ have caught all three:
       only if SCR grows real panel chrome — the race-pause and
       race-result screens below are the plausible source.
 - [ ] [StuntCarRacerSharpLib] The original remake's Windows-only infrastructure (DXUT registry prefs, clipboard, DirectSound path, `MessageBox` dialogs) is deliberately not ported — see the porting notes in [scr-readme.md](scr-readme.md).
-- [ ] [StuntCarRacerSharpLib] ptitSeb's remaining debug/infrastructure toggles are deliberately not ported (2026-07-19 parity audit): F1 test key, F2 triangle-list/strip vertex-buffer toggle (meaningless in the software rasterizer), the 'Z' reposition test key, the disabled action-replay / Amiga-recording harness (`#ifdef NOT_USED` / `USE_AMIGA_RECORDING` even upstream), the French-keyboard digit remaps, and the SDL command-line video flags (superseded by the resizable-window/config-resolution items under Could). (The F5 stats overlay and F6/F7 per-car freezes were the exception and are now ported, 2026-08-19, see [CHANGELOG.md](../CHANGELOG.md).) `Chime.wav` is unused by both code bases (kept as an asset only).
+- [ ] [StuntCarRacerSharpLib] ptitSeb's remaining debug/infrastructure toggles are deliberately not ported (2026-07-19 parity audit): F1 test key, F2 triangle-list/strip vertex-buffer toggle (meaningless in the software rasterizer), the 'Z' reposition test key, the disabled action-replay / Amiga-recording harness (`#ifdef NOT_USED` / `USE_AMIGA_RECORDING` even upstream), the French-keyboard digit remaps, and the SDL command-line video flags (superseded by the resizable-window/config-resolution items under Could). (The F5 stats overlay and F6/F7 per-car freezes were the exception and are now ported, 2026-08-19, see [CHANGELOG.md](https://github.com/aphawkins/the-sharp-kind/blob/main/CHANGELOG.md).) `Chime.wav` is unused by both code bases (kept as an asset only).

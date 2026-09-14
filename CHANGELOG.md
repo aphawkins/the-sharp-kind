@@ -7,6 +7,50 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Added (DocFX builds the documentation site, 2026-09-14)
+
+- **The site is generated, not hand-kept.** [docs/docfx.json](docs/docfx.json)
+  and [docs/toc.yml](docs/toc.yml) replace the Jekyll `_config.yml`: DocFX
+  now builds every markdown file under `docs/` as a conceptual page and
+  generates an API reference from the XML doc comments of all eighteen
+  library projects - `SharpKind.*`, `EliteSharp.*` and
+  `StuntCarRacerSharpLib`. The comments were already being emitted
+  (`GenerateDocumentationFile` has been on in
+  [Directory.Build.props](Directory.Build.props) since it was added to
+  silence IDE0005) but nothing had ever read them.
+  - DocFX extracts the metadata from the `.csproj` files itself, so the
+    docs build needs no prior solution build.
+  - `outputFormat: apiPage` - the newer of the two API renderers - was
+    tried first and fails on `ConfigSettings<T>` with a parse error, so the
+    default renderer is used.
+  - The generated `docs/api/` and the built `docs/_site/` are ignored, not
+    committed: they are outputs of the two source files above.
+
+- **[.github/workflows/docs.yml](.github/workflows/docs.yml) builds the site
+  on every PR and deploys it on a push to `main`.** The build runs with
+  `--warningsAsErrors`, which is affordable because the same commit empties
+  the warning list: fifty-six links in six files under `docs/` pointed above
+  the docs root (`../README.md`, `../CHANGELOG.md`, source files), which
+  GitHub resolves but a generated site cannot. Each is now an absolute
+  `github.com` URL, so it works in both places - the form
+  [index.md](docs/index.md) already used for the changelog. The
+  cross-repository form GitHub also accepts
+  (`../../../markmoxon/...`, three levels up) is spelled out in full for
+  the same reason.
+
+- **Still to do by hand, and it is a conflict rather than a step:** the
+  repository's Pages source must change from a branch to GitHub Actions for
+  this to deploy at all, and that source is currently the `gh-pages` branch
+  holding the benchmark dashboard that
+  [.github/workflows/benchmarks.yml](.github/workflows/benchmarks.yml)
+  pushes to. One Pages site cannot serve both. The dashboard's history is
+  not at risk - it stays on the branch - but its published URL is, so the
+  switch should not be made until where the charts are to live is decided.
+  That call is now an open item under Release engineering in
+  [backlog-roadmap.md](docs/backlog-roadmap.md), since it is a decision
+  rather than a step; until it is made the docs workflow is a PR build gate
+  and its deploy job publishes to a Pages site that is not serving it.
+
 ### Added (the bindings move into elite.controls.sharp, 2026-09-13)
 
 - **The binding machinery is a SharpKind library, not Elite's.** It sits in

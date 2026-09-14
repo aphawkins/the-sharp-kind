@@ -54,7 +54,7 @@ caught case reported to stderr, which a double-clicked app has nowhere to
 show; and a rejected commander file said "Error Loading Commander!" whichever
 of a dozen checks it had failed.
 
-**Both halves were fixed the same day** (see [CHANGELOG.md](../CHANGELOG.md)).
+**Both halves were fixed the same day** (see [CHANGELOG.md](https://github.com/aphawkins/the-sharp-kind/blob/main/CHANGELOG.md)).
 The startup half: the composition moved inside the handler and the message
 reaches an SDL dialog as well as the console. The in-game half: the save's
 validation reports the field it rejected and why, so the goods check the
@@ -927,7 +927,7 @@ apart by the action's `name` input), triggered manually via
 `workflow_dispatch` only — not on every push/PR, since shared GitHub-hosted
 runners are too noisy for benchmark numbers to gate CI, and this repo has no
 regression-alerting need yet. Implemented in
-[.github/workflows/benchmarks.yml](../.github/workflows/benchmarks.yml).
+[.github/workflows/benchmarks.yml](https://github.com/aphawkins/the-sharp-kind/blob/main/.github/workflows/benchmarks.yml).
 One-time manual follow-up outside of code: after the workflow's first run
 creates the `gh-pages` branch, enable it under repo Settings → Pages →
 Source, to get a browsable dashboard (the history is recorded either way;

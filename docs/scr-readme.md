@@ -6,7 +6,7 @@ A C# port of the classic Geoff Crammond racing game 'Stunt Car Racer'.  It is co
 
 The port shares the `SharpKind` libraries with 'Elite - The Sharp Kind': hardware access is hidden behind interfaces, with a software renderer drawing through SDL3.  The physics uses the original Amiga fixed-point algorithms and track data.
 
-Part of [The Sharp Kind](../README.md), alongside [Elite - The Sharp Kind](elite-readme.md).  Remaining conversion work is tracked in the [backlog](backlog-roadmap.md).
+Part of [The Sharp Kind](https://github.com/aphawkins/the-sharp-kind/blob/main/README.md), alongside [Elite - The Sharp Kind](elite-readme.md).  Remaining conversion work is tracked in the [backlog](backlog-roadmap.md).
 
 Race the clock and an AI opponent over four laps of elevated track.  The car takes damage from heavy landings and collisions, boost is limited, and falling off the track costs time - after too long off the track the car is dropped back on.
 
@@ -22,7 +22,7 @@ To build and run from source, install the .NET SDK and run:
 dotnet run --project src/scr/apps/StuntCarRacerSharp
 ```
 
-It can also be run and debugged directly from an IDE: open [TheSharpKind.slnx](../TheSharpKind.slnx) in Visual Studio and set `StuntCarRacerSharp` as the startup project, or open the repo root in VS Code and use the "Stunt Car Racer" launch configuration (`.vscode/launch.json`).
+It can also be run and debugged directly from an IDE: open [TheSharpKind.slnx](https://github.com/aphawkins/the-sharp-kind/blob/main/TheSharpKind.slnx) in Visual Studio and set `StuntCarRacerSharp` as the startup project, or open the repo root in VS Code and use the "Stunt Car Racer" launch configuration (`.vscode/launch.json`).
 
 ## Controls
 
@@ -119,7 +119,7 @@ The cockpit is drawn as a set of sprites over the track view: front wheels that 
 
 Game settings are held in the `stuntcarracer.sharp` file, stored in JSON format, in the user's application data directory (`%AppData%\The Sharp Kind` on Windows, `~/.config/The Sharp Kind` on Linux/macOS) — shared with [Elite - The Sharp Kind](elite-readme.md). Logs (`logs\scr-*.log`, daily rolling, 7 kept by default) live in the same directory. If the config file is missing or invalid the game falls back to defaults. There is no in-game settings screen yet, so `stuntcarracer.sharp` must be edited by hand.
 
-The file's `engine` element holds the settings shared by every game — the backend, the tier, the window scale, the frame rate, the sound switches and the logging levels among them — and is documented in the [main readme](../README.md#configuration). Of those, `fillMode`, `depthSort`, `shading`, `quantisation` and `showFps` are written out but not acted on yet: Stunt Car Racer draws its track through its own pipeline.
+The file's `engine` element holds the settings shared by every game — the backend, the tier, the window scale, the frame rate, the sound switches and the logging levels among them — and is documented in the [main readme](https://github.com/aphawkins/the-sharp-kind/blob/main/README.md#configuration). Of those, `fillMode`, `depthSort`, `shading`, `quantisation` and `showFps` are written out but not acted on yet: Stunt Car Racer draws its track through its own pipeline.
 
 Stunt Car Racer's own settings would sit alongside under `game`, but it has none of its own yet, so the element is written out empty:
 
@@ -131,7 +131,7 @@ Stunt Car Racer's own settings would sit alongside under `game`, but it has none
 
 ### Environment variables
 
-Stunt Car Racer's own diagnostic opt-in, read at runtime rather than compiled in, so it works in a Release build. The ones shared with Elite, `GAME_KEY_SCRIPT` and `GAME_FRAME_DUMP_DIR`, are in the [main readme](../README.md#environment-variables).
+Stunt Car Racer's own diagnostic opt-in, read at runtime rather than compiled in, so it works in a Release build. The ones shared with Elite, `GAME_KEY_SCRIPT` and `GAME_FRAME_DUMP_DIR`, are in the [main readme](https://github.com/aphawkins/the-sharp-kind/blob/main/README.md#environment-variables).
 
 | Variable | Value | Effect |
 | -------- | ----- | ------ |

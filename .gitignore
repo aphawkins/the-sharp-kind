@@ -415,3 +415,7 @@ FodyWeavers.xsd
 
 # Built Visual Studio Code Extensions
 *.vsix
+
+# DocFX generated documentation
+docs/_site/
+docs/api/

@@ -36,11 +36,11 @@ bump first.
 
 ## 3. What the push triggers
 
-Pushing a `v*` tag fires [release.yml](../.github/workflows/release.yml).
+Pushing a `v*` tag fires [release.yml](https://github.com/aphawkins/the-sharp-kind/blob/main/.github/workflows/release.yml).
 It runs unattended and, in order:
 
 1. **Computes the version.** MinVer reads the tag (`MinVerTagPrefix` is `v`
-   — see [Directory.Build.props](../Directory.Build.props)) and stamps it
+   — see [Directory.Build.props](https://github.com/aphawkins/the-sharp-kind/blob/main/Directory.Build.props)) and stamps it
    onto every project in the solution.
 2. **Packs and publishes the `SharpKind.*` libraries to NuGet.org**, every
    packable project under `src/useful/libs/`, authenticating via Trusted
