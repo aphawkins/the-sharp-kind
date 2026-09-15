@@ -180,22 +180,12 @@ whole universe 64.5 pixels down (8-bit: 28).
 shows more rather than magnifying). Deriving it from the region would take
 16-bit from 512 to 383 and change every frame. Leave it alone.
 
-Do them in order. The third is a prerequisite of the fourth, not of the
-first two.
+Do them in order. The second is a prerequisite of the third, not of the
+first.
 
-- [ ] [SharpKind.Graphics] The layer type and the runner. A layer is a clip
-      rectangle and the drawing that goes into it; the runner sets the clip,
-      runs the layer, moves on. Build the list once rather than per frame -
-      the set is fixed in both games (Elite's `Stars.Draw()` just draws an
-      empty mark list while docked,
-      [Stars.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/libs/EliteSharpLib/Stars.cs)), so an
-      interface over the objects that already have a `Draw` avoids a delegate
-      allocation per layer per tick. **The depth flush is the constraint**:
-      `_depthLayer` in
-      [SDLGraphics.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/useful/libs/SharpKind.SDL/SDLGraphics.cs)
-      flushes lazily, when something else draws next, and its comment states
-      the ordering it depends on. A layer boundary has to flush it, or a
-      depth-using layer's content lands over the layer after it.
+The layer type and the runner landed 2026-09-15 - see
+[CHANGELOG.md](https://github.com/aphawkins/the-sharp-kind/blob/main/CHANGELOG.md).
+
 - [ ] [EliteSharpLib] Move `Compose()` onto the layers. It is already these
       three bands with the clip switched by hand around them
       ([EliteMain.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/libs/EliteSharpLib/EliteMain.cs)).

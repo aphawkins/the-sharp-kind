@@ -1,4 +1,4 @@
-# Changelog
+﻿# Changelog
 
 All notable changes to this project are documented in this file. The format
 is based on [Keep a Changelog](https://keepachangelog.com/); the project does
@@ -6,6 +6,43 @@ not yet cut versioned releases, so everything sits under Unreleased.
 Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
+
+### Added (A frame is a list of render layers, 2026-09-15)
+
+- **[RenderLayer](src/useful/libs/SharpKind.Graphics/RenderLayer.cs) is one
+  band of a frame: a clip rectangle, and the drawing that goes into it.**
+  [LayerRunner](src/useful/libs/SharpKind.Graphics/LayerRunner.cs) draws an
+  ordered list of them, furthest first - it sets each layer's clip region,
+  runs the layer, flushes the depth content, and moves on. This is the first
+  of the four "rendering in three layers" items in
+  [docs/backlog-roadmap.md](docs/backlog-roadmap.md); neither game is moved
+  onto it yet, so no frame changes.
+  - The drawing is an
+    [ILayerDrawer](src/useful/libs/SharpKind.Graphics/ILayerDrawer.cs) rather
+    than a delegate. The objects a layer is built from already have a `Draw`
+    of their own, so an interface over what is there allocates nothing, where
+    a delegate would cost one closure per layer per tick. The list is built
+    once and kept: the set of layers is fixed in a given game, and a layer
+    with nothing to draw this tick draws nothing rather than leaving the list.
+
+- **`IGraphics` gained
+  [FlushDepth()](src/useful/libs/SharpKind.Graphics/IGraphics.cs)**, which is
+  what makes a layer's depth-tested content obey that layer's rectangle.
+  SDL's accelerated renderer has no depth buffer, so `SDLGraphics` rasterises
+  depth-tested draws into a screen-sized CPU bitmap, unclipped, and puts them
+  on screen in one whole-screen blit. Only the clip region active *at that
+  blit* trims them. The blit ran lazily, at the next ordinary draw, which the
+  existing comment notes is safe solely because "nothing else runs in
+  between" - and a runner changing the clip region at a layer boundary is
+  exactly that something else. Without the flush, a universe layer's ships
+  would be trimmed to the rectangle of whichever layer drew next, and paint
+  over the console.
+  - `SoftwareGraphics` implements it as a no-op, and correctly: it writes
+    every draw into the one shared buffer and clips each as it rasterises, so
+    its depth-tested content is already on screen and already trimmed.
+  - An explicit method rather than flushing inside `SetClipRegion`, because
+    the flush is one backend's compositing detail and the runner is the only
+    caller that has to say where it happens.
 
 ### Added (DocFX builds the documentation site, 2026-09-14)
 

@@ -1,4 +1,4 @@
-// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
+﻿// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
 
 using System.Diagnostics;
 using System.Numerics;
@@ -239,6 +239,13 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
         _depthLayerDirty = false;
         _depthPassOpen = true;
     }
+
+    // The public seam onto the lazy composite below. A caller that is about
+    // to change the clip region has to ask for this: FlushDepthLayer's blit
+    // is trimmed by whichever clip region is active when it runs, and it runs
+    // by itself only at the next ordinary draw - which may be past the clip
+    // change, and in a layered frame usually is.
+    public void FlushDepth() => FlushDepthLayer();
 
     public void Dispose()
     {

@@ -1,4 +1,4 @@
-// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
+﻿// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
 
 using System.Numerics;
 using SharpKind.Graphics.Rendering;
@@ -22,6 +22,22 @@ public interface IGraphics
     /// Reset the depth buffer, before drawing a depth-tested scene.
     /// </summary>
     public void ClearDepth();
+
+    /// <summary>
+    /// Put any depth-tested drawing on the screen now, under the clip region
+    /// that is active at this moment.
+    /// <para>
+    /// A backend that rasterises depth-tested content aside and composites it
+    /// later applies the clip region when it composites, not when it draws.
+    /// Its content therefore obeys whichever clip region is active at that
+    /// point. Call this before the clip region changes, so a layer's
+    /// depth-tested content is trimmed to that layer's own rectangle.
+    /// </para>
+    /// <para>
+    /// A backend that clips each draw as it rasterises has nothing to do here.
+    /// </para>
+    /// </summary>
+    public void FlushDepth();
 
     public void DrawCircle(Vector2 centre, float radius, FastColor color);
 

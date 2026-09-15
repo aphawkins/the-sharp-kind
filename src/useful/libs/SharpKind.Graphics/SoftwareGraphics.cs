@@ -154,6 +154,14 @@ public sealed partial class SoftwareGraphics : IGraphics, IDisposable
         Array.Clear(_surfaceIds);
     }
 
+    // Nothing to do: every draw goes straight into the one shared buffer and
+    // is clipped as it rasterises, so depth-tested content is already on the
+    // screen and already trimmed to the clip region that was active when it
+    // was drawn. The method exists for the backends that composite instead.
+    public void FlushDepth()
+    {
+    }
+
     public void Dispose()
     {
         // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method

@@ -33,6 +33,8 @@ public sealed class RecordingGraphics(float screenWidth = 0, float screenHeight 
 
     public IList<(Vector2 Centre, float Radius, FastColor Colour)> Circles { get; } = [];
 
+    public IList<(Vector2 Position, float Width, float Height)> ClipRegions { get; } = [];
+
     public IList<(Vector2 Position, string Text, string FontType, FastColor Colour)> LeftTexts { get; } = [];
 
     public IList<(Vector2 Position, string Text, string FontType, FastColor Colour)> RightTexts { get; } = [];
@@ -42,6 +44,8 @@ public sealed class RecordingGraphics(float screenWidth = 0, float screenHeight 
     public int ClearCount { get; private set; }
 
     public int ClearDepthCount { get; private set; }
+
+    public int FlushDepthCount { get; private set; }
 
     public int ScreenUpdateCount { get; private set; }
 
@@ -54,6 +58,8 @@ public sealed class RecordingGraphics(float screenWidth = 0, float screenHeight 
     public void Clear() => ClearCount++;
 
     public void ClearDepth() => ClearDepthCount++;
+
+    public void FlushDepth() => FlushDepthCount++;
 
     public void DrawCircle(Vector2 centre, float radius, FastColor color)
         => Circles.Add((centre, radius, color));
@@ -163,6 +169,5 @@ public sealed class RecordingGraphics(float screenWidth = 0, float screenHeight 
     public void SaveScreen(string path) => SavedScreenPaths.Add(path);
 
     public void SetClipRegion(Vector2 position, float width, float height)
-    {
-    }
+        => ClipRegions.Add((position, width, height));
 }
