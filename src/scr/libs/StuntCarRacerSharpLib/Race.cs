@@ -3,6 +3,7 @@
 // Stunt Car Racer (C) Geoff Crammond / MicroStyle / MicroProse 1989.
 
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 using SharpKind;
 using SharpKind.Audio;
 using SharpKind.Graphics;
@@ -153,29 +154,25 @@ internal sealed class Race
         }
     }
 
-    // The world common to every screen: backdrop, track and (outside the
-    // track menu) the opponent car. Road lines draw around the player's
-    // position, as the original did in every mode.
-    internal void DrawWorld(bool showOpponent, bool showPlayer = false)
-    {
-        _graphics.Clear();
-        _backdrop.Draw(Camera);
-
-        _worldPolygons.Clear();
-        if (showOpponent)
-        {
-            _opponentRenderer.AppendWorldPolygons(_worldPolygons);
-        }
-
-        // the player's car is only ever visible from the outside view - the
-        // cockpit view sits inside it (`StuntCarRacer.cpp:1600-1605`)
-        if (showPlayer && OutsideView)
-        {
-            _playerRenderer.AppendWorldPolygons(_worldPolygons);
-        }
-
-        _renderer.Draw(Camera, _worldPolygons, Car.CurrentPiece, Car.CurrentSegment);
-    }
+    // A screen's frame, as the three layers both games now draw: the
+    // backdrop furthest, the world over it, and the screen's own cockpit or
+    // text over both. SCR's window region is the whole display on every
+    // screen it draws, so all three carry the same rectangle - the layers
+    // are here for the ordering and the depth flush between them, not to
+    // clip anything.
+    //
+    // Built once per screen and kept, because the set never changes: which
+    // cars a screen shows is fixed when the screen is constructed.
+    internal LayerRunner Layers(bool showOpponent, bool showPlayer, ILayerDrawer overlay)
+        => new(
+            _graphics,
+            new RenderLayer(Vector2.Zero, _screen.ScreenWidth, _screen.ScreenHeight, new BackdropLayer(this)),
+            new RenderLayer(
+                Vector2.Zero,
+                _screen.ScreenWidth,
+                _screen.ScreenHeight,
+                new WorldLayer(this, showOpponent, showPlayer)),
+            new RenderLayer(Vector2.Zero, _screen.ScreenWidth, _screen.ScreenHeight, overlay));
 
     // The F5 stats overlay (the remake's bShowStats block,
     // `StuntCarRacer.cpp:1343-1361`). The reference printed DXUT's frame and
@@ -334,4 +331,45 @@ internal sealed class Race
             Car.ZAngle,
             Car.CurrentLapTicks,
             Car.BestLapTicks));
+
+    // Layer 0, the backdrop: the sky and ground fill and the scenery
+    // skyline. Clears the frame first, which is where that has always
+    // happened - the backdrop is what paints over it.
+    private sealed class BackdropLayer(Race race) : ILayerDrawer
+    {
+        public void Draw()
+        {
+            race._graphics.Clear();
+            race._backdrop.Draw(race.Camera);
+        }
+    }
+
+    // Layer 1, the world: the track, and the cars that are visible from
+    // this screen. Everything here is depth-tested, and the runner flushes
+    // that depth content before the layer above draws over it.
+    private sealed class WorldLayer(Race race, bool showOpponent, bool showPlayer) : ILayerDrawer
+    {
+        public void Draw()
+        {
+            race._worldPolygons.Clear();
+            if (showOpponent)
+            {
+                race._opponentRenderer.AppendWorldPolygons(race._worldPolygons);
+            }
+
+            // the player's car is only ever visible from the outside view -
+            // the cockpit view sits inside it
+            // (`StuntCarRacer.cpp:1600-1605`)
+            if (showPlayer && race.OutsideView)
+            {
+                race._playerRenderer.AppendWorldPolygons(race._worldPolygons);
+            }
+
+            race._renderer.Draw(
+                race.Camera,
+                race._worldPolygons,
+                race.Car.CurrentPiece,
+                race.Car.CurrentSegment);
+        }
+    }
 }

@@ -4,6 +4,7 @@
 
 using SharpKind.Abstraction;
 using SharpKind.Audio;
+using SharpKind.Graphics;
 using SharpKind.Input;
 using StuntCarRacerSharpLib.Cars;
 
@@ -11,9 +12,10 @@ namespace StuntCarRacerSharpLib.Screens;
 
 // The race itself (original GAME_IN_PROGRESS): input, engine sound and race
 // timing at the full tick rate, car physics every FrameGap ticks.
-internal sealed class RaceScreen : IGameScreen
+internal sealed class RaceScreen : IGameScreen, ILayerDrawer
 {
     private readonly Race _race;
+    private readonly LayerRunner _layers;
     private readonly IKeyboard _keyboard;
     private readonly IGamepad _gamepad;
     private readonly ISound _sound;
@@ -33,6 +35,7 @@ internal sealed class RaceScreen : IGameScreen
         _gamepad = gamepad;
         _sound = sound;
         _screens = screens;
+        _layers = race.Layers(showOpponent: true, showPlayer: true, overlay: this);
     }
 
     public void Reset()
@@ -168,11 +171,12 @@ internal sealed class RaceScreen : IGameScreen
         _race.UpdateSounds();
     }
 
-    public void Draw()
-    {
-        _race.DrawWorld(showOpponent: true, showPlayer: true);
-        _race.DrawHud(gameOver: false);
-    }
+    public void Draw() => _layers.Draw();
+
+    // The HUD layer's content. Explicitly implemented so it cannot be
+    // mistaken for Draw() above: that one draws the whole frame, this one
+    // draws only what goes over the world.
+    void ILayerDrawer.Draw() => _race.DrawHud(gameOver: false);
 
     // ptitSeb's stuntcarremake keyboard controls: Left/Right arrows =
     // steer, Up = accelerate, Down = brake, Space = boost (applies with

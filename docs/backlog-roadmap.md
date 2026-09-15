@@ -144,52 +144,26 @@ test the game pays.
 
 ## Could
 
-### Rendering in three layers
+### Rendering in three layers - done (2026-09-15)
 
-Scoped with the maintainer on 2026-09-15. It replaces a `HudPlacement`
-(`Reserved` | `Overlaid`) flag on `IRendition`, which was implemented and
-reverted the same day: a flag says *whether* the HUD overlays the universe,
-where what both games need is *which rectangle each layer draws into*.
-
-A frame is three layers, furthest first, in both games:
-
-- **0 Stars.** The backdrop. Always furthest. Drawn into the window region.
-- **1 Universe.** Ships, sun, planet. Always between the stars and the HUD.
-  Also the window region.
-- **2 HUD.** Always closest, over the other two, and always full screen. The
-  cockpit: the window frame, the console, and the screens shown in the
-  window. Bitmaps in the shipped tiers; blended 3D in Modern.
-
-The **window region** is the one rectangle that varies - the opening the
-HUD's frame leaves for the universe to be seen through. The 8-bit and 16-bit
-tiers put it above the console (`ScreenHeight - ScannerSize.Y`); Modern makes
-it the whole screen and floats the console over it. It belongs to the
-rendition, because the HUD art is what defines it.
-
-**Why a region and not a flag.** The region is what the projection is built
-from. `PerspectiveProjector` is `(Focus, Centre)`
-([PerspectiveProjector.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/useful/libs/SharpKind.Graphics/PerspectiveProjector.cs)),
-and Elite passes `Layout.ViewportCentre` where SCR passes the screen centre -
-so SCR is already the full-screen case, and the two games differ in nothing
-else. Drawing the universe full-frame and painting the HUD over it instead
-would move the 16-bit vanishing point from y=191.5 to y=256 and shift the
-whole universe 64.5 pixels down (8-bit: 28).
+All four items landed; see
+[CHANGELOG.md](https://github.com/aphawkins/the-sharp-kind/blob/main/CHANGELOG.md).
+A frame is now a `LayerRunner` over three `RenderLayer`s in both games,
+furthest first - the backdrop, the universe or world, and the HUD over both.
+The window region is the opening the HUD's art leaves: Elite's viewport in
+the shipped tiers, and the whole display in SCR, which is why nothing about
+SCR's geometry moved. The kept scoping notes below are the ones a later item
+still needs.
 
 **The focal length is not the region's.** Elite derives `Focus` from
 `ScreenHeight`, not from the viewport (decided 2026-07-29, so a wider screen
 shows more rather than magnifying). Deriving it from the region would take
-16-bit from 512 to 383 and change every frame. Leave it alone.
+16-bit from 512 to 383 and change every frame. Leave it alone. The Modern
+rendition makes the window region the whole screen and floats the console
+over it, so it is the first thing that will exercise a region that is not
+the viewport.
 
-Do them in order. The second is a prerequisite of the third, not of the
-first.
-
-The layer type and the runner landed 2026-09-15, and Elite moved onto them
-the same day - see
-[CHANGELOG.md](https://github.com/aphawkins/the-sharp-kind/blob/main/CHANGELOG.md).
-One item is left. SCR's frame baselines, which were its prerequisite,
-landed 2026-09-15 as well.
-
-**One thing the Elite move found and did not fix.** `BreakPattern`'s widest
+**One off-by-one found and deliberately not fixed.** `BreakPattern`'s widest
 ring reaches exactly `ViewportHeight` - one row past `ViewportBottom`, the
 last pixel inside - so on the 8-bit tier it puts 29 pixels into the console
 band if it is ever drawn without the window region's clip. It is drawn with
@@ -202,19 +176,11 @@ silently. The equivalent off-by-one in the 8-bit border and in
 `LaserDrawBase` was corrected, because there the clip and the fix produce the
 same pixels.
 
-- [ ] [StuntCarRacerSharpLib] Move SCR onto the same layers: `DrawWorld`'s
-      backdrop and world polygons are layers 0 and 1, and each screen's own
-      text plus the cockpit are layer 2
-      ([Race.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/scr/libs/StuntCarRacerSharpLib/Race.cs)).
-      Its window region is the full screen in every screen it draws, so
-      nothing about its geometry changes - this item is to stop the two games
-      expressing the same three bands two different ways.
-
 ### The 16-bit border should look like the ship's window frame
 
 The border belongs to the HUD - it is the canopy the universe is seen
-through, not decoration around a viewport - so it lands naturally in layer 2
-of the item above, and is worth doing once that has settled where it lives.
+through, not decoration around a viewport - so it belongs in layer 2, which
+the layer work above has now settled.
 
 - [ ] [EliteSharp.Renditions.SixteenBit] `DrawBorder` draws `BorderWidth`
       (currently 1) plain white rectangles nested inside one another

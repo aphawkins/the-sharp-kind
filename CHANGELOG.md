@@ -7,6 +7,31 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Changed (Stunt Car Racer composes its frames as three layers too, 2026-09-15)
+
+- **Every SCR screen now draws through a `LayerRunner`**, as Elite's does:
+  the backdrop, the world, and the screen's own cockpit or text over both.
+  [Race.Layers()](src/scr/libs/StuntCarRacerSharpLib/Race.cs) builds the
+  three, and each screen keeps one, built once in its constructor - which
+  cars a screen shows is fixed when the screen is made. `Race.DrawWorld` was
+  the old inlined version of layers 0 and 1 and is gone.
+  - SCR's window region is the whole display on every screen it draws, so
+    all three layers carry the same rectangle and no geometry moved. This
+    item was to stop the two games expressing the same three bands two
+    different ways, and that is all it does.
+  - The screens implement `ILayerDrawer` explicitly, so `Draw()` still means
+    "draw this screen's frame" and `ILayerDrawer.Draw()` means "draw what
+    goes over the world" without the two colliding.
+  - **The depth flush is now where it belongs.** `ClearDepth` opens inside
+    `TrackRenderer.Draw`, so the whole depth pass lives in layer 1, and the
+    runner composites it before the cockpit draws over it. That happened by
+    luck before, at the lazy flush the cockpit's first draw triggered.
+  - The three SCR frame baselines are byte-identical. They run on
+    `SoftwareGraphics`, where `FlushDepth` is a no-op, so the SDL path was
+    checked live instead - the menu frame is byte-identical there too, and
+    the preview and race frames were inspected, since the shipped app seeds
+    nothing and two runs of the same build differ on their own.
+
 ### Added (Stunt Car Racer gets frame baselines, 2026-09-15)
 
 - **[SharpKind.GoldenFrames](src/useful/test/SharpKind.GoldenFrames) is a new

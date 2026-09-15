@@ -13,9 +13,10 @@ namespace StuntCarRacerSharpLib.Screens;
 
 // The opponent drives the selected track, watched from the middle of the
 // world (original HandleTrackPreview / CalcTrackPreviewViewpoint).
-internal sealed class TrackPreviewScreen : IGameScreen
+internal sealed class TrackPreviewScreen : IGameScreen, ILayerDrawer
 {
     private readonly Race _race;
+    private readonly LayerRunner _layers;
     private readonly IKeyboard _keyboard;
     private readonly IGamepad _gamepad;
     private readonly ScreenManager<GameMode, IGameScreen> _screens;
@@ -39,6 +40,7 @@ internal sealed class TrackPreviewScreen : IGameScreen
         _graphics = graphics;
         _screen = screen;
         _palette = palette;
+        _layers = race.Layers(showOpponent: true, showPlayer: false, overlay: this);
     }
 
     public void Reset()
@@ -89,10 +91,13 @@ internal sealed class TrackPreviewScreen : IGameScreen
         _race.Camera.LookAt(viewX, viewY, viewZ, _race.Opponent.X, _race.Opponent.Y, _race.Opponent.Z);
     }
 
-    public void Draw()
-    {
-        _race.DrawWorld(showOpponent: true);
+    public void Draw() => _layers.Draw();
 
+    // The layer-2 content: what this screen draws over the world.
+    // Explicitly implemented so it cannot be mistaken for Draw()
+    // above, which draws the whole frame.
+    void ILayerDrawer.Draw()
+    {
         FastColor yellow = _palette.Colour(Track.ScrBaseColour + 3);
         float height = _screen.ScreenHeight;
 

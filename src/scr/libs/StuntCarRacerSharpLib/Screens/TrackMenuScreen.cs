@@ -24,7 +24,7 @@ namespace StuntCarRacerSharpLib.Screens;
 // beyond strict porting: menu.png's centre panel is transparent, so the
 // orbiting track view still shows through, with the track list positioned
 // inside the panel.
-internal sealed class TrackMenuScreen : IGameScreen
+internal sealed class TrackMenuScreen : IGameScreen, ILayerDrawer
 {
     private const string MenuImage = "Menu";
 
@@ -37,6 +37,7 @@ internal sealed class TrackMenuScreen : IGameScreen
     private const float RowHeight = 11f;
 
     private readonly Race _race;
+    private readonly LayerRunner _layers;
     private readonly IKeyboard _keyboard;
     private readonly IGamepad _gamepad;
     private readonly ISound _sound;
@@ -69,6 +70,9 @@ internal sealed class TrackMenuScreen : IGameScreen
         _graphics = graphics;
         _screen = screen;
         _palette = palette;
+
+        // the original only shows the opponent outside the track menu
+        _layers = race.Layers(showOpponent: false, showPlayer: false, overlay: this);
     }
 
     // The menu has no opponent and no engine: the reference clears the
@@ -111,11 +115,13 @@ internal sealed class TrackMenuScreen : IGameScreen
         }
     }
 
-    public void Draw()
-    {
-        // the original only shows the opponent outside the track menu
-        _race.DrawWorld(showOpponent: false);
+    public void Draw() => _layers.Draw();
 
+    // The layer-2 content: what this screen draws over the world.
+    // Explicitly implemented so it cannot be mistaken for Draw()
+    // above, which draws the whole frame.
+    void ILayerDrawer.Draw()
+    {
         // menu.png's frame draws over the world; its centre panel is
         // transparent so the orbiting track view still shows through
         _graphics.DrawImagePart(

@@ -4,15 +4,17 @@
 
 using SharpKind.Abstraction;
 using SharpKind.Audio;
+using SharpKind.Graphics;
 using SharpKind.Input;
 
 namespace StuntCarRacerSharpLib.Screens;
 
 // The original freezes the action and silences the engine once the game is
 // over; M returns to the track menu.
-internal sealed class GameOverScreen : IGameScreen
+internal sealed class GameOverScreen : IGameScreen, ILayerDrawer
 {
     private readonly Race _race;
+    private readonly LayerRunner _layers;
     private readonly IKeyboard _keyboard;
     private readonly IGamepad _gamepad;
     private readonly ISound _sound;
@@ -30,6 +32,7 @@ internal sealed class GameOverScreen : IGameScreen
         _gamepad = gamepad;
         _sound = sound;
         _screens = screens;
+        _layers = race.Layers(showOpponent: true, showPlayer: true, overlay: this);
     }
 
     public void Reset() => _sound.StopLoop();
@@ -42,9 +45,10 @@ internal sealed class GameOverScreen : IGameScreen
         }
     }
 
-    public void Draw()
-    {
-        _race.DrawWorld(showOpponent: true, showPlayer: true);
-        _race.DrawHud(gameOver: true);
-    }
+    public void Draw() => _layers.Draw();
+
+    // The HUD layer's content. Explicitly implemented so it cannot be
+    // mistaken for Draw() above: that one draws the whole frame, this one
+    // draws only what goes over the world.
+    void ILayerDrawer.Draw() => _race.DrawHud(gameOver: true);
 }
