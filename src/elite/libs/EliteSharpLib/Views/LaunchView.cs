@@ -1,4 +1,4 @@
-// 'Elite - The Sharp Kind' - Andy Hawkins 2023-2026.
+﻿// 'Elite - The Sharp Kind' - Andy Hawkins 2023-2026.
 // 'Elite - The New Kind' - C.J.Pinder 1999-2001.
 // Elite (C) I.Bell & D.Braben 1984.
 
@@ -38,11 +38,9 @@ internal sealed class LaunchView : IScreenController
         _breakPattern = new(draw);
     }
 
-    public void Draw()
-    {
-        _baseView.DrawBorder();
-        _breakPattern.Draw();
-    }
+    public void Draw() => _baseView.DrawBorder();
+
+    public void DrawUniverse() => _breakPattern.Draw();
 
     public void HandleInput()
     {

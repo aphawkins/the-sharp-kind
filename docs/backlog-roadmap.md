@@ -183,19 +183,24 @@ shows more rather than magnifying). Deriving it from the region would take
 Do them in order. The second is a prerequisite of the third, not of the
 first.
 
-The layer type and the runner landed 2026-09-15 - see
+The layer type and the runner landed 2026-09-15, and Elite moved onto them
+the same day - see
 [CHANGELOG.md](https://github.com/aphawkins/the-sharp-kind/blob/main/CHANGELOG.md).
+Two items are left, and the first is still a prerequisite of the second.
 
-- [ ] [EliteSharpLib] Move `Compose()` onto the layers. It is already these
-      three bands with the clip switched by hand around them
-      ([EliteMain.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/libs/EliteSharpLib/EliteMain.cs)).
-      The reassignment is the work and the risk: roughly twenty
-      `Layout.Viewport*` call sites each have to be settled as window-region
-      or full-screen. Most are plainly the window (options, credits, save,
-      game over, the short-range chart); `BreakPattern` and `LaserDrawBase`
-      go with the universe, and `BreakPattern.Reset` sets the view clip
-      itself today and should stop. **The golden frame traces are the
-      acceptance test** - byte-identical, or something moved.
+**One thing the Elite move found and did not fix.** `BreakPattern`'s widest
+ring reaches exactly `ViewportHeight` - one row past `ViewportBottom`, the
+last pixel inside - so on the 8-bit tier it puts 29 pixels into the console
+band if it is ever drawn without the window region's clip. It is drawn with
+that clip, so nothing is wrong today, and `RingStep`
+([BreakPattern.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/libs/EliteSharpLib/BreakPattern.cs))
+derives every ring from the same half-extent - so correcting it would shrink
+all twenty rings slightly and move the 16-bit golden frames, which is a
+maintainer decision about the animation rather than a defect to fix
+silently. The equivalent off-by-one in the 8-bit border and in
+`LaserDrawBase` was corrected, because there the clip and the fix produce the
+same pixels.
+
 - [ ] [StuntCarRacerSharpLib.Tests] **Prerequisite for the next item.** SCR
       has no golden frame traces, so a rendering change to it is unguarded
       where Elite's is checked byte for byte. `CaptureFrame` already sits on

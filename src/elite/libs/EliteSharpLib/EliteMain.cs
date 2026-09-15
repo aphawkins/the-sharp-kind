@@ -46,6 +46,7 @@ public sealed class EliteMain : IGame, IGameApp
     private readonly IBaseView _baseView;
     private readonly IEliteDraw _draw;
     private readonly List<long> _framesDrawn = [];
+    private readonly LayerRunner _layers;
     private readonly Pilot _pilot;
     private readonly SaveFile _save;
     private readonly ScannerController _scanner;
@@ -115,6 +116,31 @@ public sealed class EliteMain : IGame, IGameApp
         _save = save;
         _space = space;
         _scanner = scanner;
+
+        // The three bands a frame is, furthest first. Built once rather than
+        // per tick: the set never changes, and a band with nothing to draw
+        // this tick draws nothing rather than leaving the list.
+        //
+        // The window region is the opening the cockpit art leaves for the
+        // universe to be seen through, and ViewLayout's viewport already is
+        // exactly that - derived from the rendition's own scanner height.
+        _layers = new LayerRunner(
+            _graphics,
+            new RenderLayer(
+                new(_draw.Layout.ViewportLeft, _draw.Layout.ViewportTop),
+                _draw.Layout.ViewportWidth,
+                _draw.Layout.ViewportHeight,
+                new StarsLayer(this)),
+            new RenderLayer(
+                new(_draw.Layout.ViewportLeft, _draw.Layout.ViewportTop),
+                _draw.Layout.ViewportWidth,
+                _draw.Layout.ViewportHeight,
+                new UniverseLayer(this)),
+            new RenderLayer(
+                new(0, 0),
+                _draw.Layout.ScreenWidth,
+                _draw.Layout.ScreenHeight,
+                new HudLayer(this)));
     }
 
     public bool IsRunning => !State.ExitGame;
@@ -250,29 +276,7 @@ public sealed class EliteMain : IGame, IGameApp
     {
         _draw.SetFullScreenClipRegion();
         _graphics.Clear();
-        _draw.SetViewClipRegion();
-
-        _stars.Draw();
-        _space.DrawUniverse();
-        State.CurrentView.Draw();
-
-        if (State.Config.Engine.Graphics.ShowFps)
-        {
-            _baseView.DrawFps(_framesDrawn.Count);
-        }
-
-        if (_pendingMessage is string message)
-        {
-            _baseView.DrawInfoMessage(message);
-        }
-
-        if (_pendingCountdown is int countdown)
-        {
-            _baseView.DrawHyperspaceCountdown(countdown);
-        }
-
-        _draw.SetFullScreenClipRegion();
-        _scanner.UpdateConsole();
+        _layers.Draw();
     }
 
     // The part of a tick that only applies while flying: laser cooling,
@@ -496,5 +500,52 @@ public sealed class EliteMain : IGame, IGameApp
         _space.DockPlayer();
 
         State.SetView(Screen.IntroOne);
+    }
+
+    // Layer 0, the backdrop. Always furthest, always the window region.
+    private sealed class StarsLayer(EliteMain game) : ILayerDrawer
+    {
+        public void Draw() => game._stars.Draw();
+    }
+
+    // Layer 1, the universe: ships, sun, planet, and the break pattern -
+    // which is seen through the canopy like the rest of them, so it draws
+    // here rather than with the cockpit over it.
+    private sealed class UniverseLayer(EliteMain game) : ILayerDrawer
+    {
+        public void Draw()
+        {
+            game._space.DrawUniverse();
+            game.State.CurrentView.DrawUniverse();
+        }
+    }
+
+    // Layer 2, the HUD: the screen the commander is on, the two flight
+    // overlays and the console, over the other two and across the whole
+    // display. The console draws last because it is the nearest thing there
+    // is.
+    private sealed class HudLayer(EliteMain game) : ILayerDrawer
+    {
+        public void Draw()
+        {
+            game.State.CurrentView.Draw();
+
+            if (game.State.Config.Engine.Graphics.ShowFps)
+            {
+                game._baseView.DrawFps(game._framesDrawn.Count);
+            }
+
+            if (game._pendingMessage is string message)
+            {
+                game._baseView.DrawInfoMessage(message);
+            }
+
+            if (game._pendingCountdown is int countdown)
+            {
+                game._baseView.DrawHyperspaceCountdown(countdown);
+            }
+
+            game._scanner.UpdateConsole();
+        }
     }
 }

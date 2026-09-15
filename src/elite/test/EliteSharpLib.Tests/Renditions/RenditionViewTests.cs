@@ -1,4 +1,4 @@
-// 'Elite - The Sharp Kind' - Andy Hawkins 2023-2026.
+﻿// 'Elite - The Sharp Kind' - Andy Hawkins 2023-2026.
 // 'Elite - The New Kind' - C.J.Pinder 1999-2001.
 // Elite (C) I.Bell & D.Braben 1984.
 
@@ -11,8 +11,10 @@ using EliteSharp.Renditions.SixteenBit;
 using EliteSharpLib.Graphics;
 using EliteSharpLib.Tests.Missions;
 using EliteSharpLib.Views;
+using SharpKind;
 using SharpKind.Abstraction;
 using SharpKind.Fakes.Input;
+using SharpKind.Graphics;
 using SharpKind.Graphics.Fakes;
 using SharpKind.Graphics.Rendering;
 
@@ -60,6 +62,18 @@ public class RenditionViewTests
         (typeof(ShortRangeChartModel), DrawShortRangeChart),
     ];
 
+    // What Compose draws into the HUD layer that no screen owns. The break
+    // pattern is deliberately not here: it draws into the universe layer,
+    // which keeps the window region's clip, and it needs that clip - its
+    // widest ring reaches exactly ViewportHeight, one row past the last
+    // pixel inside, so the 8-bit tier would put 29 pixels into the console
+    // band without it. BreakPatternTests covers the rings themselves.
+    private static (string Name, Action<ViewSet, IEliteDraw, IBaseView> Draw)[] Overlays => [
+        ("DrawFps", (_, _, baseView) => baseView.DrawFps(60)),
+        ("DrawInfoMessage", (_, _, baseView) => baseView.DrawInfoMessage("DOCKING COMPUTER ON")),
+        ("DrawHyperspaceCountdown", (_, _, baseView) => baseView.DrawHyperspaceCountdown(4)),
+    ];
+
     [Theory]
     [MemberData(nameof(Renditions))]
     public void EveryScreenDrawsWithoutFailing(string renditionName)
@@ -71,6 +85,71 @@ public class RenditionViewTests
             Exception? exception = Record.Exception(() => draw(views));
             Assert.True(exception is null, $"{renditionName} could not draw {model.Name}: {exception}");
         }
+    }
+
+    // The three-layer work puts every screen in a full-screen HUD layer, so
+    // the viewport clip that stops a screen painting into the console band
+    // today would no longer be there to stop it. This draws each screen with
+    // the clip left full screen and reports any pixel below the window
+    // region - which is what that change would newly put on the display.
+    //
+    // Real SoftwareGraphics rather than RecordingGraphics, because the
+    // question is about pixels: text has to rasterise to have an extent, and
+    // RecordingGraphics neither measures text nor records every primitive.
+    // It also loads the scanner art, without which ViewportHeight is the
+    // whole screen and there is no band to overflow into.
+    [Theory]
+    [MemberData(nameof(Renditions))]
+    public void NoScreenDrawsBelowTheWindowRegion(string renditionName)
+    {
+        List<string> overflows = [];
+
+        foreach ((Type model, Action<ViewSet> draw) in Screens)
+        {
+            // The scanner is the console. Drawing below the window region is
+            // its whole job, so it is the one screen this cannot ask about.
+            if (model == typeof(ScannerModel))
+            {
+                continue;
+            }
+
+            string? overflow = MeasureOverflow(
+                renditionName,
+                (views, _, _) => draw(views));
+
+            if (overflow is not null)
+            {
+                overflows.Add($"{model.Name}: {overflow}");
+            }
+        }
+
+        string report = string.Join(Environment.NewLine, overflows);
+        Assert.True(overflows.Count == 0, $"{renditionName} draws below the window region:{Environment.NewLine}{report}");
+    }
+
+    // The same question for the drawing Compose does outside any screen: the
+    // three in-flight overlays and the break pattern. These run under the
+    // view clip today just as the screens do, and move into the same
+    // full-screen HUD layer, so they need the same guard - the screen table
+    // above cannot reach them because none of them belongs to a screen.
+    [Theory]
+    [MemberData(nameof(Renditions))]
+    public void NoOverlayDrawsBelowTheWindowRegion(string renditionName)
+    {
+        List<string> overflows = [];
+
+        foreach ((string name, Action<ViewSet, IEliteDraw, IBaseView> draw) in Overlays)
+        {
+            string? overflow = MeasureOverflow(renditionName, draw);
+
+            if (overflow is not null)
+            {
+                overflows.Add($"{name}: {overflow}");
+            }
+        }
+
+        string report = string.Join(Environment.NewLine, overflows);
+        Assert.True(overflows.Count == 0, $"{renditionName} overlays draw below the window region:{Environment.NewLine}{report}");
     }
 
     [Theory]
@@ -224,6 +303,63 @@ public class RenditionViewTests
         .. graphics.RightTexts.Select(t => t.Text),
         .. graphics.CentredTexts.Select(t => t.Text),
     ];
+
+    // Draws one thing onto a real framebuffer with the clip left full screen,
+    // and reports any pixel that lands below the window region. Null when
+    // nothing does. A fresh graphics each time, so every caller starts from a
+    // cleared frame and is charged only for what it drew itself.
+    private static string? MeasureOverflow(
+        string renditionName,
+        Action<ViewSet, IEliteDraw, IBaseView> draw)
+    {
+        IRendition rendition = renditionName == "8-bit"
+            ? new EightBitRendition()
+            : new SixteenBitRendition();
+
+        FastBitmap? frame = null;
+        using SoftwareGraphics graphics = SoftwareGraphics.Create(
+            rendition.ScreenWidth,
+            rendition.ScreenHeight,
+            b => frame = b,
+            TestAssets.Locator(renditionName));
+
+        GameState gameState = new(
+            new ScreenManager<Screen, IScreenController>(new FakeKeyboard()),
+            TestMissions.Registry());
+
+        EliteDraw eliteDraw = new(
+            gameState,
+            graphics,
+            new ScreenLayout(rendition.ScreenWidth, rendition.ScreenHeight),
+            TestAssets.Locator(renditionName),
+            rendition,
+            new ZBufferRenderer(graphics),
+            new RenderRandom(new Random(0)));
+
+        graphics.Clear();
+        graphics.SetClipRegion(new(0, 0), rendition.ScreenWidth, rendition.ScreenHeight);
+        draw(rendition.CreateViews(eliteDraw), eliteDraw, rendition.CreateBaseView(eliteDraw));
+        graphics.ScreenUpdate();
+
+        FastBitmap composed = frame ?? throw new InvalidOperationException("No frame was composed.");
+        int band = (int)eliteDraw.Layout.ViewportHeight;
+        int lit = 0;
+        int lowest = -1;
+
+        for (int y = band; y < composed.Height; y++)
+        {
+            for (int x = 0; x < composed.Width; x++)
+            {
+                if (composed.GetPixel(x, y).Argb != BaseColors.Black.Argb)
+                {
+                    lit++;
+                    lowest = y;
+                }
+            }
+        }
+
+        return lit == 0 ? null : $"{lit} pixels below y={band}, reaching y={lowest}";
+    }
 
     private static ViewSet CreateViews(string renditionName, out RecordingGraphics graphics)
     {

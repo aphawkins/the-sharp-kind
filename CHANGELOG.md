@@ -7,6 +7,48 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Changed (Elite composes a frame as three layers, 2026-09-15)
+
+- **[EliteMain.Compose()](src/elite/libs/EliteSharpLib/EliteMain.cs) is now
+  `Clear()` and a `LayerRunner`**, where it used to be three bands with the
+  clip switched by hand around them. The layers are the stars, the universe
+  and the HUD - the first two clipped to the window region, the third across
+  the whole display, with the console drawn last as the nearest thing there
+  is. Every one of the five golden frame baselines is byte-identical, which
+  is what this item was to be judged on.
+  - **The break pattern moved to the universe layer**, which is where it
+    belongs - it is seen through the canopy like the ships are, not drawn
+    over them with the cockpit. `IScreenController` gained a `DrawUniverse()`
+    with an empty body for this; only the three break-pattern screens
+    (launch, dock, hyperspace) have anything to put in it, so the other
+    sixteen are untouched. `BreakPattern.Reset` no longer sets the view clip
+    itself: the runner owns the clip now.
+
+- **Two off-by-ones, found by the new guard below and fixed.** The 8-bit
+  border's side rules ([BaseView8Bit.cs](src/elite/libs/EliteSharp.Renditions.EightBit/BaseView8Bit.cs))
+  and both laser beams' base corners
+  ([LaserDrawBase.cs](src/elite/libs/EliteSharp.Abstractions/Views/LaserDrawBase.cs))
+  ended at `ViewportHeight`, which is one past the last pixel inside, where
+  `ViewportBottom` is the inclusive coordinate `ViewLayout`'s own comment
+  says it is. The viewport clip had been quietly eating that row, so both
+  fixes draw the same pixels as before - all five frame baselines and the
+  `laser-fire` scenario stayed byte-identical across the change.
+
+### Added (A guard against drawing below the window region, 2026-09-15)
+
+- **[RenditionViewTests](src/elite/test/EliteSharpLib.Tests/Renditions/RenditionViewTests.cs)
+  now draws all sixteen screens of both tiers, and the three in-flight
+  overlays, with the clip left full screen, and fails on any pixel below the
+  window region.** The HUD layer is full screen, so the viewport clip that
+  used to stop a screen painting into the console band is no longer there to
+  do it; the golden frame traces could not have caught that, because all five
+  scenarios are intro or flight and not one of them visits a docked screen.
+  - It draws onto a real `SoftwareGraphics` rather than `RecordingGraphics`,
+    because the question is about pixels: text has to rasterise to have an
+    extent, and the fake neither measures text nor records every primitive.
+    It also loads the scanner art, without which `ViewportHeight` is the
+    whole screen and there is no band to overflow into.
+
 ### Added (A frame is a list of render layers, 2026-09-15)
 
 - **[RenderLayer](src/useful/libs/SharpKind.Graphics/RenderLayer.cs) is one

@@ -1,4 +1,4 @@
-// 'Elite - The Sharp Kind' - Andy Hawkins 2023-2026.
+﻿// 'Elite - The Sharp Kind' - Andy Hawkins 2023-2026.
 // 'Elite - The New Kind' - C.J.Pinder 1999-2001.
 // Elite (C) I.Bell & D.Braben 1984.
 
@@ -51,11 +51,11 @@ public abstract class LaserDrawBase
 
         Vector2 target = Surface.Layout.ViewportCentre + (aim * scale);
 
-        Vector2 leftA = new(Surface.Layout.ViewportLeft + (32 * scale), Surface.Layout.ViewportHeight);
-        Vector2 leftB = new(Surface.Layout.ViewportLeft + (48 * scale), Surface.Layout.ViewportHeight);
+        Vector2 leftA = new(Surface.Layout.ViewportLeft + (32 * scale), Surface.Layout.ViewportBottom);
+        Vector2 leftB = new(Surface.Layout.ViewportLeft + (48 * scale), Surface.Layout.ViewportBottom);
 
-        Vector2 rightA = new(Surface.Layout.ViewportRight - (32 * scale), Surface.Layout.ViewportHeight);
-        Vector2 rightB = new(Surface.Layout.ViewportRight - (48 * scale), Surface.Layout.ViewportHeight);
+        Vector2 rightA = new(Surface.Layout.ViewportRight - (32 * scale), Surface.Layout.ViewportBottom);
+        Vector2 rightB = new(Surface.Layout.ViewportRight - (48 * scale), Surface.Layout.ViewportBottom);
 
         if (wireframe)
         {

@@ -200,11 +200,6 @@ internal sealed class EliteDraw : IEliteDraw
 
     public void SetFullScreenClipRegion() => Graphics.SetClipRegion(new(0, 0), Layout.ScreenWidth, Layout.ScreenHeight);
 
-    public void SetViewClipRegion() => Graphics.SetClipRegion(
-        new(Layout.ViewportLeft, Layout.ViewportTop),
-        Layout.ViewportWidth,
-        Layout.ViewportHeight);
-
     /// <summary>
     /// Draws an object in the universe. (Ship, Planet, Sun etc).
     /// </summary>

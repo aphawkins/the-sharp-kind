@@ -77,13 +77,13 @@ internal class BaseView8Bit : IBaseView
             // Left
             Graphics.DrawLine(
                 new(Layout.ViewportLeft + i, Layout.ViewportTop),
-                new(Layout.ViewportLeft + i, Layout.ViewportHeight),
+                new(Layout.ViewportLeft + i, Layout.ViewportBottom),
                 _colorWhite);
 
             // Right
             Graphics.DrawLine(
                 new(Layout.ViewportWidth - 1 - i, Layout.ViewportTop),
-                new(Layout.ViewportWidth - 1 - i, Layout.ViewportHeight),
+                new(Layout.ViewportWidth - 1 - i, Layout.ViewportBottom),
                 _colorWhite);
         }
     }
