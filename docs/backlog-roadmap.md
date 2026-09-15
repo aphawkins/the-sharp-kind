@@ -1,4 +1,4 @@
-# Backlog and Roadmap — The Sharp Kind
+﻿# Backlog and Roadmap — The Sharp Kind
 
 Features, refactors, cleanups and spikes — work that **adds or reshapes**,
 not work that fixes. Prioritised with MoSCoW (per
@@ -144,6 +144,100 @@ test the game pays.
 
 ## Could
 
+### Rendering in three layers
+
+Scoped with the maintainer on 2026-09-15. It replaces a `HudPlacement`
+(`Reserved` | `Overlaid`) flag on `IRendition`, which was implemented and
+reverted the same day: a flag says *whether* the HUD overlays the universe,
+where what both games need is *which rectangle each layer draws into*.
+
+A frame is three layers, furthest first, in both games:
+
+- **0 Stars.** The backdrop. Always furthest. Drawn into the window region.
+- **1 Universe.** Ships, sun, planet. Always between the stars and the HUD.
+  Also the window region.
+- **2 HUD.** Always closest, over the other two, and always full screen. The
+  cockpit: the window frame, the console, and the screens shown in the
+  window. Bitmaps in the shipped tiers; blended 3D in Modern.
+
+The **window region** is the one rectangle that varies - the opening the
+HUD's frame leaves for the universe to be seen through. The 8-bit and 16-bit
+tiers put it above the console (`ScreenHeight - ScannerSize.Y`); Modern makes
+it the whole screen and floats the console over it. It belongs to the
+rendition, because the HUD art is what defines it.
+
+**Why a region and not a flag.** The region is what the projection is built
+from. `PerspectiveProjector` is `(Focus, Centre)`
+([PerspectiveProjector.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/useful/libs/SharpKind.Graphics/PerspectiveProjector.cs)),
+and Elite passes `Layout.ViewportCentre` where SCR passes the screen centre -
+so SCR is already the full-screen case, and the two games differ in nothing
+else. Drawing the universe full-frame and painting the HUD over it instead
+would move the 16-bit vanishing point from y=191.5 to y=256 and shift the
+whole universe 64.5 pixels down (8-bit: 28).
+
+**The focal length is not the region's.** Elite derives `Focus` from
+`ScreenHeight`, not from the viewport (decided 2026-07-29, so a wider screen
+shows more rather than magnifying). Deriving it from the region would take
+16-bit from 512 to 383 and change every frame. Leave it alone.
+
+Do them in order. The third is a prerequisite of the fourth, not of the
+first two.
+
+- [ ] [SharpKind.Graphics] The layer type and the runner. A layer is a clip
+      rectangle and the drawing that goes into it; the runner sets the clip,
+      runs the layer, moves on. Build the list once rather than per frame -
+      the set is fixed in both games (Elite's `Stars.Draw()` just draws an
+      empty mark list while docked,
+      [Stars.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/libs/EliteSharpLib/Stars.cs)), so an
+      interface over the objects that already have a `Draw` avoids a delegate
+      allocation per layer per tick. **The depth flush is the constraint**:
+      `_depthLayer` in
+      [SDLGraphics.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/useful/libs/SharpKind.SDL/SDLGraphics.cs)
+      flushes lazily, when something else draws next, and its comment states
+      the ordering it depends on. A layer boundary has to flush it, or a
+      depth-using layer's content lands over the layer after it.
+- [ ] [EliteSharpLib] Move `Compose()` onto the layers. It is already these
+      three bands with the clip switched by hand around them
+      ([EliteMain.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/libs/EliteSharpLib/EliteMain.cs)).
+      The reassignment is the work and the risk: roughly twenty
+      `Layout.Viewport*` call sites each have to be settled as window-region
+      or full-screen. Most are plainly the window (options, credits, save,
+      game over, the short-range chart); `BreakPattern` and `LaserDrawBase`
+      go with the universe, and `BreakPattern.Reset` sets the view clip
+      itself today and should stop. **The golden frame traces are the
+      acceptance test** - byte-identical, or something moved.
+- [ ] [StuntCarRacerSharpLib.Tests] **Prerequisite for the next item.** SCR
+      has no golden frame traces, so a rendering change to it is unguarded
+      where Elite's is checked byte for byte. `CaptureFrame` already sits on
+      the shared
+      [HeadlessGameHarnessBase](https://github.com/aphawkins/the-sharp-kind/blob/main/src/useful/test/SharpKind.Fakes/Harness/HeadlessGameHarnessBase.cs);
+      what is Elite-only is `FrameSignature`/`FrameFile`/`TraceBaselines` in
+      `EliteSharpLib.Tests`. Lift those into a shared test library and
+      baseline a race, the track menu and the track preview.
+- [ ] [StuntCarRacerSharpLib] Move SCR onto the same layers: `DrawWorld`'s
+      backdrop and world polygons are layers 0 and 1, and each screen's own
+      text plus the cockpit are layer 2
+      ([Race.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/scr/libs/StuntCarRacerSharpLib/Race.cs)).
+      Its window region is the full screen in every screen it draws, so
+      nothing about its geometry changes - this item is to stop the two games
+      expressing the same three bands two different ways.
+
+### The 16-bit border should look like the ship's window frame
+
+The border belongs to the HUD - it is the canopy the universe is seen
+through, not decoration around a viewport - so it lands naturally in layer 2
+of the item above, and is worth doing once that has settled where it lives.
+
+- [ ] [EliteSharp.Renditions.SixteenBit] `DrawBorder` draws `BorderWidth`
+      (currently 1) plain white rectangles nested inside one another
+      ([BaseView16Bit.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/libs/EliteSharp.Renditions.SixteenBit/BaseView16Bit.cs)),
+      which reads as a box drawn around the screen rather than as a frame the
+      commander is looking out of. The 8-bit tier's is deliberately the
+      machine's own single-pixel rule and should stay as it is. What the
+      16-bit one should become is a maintainer decision about the art, not a
+      code question - it is recorded here so the layer work does not quietly
+      settle it.
+
 ### The 'Modern' rendition
 
 Scoped with the maintainer on 2026-09-12. A third rendition standing in for
@@ -176,29 +270,16 @@ Three decisions the maintainer settled, so none of them is reopened below:
   bits as "every level there is" and passes colour through untouched, so the
   manifest declares it and no code changes.
 
-Do them in order — the first is what the second needs, and the last two are
-independent of each other.
+Do the layer work above first: Modern is the rendition whose window region
+is the whole screen, and there is nowhere to say so until a layer owns that
+rectangle. The three below are then independent of each other.
 
-- [ ] [EliteSharp.Abstractions] Let a rendition overlay its HUD instead of
-      reserving a strip for it. `ViewLayout` derives
-      `ViewportHeight = ScreenHeight - ScannerSize.Y`, and `ScannerViewBase`
-      hardcodes the scanner's top-left as `(ViewportLeft, ViewportHeight)` in
-      `DrawScanner` and `ScannerRelative`
-      ([ViewLayout.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/libs/EliteSharp.Abstractions/Views/ViewLayout.cs),
-      [ScannerViewBase.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/libs/EliteSharp.Abstractions/Views/ScannerViewBase.cs)),
-      so a full-screen viewport with a centred HUD cannot be expressed. Add a
-      `HudPlacement` (`Reserved` | `Overlaid`) to `IRendition`, defaulting to
-      `Reserved`, and derive a `ScannerOrigin` on `ViewLayout` from it —
-      derived, not stored, so the origin and the viewport height cannot
-      disagree. `ScannerViewBase` then reads `ScannerOrigin`. Library and
-      tests only: both shipped tiers are `Reserved` and must come out with
-      byte-identical layout numbers, which is the test that matters.
 - [ ] [EliteSharp.Renditions.Modern] The rendition itself: a new plugin
       assembly and `Assets` folder alongside the two shipped ones, 1280x720,
-      `DesignScale` 2, `WindowScales => [1]`, `HudPlacement.Overlaid`,
-      `ShadesShips`. Assets are a copy of the 16-bit tree — self-contained
-      like the other two, so each file can be replaced independently as real
-      artwork arrives — with the manifest's `Colours` block widened to 32-bit.
+      `DesignScale` 2, `WindowScales => [1]`, `ShadesShips`, and a window
+      region of the whole screen. Assets are a copy of the 16-bit tree —
+      self-contained like the other two, so each file can be replaced
+      independently as real artwork arrives — with the manifest's `Colours` block widened to 32-bit.
       Screens derive from the 16-bit set and centre against `ViewportCentre`
       rather than inheriting its absolute offsets. The 640-wide scanner
       centres at x=320 of 1280, which is exact. Wire it into
