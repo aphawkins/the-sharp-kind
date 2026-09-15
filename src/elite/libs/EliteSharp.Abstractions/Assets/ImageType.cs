@@ -6,7 +6,7 @@ namespace EliteSharp.Abstractions.Assets;
 
 public enum ImageType
 {
-    Scanner = 0,
+    Hud = 0,
     CompassGreen = 1,
     CompassRed = 2,
     Station = 3,

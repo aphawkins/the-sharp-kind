@@ -80,6 +80,8 @@ public class RenditionRegistryTests
 
         public int ScreenHeight => 256;
 
+        public int ConsoleHeight => 56;
+
         public int DesignScale => 1;
 
         public IBaseView CreateBaseView(IViewSurface surface) => new NothingBaseView();
@@ -186,10 +188,6 @@ public class RenditionRegistryTests
         public SharpKind.Graphics.IGraphics Graphics => throw new NotSupportedException();
 
         public ViewLayout Layout => throw new NotSupportedException();
-
-        public void DrawBorder()
-        {
-        }
 
         public void DrawFps(int fps)
         {

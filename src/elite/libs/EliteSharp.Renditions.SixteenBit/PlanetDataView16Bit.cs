@@ -30,8 +30,6 @@ internal sealed class PlanetDataView16Bit : BaseView16Bit, IView<PlanetDataModel
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        DrawBorder();
-
         DrawViewHeader(model.Header);
 
         if (model.Distance.Length > 0)

@@ -65,8 +65,6 @@ internal sealed class CreditsView16Bit : BaseView16Bit, IView<CreditsModel>
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        DrawBorder();
-
         DrawViewHeader("CREDITS");
 
         _version.Position = new(_surface.Layout.ViewportLeft, _surface.Layout.ViewportTop + VersionOffsetY);

@@ -48,6 +48,20 @@ public interface IRendition
     public int ScreenHeight { get; }
 
     /// <summary>
+    /// Gets the height in pixels of the console band at the foot of the
+    /// screen - the dials, the radar and the compass. The viewport is
+    /// everything above it, so this is the one piece of the HUD that decides
+    /// where every other screen may draw.
+    /// <para>
+    /// Stated rather than measured off the HUD art: that art is a full-screen
+    /// overlay - the canopy the universe is seen through as well as the
+    /// console under it - so its own height is the screen's and says nothing
+    /// about where the band starts.
+    /// </para>
+    /// </summary>
+    public int ConsoleHeight { get; }
+
+    /// <summary>
     /// Gets the design-space scale: this rendition's chrome is authored in the
     /// original's 256-square space, and this multiplies those positions and
     /// sizes up to its own pixels, so chrome drawn at twice the original's

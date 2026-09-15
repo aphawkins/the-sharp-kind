@@ -113,7 +113,6 @@ internal abstract class SettingsListController : IScreenController
 
     public void Draw()
     {
-        _baseView.DrawBorder();
         _baseView.DrawViewHeader(_header);
 
         for (int i = 0; i < _rows.Children.Count; i++)

@@ -37,8 +37,6 @@ internal sealed class ShortRangeChartView16Bit : BaseView16Bit, IView<ShortRange
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        DrawBorder();
-
         DrawViewHeader(model.Title);
 
         // Fuel radius

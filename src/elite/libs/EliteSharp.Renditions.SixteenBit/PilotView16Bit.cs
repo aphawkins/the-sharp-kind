@@ -35,8 +35,6 @@ internal sealed class PilotView16Bit : BaseView16Bit, IView<PilotModel>
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        DrawBorder();
-
         if (model.HyperspaceStatus.Length > 0)
         {
             _surface.Graphics.DrawTextCentre(

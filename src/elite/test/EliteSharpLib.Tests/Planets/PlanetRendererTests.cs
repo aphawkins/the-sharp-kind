@@ -180,7 +180,7 @@ public sealed class PlanetRendererTests
     {
         Mock<IViewSurface> surface = new();
         surface.SetupGet(x => x.Graphics).Returns(graphics.Object);
-        surface.SetupGet(x => x.Layout).Returns(new ViewLayout(512, 512, new(512, 129), 2));
+        surface.SetupGet(x => x.Layout).Returns(new ViewLayout(512, 512, 128, 2));
         surface.SetupGet(x => x.Palette).Returns(s_palette);
 
         Random random = new(seed);

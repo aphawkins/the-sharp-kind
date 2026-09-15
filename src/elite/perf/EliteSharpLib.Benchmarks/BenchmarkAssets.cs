@@ -10,7 +10,7 @@ namespace EliteSharpLib.Benchmarks;
 // The game's assets and a rendition's, composed as the game composes them -
 // the same arrangement EliteSharpLib.Tests uses, for the same reason. A bare
 // FakeAssetLocator has no images, so constructing EliteDraw against it throws
-// looking up "Scanner"; and what these benchmarks measure is the real
+// looking up "Hud"; and what these benchmarks measure is the real
 // composition, so the real one is what they should build.
 internal static class BenchmarkAssets
 {

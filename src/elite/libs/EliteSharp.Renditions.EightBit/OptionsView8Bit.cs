@@ -48,8 +48,6 @@ internal sealed class OptionsView8Bit : BaseView8Bit, IView<OptionsModel>
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        DrawBorder();
-
         DrawViewHeader("OPTIONS");
 
         FillOptions(model);

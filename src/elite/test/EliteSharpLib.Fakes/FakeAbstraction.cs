@@ -14,9 +14,11 @@ namespace EliteSharpLib.Fakes;
 
 internal sealed class FakeAbstraction(IGraphics graphics, ScreenLayout layout) : IAbstraction
 {
-    // 512x512, matching SDLProgram's real ScreenWidth/ScreenHeight: EliteDraw
-    // derives its layout (Centre, ScannerTop, ...) from these, and a 0x0
-    // fake screen produces negative ranges that blow up star generation.
+    // A plain square screen for the callers that only need one to exist:
+    // EliteDraw derives its layout from these, and a 0x0 fake screen
+    // produces negative ranges that blow up star generation. A caller that
+    // cares what the frame looks like passes the rendition's own size
+    // instead, as HeadlessGameHarness does.
     public FakeAbstraction()
         : this(new RecordingGraphics(512, 512), new(512, 512))
     {

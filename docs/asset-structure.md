@@ -32,7 +32,7 @@ Renditions/
     EliteSharp.Renditions.EightBit.dll
     Assets/
       AssetManifest.json
-      Images/       scanner.bmp, ...
+      Images/       hud.bmp, ...
       Fonts/        bbc-micro.bmp, Bm437_Master_512.FON, Mx437_Master_512.ttf
       Palette/      palette.json
       Models/       adder.obj, ..., palette.mtl

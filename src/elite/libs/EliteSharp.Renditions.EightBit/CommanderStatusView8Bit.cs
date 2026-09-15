@@ -46,8 +46,6 @@ internal sealed class CommanderStatusView8Bit : BaseView8Bit, IView<CommanderSta
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        DrawBorder();
-
         DrawViewHeader(model.Title);
 
         DrawRow(FirstRow, "System:", model.PresentSystem);

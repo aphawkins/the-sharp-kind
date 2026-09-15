@@ -30,8 +30,6 @@ internal sealed class SaveCommanderView16Bit : BaseView16Bit, IView<SaveCommande
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        DrawBorder();
-
         DrawViewHeader("SAVE COMMANDER");
 
         _surface.Graphics.DrawTextCentre(75, "Please enter commander name:", nameof(FontType.Small), _colorWhite);

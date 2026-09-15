@@ -4,7 +4,6 @@
 
 ////using System.Diagnostics;
 using System.Numerics;
-using EliteSharp.Abstractions.Assets;
 using EliteSharp.Abstractions.Renditions;
 using EliteSharp.Abstractions.Views;
 using EliteSharpLib.Ships;
@@ -67,7 +66,7 @@ internal sealed class EliteDraw : IEliteDraw
         Layout = new(
             screen.ScreenWidth,
             screen.ScreenHeight,
-            graphics.ImageSize(nameof(ImageType.Scanner)),
+            rendition.ConsoleHeight,
             rendition.DesignScale);
         Palette = PaletteReader.Read(assetLocator.PalettePath);
         _shadesShips = rendition.ShadesShips;

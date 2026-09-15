@@ -96,7 +96,7 @@
        where RenditionLoader looks. A folder rather than a loose DLL because a
        rendition brings its own artwork, palette, fonts and ship models with
        it, and those would collide in one directory - both of the shipped ones
-       have a palette.json and a scanner.bmp.
+       have a palette.json and a hud.bmp.
 
        Both are copied whichever one is configured: the rendition is a setting
        the commander can change without reinstalling anything. -->

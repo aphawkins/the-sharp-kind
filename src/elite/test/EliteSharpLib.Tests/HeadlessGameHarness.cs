@@ -3,6 +3,7 @@
 // Elite (C) I.Bell & D.Braben 1984.
 
 using EliteSharpLib.Fakes;
+using EliteSharpLib.Renditions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -21,25 +22,40 @@ namespace EliteSharpLib.Tests;
 // tick instead (via HeadlessGameHarnessBase).
 internal sealed class HeadlessGameHarness : HeadlessGameHarnessBase<GameStateSummary>
 {
+    // The rendition this harness draws with, loaded once and shared: a
+    // rendition holds no state, and loading it per harness reloads its
+    // assembly for every test that builds one.
+    private static readonly InstalledRenditions s_renditions =
+        EliteServiceCollectionExtensions.LoadRendition("16-bit", NullLoggerFactory.Instance);
+
     private readonly ServiceProvider _provider;
     private readonly string _configDirectory;
 
-    // 512x512, matching SDLProgram's real ScreenWidth/ScreenHeight: EliteDraw
-    // derives its layout (Centre, ScannerTop, ...) from these, and a 0x0
-    // screen produces negative ranges that blow up star generation.
+    // The screen size defaults to the rendition's own. It was a hardcoded
+    // 512x512 until 2026-09-15, which had been wrong since the tier widened
+    // to 640 on 2026-07-30: the HUD art is 640 across, so every headless
+    // frame lost the right-hand dial cluster and the right edge of the
+    // canopy - a frame no commander ever sees, being signed by the golden
+    // baselines. A caller may still name a size; 0x0 is the one thing it
+    // must not, since negative ranges blow up star generation.
     // randomSeed replaces the app's unseeded Random.Shared, so a run can be
     // reproduced exactly. Null keeps the shipped behaviour. Golden traces
     // need it: without a fixed seed the laser aim jitter, the encounter
     // rolls and the ship spins all differ run to run.
     public HeadlessGameHarness(
-        int width = 512,
-        int height = 512,
+        int? width = null,
+        int? height = null,
         int? randomSeed = null,
         float updatesPerSecond = GameClock.StepsPerSecond,
         int? renderSeed = null)
-        : base(width, height, TestAssets.Locator())
+        : base(
+            width ?? s_renditions.Chosen.ScreenWidth,
+            height ?? s_renditions.Chosen.ScreenHeight,
+            TestAssets.Locator())
     {
-        FakeAbstraction abstraction = new(Graphics, new(width, height));
+        FakeAbstraction abstraction = new(
+            Graphics,
+            new(width ?? s_renditions.Chosen.ScreenWidth, height ?? s_renditions.Chosen.ScreenHeight));
         Keyboard = (FakeKeyboard)abstraction.Keyboard;
 
         _configDirectory = Path.Combine(Path.GetTempPath(), "EliteHeadlessHarness_" + Guid.NewGuid().ToString("N"));
@@ -55,7 +71,7 @@ internal sealed class HeadlessGameHarness : HeadlessGameHarnessBase<GameStateSum
         services.AddSingleton(_ => TestAssets.Locator());
         services.AddEliteConfig(_configDirectory);
         services.AddEliteControls(_configDirectory);
-        services.AddEliteMain(EliteServiceCollectionExtensions.LoadRendition("16-bit", NullLoggerFactory.Instance));
+        services.AddEliteMain(s_renditions);
 
         // After AddEliteMain, so this wins: the container resolves the last
         // registration for a service type, and AddEliteCore registered

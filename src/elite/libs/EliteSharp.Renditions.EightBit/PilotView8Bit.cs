@@ -34,8 +34,6 @@ internal sealed class PilotView8Bit : BaseView8Bit, IView<PilotModel>
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        DrawBorder();
-
         if (model.HyperspaceStatus.Length > 0)
         {
             DrawTextCentreOnGrid(HyperspaceRow, model.HyperspaceStatus, nameof(FontType.Small), _colorWhite);

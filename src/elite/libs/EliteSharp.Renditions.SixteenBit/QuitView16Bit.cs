@@ -28,8 +28,6 @@ internal sealed class QuitView16Bit : BaseView16Bit, IView<QuitModel>
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        DrawBorder();
-
         DrawViewHeader(model.Header);
 
         _surface.Graphics.DrawTextCentre(_surface.Layout.ViewportCentre.Y, model.Prompt, nameof(FontType.Large), _colorGold);

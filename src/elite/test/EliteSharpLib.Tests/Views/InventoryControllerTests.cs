@@ -170,10 +170,6 @@ public class InventoryControllerTests
 
         public ViewLayout Layout => throw new NotSupportedException();
 
-        public void DrawBorder()
-        {
-        }
-
         public void DrawFps(int fps)
         {
         }

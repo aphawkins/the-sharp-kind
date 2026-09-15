@@ -25,8 +25,6 @@ internal sealed class GameOverView8Bit : BaseView8Bit, IView<GameOverModel>
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        DrawBorder();
-
         DrawTextCentreOnGrid(12, model.Message, nameof(FontType.Small), _colorYellow);
     }
 }

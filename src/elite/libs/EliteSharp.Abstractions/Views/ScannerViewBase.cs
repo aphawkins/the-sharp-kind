@@ -9,11 +9,11 @@ using SharpKind;
 namespace EliteSharp.Abstractions.Views;
 
 /// <summary>
-/// The HUD: dials, compass and the scanner's lollipops. Every position here is
-/// an offset into the tier's scanner bitmap, and the two tiers' scanners are
-/// different sizes (8-bit 320x56 against 16-bit 512x129), so the layout is
-/// entirely the subclass's - this base holds only the drawing that every tier
-/// does the same way.
+/// The HUD: the canopy, the dials, the compass and the scanner's lollipops.
+/// Every position here is an offset into the console band at the foot of the
+/// HUD art, and the two tiers' bands are different sizes (8-bit 320x56
+/// against 16-bit 640x128), so the layout is entirely the subclass's - this
+/// base holds only the drawing that every tier does the same way.
 /// <para>
 /// It reads no game state. What is on the scanner, how full the dials are and
 /// where the compass points all arrive on <see cref="ScannerModel"/>, the same
@@ -130,18 +130,19 @@ public abstract class ScannerViewBase : IView<ScannerModel>
     protected abstract ShipColours Ships { get; }
 
     /// <summary>
-    /// Draws the scanner bitmap itself, under everything else.
+    /// Draws the HUD art itself, under the readings. It is a full-screen
+    /// overlay rather than a strip along the bottom: the frame around the
+    /// viewport is the cockpit window the universe is seen through, so it is
+    /// part of the same artwork as the console below it, and everything it
+    /// does not ink is transparent.
     /// </summary>
-    public void DrawScanner()
-        => Surface.Graphics.DrawImage(
-            nameof(ImageType.Scanner),
-            new(Surface.Layout.ViewportLeft, Surface.Layout.ViewportHeight));
+    public void DrawHud() => Surface.Graphics.DrawImage(nameof(ImageType.Hud), new(0, 0));
 
     public void Draw(ScannerModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        DrawScanner();
+        DrawHud();
         DisplaySpeed(model);
         DisplayIndicator(model.Pitch, ScannerRelative(PitchPosition));
         DisplayIndicator(model.Roll, ScannerRelative(RollPosition));
@@ -174,9 +175,9 @@ public abstract class ScannerViewBase : IView<ScannerModel>
     }
 
     /// <summary>
-    /// Turns a scanner-relative position into a screen one.
+    /// Turns a console-relative position into a screen one.
     /// </summary>
-    /// <param name="position">The position, relative to the scanner's top left.</param>
+    /// <param name="position">The position, relative to the console band's top left.</param>
     /// <returns>The same position in screen coordinates.</returns>
     protected Vector2 ScannerRelative(Vector2 position)
         => new(Surface.Layout.ViewportLeft + position.X, Surface.Layout.ViewportHeight + position.Y);

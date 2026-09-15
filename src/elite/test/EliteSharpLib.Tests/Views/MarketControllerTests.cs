@@ -174,10 +174,6 @@ public class MarketControllerTests
 
         public ViewLayout Layout => throw new NotSupportedException();
 
-        public void DrawBorder()
-        {
-        }
-
         public void DrawFps(int fps)
         {
         }

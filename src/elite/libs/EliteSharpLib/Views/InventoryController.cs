@@ -86,7 +86,6 @@ internal sealed class InventoryController : IScreenController
 
     public void Draw()
     {
-        _baseView.DrawBorder();
         _baseView.DrawViewHeader("INVENTORY");
 
         DrawPlaced(_style.FuelCaption, _style.CaptionStyle);

@@ -88,7 +88,6 @@ internal sealed class MarketController : IScreenController
 
     public void Draw()
     {
-        _baseView.DrawBorder();
         _baseView.DrawViewHeader($"{_planet.NamePlanet(_gameState.DockedPlanet)} MARKET PRICES");
 
         foreach (PlacedText heading in _style.Headings)

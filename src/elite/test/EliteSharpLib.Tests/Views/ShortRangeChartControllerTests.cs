@@ -20,14 +20,14 @@ namespace EliteSharpLib.Tests.Views;
 // most of what is worth asserting is about that boundary.
 public class ShortRangeChartControllerTests
 {
-    // The 16-bit tier: a 512x512 screen behind a 512x129 scanner, at scale 2.
-    // Viewport height is 383, so the cross-hair's box is x 1..510, y 37..350:
+    // The 16-bit tier: a 512x512 screen above a 128-row console, at scale 2.
+    // Viewport height is 384, so the cross-hair's box is x 1..510, y 37..351:
     // one pixel inside the viewport's own right edge, and clear of the
-    // header and the scanner top and bottom.
+    // header and the console top and bottom.
     private const float MinX = 1;
     private const float MaxX = 510;
     private const float MinY = 37;
-    private const float MaxY = 350;
+    private const float MaxY = 351;
 
     [Fact]
     public void ResetPlotsOnlyThePlanetsInsideTheChartsWindow()
@@ -47,7 +47,7 @@ public class ShortRangeChartControllerTests
             planet =>
             {
                 Assert.InRange(planet.Position.X, 256 - 160, 256 + 160);
-                Assert.InRange(planet.Position.Y, 191.5f - 152, 191.5f + 152);
+                Assert.InRange(planet.Position.Y, 192f - 152, 192f + 152);
             });
     }
 
@@ -78,7 +78,7 @@ public class ShortRangeChartControllerTests
         ShortRangeChartController controller = CreateController(
             out _,
             out _,
-            new ViewLayout(512, 512, new Vector2(512, 129), designScale));
+            new ViewLayout(512, 512, 128, designScale));
 
         controller.Reset();
 
@@ -100,7 +100,7 @@ public class ShortRangeChartControllerTests
         Assert.Equal(
             new Vector2(
                 ((gameState.HyperspacePlanet.D - gameState.DockedPlanet.D) * 8) + 256,
-                ((gameState.HyperspacePlanet.B - gameState.DockedPlanet.B) * 4) + 191.5f),
+                ((gameState.HyperspacePlanet.B - gameState.DockedPlanet.B) * 4) + 192f),
             controller.Cross);
     }
 
@@ -233,7 +233,7 @@ public class ShortRangeChartControllerTests
         Assert.Equal(
             new Vector2(
                 ((gameState.HyperspacePlanet.D - gameState.DockedPlanet.D) * 8) + 256,
-                ((gameState.HyperspacePlanet.B - gameState.DockedPlanet.B) * 4) + 191.5f),
+                ((gameState.HyperspacePlanet.B - gameState.DockedPlanet.B) * 4) + 192f),
             controller.Cross);
     }
 
@@ -311,7 +311,7 @@ public class ShortRangeChartControllerTests
         ShortRangeChartController controller = CreateController(
             out FakeKeyboard keyboard,
             out _,
-            new ViewLayout(320, 256, new Vector2(320, 56), 1));
+            new ViewLayout(320, 256, 56, 1));
         controller.Reset();
 
         for (int i = 0; i < 300; i++)

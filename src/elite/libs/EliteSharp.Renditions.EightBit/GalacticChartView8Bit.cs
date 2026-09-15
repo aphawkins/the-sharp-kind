@@ -46,8 +46,6 @@ internal sealed class GalacticChartView8Bit : BaseView8Bit, IView<GalacticChartM
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        DrawBorder();
-
         DrawViewHeader(model.Title);
 
         _surface.Graphics.DrawLine(new(_surface.Layout.ViewportLeft, DividerY), new(_surface.Layout.ViewportRight, DividerY), _colorWhite);

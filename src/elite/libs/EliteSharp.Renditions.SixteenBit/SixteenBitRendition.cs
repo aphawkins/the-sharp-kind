@@ -25,6 +25,11 @@ public sealed class SixteenBitRendition : IRendition
 
     public int ScreenHeight => 512;
 
+    // The bottom 128 rows of the HUD art, where the console's own frame
+    // starts. The 2026-07-30 widening left it alone - only the console's
+    // width grew with the screen.
+    public int ConsoleHeight => 128;
+
     public int DesignScale => 2;
 
     // 640x512 doubled is 1280x1024; there is no room above that on a common

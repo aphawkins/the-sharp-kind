@@ -24,6 +24,10 @@ public sealed class EightBitRendition : IRendition
 
     public int ScreenHeight => 256;
 
+    // The bottom 56 rows of the HUD art, which leaves the viewport a whole
+    // 40 by 25 of this tier's 8x8 character cells.
+    public int ConsoleHeight => 56;
+
     public int DesignScale => 1;
 
     // 320x256 is a postage stamp on a modern display, so this tier magnifies

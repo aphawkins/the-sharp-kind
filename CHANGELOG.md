@@ -7,6 +7,48 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Changed (the border is the ship's window frame, 2026-09-15)
+
+- **Elite's HUD art is now one full-screen overlay per tier, `hud.bmp`,
+  replacing `scanner.bmp`.** It carries the canopy the universe is seen
+  through as well as the console under it, and everything it does not ink is
+  transparent, so it draws over the whole display in one call
+  ([ScannerViewBase.DrawHud](src/elite/libs/EliteSharp.Abstractions/Views/ScannerViewBase.cs)).
+  `ImageType.Scanner` is `ImageType.Hud`, and both manifests name it.
+  - **`IBaseView.DrawBorder` is gone**, with both tiers' implementations and
+    all 38 call sites. The frame was never decoration around a viewport; it
+    is what the commander is looking out of, so it belongs to the art in
+    layer 2 rather than to each screen's own draw. The HUD is drawn on every
+    screen, so every screen still gets its frame - and gets it last, over
+    whatever it drew.
+  - The 16-bit frame is a 4-pixel grey bevel where it was a one-pixel white
+    rectangle; the 8-bit one is the same two-pixel-sides, one-pixel-top rule
+    as before, now yellow and off the art rather than drawn in code.
+  - `DockingView`, `LaunchView` and `HyperspaceView` drew nothing but the
+    border, so their `Draw` is now empty and they no longer take an
+    `IBaseView`. The break pattern they own is unmoved, in layer 1.
+  - **`ViewLayout` takes a console height rather than the scanner bitmap's
+    size**, supplied by the new `IRendition.ConsoleHeight` (8-bit 56, 16-bit
+    128). It used to be measured off the art, which no longer says anything:
+    the art is the screen's own size now. The 16-bit band is a row shorter
+    than the old scanner bitmap, so the viewport gains a row and reaches 384;
+    every offset inside the band is unchanged, and the short range chart's
+    cross-hair box follows the viewport down with it.
+  - **`HeadlessGameHarness` now takes its screen size from the rendition it
+    loads**, rather than a hardcoded 512x512 that had been wrong since the
+    tier widened to 640 on 2026-07-30. Every headless frame was losing the
+    right-hand dial cluster, and since the art became the canopy, the right
+    edge of the window frame too - a frame no commander sees, being signed
+    by the golden baselines. The rendition is also loaded once and shared
+    now instead of per harness; a rendition holds no state.
+  - The five Elite frame baselines moved, as the art and the harness width
+    did. Their header line also picks up the shared `SharpKind.GoldenFrames`
+    spelling, which the SCR baselines have carried since 2026-09-15. **The
+    five traces did not move at all**, which is the check that the harness
+    width reaches only the drawing: the simulation records the same numbers
+    on a 640-wide screen as on a 512-wide one.
+
+
 ### Changed (Stunt Car Racer composes its frames as three layers too, 2026-09-15)
 
 - **Every SCR screen now draws through a `LayerRunner`**, as Elite's does:

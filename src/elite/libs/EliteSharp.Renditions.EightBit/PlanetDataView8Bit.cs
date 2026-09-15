@@ -39,8 +39,6 @@ internal sealed class PlanetDataView8Bit : BaseView8Bit, IView<PlanetDataModel>
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        DrawBorder();
-
         DrawViewHeader(model.Header);
 
         int row = FirstRow;

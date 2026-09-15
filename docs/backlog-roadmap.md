@@ -218,22 +218,6 @@ SCR shows stats and no frame rate.
       starts false - so every baseline in both games should stay
       byte-identical; a moved baseline means the default leaked.
 
-### The 16-bit border should look like the ship's window frame
-
-The border belongs to the HUD - it is the canopy the universe is seen
-through, not decoration around a viewport - so it belongs in layer 2, which
-the layer work above has now settled.
-
-- [ ] [EliteSharp.Renditions.SixteenBit] `DrawBorder` draws `BorderWidth`
-      (currently 1) plain white rectangles nested inside one another
-      ([BaseView16Bit.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/libs/EliteSharp.Renditions.SixteenBit/BaseView16Bit.cs)),
-      which reads as a box drawn around the screen rather than as a frame the
-      commander is looking out of. The 8-bit tier's is deliberately the
-      machine's own single-pixel rule and should stay as it is. What the
-      16-bit one should become is a maintainer decision about the art, not a
-      code question - it is recorded here so the layer work does not quietly
-      settle it.
-
 ### The 'Modern' rendition
 
 Scoped with the maintainer on 2026-09-12. A third rendition standing in for

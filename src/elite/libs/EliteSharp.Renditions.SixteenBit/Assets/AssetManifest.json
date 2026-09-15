@@ -34,7 +34,7 @@
     }
   },
   "Images": {
-    "Scanner": "scanner.bmp",
+    "Hud": "hud.bmp",
     "EliteText": "elitetext.bmp",
     "CompassGreen": "compass-green.bmp",
     "CompassRed": "compass-red.bmp",

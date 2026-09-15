@@ -15,7 +15,7 @@
   <ItemGroup>
     <!-- The assets travel with the assembly, which is why a rendition needs a
          folder of its own: both of the shipped ones have a palette.json and a
-         scanner.bmp, and they would land on top of each other. -->
+         hud.bmp, and they would land on top of each other. -->
     <None Update="Assets\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

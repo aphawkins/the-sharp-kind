@@ -21,10 +21,6 @@ internal class BaseView16Bit : IBaseView
     // the word-wrap estimates against rather than a measured one.
     private const int CharacterWidth = 8;
 
-    // The frame drawn around the viewport, overlaying its outer pixel rather
-    // than being reserved out of it.
-    private const int BorderWidth = 1;
-
     private readonly FastColor _colorGold;
     private readonly FastColor _colorWhite;
     private readonly float _rowHeight;
@@ -43,20 +39,6 @@ internal class BaseView16Bit : IBaseView
     public IGraphics Graphics { get; }
 
     public ViewLayout Layout { get; }
-
-    // Drawn over the viewport's own edge, so it needs no clip juggling: the
-    // rectangle is the viewport, and the view clip region already admits it.
-    public void DrawBorder()
-    {
-        for (int i = 0; i < BorderWidth; i++)
-        {
-            Graphics.DrawRectangle(
-                new(Layout.ViewportLeft + i, Layout.ViewportTop + i),
-                Layout.ViewportWidth - (2 * i),
-                Layout.ViewportHeight - (2 * i),
-                _colorWhite);
-        }
-    }
 
     // Right-aligned, so the proportional font's width never has to be
     // estimated to place this.

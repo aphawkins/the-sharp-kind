@@ -44,8 +44,6 @@ internal sealed class OptionsView16Bit : BaseView16Bit, IView<OptionsModel>
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        DrawBorder();
-
         DrawViewHeader("GAME OPTIONS");
 
         FillOptions(model);

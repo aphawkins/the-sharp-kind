@@ -34,8 +34,6 @@ internal sealed class Intro1View16Bit : BaseView16Bit, IView<Intro1Model>
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        DrawBorder();
-
         _surface.Graphics.DrawImageCentre(nameof(ImageType.EliteText), _surface.Layout.ViewportTop + 10);
 
         float y = _surface.Layout.ViewportHeight - 90;

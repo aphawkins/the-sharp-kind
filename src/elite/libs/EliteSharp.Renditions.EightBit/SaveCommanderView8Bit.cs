@@ -37,8 +37,6 @@ internal sealed class SaveCommanderView8Bit : BaseView8Bit, IView<SaveCommanderM
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        DrawBorder();
-
         DrawViewHeader("SAVE COMMANDER");
 
         DrawTextCentreOnGrid(6, "Please enter commander name:", nameof(FontType.Small), _colorWhite);

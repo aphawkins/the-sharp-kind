@@ -42,7 +42,7 @@
     }
   },
   "Images": {
-    "Scanner": "scanner.bmp",
+    "Hud": "hud.bmp",
     "CompassGreen": "compass-green.bmp",
     "CompassRed": "compass-red.bmp",
     "Station": "station.bmp",

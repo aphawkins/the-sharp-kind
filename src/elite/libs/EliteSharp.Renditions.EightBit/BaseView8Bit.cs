@@ -43,9 +43,6 @@ internal class BaseView8Bit : IBaseView
     internal const int CharacterWidth = 8;
     internal const int RowHeight = 8;
 
-    // The left and right border are two pixels wide; top and bottom are one.
-    internal const int SideBorderWidth = 2;
-
     private readonly FastColor _colorWhite;
     private readonly FastColor _colorYellow;
 
@@ -62,31 +59,6 @@ internal class BaseView8Bit : IBaseView
     public IGraphics Graphics { get; }
 
     public ViewLayout Layout { get; }
-
-    // Drawn over the viewport's own edge, so it needs no clip juggling: the
-    // rectangle is the viewport, and the view clip region already admits it.
-    public void DrawBorder()
-    {
-        // Top
-        Graphics.DrawLine(new(Layout.ViewportLeft, Layout.ViewportTop), new(Layout.ViewportWidth, Layout.ViewportTop), _colorWhite);
-
-        // Left and right are two pixels wide, the second line one pixel
-        // inboard of the first; top and bottom stay single-pixel.
-        for (int i = 0; i < SideBorderWidth; i++)
-        {
-            // Left
-            Graphics.DrawLine(
-                new(Layout.ViewportLeft + i, Layout.ViewportTop),
-                new(Layout.ViewportLeft + i, Layout.ViewportBottom),
-                _colorWhite);
-
-            // Right
-            Graphics.DrawLine(
-                new(Layout.ViewportWidth - 1 - i, Layout.ViewportTop),
-                new(Layout.ViewportWidth - 1 - i, Layout.ViewportBottom),
-                _colorWhite);
-        }
-    }
 
     // Row 0 and the outermost columns belong to the border, which overlays
     // their first pixel; most of this font's glyphs ink theirs, so no text

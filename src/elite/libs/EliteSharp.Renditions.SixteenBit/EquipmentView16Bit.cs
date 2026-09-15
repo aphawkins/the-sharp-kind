@@ -32,8 +32,6 @@ internal sealed class EquipmentView16Bit : BaseView16Bit, IView<EquipmentModel>
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        DrawBorder();
-
         DrawViewHeader("EQUIP SHIP");
 
         float y = 55;

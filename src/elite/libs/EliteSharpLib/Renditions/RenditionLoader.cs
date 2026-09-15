@@ -64,7 +64,7 @@ internal static class RenditionLoader
             // A rendition is a folder, not a loose file: it brings its own
             // artwork, palette, fonts and ship models alongside its code, and
             // they would collide in one directory - both of the shipped ones
-            // have a palette.json and a scanner.bmp. Loose DLLs are still read
+            // have a palette.json and a hud.bmp. Loose DLLs are still read
             // so a code-only rendition needs no folder of its own.
             foreach (string file in Directory.EnumerateFiles(renditionsFolder, "*.dll", SearchOption.AllDirectories))
             {

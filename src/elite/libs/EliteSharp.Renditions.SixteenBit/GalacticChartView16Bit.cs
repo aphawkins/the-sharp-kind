@@ -36,8 +36,6 @@ internal sealed class GalacticChartView16Bit : BaseView16Bit, IView<GalacticChar
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        DrawBorder();
-
         // Header
         DrawViewHeader(model.Title);
 

@@ -2,7 +2,6 @@
 // 'Elite - The New Kind' - C.J.Pinder 1999-2001.
 // Elite (C) I.Bell & D.Braben 1984.
 
-using EliteSharp.Abstractions.Views;
 using EliteSharpLib.Audio;
 using EliteSharpLib.Conflict;
 using EliteSharpLib.Graphics;
@@ -13,7 +12,6 @@ namespace EliteSharpLib.Views;
 internal sealed class DockingView : IScreenController
 {
     private readonly AudioController _audio;
-    private readonly IBaseView _baseView;
     private readonly BreakPattern _breakPattern;
     private readonly Combat _combat;
     private readonly GameState _gameState;
@@ -26,19 +24,21 @@ internal sealed class DockingView : IScreenController
         Space space,
         Combat combat,
         Universe universe,
-        IEliteDraw draw,
-        IBaseView baseView)
+        IEliteDraw draw)
     {
         _gameState = gameState;
         _audio = audio;
         _space = space;
         _combat = combat;
         _universe = universe;
-        _baseView = baseView;
         _breakPattern = new(draw);
     }
 
-    public void Draw() => _baseView.DrawBorder();
+    // Nothing: this screen is the break pattern, which is drawn into the
+    // universe layer below, and the HUD art draws the canopy over it.
+    public void Draw()
+    {
+    }
 
     public void DrawUniverse() => _breakPattern.Draw();
 

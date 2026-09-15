@@ -26,8 +26,6 @@ internal sealed class QuitView8Bit : BaseView8Bit, IView<QuitModel>
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        DrawBorder();
-
         DrawViewHeader(model.Header);
 
         DrawTextCentreOnGrid(12, model.Prompt, nameof(FontType.Small), _colorYellow);

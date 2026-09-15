@@ -40,8 +40,6 @@ internal sealed class EquipmentView8Bit : BaseView8Bit, IView<EquipmentModel>
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        DrawBorder();
-
         DrawViewHeader("EQUIP SHIP");
 
         int row = FirstRow;

@@ -309,26 +309,23 @@ public static class EliteServiceCollectionExtensions
             sp.GetRequiredService<Space>(),
             sp.GetRequiredService<Combat>(),
             sp.GetRequiredService<Universe>(),
-            sp.GetRequiredService<IEliteDraw>(),
-            sp.GetRequiredService<IBaseView>()));
+            sp.GetRequiredService<IEliteDraw>()));
         services.AddSingleton(sp => new LaunchView(
             sp.GetRequiredService<GameState>(),
             sp.GetRequiredService<AudioController>(),
             sp.GetRequiredService<Space>(),
             sp.GetRequiredService<Combat>(),
             sp.GetRequiredService<Universe>(),
-            sp.GetRequiredService<IEliteDraw>(),
-            sp.GetRequiredService<IBaseView>()));
+            sp.GetRequiredService<IEliteDraw>()));
         services.AddSingleton(sp => new HyperspaceView(
             sp.GetRequiredService<GameState>(),
             sp.GetRequiredService<AudioController>(),
-            sp.GetRequiredService<IEliteDraw>(),
-            sp.GetRequiredService<IBaseView>()));
+            sp.GetRequiredService<IEliteDraw>()));
     }
 
-    // The tier's shared chrome: every screen draws its own border through
-    // this, EliteMain the hyperspace countdown, and the tier-split screens
-    // their headers. It comes off the rendition with everything else.
+    // The tier's shared chrome: EliteMain draws the frame rate, the info
+    // message and the hyperspace countdown through this, and the tier-split
+    // screens their headers. It comes off the rendition with everything else.
     private static void AddBaseView(this IServiceCollection services)
     {
         services.AddSingleton(sp => sp.GetRequiredService<RenditionRegistry>().BaseView);

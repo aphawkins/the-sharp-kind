@@ -37,8 +37,6 @@ internal sealed class LoadCommanderView8Bit : BaseView8Bit, IView<LoadCommanderM
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        DrawBorder();
-
         DrawViewHeader("LOAD COMMANDER");
 
         DrawTextCentreOnGrid(6, "Please enter commander name:", nameof(FontType.Small), _colorWhite);

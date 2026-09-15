@@ -2,7 +2,6 @@
 // 'Elite - The New Kind' - C.J.Pinder 1999-2001.
 // Elite (C) I.Bell & D.Braben 1984.
 
-using EliteSharp.Abstractions.Views;
 using EliteSharpLib.Audio;
 using EliteSharpLib.Graphics;
 using SharpKind.Audio;
@@ -12,19 +11,21 @@ namespace EliteSharpLib.Views;
 internal sealed class HyperspaceView : IScreenController
 {
     private readonly AudioController _audio;
-    private readonly IBaseView _baseView;
     private readonly BreakPattern _breakPattern;
     private readonly GameState _gameState;
 
-    internal HyperspaceView(GameState gameState, AudioController audio, IEliteDraw draw, IBaseView baseView)
+    internal HyperspaceView(GameState gameState, AudioController audio, IEliteDraw draw)
     {
         _gameState = gameState;
         _audio = audio;
-        _baseView = baseView;
         _breakPattern = new(draw);
     }
 
-    public void Draw() => _baseView.DrawBorder();
+    // Nothing: this screen is the break pattern, which is drawn into the
+    // universe layer below, and the HUD art draws the canopy over it.
+    public void Draw()
+    {
+    }
 
     public void DrawUniverse() => _breakPattern.Draw();
 

@@ -35,8 +35,6 @@ internal sealed class Intro1View8Bit : BaseView8Bit, IView<Intro1Model>
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        DrawBorder();
-
         DrawTitle();
 
         int row = CreditsFirstRow;

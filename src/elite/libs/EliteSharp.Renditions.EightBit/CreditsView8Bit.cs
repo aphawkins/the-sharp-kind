@@ -77,8 +77,6 @@ internal sealed class CreditsView8Bit : BaseView8Bit, IView<CreditsModel>
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        DrawBorder();
-
         DrawViewHeader("CREDITS");
 
         _version.Position = new(_surface.Layout.ViewportLeft, Row(VersionRow));

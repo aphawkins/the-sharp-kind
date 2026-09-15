@@ -9,7 +9,8 @@ using SharpKind;
 namespace EliteSharp.Renditions.SixteenBit;
 
 /// <summary>
-/// The 16-bit HUD, laid out against the 640x129 scanner bitmap.
+/// The 16-bit HUD, laid out against the 640x128 console band at the foot of
+/// the HUD art.
 /// </summary>
 /// <remarks>
 /// When the tier widened from 512 to 640 the art was re-laid-out rather than

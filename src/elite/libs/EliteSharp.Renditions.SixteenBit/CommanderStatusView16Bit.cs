@@ -40,8 +40,6 @@ internal sealed class CommanderStatusView16Bit : BaseView16Bit, IView<CommanderS
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        DrawBorder();
-
         DrawViewHeader(model.Title);
 
         DrawRow(58, "Present System:", model.PresentSystem);

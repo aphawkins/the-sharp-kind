@@ -31,8 +31,6 @@ internal sealed class Intro2View8Bit : BaseView8Bit, IView<Intro2Model>
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        DrawBorder();
-
         DrawTitle();
 
         DrawTextCentreOnGrid(PromptRow, model.Prompt, nameof(FontType.Small), _colorYellow);

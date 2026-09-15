@@ -30,8 +30,6 @@ internal sealed class LoadCommanderView16Bit : BaseView16Bit, IView<LoadCommande
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        DrawBorder();
-
         DrawViewHeader("LOAD COMMANDER");
 
         _surface.Graphics.DrawTextCentre(75, "Please enter commander name:", nameof(FontType.Small), _colorWhite);

@@ -700,7 +700,8 @@ Blue 000088 · DarkBlue 111199 · Purple 444488 · BrightPurple BB55EE · Lilac 
   stays false for 16-bit: the tier is still direct-colour, so a bitmap need
   not use a *named* colour — it just has to use a *producible* one.
 - **36 bitmap colours were repainted to comply**, mostly `elitetext.bmp`'s
-  anti-aliased grey ramp and `scanner.bmp`. The ramp loses a few steps
+  anti-aliased grey ramp and the HUD art (then `scanner.bmp`, now
+  `hud.bmp`). The ramp loses a few steps
   where two of its shades now round together, which is inherent to 12 bits.
   Stunt Car Racer shares the tier and its `menu.bmp` was repainted the same
   way; its palette was already on the grid.

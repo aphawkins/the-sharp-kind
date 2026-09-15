@@ -57,8 +57,6 @@ internal sealed class MissionBriefingView16Bit : BaseView16Bit, IMissionBriefing
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        DrawBorder();
-
         if (model.Paragraphs.Count == 0)
         {
             return;

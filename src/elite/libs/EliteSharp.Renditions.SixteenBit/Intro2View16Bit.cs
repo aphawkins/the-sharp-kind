@@ -31,8 +31,6 @@ internal sealed class Intro2View16Bit : BaseView16Bit, IView<Intro2Model>
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        DrawBorder();
-
         _surface.Graphics.DrawImageCentre(nameof(ImageType.EliteText), _surface.Layout.ViewportTop + 10);
 
         _surface.Graphics.DrawTextCentre(_surface.Layout.ViewportHeight - 30, model.Prompt, nameof(FontType.Large), _colorGold);

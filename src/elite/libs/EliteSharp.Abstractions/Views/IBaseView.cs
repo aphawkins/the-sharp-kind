@@ -20,11 +20,6 @@ public interface IBaseView
     public ViewLayout Layout { get; }
 
     /// <summary>
-    /// Draws the screen border framing the view area.
-    /// </summary>
-    public void DrawBorder();
-
-    /// <summary>
     /// Draws the measured frame rate in the top-right, opposite the
     /// hyperspace countdown.
     /// </summary>

@@ -15,7 +15,7 @@ public class BreakPatternTests
     // tall, which is what the rings have to fit inside.
     public static TheoryData<string, float, float, float, float> Renditions { get; } = new()
     {
-        { "16-bit", 640, 512, 129, 2 },
+        { "16-bit", 640, 512, 128, 2 },
         { "8-bit", 320, 256, 56, 1 },
     };
 
@@ -25,10 +25,10 @@ public class BreakPatternTests
         string rendition,
         float screenWidth,
         float screenHeight,
-        float scannerHeight,
+        float consoleHeight,
         float scale)
     {
-        ViewLayout layout = new(screenWidth, screenHeight, new Vector2(screenWidth, scannerHeight), scale);
+        ViewLayout layout = new(screenWidth, screenHeight, consoleHeight, scale);
         RecordingGraphics graphics = new(screenWidth, screenHeight);
         FakeEliteDraw draw = new() { Layout = layout, Rendition = rendition, Graphics = graphics };
         BreakPattern pattern = new(draw);
