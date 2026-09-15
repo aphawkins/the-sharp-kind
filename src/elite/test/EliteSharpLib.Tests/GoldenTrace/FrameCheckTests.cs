@@ -2,7 +2,7 @@
 // 'Elite - The New Kind' - C.J.Pinder 1999-2001.
 // Elite (C) I.Bell & D.Braben 1984.
 
-using System.Text;
+using SharpKind.GoldenFrames;
 
 namespace EliteSharpLib.Tests.GoldenTrace;
 
@@ -60,7 +60,7 @@ public class FrameCheckTests
         TraceScenario scenario = TraceScenarios.All.Single(s => s.Name == scenarioName);
         Assert.NotEmpty(scenario.FrameTicks);
 
-        string text = FrameFile.Write(scenario, FrameRecorder.Record(scenario));
+        string text = FrameFile.Write(scenario.Name, FrameRecorder.Record(scenario));
 
         if (TraceBaselines.Regenerating)
         {
@@ -79,47 +79,8 @@ public class FrameCheckTests
 
         IReadOnlyList<FrameSignature> expected = FrameFile.Read(File.ReadAllText(baselinePath));
         IReadOnlyList<FrameSignature> actual = FrameFile.Read(text);
-        string? difference = FindFirstDifference(expected, actual);
+        string? difference = FrameComparer.FindFirstDifference(expected, actual);
 
         Assert.True(difference is null, difference);
-    }
-
-    private static string? FindFirstDifference(
-        IReadOnlyList<FrameSignature> expected,
-        IReadOnlyList<FrameSignature> actual)
-    {
-        if (expected.Count != actual.Count)
-        {
-            return $"frame count: expected {expected.Count}, got {actual.Count}";
-        }
-
-        for (int i = 0; i < expected.Count; i++)
-        {
-            if (expected[i].Hash != actual[i].Hash)
-            {
-                return Report(expected[i], actual[i]);
-            }
-        }
-
-        return null;
-    }
-
-    // Both grids side by side, with the rows that differ marked, so the
-    // failure message alone says what moved.
-    private static string Report(FrameSignature expected, FrameSignature actual)
-    {
-        StringBuilder message = new();
-        _ = message.Append(actual.Describe()).Append(" differs from ").Append(expected.Describe()).Append('\n');
-        _ = message.Append("     expected                         actual\n");
-
-        for (int row = 0; row < expected.Thumbnail.Count; row++)
-        {
-            string before = expected.Thumbnail[row];
-            string after = row < actual.Thumbnail.Count ? actual.Thumbnail[row] : string.Empty;
-            _ = message.Append(before == after ? "     " : "  != ");
-            _ = message.Append(before).Append("  ").Append(after).Append('\n');
-        }
-
-        return message.ToString();
     }
 }

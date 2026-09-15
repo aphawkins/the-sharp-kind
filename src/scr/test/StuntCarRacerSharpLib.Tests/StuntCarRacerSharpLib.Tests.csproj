@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <IsPackable>false</IsPackable>
@@ -21,8 +21,18 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\useful\libs\SharpKind.Graphics\SharpKind.Graphics.csproj" />
     <ProjectReference Include="..\..\..\useful\test\SharpKind.Fakes\SharpKind.Fakes.csproj" />
+    <ProjectReference Include="..\..\..\useful\test\SharpKind.GoldenFrames\SharpKind.GoldenFrames.csproj" />
     <ProjectReference Include="..\..\libs\StuntCarRacerSharpLib\StuntCarRacerSharpLib.csproj" />
     <ProjectReference Include="..\StuntCarRacerSharpLib.Fakes\StuntCarRacerSharpLib.Fakes.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Read from the build output so a test run never depends on the source
+         tree being where it was compiled. Regenerating writes back to the
+         source copy instead - see FrameBaselines. -->
+    <None Include="GoldenFrames\Baselines\*.*"
+          LinkBase="GoldenFrames\Baselines"
+          CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

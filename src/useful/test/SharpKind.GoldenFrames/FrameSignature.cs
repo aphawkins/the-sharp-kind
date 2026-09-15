@@ -1,14 +1,11 @@
-// 'Elite - The Sharp Kind' - Andy Hawkins 2023-2026.
-// 'Elite - The New Kind' - C.J.Pinder 1999-2001.
-// Elite (C) I.Bell & D.Braben 1984.
+﻿// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
 
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
-using SharpKind;
 using SharpKind.Graphics;
 
-namespace EliteSharpLib.Tests.GoldenTrace;
+namespace SharpKind.GoldenFrames;
 
 // What one composed frame looks like, in a form small enough to commit and
 // legible enough to review.
@@ -19,7 +16,7 @@ namespace EliteSharpLib.Tests.GoldenTrace;
 // that vanished, a starfield painted over the ships - which a hash cannot,
 // and which matters because the repo has no image diff and no PNG writer to
 // build one from.
-internal sealed record FrameSignature(int Tick, string Hash, IReadOnlyList<string> Thumbnail)
+public sealed record FrameSignature(int Tick, string Hash, IReadOnlyList<string> Thumbnail)
 {
     // 32x32 cells over the frame. Enough to place the planet disc, the
     // viewport border and the HUD band; small enough that a whole scenario's
@@ -30,14 +27,14 @@ internal sealed record FrameSignature(int Tick, string Hash, IReadOnlyList<strin
     // cells survive a trim and the rows stay aligned in a diff.
     private const string Ramp = ".:-=+*#%@";
 
-    internal static FrameSignature Capture(int tick, FastBitmap frame)
+    public static FrameSignature Capture(int tick, FastBitmap frame)
     {
         ArgumentNullException.ThrowIfNull(frame);
 
         return new(tick, HashOf(frame), ThumbnailOf(frame));
     }
 
-    internal string Describe()
+    public string Describe()
         => string.Create(CultureInfo.InvariantCulture, $"frame {Tick} ({Hash[..12]})");
 
     private static string HashOf(FastBitmap frame)
@@ -115,10 +112,11 @@ internal sealed record FrameSignature(int Tick, string Hash, IReadOnlyList<strin
             return 0;
         }
 
-        // Square-rooted rather than linear. Elite draws thin bright lines on
-        // black, so a cell holding a break-pattern arc or a dozen stars has a
-        // mean of about eight out of 255 and would round to "empty" on a
-        // linear ramp - which is exactly the content a reader needs to see.
+        // Square-rooted rather than linear. Both games draw thin bright lines
+        // on black, so a cell holding a break-pattern arc, a dozen stars or a
+        // length of track edge has a mean of about eight out of 255 and would
+        // round to "empty" on a linear ramp - which is exactly the content a
+        // reader needs to see.
         float mean = total / (count * 255f);
         return (int)((MathF.Sqrt(mean) * (Ramp.Length - 1)) + 0.5f);
     }

@@ -186,7 +186,8 @@ first.
 The layer type and the runner landed 2026-09-15, and Elite moved onto them
 the same day - see
 [CHANGELOG.md](https://github.com/aphawkins/the-sharp-kind/blob/main/CHANGELOG.md).
-Two items are left, and the first is still a prerequisite of the second.
+One item is left. SCR's frame baselines, which were its prerequisite,
+landed 2026-09-15 as well.
 
 **One thing the Elite move found and did not fix.** `BreakPattern`'s widest
 ring reaches exactly `ViewportHeight` - one row past `ViewportBottom`, the
@@ -201,14 +202,6 @@ silently. The equivalent off-by-one in the 8-bit border and in
 `LaserDrawBase` was corrected, because there the clip and the fix produce the
 same pixels.
 
-- [ ] [StuntCarRacerSharpLib.Tests] **Prerequisite for the next item.** SCR
-      has no golden frame traces, so a rendering change to it is unguarded
-      where Elite's is checked byte for byte. `CaptureFrame` already sits on
-      the shared
-      [HeadlessGameHarnessBase](https://github.com/aphawkins/the-sharp-kind/blob/main/src/useful/test/SharpKind.Fakes/Harness/HeadlessGameHarnessBase.cs);
-      what is Elite-only is `FrameSignature`/`FrameFile`/`TraceBaselines` in
-      `EliteSharpLib.Tests`. Lift those into a shared test library and
-      baseline a race, the track menu and the track preview.
 - [ ] [StuntCarRacerSharpLib] Move SCR onto the same layers: `DrawWorld`'s
       backdrop and world polygons are layers 0 and 1, and each screen's own
       text plus the cockpit are layer 2

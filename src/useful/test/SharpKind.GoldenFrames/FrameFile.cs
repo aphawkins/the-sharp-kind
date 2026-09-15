@@ -1,31 +1,28 @@
-// 'Elite - The Sharp Kind' - Andy Hawkins 2023-2026.
-// 'Elite - The New Kind' - C.J.Pinder 1999-2001.
-// Elite (C) I.Bell & D.Braben 1984.
+﻿// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
 
 using System.Globalization;
 using System.Text;
 
-namespace EliteSharpLib.Tests.GoldenTrace;
+namespace SharpKind.GoldenFrames;
 
 // Reads and writes the committed frame-signature baselines, in the same
 // line-based text as the traces and for the same reason: a change should be
 // reviewable in a pull request without special tooling.
-internal static class FrameFile
+public static class FrameFile
 {
-    internal const string Extension = ".frames";
-
     private const int SchemaVersion = 1;
 
-    private const string Banner = "# elite frame signatures v";
+    private const string Banner = "# frame signatures v";
 
-    internal static string Write(TraceScenario scenario, IReadOnlyList<FrameSignature> frames)
+    public static string Extension => ".frames";
+
+    public static string Write(string scenarioName, IReadOnlyList<FrameSignature> frames)
     {
-        ArgumentNullException.ThrowIfNull(scenario);
         ArgumentNullException.ThrowIfNull(frames);
 
         StringBuilder text = new();
         Line(text, Banner + SchemaVersion.ToString(CultureInfo.InvariantCulture));
-        Line(text, "# scenario " + scenario.Name);
+        Line(text, "# scenario " + scenarioName);
 
         foreach (FrameSignature frame in frames)
         {
@@ -39,7 +36,7 @@ internal static class FrameFile
         return text.ToString();
     }
 
-    internal static IReadOnlyList<FrameSignature> Read(string text)
+    public static IReadOnlyList<FrameSignature> Read(string text)
     {
         ArgumentNullException.ThrowIfNull(text);
 

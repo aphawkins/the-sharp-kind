@@ -1,4 +1,4 @@
-<Solution>
+﻿<Solution>
   <Folder Name="/docs/">
     <File Path="docs/architecture-principles.md" />
     <File Path="docs/asset-structure.md" />
@@ -122,6 +122,7 @@
     <Project Path="src/useful/test/SharpKind.Assets.Tests/SharpKind.Assets.Tests.csproj" />
     <Project Path="src/useful/test/SharpKind.Audio.Tests/SharpKind.Audio.Tests.csproj" />
     <Project Path="src/useful/test/SharpKind.Fakes/SharpKind.Fakes.csproj" />
+    <Project Path="src/useful/test/SharpKind.GoldenFrames/SharpKind.GoldenFrames.csproj" />
     <Project Path="src/useful/test/SharpKind.Graphics.Fakes/SharpKind.Graphics.Fakes.csproj" />
     <Project Path="src/useful/test/SharpKind.Graphics.Tests/SharpKind.Graphics.Tests.csproj" />
     <Project Path="src/useful/test/SharpKind.Input.Tests/SharpKind.Input.Tests.csproj" Id="71806841-6acf-4385-9ca4-a722f492b109" />

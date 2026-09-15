@@ -7,6 +7,40 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Added (Stunt Car Racer gets frame baselines, 2026-09-15)
+
+- **[SharpKind.GoldenFrames](src/useful/test/SharpKind.GoldenFrames) is a new
+  shared test library**, holding what both games need to sign a composed
+  frame and compare it against a committed one: `FrameSignature` (a SHA-256
+  of every pixel, plus the 32x32 brightness grid a reviewer reads),
+  `FrameFile` (the line-based text the baselines are), `FrameComparer` (the
+  first differing frame, with both grids side by side) and `BaselineFolder`
+  (where a project's baselines live, and whether this run asserts or
+  rewrites). All four were Elite-only before, three of them in
+  `EliteSharpLib.Tests.GoldenTrace` and the comparison logic inside Elite's
+  own test class.
+  - Elite's five baselines were not edited and did not move: `TraceBaselines`
+    is now a thin wrapper keeping the `ELITE_REGENERATE_TRACES` name over the
+    shared `BaselineFolder`. Each game names its own variable, so
+    regenerating one never rewrites the other's.
+
+- **[SCR now has frame baselines of its own](src/scr/test/StuntCarRacerSharpLib.Tests/GoldenFrames)** -
+  the track menu, the track preview and a race, eight signed frames between
+  them. A rendering change to SCR was unguarded where Elite's was checked
+  byte for byte, which matters most for the layer work still to come: moving
+  the backdrop and world polygons into layers of their own is exactly the
+  kind of change that keeps every behavioural test green while painting the
+  world over the cockpit.
+  - **The harness is seeded.** SCR draws the opponent's steering jitter and
+    the engine note from `Random.Shared`, so no two runs composed the same
+    frame; `HeadlessGameHarness` now takes a `randomSeed` and passes a
+    `RandomSource` through the constructor seam the game already had. A test
+    asserts two runs of the same scenario compose identical frames, because
+    baselines are only worth committing if that holds.
+  - The check was verified by making it fail: a one-step change to the sky
+    colour was caught in all three scenarios, and the failure message named
+    the sky rows and left the ground rows unmarked.
+
 ### Changed (Elite composes a frame as three layers, 2026-09-15)
 
 - **[EliteMain.Compose()](src/elite/libs/EliteSharpLib/EliteMain.cs) is now

@@ -3,6 +3,7 @@
 // Elite (C) I.Bell & D.Braben 1984.
 
 using EliteSharpLib.Save;
+using SharpKind.GoldenFrames;
 
 namespace EliteSharpLib.Tests.GoldenTrace;
 

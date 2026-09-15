@@ -2,7 +2,9 @@
 // 'Stunt Car Racer Remake' - sourceforge.net/projects/stuntcarremake.
 // Stunt Car Racer (C) Geoff Crammond / MicroStyle / MicroProse 1989.
 
+using SharpKind;
 using SharpKind.Assets;
+using SharpKind.Audio;
 using SharpKind.Fakes.Harness;
 using SharpKind.Fakes.Input;
 using StuntCarRacerSharpLib.Fakes;
@@ -17,12 +19,21 @@ namespace StuntCarRacerSharpLib.Tests;
 // frame to eyeball.
 internal sealed class HeadlessGameHarness : HeadlessGameHarnessBase<GameStateSummary>
 {
-    public HeadlessGameHarness(int width = 640, int height = 400)
+    // randomSeed replaces the game's unseeded Random.Shared, so a run can be
+    // reproduced exactly. Null keeps the shipped behaviour. Frame baselines
+    // need it: the opponent's steering jitter and the engine sound's period
+    // are both drawn from it, so without a fixed seed no two runs compose the
+    // same frame.
+    public HeadlessGameHarness(int width = 640, int height = 400, int? randomSeed = null)
         : base(width, height, AssetLocator.Create())
     {
         FakeAbstraction abstraction = new(Graphics, new(width, height));
         Keyboard = (FakeKeyboard)abstraction.Keyboard;
-        Game = new(abstraction, AssetLocator.Create());
+        Game = new(
+            abstraction,
+            AssetLocator.Create(),
+            new AudioOptions(),
+            new RandomSource(randomSeed is int seed ? new Random(seed) : Random.Shared));
     }
 
     public StuntCarRacerMain Game { get; }
