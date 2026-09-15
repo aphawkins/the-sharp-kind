@@ -36,6 +36,44 @@ there before starting an item that mentions a decision.
 
 ## Should
 
+- [ ] [EliteSharpLib] The universe is not fully reset when the commander dies
+      and the game restarts. Reported by the maintainer, 2026-09-15: after a
+      death the restarted game does not appear to start from a clean
+      universe, and on a *second* death it seems to glitch back to the
+      universe of the run before. Not yet reproduced under a harness, so the
+      shape of the bleed is the first thing to establish - the report is a
+      symptom, not a diagnosis.
+      **What is already ruled out.** The restart path exists and does run:
+      `GameOverController.Update` clears `IsInitialised` after 100 ticks
+      ([GameOverController.cs:113](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/libs/EliteSharpLib/Views/GameOverController.cs)),
+      and the next `Simulate` re-enters `InitialiseGame`
+      ([EliteMain.cs:481](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/libs/EliteSharpLib/EliteMain.cs)),
+      which calls `Universe.ClearUniverse()` - and that does null `Planet`
+      and `StationOrSun` and empty both `_objects` and `_shipCount`
+      ([Universe.cs:107](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/libs/EliteSharpLib/Universe.cs)).
+      So "the object list is never emptied" is not the explanation.
+      **Where to look instead - state that survives a restart.**
+      `InitialiseGame` resets `GameState`, `Pilot`, `PlayerShip`, `Combat`,
+      `Stars` and the universe, and reloads the commander with
+      `SaveFile.GetLastSave()`. It resets nothing on `Space` itself beyond
+      `IsHyperspaceReady`: `_destinationPlanet`, `_hyperDistance`,
+      `_universeVisible`, `HyperCountdown`, `HyperGalactic` and `HyperName`
+      all carry over from the dead run
+      ([Space.cs:68-109](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/libs/EliteSharpLib/Space.cs)).
+      `Trade` and `PlanetController` are not reset either. Which system the
+      restarted game is in comes from the reloaded save's `DockedPlanet`,
+      since `LaunchPlayer` builds the planet from it, so a `GetLastSave()`
+      that silently leaves the previous run's seed in place would read
+      exactly as "the previous universe" on the next launch.
+      **Reproducing it is the work.** `HeadlessGameHarness` is the seam - it
+      drives the real composition tick by tick and can be stepped through a
+      death, a restart and a second death, with `GameStateSummary` and the
+      universe's contents asserted at each boundary. A test that fails
+      without the fix should be possible there without touching the game
+      loop. Left under Should rather than Must until it is reproduced: if it
+      turns out the commander's own save is being corrupted rather than a
+      field going stale, it is worth promoting.
+
 ## Could
 
 ## Won't
