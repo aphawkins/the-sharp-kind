@@ -9,6 +9,41 @@ decision may reshape items in either. Newest first. When a decision
 reshapes or unblocks backlog items, those items are updated in the backlog
 to reference the decision here rather than restating it.
 
+## Resolved (2026-09-15) — the dashboard moves into the docs site
+
+One GitHub Pages site cannot have two publishers, and the repository had
+two candidates: the DocFX site
+[.github/workflows/docs.yml](https://github.com/aphawkins/the-sharp-kind/blob/main/.github/workflows/docs.yml)
+builds, and the benchmark charts
+[.github/workflows/benchmarks.yml](https://github.com/aphawkins/the-sharp-kind/blob/main/.github/workflows/benchmarks.yml)
+pushes to the `gh-pages` branch. The Pages source stayed on that branch, so
+the docs site deployed to a site that was not serving it.
+
+**The docs site is the publisher; `gh-pages` is a store.** The Pages source
+becomes GitHub Actions. The docs build checks the `gh-pages` branch out
+alongside the repository and copies `dev/bench` - the directory
+`github-action-benchmark` writes by default - into `_site/benchmarks`
+before it uploads the Pages artifact. Both therefore ship in one deployment,
+and the dashboard's URL moves to `/benchmarks/`. The alternatives were to
+leave the charts unpublished and read them from the branch, or to keep Pages
+on `gh-pages` and never publish the API reference; both spend a site to save
+a copy step.
+
+**A benchmark run now asks the docs workflow to republish.** The charts
+reach the site at docs-build time, not at benchmark time, so
+`benchmarks.yml` ends by dispatching `docs.yml`, and `docs.yml` accepts
+`workflow_dispatch` for it. Nothing is lost if that step fails: the data
+point is already on the branch and the next push to `main` publishes it.
+
+**The branch does not exist yet.** `benchmarks.yml` is dispatch-only and has
+never run, so the checkout tolerates a missing `gh-pages` and the site gets a
+placeholder page at `/benchmarks/` until the first run records something.
+This was found while making the change, not before it.
+
+**The manual half stays manual.** Settings → Pages → Source must be changed
+from `gh-pages` to GitHub Actions by hand, once. Until it is, the workflows
+behave exactly as before.
+
 ## Resolved (2026-08-27) — goods are a plugin family, and failure is loud
 
 Scoping the configurable-`StockType` roadmap item. The starting question was

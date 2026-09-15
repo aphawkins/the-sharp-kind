@@ -5,6 +5,10 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  # The benchmark workflow calls this one: the dashboard is copied out of the
+  # gh-pages branch at build time, so new charts only reach the site when the
+  # site is rebuilt.
+  workflow_dispatch:
 
 # A second push supersedes the first: only the newest site is worth deploying.
 concurrency:
@@ -35,15 +39,41 @@ jobs:
         # solution does not need a separate build step first.
         run: docfx docs/docfx.json --warningsAsErrors
 
+      - name: Check out the benchmark dashboard
+        if: github.event_name != 'pull_request'
+        # The charts benchmarks.yml pushes to gh-pages. The branch is the
+        # store; this site is the only publisher, so one Pages site serves
+        # both - see the 2026-09-15 decision in docs/decisions.md. The branch
+        # does not exist until that workflow has run once, and a site without
+        # a dashboard must still deploy.
+        continue-on-error: true
+        uses: actions/checkout@v7
+        with:
+          ref: gh-pages
+          path: .benchmarks
+
+      - name: Fold the dashboard into the site
+        if: github.event_name != 'pull_request'
+        # github-action-benchmark writes to its default directory, dev/bench.
+        # The placeholder keeps the site's Benchmarks link honest until the
+        # first run records something.
+        run: |
+          mkdir -p docs/_site/benchmarks
+          if [ -d .benchmarks/dev/bench ]; then
+            cp -r .benchmarks/dev/bench/. docs/_site/benchmarks/
+          else
+            echo '<h1>No benchmark history yet</h1><p>Run the Benchmarks workflow.</p>' > docs/_site/benchmarks/index.html
+          fi
+
       - name: Upload Pages artifact
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v4
         with:
           path: docs/_site
 
   deploy-docs:
     needs: build-docs
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
 
     permissions:

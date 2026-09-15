@@ -140,27 +140,7 @@ test the game pays.
 
 ### Release engineering (from the retired release plan)
 
-- [ ] [Repo] **Decide where the benchmark dashboard lives, then switch the
-      Pages source to GitHub Actions** (2026-09-14, raised by the DocFX
-      item — see CHANGELOG). The DocFX site is built and deployed by
-      [.github/workflows/docs.yml](https://github.com/aphawkins/the-sharp-kind/blob/main/.github/workflows/docs.yml),
-      but it cannot publish until the repository's Pages source changes
-      from a branch to GitHub Actions (Settings → Pages → Source). That
-      source is currently the `gh-pages` branch, which
-      [.github/workflows/benchmarks.yml](https://github.com/aphawkins/the-sharp-kind/blob/main/.github/workflows/benchmarks.yml)
-      pushes the `benchmark-action/github-action-benchmark` charts to. One
-      Pages site cannot serve both, so the switch takes the dashboard's
-      published URL with it — the history is safe on the branch, only the
-      URL is at stake. Three ways out, in the maintainer's gift: fold the
-      dashboard into the docs site as another artifact the docs workflow
-      uploads; leave the charts unpublished and read them from the branch;
-      or keep Pages on `gh-pages` and drop the docs deployment, leaving
-      `docs.yml` as a PR build gate only. Until this is decided the docs
-      workflow builds on PRs and its deploy job runs but publishes to a
-      Pages site that is not serving it. **This is a decision first and a
-      one-line settings change second** — record the call in
-      [decisions.md](decisions.md) when it is made.
-
+(none open — see [CHANGELOG.md](https://github.com/aphawkins/the-sharp-kind/blob/main/CHANGELOG.md) for completed items)
 
 ## Could
 

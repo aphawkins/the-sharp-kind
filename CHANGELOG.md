@@ -40,16 +40,40 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 - **Still to do by hand, and it is a conflict rather than a step:** the
   repository's Pages source must change from a branch to GitHub Actions for
-  this to deploy at all, and that source is currently the `gh-pages` branch
-  holding the benchmark dashboard that
+  this to deploy at all. Which branch it was, and what became of it, is the
+  next entry.
+
+### Changed (one Pages site serves the docs and the benchmark dashboard, 2026-09-15)
+
+- **The docs site publishes; `gh-pages` stores.** The Pages source was the
+  `gh-pages` branch that
   [.github/workflows/benchmarks.yml](.github/workflows/benchmarks.yml)
-  pushes to. One Pages site cannot serve both. The dashboard's history is
-  not at risk - it stays on the branch - but its published URL is, so the
-  switch should not be made until where the charts are to live is decided.
-  That call is now an open item under Release engineering in
-  [backlog-roadmap.md](docs/backlog-roadmap.md), since it is a decision
-  rather than a step; until it is made the docs workflow is a PR build gate
-  and its deploy job publishes to a Pages site that is not serving it.
+  pushes the `github-action-benchmark` charts to, so the docs workflow added
+  the day before deployed to a site that was not serving it. One Pages site
+  cannot have two publishers, so the dashboard moves inside the docs site:
+  [.github/workflows/docs.yml](.github/workflows/docs.yml) checks `gh-pages`
+  out beside the repository and copies its `dev/bench` directory into
+  `_site/benchmarks` before uploading the Pages artifact. The charts keep
+  their history on the branch and lose only their old URL; the new one is
+  `/benchmarks/`, linked from [docs/toc.yml](docs/toc.yml). The reasoning,
+  and the two alternatives it beat, are in
+  [decisions.md](docs/decisions.md).
+  - A benchmark run publishes nothing on its own now, because the copy
+    happens at docs-build time. `benchmarks.yml` therefore ends by
+    dispatching `docs.yml`, which gained a `workflow_dispatch` trigger and
+    an `actions: write` permission for it. A failure there costs nothing:
+    the data point is on the branch, and the next push to `main` publishes
+    it.
+  - **`gh-pages` does not exist yet**, because `benchmarks.yml` is
+    dispatch-only and has never run. The checkout of it is therefore
+    `continue-on-error`, and `/benchmarks/` serves a one-line placeholder
+    until a run records the first data point - a missing dashboard must not
+    stop the documentation deploying.
+  - The upload and deploy jobs were gated on a push to `main`; they are now
+    gated on "not a pull request", so a dispatched run deploys too.
+  - **Settings -> Pages -> Source still has to be changed from `gh-pages`
+    to GitHub Actions by hand, once.** Until it is, both workflows behave
+    exactly as they did.
 
 ### Added (the bindings move into elite.controls.sharp, 2026-09-13)
 

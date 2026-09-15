@@ -24,3 +24,5 @@
       href: backlog-roadmap.md
 - name: API
   href: api/
+- name: Benchmarks
+  href: https://aphawkins.github.io/the-sharp-kind/benchmarks/

@@ -15,6 +15,8 @@ jobs:
       deployments: write
       # contents permission to push benchmark history to the gh-pages branch
       contents: write
+      # actions permission to ask the docs workflow to republish the charts
+      actions: write
 
     steps:
       - name: Checkout repository
@@ -79,3 +81,11 @@ jobs:
           gh-pages-branch: gh-pages
           github-token: ${{ secrets.GITHUB_TOKEN }}
           auto-push: true
+
+      # gh-pages is the store, not the published site: the docs workflow copies
+      # these charts into the site it deploys, so a new data point is only
+      # visible once that site is rebuilt.
+      - name: Republish the documentation site
+        run: gh workflow run docs.yml --ref main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
