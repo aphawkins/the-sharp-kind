@@ -176,6 +176,48 @@ silently. The equivalent off-by-one in the 8-bit border and in
 `LaserDrawBase` was corrected, because there the clip and the fix produce the
 same pixels.
 
+### The debug overlays should be common to both games
+
+Each game grew its own developer furniture, and they have ended up with
+opposite halves of the same feature: Elite shows a frame rate and no stats,
+SCR shows stats and no frame rate.
+
+- [ ] [SharpKind.Abstraction] Make the debug overlays one thing both games
+      draw, most likely as a fourth layer - always closest, always full
+      screen, drawn after the HUD so nothing can cover it, and appended to
+      each game's existing `LayerRunner`.
+      **What is there now.** Elite counts presents into `_framesDrawn` (a
+      list of `Stopwatch` timestamps trimmed to the last second) in
+      `Draw()`, and draws through `_baseView.DrawFps` inside its HUD layer
+      ([EliteMain.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/libs/EliteSharpLib/EliteMain.cs)).
+      SCR draws `Race.DrawStats` - the frame gap and the F6/F7 per-car
+      freezes - from `StuntCarRacerMain.Draw` after the current screen, in
+      no layer at all
+      ([Race.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/scr/libs/StuntCarRacerSharpLib/Race.cs)).
+      Even the switches disagree: Elite's is the `engine.graphics.showFps`
+      config setting, SCR's is an F5 key toggle.
+      **Where the seams already are.** `ShowFps` is on the *shared*
+      [GraphicsConfigSettings](https://github.com/aphawkins/the-sharp-kind/blob/main/src/useful/libs/SharpKind.Abstraction/Config/GraphicsConfigSettings.cs)
+      and only Elite reads it, so half the plumbing is in place. Frame
+      timing belongs lower still: `GameHost.Run`
+      ([GameHost.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/useful/libs/SharpKind.Abstraction/GameHost.cs))
+      already drives both games' loops and is the one place that knows when
+      a frame is actually presented, which is what Elite is counting by
+      hand today.
+      **Two things to settle rather than assume.** Whether the text is drawn
+      by the shared layer through `IGraphics.DrawTextLeft` or handed back to
+      each game - Elite draws HUD text through its rendition's `IBaseView`
+      and its per-tier fonts, SCR through `StuntCarRacerMain.SmallFont` -
+      and whether the two switches become one. This is developer furniture,
+      screen-absolute and in no rendition's style, so it is not what the
+      shared-HUD-chrome survey in the Won't section declined; that one was
+      about viewport-relative game chrome, and its reasoning does not reach
+      this.
+      **The golden frames are the acceptance test.** Both overlays default
+      to off - `ShowFps` is false in the shipped config and `ShowStats`
+      starts false - so every baseline in both games should stay
+      byte-identical; a moved baseline means the default leaked.
+
 ### The 16-bit border should look like the ship's window frame
 
 The border belongs to the HUD - it is the canopy the universe is seen
