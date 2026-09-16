@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\useful\test\SharpKind.Fakes\SharpKind.Fakes.csproj" />
+    <ProjectReference Include="..\..\..\useful\test\SharpKind.Graphics.Fakes\SharpKind.Graphics.Fakes.csproj" />
+    <ProjectReference Include="..\..\libs\BubbleBobbleSharpLib\BubbleBobbleSharpLib.csproj" />
+  </ItemGroup>
+
+</Project>

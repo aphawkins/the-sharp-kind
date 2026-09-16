@@ -4,6 +4,7 @@
     <File Path="docs/asset-structure.md" />
     <File Path="docs/backlog-issues.md" />
     <File Path="docs/backlog-roadmap.md" />
+    <File Path="docs/bb-port-plan.md" />
     <File Path="docs/Code Complete (2nd Edition) - Steve McConnell.md" />
     <File Path="docs/decisions.md" />
     <File Path="docs/docfx.json" />
@@ -63,6 +64,17 @@
     <File Path="SonarLint.xml" />
   </Folder>
   <Folder Name="/src/" />
+  <Folder Name="/src/bb/" />
+  <Folder Name="/src/bb/apps/">
+    <Project Path="src/bb/apps/BubbleBobbleSharp/BubbleBobbleSharp.csproj" />
+  </Folder>
+  <Folder Name="/src/bb/libs/">
+    <Project Path="src/bb/libs/BubbleBobbleSharpLib/BubbleBobbleSharpLib.csproj" />
+  </Folder>
+  <Folder Name="/src/bb/test/">
+    <Project Path="src/bb/test/BubbleBobbleSharpLib.Fakes/BubbleBobbleSharpLib.Fakes.csproj" />
+    <Project Path="src/bb/test/BubbleBobbleSharpLib.Tests/BubbleBobbleSharpLib.Tests.csproj" />
+  </Folder>
   <Folder Name="/src/elite/" />
   <Folder Name="/src/elite/apps/">
     <Project Path="src/elite/apps/EliteSharp/EliteSharp.csproj" />
