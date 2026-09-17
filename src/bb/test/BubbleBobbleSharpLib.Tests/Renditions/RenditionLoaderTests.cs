@@ -30,8 +30,7 @@ public sealed class RenditionLoaderTests : IDisposable
     [Fact]
     public void FindsTheRenditionTheConfigNames()
     {
-        // The rendition is copied in off disk, which is the whole point -
-        // neither the game nor this test hands the loader anything.
+        // Copied in off disk: neither the game nor this test hands the loader anything.
         GivenTheShippedRendition();
 
         InstalledRenditions found = RenditionLoader.LoadFrom(_baseDirectory, RenditionNames.EightBit, NullLogger.Instance);
@@ -55,8 +54,7 @@ public sealed class RenditionLoaderTests : IDisposable
     [Fact]
     public void ThrowsWhenNothingGoesByThatName()
     {
-        // The game cannot start with nothing to draw with, so this fails at
-        // startup naming what it could not find.
+        // Fatal at startup, naming what it could not find.
         GivenTheShippedRendition();
 
         InvalidOperationException ex = Assert.Throws<InvalidOperationException>(
@@ -89,7 +87,7 @@ public sealed class RenditionLoaderTests : IDisposable
         _isDisposed = true;
     }
 
-    // A folder of its own under Renditions, which is how the game ships it.
+    // A folder of its own, which is how the game ships it.
     private void GivenTheShippedRendition()
     {
         string folder = Path.Combine(_baseDirectory, RenditionLoader.FolderName, RenditionFolder);

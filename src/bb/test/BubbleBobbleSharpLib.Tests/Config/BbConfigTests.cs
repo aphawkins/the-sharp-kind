@@ -13,8 +13,7 @@ public sealed class BbConfigTests
     [Fact]
     public void DefaultsToTheOnlyRenditionThisGameShips()
     {
-        // The engine's own default is 16-bit, and this game has art for the
-        // 8-bit tier alone.
+        // The engine defaults to 16-bit; this game has art for the 8-bit tier alone.
         BbConfig config = new();
 
         Assert.Equal(RenditionNames.EightBit, config.Engine.Rendition);
@@ -23,10 +22,7 @@ public sealed class BbConfigTests
     [Fact]
     public void RepairsARenditionThatIsNotOneOfTheThree()
     {
-        // There are three renditions, the engine says which, and a file
-        // naming anything else names something that cannot exist. It repairs
-        // to this game's fallback rather than the engine's 16-bit, which this
-        // game has no art for.
+        // Repaired to this game's fallback, not the engine's 16-bit, which it has no art for.
         BbConfig config = new();
         config.Engine.Rendition = "Psychedelic";
 

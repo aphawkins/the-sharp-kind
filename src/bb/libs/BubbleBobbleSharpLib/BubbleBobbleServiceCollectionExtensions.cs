@@ -18,10 +18,8 @@ public static class BubbleBobbleServiceCollectionExtensions
 {
     private const string ConfigFileName = "bubblebobble.sharp";
 
-    // BbConfig is internal, so Program.Main can't reference or construct a
-    // ConfigFile<BbConfig> directly; this registers it from inside the
-    // assembly that can, exposing only the already-public AudioOptions that
-    // BubbleBobbleMain's constructor accepts.
+    // BbConfig is internal, so Main cannot construct a ConfigFile<BbConfig>; this registers it
+    // from inside the assembly that can, exposing only the public AudioOptions.
     public static IServiceCollection AddBbConfig(this IServiceCollection services, string userDataPath)
     {
         ArgumentNullException.ThrowIfNull(services);
@@ -39,17 +37,12 @@ public static class BubbleBobbleServiceCollectionExtensions
         return services;
     }
 
-    // Exposes the (public) engine settings from the (internal) BbConfig, so
-    // Program.Main - which picks between SoftwareAbstraction and SDLAbstraction
-    // and therefore needs to reference SharpKind.SDL, a dependency
-    // BubbleBobbleSharpLib itself deliberately does not have - can read the
-    // backend and the rendition before the DI container exists.
+    // The engine half of the internal BbConfig, so Main can read the backend and the rendition
+    // before the container exists.
     public static EngineConfigSettings ReadEngineSettings(string userDataPath, ILoggerFactory loggerFactory)
         => EngineConfigReader.Read<BbConfig>(userDataPath, ConfigFileName, RepairConfig, loggerFactory);
 
-    // Finds the rendition the player configured. The app needs it before the
-    // container exists, because the window is made at the size the rendition
-    // draws at, so this is the one thing loaded up front.
+    // Loaded before the container, because the window is made at the size the rendition draws at.
     public static InstalledRenditions LoadRendition(string name, ILoggerFactory loggerFactory)
     {
         ArgumentNullException.ThrowIfNull(loggerFactory);
@@ -60,9 +53,8 @@ public static class BubbleBobbleServiceCollectionExtensions
             loggerFactory.CreateLogger(typeof(RenditionLoader)));
     }
 
-    // The rendition's own artwork, palette and font, registered over the
-    // locator AddGameEngine put there - which knows only about the
-    // executable's own Assets folder, and this game keeps none of its own.
+    // Over the locator AddGameEngine registered, which knows only the executable's own Assets
+    // folder. This game keeps none of its own.
     public static IServiceCollection AddBbRenditionAssets(this IServiceCollection services, InstalledRenditions renditions)
     {
         ArgumentNullException.ThrowIfNull(services);
@@ -72,8 +64,7 @@ public static class BubbleBobbleServiceCollectionExtensions
             _ => AssetLocator.CreateFrom(renditions.Folder, renditions.Chosen.Name));
     }
 
-    // Registers the game itself: the composition root asks for the game, not
-    // for the pieces it is built from.
+    // The composition root asks for the game, not the pieces it is built from.
     public static IServiceCollection AddBbMain(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
@@ -87,8 +78,7 @@ public static class BubbleBobbleServiceCollectionExtensions
         return services;
     }
 
-    // Bubble Bobble has no settings of its own yet, so this is the shared
-    // engine repair plus BbConfig's own rendition default.
+    // No game settings yet, so this is the shared engine repair plus BbConfig's own defaults.
     internal static bool RepairConfig(BbConfig config)
     {
         ArgumentNullException.ThrowIfNull(config);

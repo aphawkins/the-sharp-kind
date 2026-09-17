@@ -31,9 +31,7 @@
     <RenditionProject Include="..\..\libs\BubbleBobbleSharp.Renditions.EightBit\BubbleBobbleSharp.Renditions.EightBit.csproj" />
   </ItemGroup>
 
-  <!-- The rendition into a folder of its own under Renditions, laid out as the
-       game ships it, so RenditionLoaderTests copies a real plugin off disk
-       rather than being handed one. -->
+  <!-- Laid out as the game ships it, so RenditionLoaderTests copies a real plugin off disk. -->
   <Target Name="CopyRenditions" AfterTargets="Build">
     <MSBuild Projects="@(RenditionProject)"
              Targets="GetTargetPath"

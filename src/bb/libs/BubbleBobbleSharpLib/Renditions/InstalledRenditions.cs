@@ -11,14 +11,10 @@ namespace BubbleBobbleSharpLib.Renditions;
 /// loaded from, and every one installed beside it.
 /// </summary>
 /// <param name="Chosen">The rendition the game will draw itself with.</param>
-/// <param name="Folder">
-/// The directory the chosen rendition was loaded from. A rendition brings its
-/// own artwork with it, and this is where the game looks for it.
-/// </param>
+/// <param name="Folder">Where the chosen rendition, and so its artwork, was loaded from.</param>
 /// <param name="Installed">
-/// Every rendition found, in the order their names are offered. Kept in full
-/// rather than by name, so a screen that offers switching rendition can read
-/// what another would offer - such as its window scales - without loading it.
+/// Every rendition found, in name order. Kept in full rather than by name, so a screen offering
+/// a switch can read what another offers without loading it.
 /// </param>
 public sealed record InstalledRenditions(IBbRendition Chosen, string Folder, IReadOnlyList<IBbRendition> Installed)
 {

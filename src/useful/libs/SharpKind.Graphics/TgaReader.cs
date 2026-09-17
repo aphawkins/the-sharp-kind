@@ -4,15 +4,8 @@ using System.Buffers.Binary;
 
 namespace SharpKind.Graphics;
 
-// Decodes Truevision TGA: colour-mapped, true-colour and greyscale, each
-// either uncompressed or run-length encoded, at 8, 16, 24 or 32 bits per
-// pixel, in either row order.
-//
-// TGA has no signature at the start of the file - the format predates the
-// habit - so IsTga reads the 18-byte header and asks whether it could be one.
-// Version 2 files end with a footer that does identify them, and that is
-// checked first, but the files this was added for are version 1 and have
-// none. ImageReader therefore tries PNG and BMP before it tries this.
+// Decodes Truevision TGA: colour-mapped, true-colour and greyscale, uncompressed or run-length encoded, at 8/16/24/32bpp, in either row order.
+// The format has no signature, so IsTga reads the header and asks whether it could be one; the version 2 footer that would identify it is absent from version 1 files.
 public static class TgaReader
 {
     private const int HeaderSize = 18;
@@ -36,14 +29,11 @@ public static class TgaReader
     private const int RunLengthTrueColour = 10;
     private const int RunLengthGreyscale = 11;
 
-    // Bit 5 of the descriptor: set means the rows are stored top to bottom.
+    // Descriptor bit 5: rows stored top to bottom. Bit 4: each row right to left.
     private const byte TopToBottom = 0x20;
-
-    // Bit 4: set means each row is stored right to left.
     private const byte RightToLeft = 0x10;
 
-    // The high bit of a packet's header byte marks a run rather than a
-    // literal, and the low seven are the count less one.
+    // A packet's high bit marks a run rather than a literal; the low seven are the count less one.
     private const byte RunPacket = 0x80;
     private const byte PacketCountMask = 0x7F;
 
@@ -65,9 +55,7 @@ public static class TgaReader
             return true;
         }
 
-        // Otherwise the header has to be one a TGA could have had. Every
-        // field below is a small closed set, so a file of some other format
-        // reaching this point is very unlikely to satisfy all of them.
+        // Otherwise every field has to be one a TGA could have had. Each is a small closed set.
         byte colourMapType = bytes[ColourMapTypeOffset];
         byte imageType = bytes[ImageTypeOffset];
         byte pixelDepth = bytes[PixelDepthOffset];
@@ -114,9 +102,8 @@ public static class TgaReader
 
         for (int y = 0; y < height; y++)
         {
-            // TGA's own origin is the bottom-left unless the descriptor says
-            // otherwise, and FastBitmap's is the top-left, so the usual file
-            // has its rows read back to front.
+            // TGA's origin is the bottom-left unless the descriptor says otherwise; FastBitmap's
+            // is the top-left, so the usual file has its rows read back to front.
             int sourceRow = topToBottom ? y : height - y - 1;
             int rowOffset = sourceRow * width * bytesPerPixel;
             int destinationRow = y * width;
@@ -192,9 +179,8 @@ public static class TgaReader
             throw new SharpKindException("TGA colour map extends past the end of the file.");
         }
 
-        // Sized to hold the highest index the image can name, so a map that
-        // starts part-way up - which the first-entry field allows - is still
-        // indexed by the value in the pixel rather than by an offset from it.
+        // Sized to the highest index the image can name, so a map starting part-way up is still
+        // indexed by the pixel's own value.
         uint[] colourMap = new uint[first + length];
         for (int i = 0; i < length; i++)
         {
@@ -204,9 +190,7 @@ public static class TgaReader
         return colourMap;
     }
 
-    // The pixel data, unpacked if it is run-length encoded. An encoded file is
-    // expanded here rather than during the row walk, so the walk indexes both
-    // kinds the same way.
+    // Expanded here rather than during the row walk, so the walk indexes both kinds the same way.
     private static byte[] ReadSamples(byte[] bytes, int expectedLength)
     {
         int offset = PixelDataOffset(bytes);
@@ -296,8 +280,7 @@ public static class TgaReader
         return ToArgb(samples, offset, pixelDepth);
     }
 
-    // One true-colour sample, in the depth given. Shared with the colour map,
-    // whose entries carry the same three layouts.
+    // One true-colour sample. Shared with the colour map, whose entries carry the same layouts.
     private static uint ToArgb(byte[] samples, int offset, byte depth)
     {
         switch (depth)
@@ -309,9 +292,8 @@ public static class TgaReader
                 return Opaque(samples[offset + 2], samples[offset + 1], samples[offset]);
 
             default:
-                // 15 and 16 bit are the same five bits per channel; the spare
-                // top bit is an attribute bit that files disagree about, so it
-                // is ignored and the pixel is opaque.
+                // 15 and 16 bit are the same five bits per channel. The spare top bit is an
+                // attribute bit files disagree about, so the pixel is opaque.
                 int packed = ReadUInt16(samples, offset);
                 byte red = Expand5((packed >> 10) & 0x1F);
                 byte green = Expand5((packed >> 5) & 0x1F);
@@ -320,8 +302,7 @@ public static class TgaReader
         }
     }
 
-    // Five bits to eight, so full scale stays full scale rather than landing
-    // on 248.
+    // Replicated, not shifted, so full scale stays full scale rather than landing on 248.
     private static byte Expand5(int value) => (byte)((value << 3) | (value >> 2));
 
     private static uint Opaque(byte red, byte green, byte blue)

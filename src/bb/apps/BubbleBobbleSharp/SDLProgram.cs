@@ -29,17 +29,13 @@ internal static class SDLProgram
 
     private static ServiceCollection BuildServices(string userDataPath, ILoggerFactory loggerFactory, EngineConfigSettings engine)
     {
-        // The rendition is loaded before anything else because it says what
-        // size the game draws at, and the window is made at that size. The
-        // resolution is the rendition's rather than a setting of its own, so
-        // the artwork and the resolution can never disagree.
+        // First, because it says what size the game draws at and the window is made at that
+        // size - so the artwork and the resolution cannot disagree.
         InstalledRenditions renditions = BubbleBobbleServiceCollectionExtensions.LoadRendition(
             engine.Rendition,
             loggerFactory);
 
-        // Which magnifications are on offer is the rendition's, so the scale
-        // the file holds is only settled now: unchosen takes the rendition's
-        // default, and a hand-edited one is pegged to the nearest it offers.
+        // Which magnifications are on offer is the rendition's, so the scale is settled only now.
         engine.WindowScale = ResolveWindowScale(renditions, engine.WindowScale);
 
         ServiceCollection services = new();
@@ -63,9 +59,7 @@ internal static class SDLProgram
             return renditions.Chosen.DefaultWindowScale;
         }
 
-        // Pegged to the nearest offered rather than rejected: a hand-edited
-        // scale is a wish about window size, and the nearest one this
-        // rendition can actually show is the closest the game can come to it.
+        // Pegged to the nearest offered rather than rejected - it is a wish about window size.
         return renditions.Chosen.WindowScales
             .OrderBy(scale => Math.Abs(scale - configured.Value))
             .First();

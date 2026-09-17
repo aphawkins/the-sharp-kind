@@ -4,10 +4,8 @@ using System.Buffers.Binary;
 
 namespace SharpKind.Graphics.Tests;
 
-// Builds minimal TGAs so the decoder tests can cover the image types, depths
-// and row orders no committed asset uses. Version 1 files, with no footer -
-// which is the shape the format is usually met in, and the one IsTga has to
-// recognise from the header alone.
+// Builds minimal TGAs so the decoder tests can cover image types, depths and row orders no
+// committed asset uses. Version 1, with no footer, which is what IsTga has to recognise.
 internal static class TgaBuilder
 {
     private const int HeaderSize = 18;

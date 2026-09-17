@@ -15,15 +15,13 @@ using SharpKind.Input;
 namespace BubbleBobbleSharpLib;
 
 /// <summary>
-/// The game, as the host and the composition root see it. Phase 0 of the
-/// port: it opens, clears the screen and closes. Everything else arrives a
-/// phase at a time - see docs/PORT-PLAN.md.
+/// The game, as the host and the composition root see it. It opens, clears
+/// the screen and closes; see docs/bb-port-plan.md for what comes next.
 /// </summary>
 public sealed class BubbleBobbleMain : IGame, IGameApp
 {
-    // The C64 runs the game off the PAL raster interrupt, so one tick is one
-    // frame at 50Hz. Every counter translated out of src/ is measured in
-    // these, and they are what the .s files mean by a frame.
+    // The C64 runs off the PAL raster interrupt, so one tick is one frame. Every counter
+    // translated out of the reference is measured in these.
     internal const int TickRate = 50;
 
     private readonly IAbstraction _abstraction;

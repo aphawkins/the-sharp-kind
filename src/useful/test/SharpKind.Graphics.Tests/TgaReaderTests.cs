@@ -10,10 +10,8 @@ public class TgaReaderTests
     private const byte RunLengthColourMapped = 9;
     private const byte RunLengthTrueColour = 10;
 
-    // Bit 5 of the descriptor: rows stored top to bottom.
+    // Descriptor bit 5: rows top to bottom. Bit 4: each row right to left.
     private const byte TopToBottom = 0x20;
-
-    // Bit 4: each row stored right to left.
     private const byte RightToLeft = 0x10;
 
     [Fact]
@@ -40,8 +38,7 @@ public class TgaReaderTests
     [Fact]
     public void Decodes16BitTrueColourAtFullScale()
     {
-        // Five bits per channel, all of red set. Expanding those to eight has
-        // to reach 0xFF, not 0xF8, or white stops being white.
+        // All five bits of red set. Expanding to eight has to reach 0xFF, not 0xF8.
         using TempImageFile file = TempImageFile.From(TgaBuilder.Build(1, 1, TrueColour, 16, [0x00, 0x7C]));
 
         FastBitmap bitmap = TgaReader.Read(file.Path);
@@ -75,8 +72,7 @@ public class TgaReaderTests
     [Fact]
     public void ReadsRowsBottomUpByDefault()
     {
-        // TGA's origin is the bottom-left unless the descriptor says
-        // otherwise, so the first row in the file is the last on screen.
+        // TGA's origin is the bottom-left, so the first row in the file is the last on screen.
         using TempImageFile file = TempImageFile.From(TgaBuilder.Build(
             1,
             2,
