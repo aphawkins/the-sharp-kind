@@ -188,3 +188,33 @@ jobs:
         with:
           name: StuntCarRacerSharp-Linux-${{ steps.vars.outputs.version }}
           path: ./publish/StuntCarRacerSharp/linux-x64/*
+
+      - name: Publish BubbleBobbleSharp Windows
+        if: env.IS_MAIN == 'true'
+        run: dotnet publish ./src/bb/apps/BubbleBobbleSharp/BubbleBobbleSharp.csproj /p:PublishProfile=PublishProfileWindows
+
+      - name: Delete superfluous files
+        if: env.IS_MAIN == 'true'
+        run: find ./publish/BubbleBobbleSharp/win-x64 \( -name "*.xml" -o -name "*.ico" \) -type f -delete
+
+      - name: Upload artifact
+        if: env.IS_MAIN == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: BubbleBobbleSharp-Windows-${{ steps.vars.outputs.version }}
+          path: ./publish/BubbleBobbleSharp/win-x64/*
+
+      - name: Publish BubbleBobbleSharp Linux
+        if: env.IS_MAIN == 'true'
+        run: dotnet publish ./src/bb/apps/BubbleBobbleSharp/BubbleBobbleSharp.csproj /p:PublishProfile=PublishProfileLinux
+
+      - name: Delete superfluous files
+        if: env.IS_MAIN == 'true'
+        run: find ./publish/BubbleBobbleSharp/linux-x64 \( -name "*.xml" -o -name "*.ico" \) -type f -delete
+
+      - name: Upload artifact
+        if: env.IS_MAIN == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: BubbleBobbleSharp-Linux-${{ steps.vars.outputs.version }}
+          path: ./publish/BubbleBobbleSharp/linux-x64/*
