@@ -17,4 +17,56 @@
     <ProjectReference Include="..\..\libs\BubbleBobbleSharpLib\BubbleBobbleSharpLib.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- The rendition is a plugin, including the one that ships with the game.
+         Built and copied, but deliberately not referenced: the game must find
+         its own rendition the same way it would find anyone else's. Unlike a
+         mission it is not optional - remove it and the game has nothing to
+         draw with, and says so at startup. -->
+    <ProjectReference Include="..\..\libs\BubbleBobbleSharp.Renditions.EightBit\BubbleBobbleSharp.Renditions.EightBit.csproj"
+                      ReferenceOutputAssembly="false"
+                      Private="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <RenditionProject Include="..\..\libs\BubbleBobbleSharp.Renditions.EightBit\BubbleBobbleSharp.Renditions.EightBit.csproj" />
+  </ItemGroup>
+
+  <!-- Each rendition into a folder of its own under Renditions, which is where
+       RenditionLoader looks. A folder rather than a loose DLL because a
+       rendition brings its own artwork, palette and font with it, and a second
+       rendition's would collide with this one's in a single directory.
+
+       Only the rendition's own assembly is copied. The contracts it references
+       sit in the output root, put there by the game's own reference to them,
+       and the default load context resolves them from there. -->
+  <Target Name="CopyRenditions" AfterTargets="Build;Publish">
+    <MSBuild Projects="@(RenditionProject)"
+             Targets="GetTargetPath"
+             Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework)">
+      <Output TaskParameter="TargetOutputs" ItemName="RenditionAssembly" />
+    </MSBuild>
+    <!-- The Assets tree is taken from the source folder rather than the build
+         output, so this does not depend on where a rendition's bin happens to
+         be, and RecursiveDir keeps the tree's shape under the copy. -->
+    <ItemGroup>
+      <RenditionAsset Include="..\..\libs\BubbleBobbleSharp.Renditions.EightBit\Assets\**\*"
+                      Rendition="BubbleBobbleSharp.Renditions.EightBit" />
+    </ItemGroup>
+    <Copy SourceFiles="@(RenditionAssembly)"
+          DestinationFolder="$(OutDir)Renditions\%(Filename)"
+          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(RenditionAsset)"
+          DestinationFolder="$(OutDir)Renditions\%(RenditionAsset.Rendition)\Assets\%(RecursiveDir)"
+          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(RenditionAssembly)"
+          DestinationFolder="$(PublishDir)Renditions\%(Filename)"
+          SkipUnchangedFiles="true"
+          Condition="'$(PublishDir)' != ''" />
+    <Copy SourceFiles="@(RenditionAsset)"
+          DestinationFolder="$(PublishDir)Renditions\%(RenditionAsset.Rendition)\Assets\%(RecursiveDir)"
+          SkipUnchangedFiles="true"
+          Condition="'$(PublishDir)' != ''" />
+  </Target>
+
 </Project>

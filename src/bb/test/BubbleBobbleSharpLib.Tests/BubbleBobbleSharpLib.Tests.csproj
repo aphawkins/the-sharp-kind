@@ -22,8 +22,34 @@
     <ProjectReference Include="..\..\..\useful\libs\SharpKind.Graphics\SharpKind.Graphics.csproj" />
     <ProjectReference Include="..\..\..\useful\test\SharpKind.Fakes\SharpKind.Fakes.csproj" />
     <ProjectReference Include="..\..\..\useful\test\SharpKind.GoldenFrames\SharpKind.GoldenFrames.csproj" />
+    <ProjectReference Include="..\..\libs\BubbleBobbleSharp.Renditions.EightBit\BubbleBobbleSharp.Renditions.EightBit.csproj" />
     <ProjectReference Include="..\..\libs\BubbleBobbleSharpLib\BubbleBobbleSharpLib.csproj" />
     <ProjectReference Include="..\BubbleBobbleSharpLib.Fakes\BubbleBobbleSharpLib.Fakes.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <RenditionProject Include="..\..\libs\BubbleBobbleSharp.Renditions.EightBit\BubbleBobbleSharp.Renditions.EightBit.csproj" />
+  </ItemGroup>
+
+  <!-- The rendition into a folder of its own under Renditions, laid out as the
+       game ships it, so RenditionLoaderTests copies a real plugin off disk
+       rather than being handed one. -->
+  <Target Name="CopyRenditions" AfterTargets="Build">
+    <MSBuild Projects="@(RenditionProject)"
+             Targets="GetTargetPath"
+             Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework)">
+      <Output TaskParameter="TargetOutputs" ItemName="RenditionAssembly" />
+    </MSBuild>
+    <ItemGroup>
+      <RenditionAsset Include="..\..\libs\BubbleBobbleSharp.Renditions.EightBit\Assets\**\*"
+                      Rendition="BubbleBobbleSharp.Renditions.EightBit" />
+    </ItemGroup>
+    <Copy SourceFiles="@(RenditionAssembly)"
+          DestinationFolder="$(OutDir)Renditions\%(Filename)"
+          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(RenditionAsset)"
+          DestinationFolder="$(OutDir)Renditions\%(RenditionAsset.Rendition)\Assets\%(RecursiveDir)"
+          SkipUnchangedFiles="true" />
+  </Target>
 
 </Project>

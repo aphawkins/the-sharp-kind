@@ -76,7 +76,7 @@ Three assemblies plus the app, mirroring Elite:
 ```
 src/bb/libs/BubbleBobbleSharp.Abstractions/     contracts and view models
 src/bb/libs/BubbleBobbleSharpLib/               the game: the 6502 translation
-src/bb/libs/BubbleBobbleSharp.Renditions.C64/   the drawing, and the assets
+src/bb/libs/BubbleBobbleSharp.Renditions.EightBit/  the drawing, and the assets
 src/bb/apps/BubbleBobbleSharp/                  entry point
 src/bb/test/BubbleBobbleSharpLib.Fakes/
 src/bb/test/BubbleBobbleSharpLib.Tests/
@@ -88,8 +88,11 @@ The division is Elite's, and it earns its place here for the same reasons:
   `IView<in TModel>`, holds no state and derives nothing.
 - A view is handed an `IViewSurface` and sees nothing else of the game:
   graphics, layout, palette.
-- The **rendition declares the screen size**, not `Program.Main`. The C64
+- The **rendition declares the screen size**, not `Program.Main`. The 8-bit
   rendition says 320x200 and picks its own window scales.
+- A rendition is one of the three the engine names - `8-bit`, `16-bit` or
+  `Modern`. This game's C64 is the 8-bit tier, the same one Elite's BBC Micro
+  tier is, so it is named for the tier and not for the machine.
 - The rendition carries its own `Assets/` folder, and the app's build drops
   it into `Renditions/` beside the executable, where the loader finds it.
   The app references it with `ReferenceOutputAssembly="false"`.
@@ -266,32 +269,34 @@ is what is left.
 - [x] Verified: solution builds with 0 warnings, 2/2 tests pass, and a
       scripted run dumps a 320x200 frame of 64,000 black pixels, exit 0
 
-**To do — the three-assembly split**
+**Done — the three-assembly split**
 
-- [ ] Create `BubbleBobbleSharp.Abstractions`. It references only SharpKind,
-      never the game.
-- [ ] `IBbRendition` in it: `Name`, `ScreenWidth`, `ScreenHeight`,
-      `WindowScales`, `DefaultWindowScale`, `CreateViews(IViewSurface)`.
-      Model it on `EliteSharp.Abstractions.Renditions.IRendition`, keeping
-      only the members Bubble Bobble has a use for.
-- [ ] `IBbViewSurface` and `BbViewLayout`, on
-      `EliteSharp.Abstractions.Views.IViewSurface` and `ViewLayout`. The
-      layout's derived members are the playfield and HUD rectangles.
-- [ ] `IView<in TModel>`, copied from Elite's.
-- [ ] Create `BubbleBobbleSharp.Renditions.C64`, referencing Abstractions
-      only. `C64Rendition : IBbRendition`, `Name => "c64"`, 320x200.
-- [ ] Move `Assets/` from `BubbleBobbleSharpLib` into the rendition, with
-      the `None Update="Assets\**\*"` item from Elite's rendition csproj.
-- [ ] `RenditionLoader` in `BubbleBobbleSharpLib`, on
-      `EliteSharpLib/Renditions/RenditionLoader.cs`.
-- [ ] The app's `CopyRenditions` target, copied from `EliteSharp.csproj`,
-      and the `ReferenceOutputAssembly="false"` project reference.
-- [ ] Take `ScreenWidth`/`ScreenHeight` out of `SDLProgram` and read them
-      off the loaded rendition.
-- [ ] Add both new projects to `TheSharpKind.slnx`.
+- [x] `BubbleBobbleSharp.Abstractions`, referencing the engine's contracts and
+      nothing else
+- [x] `IBbRendition`, on Elite's `IRendition`: the rendition declares which of
+      the engine's three it is, and its `Name` is derived from that
+- [x] `BubbleBobbleSharp.Renditions.EightBit`, referencing Abstractions only.
+      `EightBitRendition`, 320x200, window scales 1-4
+- [x] `Assets/` moved into the rendition, where a rendition's assets belong
+- [x] `RenditionLoader` and `InstalledRenditions`, on Elite's
+- [x] The app's `CopyRenditions` target and its
+      `ReferenceOutputAssembly="false"` reference
+- [x] Screen size read off the loaded rendition, not `SDLProgram`
+- [x] `BbConfig` sets both the default rendition and the fallback to `8-bit`,
+      as `EliteConfig` does
+- [x] Both new projects in `TheSharpKind.slnx`
+- [x] Four loader tests and three config tests
 
-**Verify:** the app still opens a black 320x200 window and exits on Escape,
-and the startup log line names `"rendition":"c64"` rather than `"16-bit"`.
+**Verified:** the startup log reads `"rendition":"8-bit"` and `Loaded 1
+rendition(s) from 1 plugin assemblies; drawing 8-bit.`, the frame is still
+320x200 and black, and the app exits 0 on Escape.
+
+Still to do, when there is a settings screen to do it in:
+
+- [ ] Stop the game offering `16-bit` or `Modern`. Both are legal names the
+      engine knows, and this game ships art for neither, so choosing one
+      leaves it with nothing to draw with. Elite is unaffected - it ships
+      both of the ones it offers.
 
 ## Phase 1 — The sprite engine
 
@@ -327,7 +332,10 @@ what the engine reads.
       not re-invent them.
 - [ ] `Images/atlas.bmp` — every `.tga` packed into one 24-bit BMP, indices
       resolved to RGB, index 0 the transparent colour, with a recoloured
-      copy of the tile set per level colour.
+      copy of the tile set per level colour. The engine reads TGA directly
+      now, so this is packing and recolouring, not format conversion - and
+      a single sprite can be read straight from `rebb64/data` while the
+      atlas is still being built.
 - [ ] `Images/atlas.json` — the sprite index the `SpriteSheet` reads.
 - [ ] `Levels/levels.json` — 100 levels: the 32x23 bitmap as a string array,
       plus `colors`, `sidebar`, `bubbleCurrent`, `wrapOpenings`, `foodDrop`,

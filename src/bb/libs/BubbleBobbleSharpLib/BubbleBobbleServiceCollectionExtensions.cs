@@ -3,6 +3,7 @@
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
 using BubbleBobbleSharpLib.Config;
+using BubbleBobbleSharpLib.Renditions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SharpKind.Abstraction;
@@ -42,9 +43,34 @@ public static class BubbleBobbleServiceCollectionExtensions
     // Program.Main - which picks between SoftwareAbstraction and SDLAbstraction
     // and therefore needs to reference SharpKind.SDL, a dependency
     // BubbleBobbleSharpLib itself deliberately does not have - can read the
-    // backend and the window scale before the DI container exists.
+    // backend and the rendition before the DI container exists.
     public static EngineConfigSettings ReadEngineSettings(string userDataPath, ILoggerFactory loggerFactory)
         => EngineConfigReader.Read<BbConfig>(userDataPath, ConfigFileName, RepairConfig, loggerFactory);
+
+    // Finds the rendition the player configured. The app needs it before the
+    // container exists, because the window is made at the size the rendition
+    // draws at, so this is the one thing loaded up front.
+    public static InstalledRenditions LoadRendition(string name, ILoggerFactory loggerFactory)
+    {
+        ArgumentNullException.ThrowIfNull(loggerFactory);
+
+        return RenditionLoader.LoadFrom(
+            AppContext.BaseDirectory,
+            name,
+            loggerFactory.CreateLogger(typeof(RenditionLoader)));
+    }
+
+    // The rendition's own artwork, palette and font, registered over the
+    // locator AddGameEngine put there - which knows only about the
+    // executable's own Assets folder, and this game keeps none of its own.
+    public static IServiceCollection AddBbRenditionAssets(this IServiceCollection services, InstalledRenditions renditions)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(renditions);
+
+        return services.AddSingleton<IAssetLocator>(
+            _ => AssetLocator.CreateFrom(renditions.Folder, renditions.Chosen.Name));
+    }
 
     // Registers the game itself: the composition root asks for the game, not
     // for the pieces it is built from.
@@ -62,6 +88,11 @@ public static class BubbleBobbleServiceCollectionExtensions
     }
 
     // Bubble Bobble has no settings of its own yet, so this is the shared
-    // engine repair.
-    internal static bool RepairConfig(BbConfig config) => config.Repair();
+    // engine repair plus BbConfig's own rendition default.
+    internal static bool RepairConfig(BbConfig config)
+    {
+        ArgumentNullException.ThrowIfNull(config);
+
+        return config.Repair();
+    }
 }

@@ -1,4 +1,4 @@
-﻿<Solution>
+<Solution>
   <Folder Name="/docs/">
     <File Path="docs/architecture-principles.md" />
     <File Path="docs/asset-structure.md" />
@@ -69,6 +69,8 @@
     <Project Path="src/bb/apps/BubbleBobbleSharp/BubbleBobbleSharp.csproj" />
   </Folder>
   <Folder Name="/src/bb/libs/">
+    <Project Path="src/bb/libs/BubbleBobbleSharp.Abstractions/BubbleBobbleSharp.Abstractions.csproj" />
+    <Project Path="src/bb/libs/BubbleBobbleSharp.Renditions.EightBit/BubbleBobbleSharp.Renditions.EightBit.csproj" />
     <Project Path="src/bb/libs/BubbleBobbleSharpLib/BubbleBobbleSharpLib.csproj" />
   </Folder>
   <Folder Name="/src/bb/test/">

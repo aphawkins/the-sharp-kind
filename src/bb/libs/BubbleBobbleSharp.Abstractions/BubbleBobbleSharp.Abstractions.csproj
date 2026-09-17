@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The one plugin-facing assembly: a rendition references this and nothing
+       else. Anything reachable from here is published API, so what goes in is
+       contracts and the data they carry, never game behaviour.
+
+       It has no references of its own yet. Elite's equivalent carries
+       SharpKind.Graphics and SharpKind.Assets because a view is handed an
+       IGraphics and a palette; this one gains them when the first view does,
+       in Phase 3 of docs/bb-port-plan.md. -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\useful\libs\SharpKind.Abstraction\SharpKind.Abstraction.csproj" />
+  </ItemGroup>
+
+</Project>

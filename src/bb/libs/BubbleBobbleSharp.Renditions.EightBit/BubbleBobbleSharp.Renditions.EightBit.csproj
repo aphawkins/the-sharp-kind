@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The 8-bit rendition - the C64: its screens, and the artwork, palette and font they
+       draw with. It references the contracts and nothing else - not the game -
+       which is the whole point: whatever the game can do for its own rendition
+       it can do for anyone's. It is not referenced by the game either; the
+       app's build drops it into a folder under Renditions beside the
+       executable, and the loader finds it there. -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\BubbleBobbleSharp.Abstractions\BubbleBobbleSharp.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The assets travel with the assembly, which is why a rendition needs a
+         folder of its own: a second rendition would have a palette.json of its
+         own, and the two would land on top of each other. -->
+    <None Update="Assets\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

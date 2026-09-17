@@ -3,21 +3,19 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="System.Composition.Convention" />
+    <PackageReference Include="System.Composition.Hosting" />
+    <PackageReference Include="System.Composition.TypedParts" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\BubbleBobbleSharp.Abstractions\BubbleBobbleSharp.Abstractions.csproj" />
     <ProjectReference Include="..\..\..\useful\libs\SharpKind.Abstraction\SharpKind.Abstraction.csproj" />
     <ProjectReference Include="..\..\..\useful\libs\SharpKind.Assets\SharpKind.Assets.csproj" />
     <ProjectReference Include="..\..\..\useful\libs\SharpKind.Audio\SharpKind.Audio.csproj" />
     <ProjectReference Include="..\..\..\useful\libs\SharpKind.Input\SharpKind.Input.csproj" />
     <ProjectReference Include="..\..\..\useful\libs\SharpKind.Graphics\SharpKind.Graphics.csproj" />
     <ProjectReference Include="..\..\..\useful\libs\SharpKind\SharpKind.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="Assets\**\*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
 </Project>
