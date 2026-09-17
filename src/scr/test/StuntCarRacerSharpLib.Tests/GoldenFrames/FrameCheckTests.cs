@@ -14,15 +14,17 @@ namespace StuntCarRacerSharpLib.Tests.GoldenFrames;
 /// <remarks>
 /// <para>
 /// SCR had nothing of this kind, so a rendering change to it was unguarded
-/// where Elite's was checked byte for byte. It matters most for the layer
+/// where Elite's was checked frame by frame. It matters most for the layer
 /// work: moving the backdrop and the world polygons into layers of their own
 /// is precisely the sort of change that keeps every behavioural test green
 /// while painting the world over the cockpit, or the backdrop over both.
 /// </para>
 /// <para>
-/// A frame is signed twice over - an exact hash of every pixel, which
-/// catches any change at all, and a 32x32 brightness grid, which shows
-/// where the change is. The grid is the half a reviewer reads.
+/// A frame is signed twice over - a 32x32 brightness grid, which is what is
+/// compared and what a reviewer reads, and a hash of every pixel, which
+/// names the frame. The grid is compared a cell at a time with a one-step
+/// tolerance, because a pixel-exact hash is pinned to the machine that
+/// regenerated it and fails elsewhere over rounding alone.
 /// </para>
 /// <para>
 /// Regenerate with SCR_REGENERATE_TRACES=1 and review the grid diff before

@@ -19,11 +19,11 @@ namespace EliteSharpLib.Tests.GoldenTrace;
 /// ships with every trace still green. This is the check that would fail.
 /// </para>
 /// <para>
-/// A frame is signed twice over - an exact hash of every pixel, which
-/// catches any change at all, and a 32x32 brightness grid, which shows
-/// where the change is. The grid is the half a reviewer reads: the repo has
-/// no image diff and no PNG writer, so without it a failure would be a
-/// changed hex string and nothing else.
+/// A frame is signed twice over - a 32x32 brightness grid, which is what is
+/// compared and what a reviewer reads, and a hash of every pixel, which
+/// names the frame. The grid is compared a cell at a time with a one-step
+/// tolerance, because a pixel-exact hash is pinned to the machine that
+/// regenerated it and fails elsewhere over rounding alone.
 /// </para>
 /// <para>
 /// Regenerate with ELITE_REGENERATE_TRACES=1, the same switch the traces
