@@ -581,6 +581,50 @@ bitmap it painted, and a third at a different one to repaint.
 
 Still unverified against VICE, which is not installed: that the colours
 themselves are the ones the C64 shows.
+- [x] Compose the frame, so what the views draw reaches the screen. This was
+      not a bullet and should have been: the phase's preamble asks for
+      `RenderLayer`s and nothing built them, so every view above was proved
+      against `RecordingGraphics` and drawn by nobody. The game ran to a
+      black screen.
+
+      `BbViewSurface` in the game is the three members `IViewSurface` is -
+      graphics, `BbViewLayout`, palette - on Elite's `EliteDraw`, minus the
+      drawing Elite does for itself and this game has none of yet.
+      `BubbleBobbleMain` builds it, asks the rendition for both views, and
+      holds a `LayerRunner` of two bands.
+
+      The bands are in the reference's own order: the level, then the
+      decoration over it. The level's band is trimmed to the 28 columns the
+      decoration leaves, which is where the clip the playfield bullet
+      promised finally lands - the view still draws all 32 columns and still
+      knows nothing about the sidebar, exactly as `draw_border` writes over
+      the outermost two each side after `setup_level_screen` has run.
+      `BbViewLayout` gained `PlayfieldArea` and `PlayfieldInterior` to say
+      where those two rectangles are.
+
+      The rendition and a `LevelStore` are services now. The levels are read
+      from `<rendition>/Assets/Levels/levels.json` rather than through the
+      manifest, which names images, fonts and a palette and has no business
+      knowing about a hundred levels.
+
+**Verified:** the solution builds with 0 warnings and
+`BubbleBobbleSharpLib.Tests` is 54/54. Elite (726 + 39), SCR (246) and every
+engine suite pass unchanged. The composition is proved headlessly: two clip
+regions, the level's and the decoration's, at the rectangles above; and the
+decoration drawn after the level, which is shown by where it lands rather
+than by which sheet it comes from, since level 1 has no design and repeats
+its header tile out of the tile sheet.
+
+Proved in the real app too, through `GAME_KEY_SCRIPT` and
+`GAME_FRAME_DUMP_DIR`: the game runs, exits 0 and dumps a 320x200 frame with
+content in all 32 character columns and all 25 rows. That frame also settles
+the recolour end to end. Level 1's colour byte is `$21`, which swaps entries
+01 and 10, and its tile holds 16 pixels of each - so the tiles say nothing.
+The edge characters hold entry 01 only, and they came out colour 2 rather
+than colour 1: 32 x 222 tile characters is the 7 104 white pixels, and the
+3 072 more red ones are 1 536 edge pixels at double width. Entry 01 was
+painted the high nibble, as the reference has it.
+
 - [ ] `HudModel` / `HudViewC64` — both scores, high score, lives.
 - [ ] A debug key that steps to the next level.
 - [ ] Confirm the fourteen unverified palette entries against VICE.

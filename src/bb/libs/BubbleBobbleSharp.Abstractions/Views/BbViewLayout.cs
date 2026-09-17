@@ -1,7 +1,8 @@
-// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
+﻿// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
 // 'rebb64' - github.com/zaidka/rebb64.
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
+using System.Numerics;
 using SharpKind.Graphics;
 
 namespace BubbleBobbleSharp.Abstractions.Views;
@@ -52,6 +53,13 @@ public sealed record BbViewLayout(float ScreenWidth, float ScreenHeight)
     public int PlayfieldRow { get; init; }
 
     /// <summary>
+    /// Gets how many columns of the level each edge's decoration covers.
+    /// draw_border writes a two-character block down the level's leftmost two
+    /// columns and its rightmost two.
+    /// </summary>
+    public int SidebarColumns { get; init; } = 2;
+
+    /// <summary>
     /// Gets the whole screen's character grid, counted from its top-left
     /// corner - the forty by twenty-five the hardware addresses.
     /// </summary>
@@ -66,4 +74,25 @@ public sealed record BbViewLayout(float ScreenWidth, float ScreenHeight)
         CellWidth,
         CellHeight,
         new(Screen.Column(PlayfieldColumn), Screen.Row(PlayfieldRow)));
+
+    /// <summary>
+    /// Gets the whole of the level as a rectangle on the screen - what the
+    /// decoration is composed into, since it is drawn over the level's own
+    /// outermost columns.
+    /// </summary>
+    public (Vector2 Position, float Width, float Height) PlayfieldArea => (
+        Playfield.Cell(0, 0),
+        PlayfieldColumns * CellWidth,
+        PlayfieldRows * CellHeight);
+
+    /// <summary>
+    /// Gets the level between its two edges of decoration. The level renderer
+    /// draws across all 32 columns and draw_border then writes over the outer
+    /// two each side, so trimming the level to what survives that is the
+    /// composition's job rather than the view's.
+    /// </summary>
+    public (Vector2 Position, float Width, float Height) PlayfieldInterior => (
+        Playfield.Cell(SidebarColumns, 0),
+        (PlayfieldColumns - (2 * SidebarColumns)) * CellWidth,
+        PlayfieldRows * CellHeight);
 }

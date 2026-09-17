@@ -1,8 +1,10 @@
-// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
+﻿// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
 // 'rebb64' - github.com/zaidka/rebb64.
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
+using BubbleBobbleSharp.Abstractions.Renditions;
 using BubbleBobbleSharpLib.Config;
+using BubbleBobbleSharpLib.Levels;
 using BubbleBobbleSharpLib.Renditions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -60,8 +62,26 @@ public static class BubbleBobbleServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(renditions);
 
-        return services.AddSingleton<IAssetLocator>(
+        services.AddSingleton<IAssetLocator>(
             _ => AssetLocator.CreateFrom(renditions.Folder, renditions.Chosen.Name));
+
+        // The game draws through whichever rendition was loaded, so it is a service like any other.
+        services.AddSingleton(renditions);
+        services.AddSingleton(renditions.Chosen);
+
+        // The levels sit beside the rendition's artwork rather than in the manifest: the manifest
+        // names images, fonts and a palette, and a hundred levels are none of those.
+        services.AddSingleton(_ => LevelStore.Read(LevelPath(renditions)));
+
+        return services;
+    }
+
+    // <rendition folder>/Assets/Levels/levels.json, the same layout AssetLocator resolves against.
+    public static string LevelPath(InstalledRenditions renditions)
+    {
+        ArgumentNullException.ThrowIfNull(renditions);
+
+        return Path.Combine(renditions.Folder, "Assets", "Levels", "levels.json");
     }
 
     // The composition root asks for the game, not the pieces it is built from.
@@ -72,6 +92,8 @@ public static class BubbleBobbleServiceCollectionExtensions
         services.AddSingleton(sp => new BubbleBobbleMain(
             sp.GetRequiredService<IAbstraction>(),
             sp.GetRequiredService<IAssetLocator>(),
+            sp.GetRequiredService<IBbRendition>(),
+            sp.GetRequiredService<LevelStore>(),
             sp.GetRequiredService<AudioOptions>()));
         services.AddSingleton<IGame>(sp => sp.GetRequiredService<BubbleBobbleMain>());
         services.AddSingleton<IGameApp>(sp => sp.GetRequiredService<BubbleBobbleMain>());

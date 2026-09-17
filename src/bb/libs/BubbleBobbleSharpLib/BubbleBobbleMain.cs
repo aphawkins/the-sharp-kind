@@ -1,8 +1,14 @@
-// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
+﻿// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
 // 'rebb64' - github.com/zaidka/rebb64.
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
+using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 using System.Runtime.CompilerServices;
+using BubbleBobbleSharp.Abstractions.Renditions;
+using BubbleBobbleSharp.Abstractions.Views;
+using BubbleBobbleSharpLib.Graphics;
+using BubbleBobbleSharpLib.Levels;
 using SharpKind.Abstraction;
 using SharpKind.Assets;
 using SharpKind.Audio;
@@ -15,8 +21,9 @@ using SharpKind.Input;
 namespace BubbleBobbleSharpLib;
 
 /// <summary>
-/// The game, as the host and the composition root see it. It opens, clears
-/// the screen and closes; see docs/bb-port-plan.md for what comes next.
+/// The game, as the host and the composition root see it. It puts a level on
+/// the screen and closes on Escape; see docs/bb-port-plan.md for what comes
+/// next.
 /// </summary>
 public sealed class BubbleBobbleMain : IGame, IGameApp
 {
@@ -24,17 +31,40 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     // translated out of the reference is measured in these.
     internal const int TickRate = 50;
 
-    private readonly IAbstraction _abstraction;
+    // The level the game opens on. There is no front end yet to choose another.
+    private const int FirstLevel = 1;
 
-    public BubbleBobbleMain(IAbstraction abstraction, IAssetLocator assetLocator)
-        : this(abstraction, assetLocator, new())
+    private readonly IAbstraction _abstraction;
+    private readonly LevelStore _levels;
+    private readonly IView<PlayfieldModel> _playfieldView;
+    private readonly IView<SidebarModel> _sidebarView;
+    private readonly LayerRunner _layers;
+
+    // What the level in play looks like, rebuilt when the level changes rather than per frame: a
+    // level's characters are settled the moment setup_level_screen has run.
+    private PlayfieldModel _playfield;
+    private SidebarModel _sidebar;
+
+    public BubbleBobbleMain(
+        IAbstraction abstraction,
+        IAssetLocator assetLocator,
+        IBbRendition rendition,
+        LevelStore levels)
+        : this(abstraction, assetLocator, rendition, levels, new())
     {
     }
 
-    public BubbleBobbleMain(IAbstraction abstraction, IAssetLocator assetLocator, AudioOptions audioOptions)
+    public BubbleBobbleMain(
+        IAbstraction abstraction,
+        IAssetLocator assetLocator,
+        IBbRendition rendition,
+        LevelStore levels,
+        AudioOptions audioOptions)
     {
         ArgumentNullException.ThrowIfNull(abstraction);
         ArgumentNullException.ThrowIfNull(assetLocator);
+        ArgumentNullException.ThrowIfNull(rendition);
+        ArgumentNullException.ThrowIfNull(levels);
         ArgumentNullException.ThrowIfNull(audioOptions);
 
         _abstraction = abstraction;
@@ -44,6 +74,24 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         Gamepad = abstraction.Gamepad;
         Sound = abstraction.Sound;
         AudioOptions = audioOptions;
+        _levels = levels;
+
+        BbViewSurface surface = new(Graphics, Layout, assetLocator);
+        _playfieldView = rendition.CreatePlayfieldView(surface);
+        _sidebarView = rendition.CreateSidebarView(surface);
+
+        ShowLevel(FirstLevel);
+
+        // Two bands, in the order the reference draws them: the level, and then the decoration
+        // written over its outermost columns. The level is trimmed to what survives that, which is
+        // why the playfield view can draw all 32 columns without knowing the sidebar exists.
+        (Vector2 interior, float interiorWidth, float height) = surface.Layout.PlayfieldInterior;
+        (Vector2 whole, float wholeWidth, _) = surface.Layout.PlayfieldArea;
+
+        _layers = new LayerRunner(
+            Graphics,
+            new RenderLayer(interior, interiorWidth, height, new PlayfieldLayer(this)),
+            new RenderLayer(whole, wholeWidth, height, new SidebarLayer(this)));
     }
 
     public bool IsRunning { get; private set; } = true;
@@ -60,6 +108,9 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
 
     internal AudioOptions AudioOptions { get; }
 
+    // Which level is on screen, counted the way the game counts them.
+    internal int CurrentLevel { get; private set; }
+
     public void Run() => GameHost.Run(_abstraction, this, TickRate, TickRate);
 
     public void Update()
@@ -73,6 +124,31 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     public void Draw()
     {
         Graphics.Clear();
+        _layers.Draw();
         Graphics.ScreenUpdate();
+    }
+
+    // setup_level_screen, as far as this port has translated it: what the level's screen holds, and
+    // what its border is decorated with. Both are settled once and then drawn every frame.
+    [MemberNotNull(nameof(_playfield), nameof(_sidebar))]
+    internal void ShowLevel(int number)
+    {
+        Level level = _levels.Level(number);
+
+        _playfield = Playfield.Build(level);
+        _sidebar = Sidebars.Select(level);
+        CurrentLevel = number;
+    }
+
+    // Layer 0, the level itself, trimmed to the columns the decoration does not cover.
+    private sealed class PlayfieldLayer(BubbleBobbleMain game) : ILayerDrawer
+    {
+        public void Draw() => game._playfieldView.Draw(game._playfield);
+    }
+
+    // Layer 1, draw_border: the decoration down both edges, over the level already on the screen.
+    private sealed class SidebarLayer(BubbleBobbleMain game) : ILayerDrawer
+    {
+        public void Draw() => game._sidebarView.Draw(game._sidebar);
     }
 }
