@@ -343,10 +343,18 @@ Being done in two chunks: the data first, the artwork second.
 
 **Done — the data**
 
-- [x] `rebb64/build/export-csharp-assets.py`, reusing the parsers in
-      `convert-levels.py` and `convert-zone-data.py` by importing them, so
-      what it exports is parsed by the very code `make verify` proves. Its
-      atlas half is still to come.
+- [x] `tools/bb/export-csharp-assets.py`, reusing rebb64's own parsers in
+      `convert-levels.py`, `convert-zone-data.py` and `convert-tga.py` by
+      importing them from a checkout at run time, so what it exports is
+      parsed by the very code `make verify` proves.
+
+      It lives in this repo, not in the rebb64 checkout: it is our code
+      generating our assets, and an upstream pull is where it would go
+      missing. It takes `--rebb64 <path to a checkout>` and defaults
+      `--out` to the 8-bit rendition's `Assets`. Re-running it over an
+      unchanged checkout reproduces every committed asset byte for byte,
+      which is the cheapest check that the assets and the script still
+      agree.
 - [x] `Levels/levels.json` — 100 levels: the 32x23 bitmap as a string array,
       plus `colors`, `sidebar`, `bubbleCurrent`, `wrapOpenings`, `foodDrop`,
       `powerupSpawn`, `spawnFlags` and the enemy list.
