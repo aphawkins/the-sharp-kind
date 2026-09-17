@@ -1,4 +1,4 @@
-// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
+﻿// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
 
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -67,6 +67,39 @@ public class FastBitmap : IDisposable
     public FastColor GetPixel(int x, int y) => FastColor.FromUInt32(_pixels[x + (y * Width)]);
 
     public void SetPixel(int x, int y, in FastColor color) => _pixels[x + (y * Width)] = color.Argb;
+
+    /// <summary>
+    /// A copy with some of its colours exchanged for others: a pixel whose
+    /// colour the map names is written as the colour it names for it, and
+    /// every other pixel is copied across as it stands.
+    /// </summary>
+    /// <remarks>
+    /// For artwork that is really palette indices wearing colours - a C64
+    /// multicolour sheet, say, where a pixel is a two-bit entry number rather
+    /// than a colour in its own right - and so has to be repainted when the
+    /// machine points those entries somewhere else.
+    /// </remarks>
+    /// <param name="colours">Which colour each colour becomes.</param>
+    /// <returns>The recoloured copy. This bitmap is left alone.</returns>
+    public FastBitmap Recolour(IReadOnlyDictionary<uint, FastColor> colours)
+    {
+        ArgumentNullException.ThrowIfNull(colours);
+
+        FastBitmap recoloured = new(Width, Height);
+
+        for (int y = 0; y < Height; y++)
+        {
+            for (int x = 0; x < Width; x++)
+            {
+                FastColor pixel = GetPixel(x, y);
+                FastColor drawn = colours.TryGetValue(pixel.Argb, out FastColor replacement) ? replacement : pixel;
+
+                recoloured.SetPixel(x, y, drawn);
+            }
+        }
+
+        return recoloured;
+    }
 
     public FastBitmap Resize(int newWidth, int newHeight)
     {

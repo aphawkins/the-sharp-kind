@@ -1,4 +1,4 @@
-// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
+﻿// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
 // 'rebb64' - github.com/zaidka/rebb64.
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
@@ -25,7 +25,12 @@ namespace BubbleBobbleSharp.Abstractions.Views;
 /// character into all four sidebar slots, so the block is that tile four
 /// times over.
 /// </param>
-public sealed record SidebarModel(int Design, int HeaderTile)
+/// <param name="Colours">
+/// The level's colour byte, as <see cref="PlayfieldModel.Colours"/> holds it.
+/// The decoration is inside the level rather than beside it, so it is painted
+/// out of the same two entries the level's own tiles are.
+/// </param>
+public sealed record SidebarModel(int Design, int HeaderTile, int Colours)
 {
     /// <summary>Gets the design a level has when it has none of its own and repeats its header tile.</summary>
     public static int NoDesign => -1;

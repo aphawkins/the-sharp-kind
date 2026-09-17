@@ -60,6 +60,31 @@ public interface IGraphics
     /// </summary>
     public Vector2 ImageSize(string imageType);
 
+    /// <summary>
+    /// A loaded image's pixels, for a caller that needs to make another image
+    /// out of them - recolouring a sheet whose pixels stand for palette
+    /// entries, say. The bitmap is the backend's own, so a caller that means
+    /// to change it copies it first.
+    /// </summary>
+    public FastBitmap Image(string imageType);
+
+    /// <summary>
+    /// Give <paramref name="imageType"/> these pixels from now on, adding the
+    /// name if the asset set did not declare it. For images the game makes for
+    /// itself rather than loads, which it then draws by name like any other.
+    /// <para>
+    /// The backend takes the image on, and lets go of whatever was under that
+    /// name - so a caller that still wants the old one keeps it under a name
+    /// of its own rather than reading it back afterwards.
+    /// </para>
+    /// <para>
+    /// It costs whatever the backend does to take a new image - an upload, for
+    /// one that draws through a GPU - so it is for something that changes
+    /// rarely, once a level rather than once a frame.
+    /// </para>
+    /// </summary>
+    public void SetImage(string imageType, FastBitmap image);
+
     public void DrawLine(Vector2 lineStart, Vector2 lineEnd, FastColor color);
 
     /// <summary>

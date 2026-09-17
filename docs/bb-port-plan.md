@@ -534,12 +534,53 @@ and each character comes from the right part of the right sheet.
 Still unverified against VICE, which is not installed: that the shadows and
 the edges land the right way round on screen.
 
-- [ ] Recolour the tile sheet at level load, from the level's `colors` byte,
+- [x] Recolour the tile sheet at level load, from the level's `colors` byte,
       and hold the recoloured `FastBitmap` for as long as the level lasts.
       The tiles are 2-bit multicolour and the colour byte picks what the
       four entries mean, so keeping the indices until draw time is both the
       faithful model and the one that costs nothing: a recolour per level
       beats a baked copy per colour combination.
+
+      `MulticolourSheet` in the rendition does it, one per sheet a view
+      draws from. It repaints the sheet under a name of its own -
+      `LevelTiles.Recoloured` - and skips the work while the colour byte is
+      the one it last painted, so the cost is a level rather than a frame.
+
+      Where the four entries point is settled by the reference: `$E0CE`
+      splits the colour byte into `$1D` and `$1F`, and the split-screen IRQ
+      at `$072E` writes those to the two background registers in that order,
+      so entry 01 is the high nibble and 10 the low. Entry 11 is the cell's
+      colour RAM, which `game-loop.s` fills the playfield with as `$0D`
+      before the level is drawn - and multicolour mode reads only its low
+      three bits, so entry 11 is colour 5 on every cell. Entry 00 is the
+      screen background, which the export already wrote as a transparent
+      pixel and nothing repaints.
+
+      **All three of the playfield's sheets, not just the tiles.** The
+      sidebar decoration is inside the level rather than beside it, over the
+      same two registers, and `tile-edges.tga` is cut from a charset drawn
+      in multicolour too. Repainting one and not the others would put a
+      level's colours on its tiles and leave the edges and the decoration in
+      the artwork's.
+
+      Two additions to `SharpKind.Graphics` paid for it: `FastBitmap.Recolour`,
+      which exchanges named colours for others, and `IGraphics.Image` /
+      `IGraphics.SetImage`, which read a loaded image back and give a name a
+      new one. The SDL backend rebuilds that name's texture when it takes
+      one, which is why this is a per-level operation and not a per-frame
+      one.
+
+**Verified:** the solution builds with 0 warnings and
+`BubbleBobbleSharpLib.Tests` is 51/51. Elite (726 + 39), SCR (246) and every
+engine suite pass unchanged. The repaint is proved against sheets whose
+pixels are the entry number wearing the palette colour of the same number, so
+a repainted pixel says outright which entry the level pointed where: entry 01
+lands on the high nibble's colour, 10 on the low nibble's, 11 on colour 5, and
+00 is left alone. A second draw at the same colour byte is proved to reuse the
+bitmap it painted, and a third at a different one to repaint.
+
+Still unverified against VICE, which is not installed: that the colours
+themselves are the ones the C64 shows.
 - [ ] `HudModel` / `HudViewC64` — both scores, high score, lives.
 - [ ] A debug key that steps to the next level.
 - [ ] Confirm the fourteen unverified palette entries against VICE.

@@ -1,4 +1,4 @@
-// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
+﻿// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
 // 'rebb64' - github.com/zaidka/rebb64.
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
@@ -41,8 +41,10 @@ internal static class Playfield
         ArgumentNullException.ThrowIfNull(level);
 
         // $E014. The reference indexes its tables by a level counted from zero, and the tile sheet
-        // holds one character per level.
-        return new(level.Number - 1, Characters(LevelBits(level)));
+        // holds one character per level. $E0CE splits the colour byte into the two nibbles the
+        // background registers take; the byte itself crosses whole, since which nibble means what
+        // is the rendition's business rather than the level's.
+        return new(level.Number - 1, level.Colours, Characters(LevelBits(level)));
     }
 
     // $E299. init_level_renderer fills the hundred bytes the renderer reads: thirty-two bits a row,

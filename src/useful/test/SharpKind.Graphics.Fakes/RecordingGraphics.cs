@@ -35,6 +35,8 @@ public sealed class RecordingGraphics(float screenWidth = 0, float screenHeight 
 
     public IList<(Vector2 Position, float Width, float Height)> ClipRegions { get; } = [];
 
+    public IDictionary<string, FastBitmap> Images { get; } = new Dictionary<string, FastBitmap>(StringComparer.Ordinal);
+
     public IList<(Vector2 Position, string Text, string FontType, FastColor Colour)> LeftTexts { get; } = [];
 
     public IList<(Vector2 Position, string Text, string FontType, FastColor Colour)> RightTexts { get; } = [];
@@ -80,6 +82,13 @@ public sealed class RecordingGraphics(float screenWidth = 0, float screenHeight 
         => ImageParts.Add((imageType, position, size, sourcePosition, sourceSize));
 
     public Vector2 ImageSize(string imageType) => Vector2.Zero;
+
+    // Named images the test put there itself, and the ones the game made for
+    // itself while it drew - a recoloured sheet, say, which a test wants to
+    // read back rather than watch go past.
+    public FastBitmap Image(string imageType) => Images[imageType];
+
+    public void SetImage(string imageType, FastBitmap image) => Images[imageType] = image;
 
     public void DrawLine(Vector2 lineStart, Vector2 lineEnd, FastColor color)
         => Lines.Add((lineStart, lineEnd, color));

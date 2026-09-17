@@ -1,4 +1,4 @@
-// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
+﻿// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
 // 'rebb64' - github.com/zaidka/rebb64.
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
@@ -26,6 +26,9 @@ internal static class Sidebars
         // $E014. The reference indexes its tables by a level counted from zero.
         int headerTile = level.Number - 1;
 
-        return new(level.Sidebar >= NoDesignFrom ? SidebarModel.NoDesign : level.Sidebar, headerTile);
+        return new(
+            level.Sidebar >= NoDesignFrom ? SidebarModel.NoDesign : level.Sidebar,
+            headerTile,
+            level.Colours);
     }
 }

@@ -287,6 +287,30 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
         return new(image.Width, image.Height);
     }
 
+    public FastBitmap Image(string imageType) => _images[imageType];
+
+    // Takes the image on, texture and all. Whatever was under the name goes -
+    // its bitmap disposed and its texture destroyed - since the dictionaries
+    // are the only thing holding either, and Dispose walks them to free them.
+    public void SetImage(string imageType, FastBitmap image)
+    {
+        ArgumentNullException.ThrowIfNull(image);
+
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        if (_images.TryGetValue(imageType, out FastBitmap? replaced))
+        {
+            replaced.Dispose();
+            SDL_DestroyTexture((SDL_Texture*)_imageTextures[imageType]);
+        }
+
+        _images[imageType] = image;
+        _imageTextures[imageType] = CreateImageTexture(NativeRenderer, image);
+    }
+
     public void DrawImagePart(string imageType, Vector2 position, Vector2 size, Vector2 sourcePosition, Vector2 sourceSize)
     {
         if (_isDisposed)

@@ -1,4 +1,4 @@
-// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
+﻿// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
 // 'rebb64' - github.com/zaidka/rebb64.
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
@@ -18,6 +18,12 @@ namespace BubbleBobbleSharp.Renditions.EightBit;
 /// The sheets are copied out of rebb64 as they stand, which is why the
 /// doubling happens here rather than having been baked in: what is committed
 /// stays byte for byte what the reference holds.
+/// </para>
+/// <para>
+/// The decoration is inside the level rather than beside it, so it is painted
+/// out of the same two background registers the level's own tiles are. Both
+/// sheets are repainted in the level's colours before anything is drawn from
+/// them - see <see cref="MulticolourSheet"/>.
 /// </para>
 /// </summary>
 internal sealed class SidebarView8Bit : IView<SidebarModel>
@@ -39,6 +45,8 @@ internal sealed class SidebarView8Bit : IView<SidebarModel>
 
     private readonly IGraphics _graphics;
     private readonly BbViewLayout _layout;
+    private readonly MulticolourSheet _sidebars;
+    private readonly MulticolourSheet _tiles;
 
     internal SidebarView8Bit(IViewSurface surface)
     {
@@ -46,6 +54,8 @@ internal sealed class SidebarView8Bit : IView<SidebarModel>
 
         _graphics = surface.Graphics;
         _layout = surface.Layout;
+        _sidebars = new(surface, SidebarSheet);
+        _tiles = new(surface, TileSheet);
     }
 
     // $E10C. draw_border walks twelve two-row blocks down both edges and then writes the block's top
@@ -53,6 +63,9 @@ internal sealed class SidebarView8Bit : IView<SidebarModel>
     public void Draw(SidebarModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
+
+        _sidebars.Paint(model.Colours);
+        _tiles.Paint(model.Colours);
 
         for (int row = 0; row < _layout.PlayfieldRows; row += BlockRows)
         {
@@ -87,8 +100,8 @@ internal sealed class SidebarView8Bit : IView<SidebarModel>
     private void DrawCharacter(SidebarModel model, int character, Vector2 position)
     {
         (string sheet, int index) = model.HasDesign
-            ? (SidebarSheet, (model.Design * SidebarModel.CharactersPerDesign) + character)
-            : (TileSheet, model.HeaderTile);
+            ? (_sidebars.Name, (model.Design * SidebarModel.CharactersPerDesign) + character)
+            : (_tiles.Name, model.HeaderTile);
 
         int columns = model.HasDesign ? SidebarModel.CharactersPerDesign : TileSheetColumns;
         int sheetColumn = index % columns;

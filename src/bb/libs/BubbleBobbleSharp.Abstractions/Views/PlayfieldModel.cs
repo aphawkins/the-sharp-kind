@@ -1,4 +1,4 @@
-// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
+﻿// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
 // 'rebb64' - github.com/zaidka/rebb64.
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
@@ -23,11 +23,12 @@ public sealed class PlayfieldModel
     /// Initializes a new instance of the <see cref="PlayfieldModel"/> class.
     /// </summary>
     /// <param name="tile">The level's own tile, counted from zero.</param>
+    /// <param name="colours">The level's colour byte - see <see cref="Colours"/>.</param>
     /// <param name="characters">
     /// The screen codes, row by row: <see cref="Rows"/> rows of
     /// <see cref="Columns"/>.
     /// </param>
-    public PlayfieldModel(int tile, ReadOnlySpan<byte> characters)
+    public PlayfieldModel(int tile, int colours, ReadOnlySpan<byte> characters)
     {
         if (characters.Length != Columns * Rows)
         {
@@ -37,6 +38,7 @@ public sealed class PlayfieldModel
         }
 
         Tile = tile;
+        Colours = colours;
         _characters = characters.ToArray();
     }
 
@@ -69,6 +71,15 @@ public sealed class PlayfieldModel
     /// Gets which of the hundred tiles is this level's, counted from zero.
     /// </summary>
     public int Tile { get; }
+
+    /// <summary>
+    /// Gets the level's colour byte, as levels.txt spells it: two nibbles,
+    /// each naming one of the sixteen colours the playfield's artwork is
+    /// painted in. The characters are two-bit entry numbers rather than
+    /// colours, and this is what the entries point at - so a rendition reads
+    /// it to know what the level actually looks like.
+    /// </summary>
+    public int Colours { get; }
 
     /// <summary>
     /// Gets the screen code at one cell of the level.

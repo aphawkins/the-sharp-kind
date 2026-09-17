@@ -1,12 +1,10 @@
-// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
+﻿// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
 // 'rebb64' - github.com/zaidka/rebb64.
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
 using System.Numerics;
 using BubbleBobbleSharp.Abstractions.Views;
 using BubbleBobbleSharp.Renditions.EightBit;
-using Moq;
-using SharpKind.Assets.Palettes;
 using SharpKind.Graphics;
 using SharpKind.Graphics.Fakes;
 using Xunit;
@@ -21,6 +19,9 @@ public sealed class SidebarView8BitTests
     // half on its own: (12 * 2 * 2 + 2) characters an edge, both edges.
     private const int ExpectedCharacters = 100;
 
+    // A level's colour byte: entry 01 is painted colour 6 and entry 10 colour 9.
+    private const int Colours = 0x69;
+
     // A multicolour character: four pixels wide in the sheet, eight on screen, eight rows tall.
     private static readonly Vector2 s_sourceSize = new(4, 8);
     private static readonly Vector2 s_screenSize = new(8, 8);
@@ -28,7 +29,7 @@ public sealed class SidebarView8BitTests
     [Fact]
     public void DrawsBothEdgesFromTopToBottom()
     {
-        RecordingGraphics graphics = Draw(new(3, 7));
+        RecordingGraphics graphics = Draw(new(3, 7, Colours));
 
         Assert.Equal(ExpectedCharacters, graphics.ImageParts.Count);
         Assert.All(graphics.ImageParts, x => Assert.Equal(s_screenSize, x.Size));
@@ -50,9 +51,9 @@ public sealed class SidebarView8BitTests
     [Fact]
     public void TakesADesignsFourCharactersFromItsRowOfTheSheet()
     {
-        RecordingGraphics graphics = Draw(new(3, 7));
+        RecordingGraphics graphics = Draw(new(3, 7, Colours));
 
-        Assert.All(graphics.ImageParts, x => Assert.Equal("Sidebars", x.ImageType));
+        Assert.All(graphics.ImageParts, x => Assert.Equal("Sidebars.Recoloured", x.ImageType));
 
         (string ImageType, Vector2 Position, Vector2 Size, Vector2 SourcePosition, Vector2 SourceSize)[] block =
             [.. graphics.ImageParts.Where(x => x.Position.X < 16 && x.Position.Y < 16)];
@@ -69,11 +70,25 @@ public sealed class SidebarView8BitTests
     [Fact]
     public void RepeatsTheHeaderTileWhenTheLevelHasNoDesign()
     {
-        RecordingGraphics graphics = Draw(new(SidebarModel.NoDesign, 23));
+        RecordingGraphics graphics = Draw(new(SidebarModel.NoDesign, 23, Colours));
 
         Assert.Equal(ExpectedCharacters, graphics.ImageParts.Count);
-        Assert.All(graphics.ImageParts, x => Assert.Equal("LevelTiles", x.ImageType));
+        Assert.All(graphics.ImageParts, x => Assert.Equal("LevelTiles.Recoloured", x.ImageType));
         Assert.All(graphics.ImageParts, x => Assert.Equal(new Vector2(12, 16), x.SourcePosition));
+    }
+
+    // The decoration sits inside the level, over the same two background registers the level's own
+    // tiles are painted out of, so it wears the level's colours rather than the sheet's own.
+    [Fact]
+    public void PaintsTheSidebarSheetInTheLevelsColours()
+    {
+        RecordingGraphics graphics = Draw(new(3, 7, Colours));
+
+        FastBitmap painted = graphics.Image("Sidebars.Recoloured");
+
+        Assert.Equal(TestSurface.Colour(0), painted.GetPixel(0, 0));
+        Assert.Equal(TestSurface.Colour(6), painted.GetPixel(1, 0));
+        Assert.Equal(TestSurface.Colour(9), painted.GetPixel(2, 0));
     }
 
     private static RecordingGraphics Draw(SidebarModel model)
@@ -81,17 +96,8 @@ public sealed class SidebarView8BitTests
         RecordingGraphics graphics = new(320, 200);
         EightBitRendition rendition = new();
 
-        rendition.CreateSidebarView(new Surface(graphics)).Draw(model);
+        rendition.CreateSidebarView(new TestSurface(graphics, "Sidebars", "LevelTiles")).Draw(model);
 
         return graphics;
-    }
-
-    private sealed class Surface(IGraphics graphics) : IViewSurface
-    {
-        public IGraphics Graphics { get; } = graphics;
-
-        public BbViewLayout Layout { get; } = new(320, 200);
-
-        public IPaletteCollection Palette { get; } = Mock.Of<IPaletteCollection>();
     }
 }

@@ -285,6 +285,20 @@ public sealed partial class SoftwareGraphics : IGraphics, IDisposable
         return new(bitmap.Width, bitmap.Height);
     }
 
+    public FastBitmap Image(string imageType)
+    {
+        Debug.Assert(Images.ContainsKey(imageType), "Image has not been loaded");
+
+        return Images[imageType];
+    }
+
+    public void SetImage(string imageType, FastBitmap image)
+    {
+        ArgumentNullException.ThrowIfNull(image);
+
+        Images[imageType] = image;
+    }
+
     public void DrawLineDepth(
         Vector2 lineStart,
         Vector2 lineEnd,

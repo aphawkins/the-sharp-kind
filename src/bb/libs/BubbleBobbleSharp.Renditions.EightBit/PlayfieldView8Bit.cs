@@ -1,4 +1,4 @@
-// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
+﻿// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
 // 'rebb64' - github.com/zaidka/rebb64.
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
@@ -25,6 +25,11 @@ namespace BubbleBobbleSharp.Renditions.EightBit;
 /// the same order is what keeps the two views from having to know about each
 /// other.
 /// </para>
+/// <para>
+/// Both sheets are repainted in the level's own colours before anything is
+/// drawn from them - see <see cref="MulticolourSheet"/> - so what this draws
+/// by name is the repainted copy rather than the sheet as it was exported.
+/// </para>
 /// </summary>
 internal sealed class PlayfieldView8Bit : IView<PlayfieldModel>
 {
@@ -40,6 +45,8 @@ internal sealed class PlayfieldView8Bit : IView<PlayfieldModel>
 
     private readonly IGraphics _graphics;
     private readonly BbViewLayout _layout;
+    private readonly MulticolourSheet _tiles;
+    private readonly MulticolourSheet _edges;
 
     internal PlayfieldView8Bit(IViewSurface surface)
     {
@@ -47,11 +54,16 @@ internal sealed class PlayfieldView8Bit : IView<PlayfieldModel>
 
         _graphics = surface.Graphics;
         _layout = surface.Layout;
+        _tiles = new(surface, TileSheet);
+        _edges = new(surface, EdgeSheet);
     }
 
     public void Draw(PlayfieldModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
+
+        _tiles.Paint(model.Colours);
+        _edges.Paint(model.Colours);
 
         for (int row = 0; row < PlayfieldModel.Rows; row++)
         {
@@ -74,8 +86,8 @@ internal sealed class PlayfieldView8Bit : IView<PlayfieldModel>
     private void DrawCharacter(PlayfieldModel model, byte character, Vector2 position)
     {
         (string sheet, int index, int columns) = character == PlayfieldModel.LevelTile
-            ? (TileSheet, model.Tile, TileSheetColumns)
-            : (EdgeSheet, character - PlayfieldModel.FirstTileEdge, PlayfieldModel.TileEdgeCount);
+            ? (_tiles.Name, model.Tile, TileSheetColumns)
+            : (_edges.Name, character - PlayfieldModel.FirstTileEdge, PlayfieldModel.TileEdgeCount);
 
         int sheetColumn = index % columns;
         int sheetRow = index / columns;
