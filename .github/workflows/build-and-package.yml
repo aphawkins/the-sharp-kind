@@ -1,10 +1,20 @@
 name: Build and Package
 
 on:
+  # Every branch, not just main. A long-lived branch - the Bubble Bobble port
+  # is one - otherwise goes unbuilt until the day it opens a pull request, and
+  # a commit nothing has built is a commit nobody knows is good.
+  #
+  # The packaging and publishing steps below stay pegged to main, so a feature
+  # branch gets the build and the tests and none of the artefact churn.
   push:
-    branches: [ main ]
+    branches: [ '**' ]
   pull_request:
     branches: [ main ]
+
+env:
+  # The one place the steps below ask "is this main?".
+  IS_MAIN: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
 
 jobs:
   build-test-package:
@@ -53,8 +63,9 @@ jobs:
         run: dotnet test --configuration Release -p:DebugType=portable -p:DebugSymbols=true --coverage --coverage-output-format cobertura --results-directory ./TestResults -- --filter-not-trait "Level=Integration"
 
       - name: Run integration tests with coverage
-        # Only EliteSharpLib.Tests and StuntCarRacerSharpLib.Tests carry any
-        # Level=Integration tests, so every other project matches none. The
+        # Only EliteSharpLib.Tests, StuntCarRacerSharpLib.Tests and
+        # BubbleBobbleSharpLib.Tests carry any Level=Integration tests, so
+        # every other project matches none. The
         # runner treats a project with zero matching tests as a failure
         # (exit code 8) even though nothing is actually wrong, so that one
         # code is ignored here - a real test failure still exits non-zero.
@@ -76,14 +87,14 @@ jobs:
           path: coveragereport/Cobertura.xml
 
       - name: Update coverage badge file
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: env.IS_MAIN == 'true'
         # ReportGenerator emits the badge with CRLF, but .gitattributes normalizes
         # to LF on staging - so a copied-but-unchanged badge stages as a no-op and
         # create-pull-request fails on the empty commit. Strip the CRs up front.
         run: tr -d '\r' < coveragereport/badge_linecoverage.svg > docs/images/coverage-badge.svg
 
       - name: Create coverage badge PR
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: env.IS_MAIN == 'true'
         id: badge-pr
         uses: peter-evans/create-pull-request@v8
         with:
@@ -102,6 +113,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Pack SharpKind libraries
+        if: env.IS_MAIN == 'true'
         # Pack only the publishable SharpKind.* libraries under src/useful/libs
         # (IsPackable=true there) - not the EliteSharp/StuntCarRacerSharp game
         # projects, which are not meant to be published as NuGet packages.
@@ -111,54 +123,67 @@ jobs:
           done
 
       - name: Upload SharpKind NuGet packages
+        if: env.IS_MAIN == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: SharpKind-nupkgs-${{ steps.vars.outputs.version }}
           path: ./nupkg/*.nupkg
 
       - name: Publish EliteSharp Windows
+        if: env.IS_MAIN == 'true'
         run: dotnet publish ./src/elite/apps/EliteSharp/EliteSharp.csproj /p:PublishProfile=PublishProfileWindows
 
       - name: Delete superfluous files
+        if: env.IS_MAIN == 'true'
         run: find ./publish/EliteSharp/win-x64 \( -name "*.xml" -o -name "*.ico" \) -type f -delete
 
       - name: Upload artifact
+        if: env.IS_MAIN == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: EliteSharp-Windows-${{ steps.vars.outputs.version }}
           path: ./publish/EliteSharp/win-x64/*
 
       - name: Publish EliteSharp Linux
+        if: env.IS_MAIN == 'true'
         run: dotnet publish ./src/elite/apps/EliteSharp/EliteSharp.csproj /p:PublishProfile=PublishProfileLinux
 
       - name: Delete superfluous files
+        if: env.IS_MAIN == 'true'
         run: find ./publish/EliteSharp/linux-x64 \( -name "*.xml" -o -name "*.ico" \) -type f -delete
 
       - name: Upload artifact
+        if: env.IS_MAIN == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: EliteSharp-Linux-${{ steps.vars.outputs.version }}
           path: ./publish/EliteSharp/linux-x64/*
 
       - name: Publish StuntCarRacerSharp Windows
+        if: env.IS_MAIN == 'true'
         run: dotnet publish ./src/scr/apps/StuntCarRacerSharp/StuntCarRacerSharp.csproj /p:PublishProfile=PublishProfileWindows
 
       - name: Delete superfluous files
+        if: env.IS_MAIN == 'true'
         run: find ./publish/StuntCarRacerSharp/win-x64 \( -name "*.xml" -o -name "*.ico" \) -type f -delete
 
       - name: Upload artifact
+        if: env.IS_MAIN == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: StuntCarRacerSharp-Windows-${{ steps.vars.outputs.version }}
           path: ./publish/StuntCarRacerSharp/win-x64/*
 
       - name: Publish StuntCarRacerSharp Linux
+        if: env.IS_MAIN == 'true'
         run: dotnet publish ./src/scr/apps/StuntCarRacerSharp/StuntCarRacerSharp.csproj /p:PublishProfile=PublishProfileLinux
 
       - name: Delete superfluous files
+        if: env.IS_MAIN == 'true'
         run: find ./publish/StuntCarRacerSharp/linux-x64 \( -name "*.xml" -o -name "*.ico" \) -type f -delete
 
       - name: Upload artifact
+        if: env.IS_MAIN == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: StuntCarRacerSharp-Linux-${{ steps.vars.outputs.version }}
