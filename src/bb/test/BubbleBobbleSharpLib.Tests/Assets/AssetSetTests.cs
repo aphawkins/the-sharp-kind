@@ -22,7 +22,7 @@ public sealed class AssetSetTests
     [Fact]
     public void LoadsEverySheetTheManifestNames()
     {
-        Assert.Equal(11, s_assets.Images.Count);
+        Assert.Equal(12, s_assets.Images.Count);
         Assert.All(s_assets.Images.Values, x => Assert.True(x.Width > 0 && x.Height > 0));
     }
 
@@ -43,6 +43,7 @@ public sealed class AssetSetTests
     [InlineData("LevelTiles")]
     [InlineData("SpritesGame")]
     [InlineData("Sidebars")]
+    [InlineData("TileEdges")]
     public void LeavesTheBackgroundIndexTransparent(string sheet)
     {
         FastBitmap image = s_assets.Images[sheet];

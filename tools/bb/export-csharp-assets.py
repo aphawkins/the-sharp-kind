@@ -207,6 +207,69 @@ def export_font(out_dir):
 
 
 # =============================================================================
+# Tile edges
+# =============================================================================
+
+# The level renderer draws a solid cell as the level's own tile with five other
+# characters around it - screen codes $0A to $0F, the tile's right-hand edges
+# and the shadow it casts on the row below. Those six live in the charset
+# rather than in a sheet of their own, so they are cut out of it here.
+#
+# They are drawn in multicolour: game-loop.s fills colour RAM with $0D before
+# the level is rendered, and bit 3 of that is what puts every cell of the
+# playfield in multicolour mode. charset.tga stores the charset the way
+# convert-tga.py's convert_hires_chars() reads it, one TGA pixel per bit, so
+# the eight bits of a row are re-read here as the four bit-pairs the hardware
+# makes of them. That leaves a 4x8 cell - the same shape level-tiles.tga and
+# sidebars.tga are already in, and the same doubling at draw time.
+TILE_EDGE_FIRST = 0x0A
+TILE_EDGE_COUNT = 6
+TILE_EDGE_WIDTH = 4
+
+
+def export_tile_edges(out_dir):
+    """charset.tga's screen codes $0A-$0F -> a multicolour sheet of 4x8 cells."""
+    source = tga_mod.parse_tga(os.path.join(DATA, "charset.tga"))
+    palette = source["palette"]
+
+    width = TILE_EDGE_COUNT * TILE_EDGE_WIDTH
+    pixels = bytearray(width * CELL)
+
+    for cell in range(TILE_EDGE_COUNT):
+        src_x = ((TILE_EDGE_FIRST + cell) % CHARSET_COLUMNS) * CELL
+        src_y = ((TILE_EDGE_FIRST + cell) // CHARSET_COLUMNS) * CELL
+
+        for y in range(CELL):
+            for x in range(TILE_EDGE_WIDTH):
+                high = tga_mod.get_pixel(source, src_x + (x * 2), src_y + y)
+                low = tga_mod.get_pixel(source, src_x + (x * 2) + 1, src_y + y)
+                pair = (high << 1) | low
+
+                # Every pair in these six is 00 or 01, so the charset's two
+                # colours cover them. A third would mean the cells are not
+                # what this reads them as, and guessing a colour for it would
+                # be the wrong answer quietly.
+                if pair >= len(palette):
+                    raise SystemExit(
+                        f"charset.tga cell {TILE_EDGE_FIRST + cell:#04x} has bit-pair "
+                        f"{pair}, which its {len(palette)}-colour map has no entry for."
+                    )
+
+                pixels[(y * width) + (cell * TILE_EDGE_WIDTH) + x] = pair
+
+    edges = {
+        "width": width,
+        "height": CELL,
+        "pixels": pixels,
+        "palette": palette,
+    }
+
+    write_tga(os.path.join(out_dir, "Images", "tile-edges.tga"), edges, transparent_index=0)
+
+    return TILE_EDGE_COUNT
+
+
+# =============================================================================
 # Levels
 # =============================================================================
 
@@ -370,6 +433,12 @@ def main():
 
     count = export_font(args.out)
     print(f"Wrote a {count}-glyph font -> {os.path.join(args.out, 'Fonts', 'charset.tga')}")
+
+    count = export_tile_edges(args.out)
+    print(
+        f"Wrote {count} tile edge characters -> "
+        f"{os.path.join(args.out, 'Images', 'tile-edges.tga')}"
+    )
 
 
 if __name__ == "__main__":

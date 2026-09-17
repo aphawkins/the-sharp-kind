@@ -51,4 +51,11 @@ public interface IBbRendition
     /// <param name="surface">Everything the view draws with.</param>
     /// <returns>The view.</returns>
     public IView<SidebarModel> CreateSidebarView(IViewSurface surface);
+
+    /// <summary>
+    /// Creates the view that draws the level itself.
+    /// </summary>
+    /// <param name="surface">Everything the view draws with.</param>
+    /// <returns>The view.</returns>
+    public IView<PlayfieldModel> CreatePlayfieldView(IViewSurface surface);
 }

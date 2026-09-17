@@ -28,4 +28,6 @@ public sealed class EightBitRendition : IBbRendition
     public int DefaultWindowScale => 4;
 
     public IView<SidebarModel> CreateSidebarView(IViewSurface surface) => new SidebarView8Bit(surface);
+
+    public IView<PlayfieldModel> CreatePlayfieldView(IViewSurface surface) => new PlayfieldView8Bit(surface);
 }

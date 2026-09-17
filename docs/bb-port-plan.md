@@ -406,6 +406,16 @@ a name-to-file map, so separate files are also the shorter path.
       only the letters happen to fall where `char - ' '` looks for them.
       The export rewrites it into the order `BitmapFont` reads, 16 columns
       of 8x8, leaving unmapped cells blank.
+- [x] `tile-edges.tga`, added 2026-09-17 with the playfield below. The level
+      renderer draws a tile's right-hand edges and the shadow it casts from
+      screen codes `$0A` to `$0F`, which live in the charset rather than in a
+      sheet of their own, so the export cuts the six of them out of it. They
+      are multicolour - `game-loop.s` fills colour RAM with `$0D` before the
+      level is drawn, and bit 3 of that is what puts every cell of the
+      playfield in multicolour mode - while `charset.tga` stores the charset
+      one pixel per bit, so the export re-reads each row's eight bits as the
+      four bit-pairs the hardware makes of them. That is also the proof: read
+      as bits the six are a dither, and read as pairs they are solid edges.
 - [ ] `hud-font.tga` is still unexported - 10 cells of 8x8, almost
       certainly the HUD's digits. Deferred deliberately: it is a second
       font entry, and what it is for is only decidable when there is a HUD
@@ -478,8 +488,52 @@ and twenty-five rows expected, from the right row of the right sheet.
 
 Still unverified against VICE, which is not installed: that the doubling and
 the block order look right on screen.
-- [ ] `PlayfieldModel` / `PlayfieldViewC64` — the 32x23 tile grid, using the
-      level's `colors` byte, clipped so nothing spills into the sidebars.
+- [x] `PlayfieldModel` / `PlayfieldView8Bit` — the level itself. Named for the
+      tier rather than the machine, as the sidebar is and as section 4 has it.
+
+      It is a 32x**25** grid, not 32x23. `init_level_renderer` builds the
+      hundred bytes the renderer walks out of three parts: a ceiling on row 0
+      and a floor on row 24, each half of each taken from `$E36E`/`$E371`
+      according to that half's `wrapOpenings` bit, with the level's own
+      twenty-three rows between them. Every one of those rows has its top two
+      bits set as it lands, so the level's leftmost two columns are wall
+      whatever the level drew - which is what the sidebar decoration sits on.
+
+      What crosses to the view is screen codes, because the renderer's
+      decisions are made in them: a set bit puts the level's own tile down and
+      three characters with it, and which edge and which shadow those are
+      depends on what the cell holds already. That is what joins a row of
+      tiles into one platform edged once at its end. `$E16F` then turns the
+      top row's plain edges into the other kind, since nothing above it casts
+      the shadow the plain one leaves room for.
+
+      Two bits of the reference are deliberately not here. The bits
+      `init_level_renderer` ors the `bubbleCurrent` nibble into at `$8B03` and
+      `$8B63` cannot change what is drawn: both tables end `$FF`, so every one
+      of them is set already. And the level is
+      drawn across all 32 of its columns rather than clipped to the 28 between
+      the sidebars, because `draw_border` writes over the outer two each side
+      straight afterwards and doing the same work in the same order keeps the
+      two views from having to know about each other. The clip belongs to the
+      `RenderLayer` when the frame is composed.
+
+      Not done here, and still the next bullet: the level's `colors` byte.
+      Everything this draws is the artwork's own colours.
+
+**Verified:** the solution builds with 0 warnings and
+`BubbleBobbleSharpLib.Tests` is 48/48. All 100 levels build a grid holding
+nothing but the eight characters the renderer can write, and all 100 have
+their leftmost two columns walled off. Particular cells traced through the
+reference by hand are checked on particular levels: a ceiling with an
+opening in it, a ceiling without, and level 1's ninth row - four tiles, the
+edge that ends them, and the three shadow characters on the row beneath.
+The view's drawing is proved against `RecordingGraphics`: an empty level
+draws nothing, a full one draws 800 characters ending at the bottom right,
+and each character comes from the right part of the right sheet.
+
+Still unverified against VICE, which is not installed: that the shadows and
+the edges land the right way round on screen.
+
 - [ ] Recolour the tile sheet at level load, from the level's `colors` byte,
       and hold the recoloured `FastBitmap` for as long as the level lasts.
       The tiles are 2-bit multicolour and the colour byte picks what the
