@@ -84,9 +84,7 @@ public static class VertexNormals
         return normals;
     }
 
-    // Which faces meet at each point, counting only those that smooth. Sized
-    // from the indices themselves rather than asking the caller for a point
-    // count it would only have to fetch.
+    // Which faces meet at each point, counting only those that smooth. Sized from the indices, not a caller-supplied point count.
     private static List<int>[] FacesAtPoint(IReadOnlyList<IList<int>> faces, IReadOnlyList<Vector3> faceNormals)
     {
         int pointCount = 0;
@@ -120,11 +118,7 @@ public static class VertexNormals
         return facesAtPoint;
     }
 
-    // The face's own normal averaged with those of the faces meeting it at
-    // this point, less the ones it creases against. The face itself is in the
-    // list, so the sum can only be empty if the model's normals cancel exactly
-    // - a degenerate the ship models do contain elsewhere - and then the face
-    // keeps its own.
+    // The face itself is in the list, so the sum is empty only if the model's normals cancel exactly (a real degenerate case); then the face keeps its own.
     private static Vector3 SmoothedNormal(Vector3 faceNormal, List<int> facesHere, IReadOnlyList<Vector3> faceNormals)
     {
         Vector3 sum = Vector3.Zero;

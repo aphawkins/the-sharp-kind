@@ -40,10 +40,7 @@ internal static class MissionJump
     /// </summary>
     internal const string EnvVar = "ELITE_DEBUG_MISSIONS";
 
-    // The two missions the game shipped with, and the stages this cheat needs
-    // to put the commander in. They are spelled out because those missions are
-    // a plugin now: the game does not reference them, and a jump to a mission
-    // nobody installed does nothing at all.
+    // Spelled out because these missions are a plugin now: the game does not reference them, and a jump to one nobody installed does nothing.
     private const string Constrictor = "Constrictor";
     private const string Thargoid = "Thargoid";
     private const string NotStarted = "None";
@@ -52,16 +49,13 @@ internal static class MissionJump
     private const string Summoned = "Summoned";
     private const string CarryingPlans = "CarryingPlans";
 
-    // The Thargoid briefings key off where the commander is docked: Ceerdi for
-    // the second brief, Birera for the debrief. These are the planet numbers
-    // the missions speak in, not the seed bytes the game used to fake by
-    // overwriting two of the six.
+    // The Thargoid briefings key off where the commander is docked: Ceerdi for the second brief, Birera for the debrief.
+    // Planet numbers as the missions speak them, not seed bytes.
     private const int ThargoidGalaxy = 2;
     private const int Ceerdi = 83;
     private const int Birera = 36;
 
-    // The galaxy seed a new commander starts on, which the later galaxies are
-    // this rotated once each (Space.EnterNextGalaxy).
+    // The galaxy seed a new commander starts on; later galaxies are this rotated once each (Space.EnterNextGalaxy).
     private const int FirstGalaxyA = 0x4a;
     private const int FirstGalaxyB = 0x5a;
     private const int FirstGalaxyC = 0x48;
@@ -69,8 +63,7 @@ internal static class MissionJump
     private const int FirstGalaxyE = 0x53;
     private const int FirstGalaxyF = 0xb7;
 
-    // The combat scores the two missions are offered at
-    // (MissionBriefingController).
+    // The combat scores the two missions are offered at (MissionBriefingController).
     private const int AboveAverageScore = 256;
     private const int DangerousScore = 1280;
 

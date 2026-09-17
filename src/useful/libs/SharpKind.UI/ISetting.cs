@@ -55,9 +55,7 @@ public interface ISetting
     {
         get => SelectedIndex >= 0 && SelectedIndex < Values.Count ? Values[SelectedIndex] : string.Empty;
 
-        // An unknown value is not a choice this setting has, so there is
-        // nothing to apply: silently landing on the first value would be
-        // worse than leaving the setting where it is.
+        // An unknown value is not a choice this setting has, so leave it where it is rather than silently landing on the first value.
         set
         {
             for (int i = 0; i < Values.Count; i++)

@@ -80,9 +80,7 @@ internal static class MarketListStyle8Bit
             CashAmount: Heading(surface, string.Empty, InHoldRightColumn, CashRow, TextAlignment.Right));
     }
 
-    // A cell's offset is from the row's left edge, which is the viewport's
-    // rather than the text margin's, so the character column is measured from
-    // the viewport and the row's own left taken back off.
+    // Measured from the viewport, not the row's own margin, then the row's left is taken back off.
     private static TableColumn Cell(IViewSurface surface, float rowsLeft, int column, TextAlignment alignment)
         => new(Column(surface, column) - rowsLeft, alignment);
 

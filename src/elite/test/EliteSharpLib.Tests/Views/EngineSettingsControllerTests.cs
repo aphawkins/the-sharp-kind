@@ -24,7 +24,7 @@ public class EngineSettingsControllerTests
     [Fact]
     public void ChangingASettingSavesItImmediately()
     {
-        // Arrange: as the game settings screen, there's no save step.
+        // Arrange: the engine settings screen has no save step.
         EngineSettingsController controller = CreateController(
             out GameState gameState, out FakeKeyboard keyboard, out _, out ConfigFile<EliteConfig> configFile);
         keyboard.KeyDown(ConsoleKey.Enter, default);
@@ -37,8 +37,7 @@ public class EngineSettingsControllerTests
         Assert.Equal(FillMode.Wireframe, configFile.ReadConfig().Engine.Graphics.FillMode);
     }
 
-    // Row 2 is Shading, which defaults Unlit - the flat original is what ships
-    // - so stepping it once selects Lambert and saves that.
+    // Row 2 is Shading, which defaults to Unlit; stepping it once selects Lambert.
     [Fact]
     public void SelectingLambertShadingSavesIt()
     {
@@ -60,8 +59,7 @@ public class EngineSettingsControllerTests
         Assert.Equal(ShadingModelKind.Lambert, configFile.ReadConfig().Engine.Graphics.Shading);
     }
 
-    // Row 3 is Quantisation, added alongside Shading as the pipeline's output
-    // stage - the two are separate choices, so both get their own row.
+    // Row 3 is Quantisation, a separate choice from Shading, with its own row.
     [Fact]
     public void SelectingOrderedQuantisationSavesIt()
     {
@@ -83,9 +81,7 @@ public class EngineSettingsControllerTests
         Assert.Equal(Quantisation.Ordered, configFile.ReadConfig().Engine.Graphics.Quantisation);
     }
 
-    // Row 4 is Font. It has no restart marker, so choosing a kind has to
-    // reach the running renderer as well as the file - the same bargain the
-    // Music row below makes with the audio controller.
+    // Row 4 is Font: no restart marker, so a choice must reach the running renderer, not just the file.
     [Fact]
     public void SelectingAFontKindAppliesItToTheRunningRenderer()
     {
@@ -114,8 +110,7 @@ public class EngineSettingsControllerTests
         Assert.Equal(FontKind.Fon, draw.Graphics.FontKind);
     }
 
-    // Row 5 is Music: the config and the running AudioController have to move
-    // together, or the setting only takes effect after a restart.
+    // Row 5 is Music: the config and the running AudioController must move together.
     [Fact]
     public void TurningMusicOffAppliesToTheRunningAudioController()
     {
@@ -123,7 +118,6 @@ public class EngineSettingsControllerTests
             out GameState gameState, out FakeKeyboard keyboard, out AudioController audio, out _);
         controller.Reset();
 
-        // Down five times to the Music row, then toggle.
         for (int i = 0; i < 5; i++)
         {
             keyboard.KeyDown(ConsoleKey.DownArrow, default);
@@ -138,9 +132,7 @@ public class EngineSettingsControllerTests
         Assert.False(audio.MusicOn);
     }
 
-    // Row 8 is Window Scale. The 16-bit tier this fixture builds offers 1 and
-    // 2, so stepping off its default of 2 lands on 1 - and the row shows the
-    // scales as multipliers rather than bare numbers.
+    // Row 8 is Window Scale: the 16-bit tier offers 1x and 2x, shown as multipliers.
     [Fact]
     public void SelectingAWindowScaleSavesIt()
     {
@@ -164,9 +156,7 @@ public class EngineSettingsControllerTests
         Assert.Equal(1, configFile.ReadConfig().Engine.WindowScale);
     }
 
-    // Row 9 is Field of View. Unchosen, it reads back the original's own
-    // 53 degrees, and selecting that value stores nothing so the classic
-    // projection stays exact. Stepping the row on once moves to 65.
+    // Row 9 is Field of View, defaulting to the original's 53 degrees (stores nothing, keeps the classic projection exact).
     [Fact]
     public void SelectingAFieldOfViewSavesIt()
     {
@@ -192,13 +182,8 @@ public class EngineSettingsControllerTests
         Assert.Equal(65, configFile.ReadConfig().Engine.FieldOfView);
     }
 
-    // Row 10 is Rendition - Design Scale was inserted at 9, between it and
-    // Window Scale. Switching it to the 8-bit tier does not reload
-    // anything - that only happens on restart - but the Window Scale row
-    // above it has to offer that tier's own scales straight away: showing
-    // the 16-bit tier's 1 and 2 while the config underneath already says
-    // 8-bit would let a commander pick a scale the tier they are about to
-    // restart into does not offer, or hide 4, which it does.
+    // Row 10 is Rendition: switching it does not reload anything until restart, but the Window
+    // Scale row above must offer the newly-selected tier's own scales straight away.
     [Fact]
     public void SwitchingRenditionUpdatesTheWindowScalesOffered()
     {
@@ -260,11 +245,7 @@ public class EngineSettingsControllerTests
         Space space = SettingsControllerFixture.CreateSpace(out gameState, out keyboard, out draw, out audio);
         configFile = SettingsControllerFixture.CreateConfigFile(ConfigFileName);
 
-        // The fixture's draw surface, base view and style are all built for
-        // the 16-bit tier (see SettingsControllerFixture), so the config has
-        // to say the same - Elite's own default is 8-bit, which would leave
-        // the Window Scale row reading a tier other than the one everything
-        // else here is built for.
+        // Fixture is built for the 16-bit tier; the config must say the same (Elite's own default is 8-bit).
         gameState.Config.Engine.Rendition = "16-bit";
 
         return new EngineSettingsController(
@@ -283,8 +264,7 @@ public class EngineSettingsControllerTests
             SettingsControllerFixture.CreateStyle(draw));
     }
 
-    // Rows are found by name and counted at runtime: these tests used fixed
-    // indices and step counts, and every new setting silently moved them.
+    // Rows are found by name rather than fixed index, so a new setting cannot silently move them.
     private static int RowNamed(EngineSettingsController controller, string name)
     {
         for (int i = 0; i < controller.Settings.Count; i++)

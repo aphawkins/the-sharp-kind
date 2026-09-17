@@ -8,11 +8,8 @@ using StuntCarRacerSharpLib.Tracks;
 
 namespace StuntCarRacerSharpLib.Rendering;
 
-// The six road-surface textures the original remake loaded from
-// Bitmap/Road*.bmp, regenerated from the SCR palette: a road-line band at
-// each edge with the road colour between. The original bitmaps were 400x100
-// with every row identical and were only ever sampled at tv = 0, so a
-// one-pixel-high strip is equivalent.
+// Regenerated from the SCR palette: a road-line band at each edge with the road colour between.
+// The original 400x100 bitmaps had every row identical and were only sampled at tv = 0, so a one-pixel-high strip is equivalent.
 public sealed class RoadTextures
 {
     internal const int YellowDark = 0;
@@ -45,10 +42,7 @@ public sealed class RoadTextures
 
     internal IReadOnlyList<FastBitmap> Textures => _textures;
 
-    // Which texture each of the track's segments uses (the original
-    // SetSegmentTextures): the line colour alternates yellow/red segment by
-    // segment starting from each piece's initial colour, the start line is
-    // white and black road stays black.
+    // Original SetSegmentTextures: line colour alternates yellow/red by segment, start line is white, black road stays black.
     internal static int[] SegmentTextures(Track track)
     {
         int[] segmentTextures = new int[track.NumSegments];

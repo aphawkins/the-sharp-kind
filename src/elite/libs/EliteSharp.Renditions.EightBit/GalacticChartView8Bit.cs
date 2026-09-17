@@ -18,9 +18,7 @@ namespace EliteSharp.Renditions.EightBit;
 /// </summary>
 internal sealed class GalacticChartView8Bit : BaseView8Bit, IView<GalacticChartModel>
 {
-    // The plot's last row is galaxy y=255, which ToScreen puts at
-    // (255 * 0.6) + ViewportTop + 12 = 165 at Scale 1; the divider closes the
-    // plot off on that row.
+    // Closes the plot off below its last row: galaxy y=255 maps to (255 * 0.6) + ViewportTop + 12 at Scale 1.
     private const float DividerY = 172;
     private const float CrossSize = 5;
     private const int CaptionColumn = 1;

@@ -73,9 +73,7 @@ public class GameClockTests
     [Fact]
     public void TheUnspentRemainderIsCarriedRatherThanDropped()
     {
-        // Half a step twice is one step. Dropping the remainder instead would
-        // lose a step here, and lose them steadily at any rate that does not
-        // divide cleanly.
+        // Half a step twice is one step; dropping the remainder instead would lose a step at any rate that doesn't divide cleanly.
         GameClock clock = new();
 
         Assert.Equal(0, clock.Advance(GameRate / 2));

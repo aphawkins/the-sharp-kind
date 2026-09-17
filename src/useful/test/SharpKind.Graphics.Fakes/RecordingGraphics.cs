@@ -108,9 +108,7 @@ public sealed class RecordingGraphics(float screenWidth = 0, float screenHeight 
     public void DrawPolygonFilledDepth(Vector2[] points, float[] depths, FastColor faceColor, IColourQuantiser? dither)
         => FilledPolygons.Add((points, faceColor));
 
-    // Recorded against the colour the polygon would take flat, so a test that
-    // only cares that a face was drawn reads the same either way; the corner
-    // colours themselves land in ShadedPolygons.
+    // Recorded against the flat colour, so a test only caring that a face was drawn reads the same either way; corners land in ShadedPolygons.
     public void DrawPolygonFilledDepth(
         Vector2[] points,
         float[] depths,

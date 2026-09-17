@@ -33,8 +33,7 @@ public static class WindowScales
         int nearest = rendition.WindowScales[0];
         foreach (int offered in rendition.WindowScales)
         {
-            // Ties go to the larger, which is why this is <= and not <: the
-            // list is ascending, so a later entry equally far away is bigger.
+            // Ties go to the larger: the ascending list makes a later equal-distance entry the bigger one.
             if (Math.Abs(offered - scale) <= Math.Abs(nearest - scale))
             {
                 nearest = offered;

@@ -5,10 +5,8 @@ using SharpKind.Graphics.Rendering;
 
 namespace SharpKind.Graphics;
 
-// The Gouraud fill: a colour per corner blended across the polygon, rather
-// than one colour for the whole of it. Its own file because the flat and
-// textured rasterisers already fill SoftwareGraphics to the size the repo
-// allows one file to be, not because it is a separate concern.
+// The Gouraud fill: a colour per corner blended across the polygon. Its own file because the flat
+// and textured rasterisers already fill SoftwareGraphics to the repo's per-file size limit.
 public sealed partial class SoftwareGraphics
 {
     public void DrawPolygonFilledDepth(
@@ -43,12 +41,9 @@ public sealed partial class SoftwareGraphics
         }
     }
 
-    // Gouraud variant of DrawTriangleFilledDepth: a colour per corner,
-    // blended down each edge and then across each span, instead of one colour
-    // for the whole triangle. The blend is affine rather than divided by
-    // depth - a shade has no perspective to be correct about the way a
-    // texture coordinate does, and the eye cannot see the difference across
-    // one face of a ship.
+    // Gouraud variant of DrawTriangleFilledDepth: blended down each edge and across each span.
+    // Affine, not divided by depth - a shade has no perspective correctness to get right the way a
+    // texture coordinate does, and the eye can't tell across one ship face.
     internal void DrawTriangleFilledDepthGouraud(
         Vector2 a,
         Vector2 b,
@@ -134,17 +129,11 @@ public sealed partial class SoftwareGraphics
         }
     }
 
-    // One channel of the blend. The same rounding as VertexColours.Lerp - t
-    // is clamped, so the result never leaves the range the two ends span and
-    // adding a half then truncating rounds away from zero as that does.
+    // Same rounding as VertexColours.Lerp: t is clamped, so the result never leaves the range the two ends span.
     private static byte Channel(byte from, float range, float t) => (byte)(from + (range * t) + 0.5f);
 
-    // Draw one depth-tested scanline of a Gouraud triangle, blending the
-    // colour from colour0 at x0 to colour1 at x1 alongside the inverse depth.
-    // Unlike the flat span, the quantiser is asked at every pixel whether it
-    // dithers or not: a blended colour is a different colour at each pixel,
-    // so there is no one answer the caller could have resolved for the whole
-    // face beforehand.
+    // Unlike the flat span, the quantiser is asked at every pixel: a blended colour differs per
+    // pixel, so there's no one answer the caller could resolve for the whole face beforehand.
     private void DrawSpanFilledDepthGouraud(
         int y,
         float x0,
@@ -158,9 +147,7 @@ public sealed partial class SoftwareGraphics
         int start = Math.Max((int)MathF.Floor(x0), _clipLeft);
         int end = Math.Min((int)MathF.Floor(x1), _clipRight - 1);
 
-        // What varies across the span, worked out once for the whole of it
-        // rather than per pixel: the reciprocal of its width, and how far each
-        // channel and the inverse depth travel from one end to the other.
+        // Worked out once for the whole span, not per pixel: reciprocal width, and per-channel/depth deltas.
         float span = x1 - x0;
         float across = span <= 0 ? 0f : 1f / span;
         float depthRange = i1 - i0;

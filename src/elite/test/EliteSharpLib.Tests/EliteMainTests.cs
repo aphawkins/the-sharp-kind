@@ -16,11 +16,7 @@ public class EliteMainTests
     [Fact]
     public void ConstructAndUpdateWithFakeAbstractionSucceeds()
     {
-        // Arrange: the same DI composition SDLProgram.Main builds
-        // (AddEliteConfig + AddEliteMain), with the real IAbstraction
-        // swapped for a fake so no SDL window, sound device or keyboard is
-        // needed. Everything else, including the real shipped assets, is
-        // production wiring.
+        // The same DI composition SDLProgram.Main builds, with IAbstraction swapped for a fake so no SDL window/sound/keyboard is needed.
         string configDirectory = Path.Combine(Path.GetTempPath(), "EliteMainTests_" + Guid.NewGuid().ToString("N"));
         try
         {

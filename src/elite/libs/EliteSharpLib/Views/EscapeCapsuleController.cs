@@ -23,8 +23,7 @@ internal sealed class EscapeCapsuleController : IScreenController
 {
     private const string Alert = "Escape capsule launched - Ship auto-destuct initiated.";
 
-    // Ticks the capsule spends watching the ship go, of which the explosion
-    // is at tick 40; after that the autopilot takes over.
+    // Ticks the capsule spends watching the ship go; the explosion is at tick 40.
     private const float LaunchTicks = 90;
     private const float ExplosionTick = 40;
 
@@ -132,10 +131,7 @@ internal sealed class EscapeCapsuleController : IScreenController
     // Exposed for tests: the alert is only up while the ship is still going.
     internal EscapeCapsuleModel BuildModel() => new(Alert, _tick < LaunchTicks);
 
-    // Crossed, not equalled. A whole tick lands on the explosion moment
-    // exactly; a fraction of one steps from just under it to just over and
-    // would sail past a test for equality, leaving the ship the capsule was
-    // launched from to fly on intact.
+    // Crossed, not equalled: a fractional tick can step past the explosion moment and miss an == test.
     private void BlowUpTheAbandonedShip(float ticks)
     {
         if (_tick < ExplosionTick && _tick + ticks >= ExplosionTick)

@@ -37,9 +37,7 @@ public class SoftwareGamepad : IGamepad, IGamepadSink
     public IReadOnlyList<string> AttachedDevices
         => [.. _arrivals.Select(id => _devices[id].Name)];
 
-    // The device being flown: the preferred one if it is attached, and
-    // otherwise whatever arrived first. Resolved on each read rather than
-    // cached, so plugging the preferred stick in mid-game picks it up.
+    // The preferred device if attached, else whatever arrived first. Resolved per read so plugging in the preferred stick mid-game picks it up.
     private Device? Active
     {
         get
@@ -96,9 +94,7 @@ public class SoftwareGamepad : IGamepad, IGamepadSink
 
     public void Disconnected(int deviceId)
     {
-        // Everything the device knew goes with it - a button held as it is
-        // unplugged would otherwise stay held forever, and what was learned
-        // about its axes cannot be carried to whatever arrives next.
+        // Everything the device knew goes with it - a button held as it's unplugged would otherwise stay held forever.
         if (_devices.Remove(deviceId))
         {
             _ = _arrivals.Remove(deviceId);
@@ -136,9 +132,7 @@ public class SoftwareGamepad : IGamepad, IGamepadSink
 
         float clamped = Math.Clamp(value, -1f, 1f);
 
-        // A digital stick is wired as switches, so it can only ever send an
-        // end of the range or the centre; anything in between is a
-        // potentiometer, and there is no undoing that conclusion.
+        // A digital stick can only send an end of the range or the centre; anything in between is a potentiometer.
         if (clamped is not (-1f or 0f or 1f))
         {
             _ = device.AnalogAxes.Add(axis);
@@ -159,9 +153,7 @@ public class SoftwareGamepad : IGamepad, IGamepadSink
 
         internal Dictionary<GamepadAxis, float> Axes { get; } = [];
 
-        // Not cleared with the input: what kind of device an axis belongs to
-        // is not state that goes stale between frames. Unplugging is what
-        // ends it, and that drops the whole device.
+        // Not cleared with the input: device kind isn't state that goes stale between frames. Unplugging drops the whole device instead.
         internal HashSet<GamepadAxis> AnalogAxes { get; } = [];
 
         internal void ClearInput()

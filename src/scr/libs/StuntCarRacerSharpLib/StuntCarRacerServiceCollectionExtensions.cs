@@ -18,10 +18,8 @@ public static class StuntCarRacerServiceCollectionExtensions
 {
     private const string ConfigFileName = "stuntcarracer.sharp";
 
-    // ScrConfig is internal, so Program.Main can't reference or
-    // construct a ConfigFile<ScrConfig> directly; this registers it
-    // from inside the assembly that can, exposing only the already-public
-    // AudioOptions that StuntCarRacerMain's constructor accepts.
+    // ScrConfig is internal, so Program.Main can't construct a ConfigFile<ScrConfig> directly; this registers it from inside the
+    // assembly that can, exposing only the already-public AudioOptions.
     public static IServiceCollection AddScrConfig(this IServiceCollection services, string userDataPath)
     {
         services.AddSingleton(sp => new ConfigFile<ScrConfig>(
@@ -37,17 +35,12 @@ public static class StuntCarRacerServiceCollectionExtensions
         return services;
     }
 
-    // Exposes the (public) engine settings from the (internal) ScrConfig, so
-    // Program.Main - which picks between SoftwareAbstraction and SDLAbstraction
-    // and therefore needs to reference SharpKind.SDL, a dependency
-    // StuntCarRacerSharpLib itself deliberately does not have - can read the
-    // backend, the tier and the window scale before the DI container exists.
+    // Exposes public engine settings from internal ScrConfig, so Program.Main can read backend/tier/window scale before the DI
+    // container exists; it needs SharpKind.SDL to pick an abstraction, a dependency this library deliberately does not have.
     public static EngineConfigSettings ReadEngineSettings(string userDataPath, ILoggerFactory loggerFactory)
         => EngineConfigReader.Read<ScrConfig>(userDataPath, ConfigFileName, RepairConfig, loggerFactory);
 
-    // The single shared source of entropy for this app instance: an
-    // unseeded Random in production, replaceable with a seeded one in
-    // tests via RandomSource's constructor seam.
+    // Single shared source of entropy: unseeded Random in production, replaceable with a seeded one in tests via RandomSource's constructor seam.
     public static IServiceCollection AddScrRandom(this IServiceCollection services)
     {
         services.AddSingleton(_ => Random.Shared);
@@ -55,8 +48,7 @@ public static class StuntCarRacerServiceCollectionExtensions
         return services;
     }
 
-    // Registers the game itself, as AddEliteMain does for Elite: the
-    // composition root asks for the game, not for the pieces it is built from.
+    // Registers the game itself, as AddEliteMain does for Elite: the composition root asks for the game, not its pieces.
     public static IServiceCollection AddScrMain(this IServiceCollection services)
     {
         services.AddSingleton(sp => new StuntCarRacerMain(
@@ -69,8 +61,6 @@ public static class StuntCarRacerServiceCollectionExtensions
         return services;
     }
 
-    // Stunt Car Racer has no settings of its own yet, so this is the shared
-    // engine repair - which it previously skipped altogether, leaving a bad
-    // backend or tier in the file to be discovered at startup.
+    // Stunt Car Racer has no settings of its own yet, so this is just the shared engine repair.
     internal static bool RepairConfig(ScrConfig config) => config.Repair();
 }

@@ -306,10 +306,8 @@ public class SpaceTests
     [Fact]
     public void AnEnergyBombKillsAConstrictor()
     {
-        // Arrange: the original's bomb-kill sweep excludes only the space
-        // station and already-exploding ships - no ship-type check at all,
-        // so the Constrictor's "only military lasers penetrate" gimmick
-        // doesn't save it from a bomb.
+        // The original's bomb-kill sweep excludes only the station and already-exploding ships -
+        // no ship-type check, so the Constrictor's "only military lasers penetrate" gimmick doesn't save it.
         Space space = CreateSpace(
             out GameState gameState, out Universe universe, out _, out _, out _, out FakeEliteDraw draw, out _, out _);
         gameState.DetonateBomb = true;
@@ -324,9 +322,7 @@ public class SpaceTests
     [Fact]
     public void RollingAndPitchingDoesNotRotateTheSunsOwnOrientation()
     {
-        // Arrange: original MV45 - the sun returns before rotating its own
-        // orientation vectors or spinning, "we don't need to rotate the sun
-        // around its origin." A planet, by contrast, still rotates.
+        // Original MV45: the sun returns before rotating its own orientation or spinning. A planet, by contrast, still rotates.
         Space space = CreateSpace(
             out _, out Universe universe, out PlayerShip ship, out _, out _, out FakeEliteDraw draw, out _, out _);
         ship.Roll = 30;
@@ -566,10 +562,8 @@ public class SpaceTests
     [Fact]
     public void MisjumpingIntoWitchspaceAlwaysSpawnsExactlyFourThargoids()
     {
-        // Original MJP1: GTHG loops until MANY+THG exceeds 3, always ending
-        // with exactly 4 Thargoids - not a random 1-4. A random byte of 253
-        // also clears the >64 escort threshold in CreateThargoid, so each
-        // Thargoid brings its Tharglet companion too.
+        // Original MJP1: always exactly 4 Thargoids, not random 1-4. A random byte of 253 also
+        // clears CreateThargoid's escort threshold, so each brings a Tharglet companion too.
         Space space = CreateSpace(
             out GameState gameState,
             out Universe universe,

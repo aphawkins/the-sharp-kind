@@ -79,9 +79,7 @@ internal abstract class SettingsListController : IScreenController
             });
         }
 
-        // The Back row is the same on every screen, so it is here rather than
-        // repeated in each. A label rather than a combo box: its text is
-        // fixed, so its binding is only somewhere for that text to live.
+        // The Back row is the same on every screen, so it's here rather than repeated. A label, not a combo box: its text is fixed.
         _back = new(surface.Graphics, style.RowStyle, new TextSetting("Back"))
         {
             Alignment = TextAlignment.Centre,
@@ -162,9 +160,7 @@ internal abstract class SettingsListController : IScreenController
     {
     }
 
-    // The cursor wraps rather than stopping at the ends, as the options menu's
-    // does: Back is the last row on every one of these screens, so one press
-    // up from the first setting is the shortest way out.
+    // Wraps rather than stopping at the ends, as the options menu's does: Back is the last row, so one press up is the shortest way out.
     private void SelectDown() => HighlightedItem = (HighlightedItem + 1) % RowCount;
 
     private void SelectUp() => HighlightedItem = (HighlightedItem + RowCount - 1) % RowCount;

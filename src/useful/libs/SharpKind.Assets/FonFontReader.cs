@@ -28,9 +28,7 @@ public static class FonFontReader
     // marks an integer id rather than a name, and 0x08 is RT_FONT.
     private const ushort FontResourceType = 0x8008;
 
-    // Offsets of the FNT header fields that are read, from the start of a
-    // font resource. Common to both versions - 3.0 only added fields after
-    // them, which is why the character table moves and these do not.
+    // Common to both versions - 3.0 only added fields after them, which is why the character table moves and these don't.
     private const int PixelHeightPosition = 0x58;
     private const int PitchAndFamilyPosition = 0x5A;
     private const int MaxWidthPosition = 0x5D;
@@ -91,10 +89,7 @@ public static class FonFontReader
         return ReadStrike(file, nearest, path);
     }
 
-    // Every RT_FONT resource's offset into the file. The NE resource table is
-    // a list of type blocks, each holding the resources of one type; offsets
-    // and lengths in it are stored shifted, by a count the table opens with,
-    // so that a 16-bit field can address a larger file.
+    // Every RT_FONT resource's offset. Offsets are stored shifted by the table's leading count so a 16-bit field can address a larger file.
     private static List<int> FontResources(byte[] file, string path)
     {
         if (ReadUInt16(file, 0, path) != 0x5A4D)
@@ -181,10 +176,7 @@ public static class FonFontReader
         return new(height, maxWidth, firstChar, lastChar, isProportional, glyphs);
     }
 
-    // A glyph is stored as columns of bytes rather than rows: the whole of
-    // the leftmost eight pixel columns first, top to bottom, then the next
-    // eight, and so on. That is the packing a 16-bit display adapter wanted.
-    // It is unpacked here so nothing downstream has to know about it.
+    // Glyph is stored as columns of bytes (leftmost 8px column-major, top to bottom, then next 8...) - the packing a 16-bit display adapter wanted.
     private static FonGlyph ReadGlyph(byte[] file, int start, int width, int height, string path)
     {
         bool[] ink = new bool[width * height];
@@ -211,9 +203,7 @@ public static class FonFontReader
         return new(width, height, ink);
     }
 
-    // A truncated or corrupt file would otherwise read off the end of the
-    // array; every field is read through these so it fails saying which file
-    // is at fault rather than with an index that means nothing to anyone.
+    // Every field is read through these so a truncated file fails naming the file, not with a bare index error.
     private static byte ReadByte(byte[] file, int position, string path)
     {
         Require(file, position, sizeof(byte), path);

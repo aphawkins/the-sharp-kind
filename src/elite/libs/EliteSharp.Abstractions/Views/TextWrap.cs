@@ -35,10 +35,7 @@ public static class TextWrap
                 break;
             }
 
-            // The last character that fits on the row, scanned backwards for
-            // somewhere to break. Starting a character further on - which is
-            // what this used to do - lets a row ending in a comma or period
-            // run one character past its width.
+            // Scanned backwards from the last character that fits - starting one further on can run a row past its width.
             int i = start + maxChars - 1;
 
             while (i > start && text[i] is not ' ' and not ',' and not '.')
@@ -48,16 +45,13 @@ public static class TextWrap
 
             if (i == start)
             {
-                // Nowhere to break in the whole row: the word is longer than
-                // the row is wide, so break it mid-word at the row width.
+                // Word is longer than the row is wide - break it mid-word.
                 lines.Add(text.Substring(start, maxChars));
                 start += maxChars;
                 continue;
             }
 
-            // A comma or period stays on the row it ends; a space is dropped,
-            // since it draws nothing left-aligned and would push a centred row
-            // half a character off centre.
+            // A comma/period stays on the row; a space is dropped, or it would push a centred row half a character off.
             lines.Add(text[start..(text[i] == ' ' ? i : i + 1)]);
             start = i + 1;
         }

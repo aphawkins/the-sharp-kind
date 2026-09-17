@@ -64,10 +64,7 @@ public class MissionRegistryTests
     [Fact]
     public void FindsTheShippedMissionsOnDiskThroughTheGamesOwnComposition()
     {
-        // Arrange: the whole seam, end to end. Nothing here hands the game its
-        // missions - they are in an assembly the game does not reference, found
-        // in the Missions folder beside the binary, which is exactly how a
-        // stranger's would be found.
+        // The whole seam end to end: found in the Missions folder beside the binary, exactly how a stranger's mission would be found.
         using HeadlessGameHarness harness = new();
 
         // Act

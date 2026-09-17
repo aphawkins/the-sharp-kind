@@ -4,18 +4,10 @@ using SharpKind.Assets;
 
 namespace SharpKind.Graphics;
 
-// A font sheet plus the layout needed to find a glyph in it. Two shapes are
-// supported, and they differ in ways that matter typographically rather than
-// incidentally:
-//
-// - Proportional sheets (the 16-bit fonts) pack variable-width glyphs into a
-//   fixed cell and terminate each one with a magenta marker pixel, so the
-//   width has to be measured per glyph. Ink is cyan and is recoloured to
-//   whatever colour the caller asked for; anything else is copied through,
-//   which is what lets a glyph carry more than one colour.
-// - Grid sheets (the 8-bit BBC Micro font) are monospaced, exactly as the
-//   hardware they imitate was: every glyph fills its cell, there are no
-//   markers, and the sheet is two colours - ink and background.
+// A font sheet plus the layout needed to find a glyph in it. Proportional sheets (16-bit fonts) pack
+// variable-width glyphs into a fixed cell, terminated by a magenta marker; cyan ink recolours, everything else
+// copies through (letting a glyph carry more than one colour). Grid sheets (8-bit BBC Micro font) are
+// monospaced, two colours only, no markers.
 public sealed class BitmapFont
 {
     public BitmapFont(FastBitmap image, BitmapFontAsset asset)
@@ -50,26 +42,20 @@ public sealed class BitmapFont
 
     public bool IsProportional { get; }
 
-    // Cyan on a proportional sheet, white on a two-colour grid sheet: the
-    // pixels that take on the requested text colour.
+    // Cyan on a proportional sheet, white on a grid sheet - the pixels that take the requested text colour.
     public FastColor Ink => IsProportional ? BaseColors.Cyan : BaseColors.White;
 
-    // Grid sheets are opaque, so their background colour is the transparency
-    // key; proportional sheets already carry an alpha channel.
+    // Grid sheets are opaque, so their background colour is the transparency key; proportional sheets already carry an alpha channel.
     public FastColor Background => IsProportional ? BaseColors.TransparentBlack : BaseColors.Black;
 
-    // A sheet only carries the cells its image has room for. Anything before
-    // space, or past the last cell, has no glyph - and reading its cell would
-    // read outside the image.
+    // A sheet only carries cells its image has room for; anything outside that range has no glyph and would read outside the image.
     public bool Has(char letter)
     {
         int index = letter - ' ';
         return index >= 0 && index < Columns * Rows;
     }
 
-    // Glyphs run from space (ASCII 32) left to right, top to bottom. This is
-    // the same mapping the proportional sheets always used - (c >> 4) - 2 and
-    // c & 0xF are just this arithmetic with Columns fixed at 16.
+    // Glyphs run from space (ASCII 32) left to right, top to bottom; Columns fixed at 16 matches the classic (c >> 4) - 2 / c & 0xF layout.
     public (int X, int Y) CellOrigin(char letter)
     {
         int index = letter - ' ';

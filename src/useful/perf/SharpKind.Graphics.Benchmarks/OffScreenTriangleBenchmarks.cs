@@ -4,11 +4,7 @@ using BenchmarkDotNet.Attributes;
 
 namespace SharpKind.Graphics.Benchmarks;
 
-// Measures what a face that lands wholly or partly outside the viewport
-// costs the rasteriser, against the on-screen cases as a yardstick. Backs
-// the "no frustum side-plane clipping" question: side planes are handled
-// after projection, per scanline, by the span clamps in DrawTriangleFilled,
-// so an off-screen face still walks its clamped Y range.
+// Cost of a face landing wholly or partly outside the viewport, against on-screen cases; side planes are clamped per scanline, not clipped before rasterising.
 [JsonExporterAttribute.FullCompressed]
 public class OffScreenTriangleBenchmarks : IDisposable
 {

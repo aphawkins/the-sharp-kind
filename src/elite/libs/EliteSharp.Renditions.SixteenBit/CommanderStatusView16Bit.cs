@@ -65,7 +65,6 @@ internal sealed class CommanderStatusView16Bit : BaseView16Bit, IView<CommanderS
         }
     }
 
-    // The equipment list, filling the left column before wrapping to the right.
     private void DrawEquipment(IReadOnlyList<string> equipment)
     {
         Vector2 position = new(EquipmentX + _surface.Layout.ViewportLeft, EquipmentStartY);

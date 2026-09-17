@@ -20,9 +20,7 @@ namespace SharpKind.Graphics.Rendering;
 /// </remarks>
 public sealed class ModelGeometry
 {
-    // How far off a plane a point may sit and still count as lying in it.
-    // The models are authored in whole units, so a decal panel meant to sit
-    // on a hull face lands on it exactly; this covers the rounding only.
+    // Models are authored in whole units, so a decal panel meant to sit on a hull face lands exactly; this covers rounding only.
     private const float PlaneTolerance = 0.1f;
 
     private static readonly ConditionalWeakTable<ThreeDModel, ModelGeometry> s_cache = [];
@@ -147,13 +145,8 @@ public sealed class ModelGeometry
         return (roots, normals);
     }
 
-    // Only a face that roots to itself takes part in the averaging: a decal or
-    // detail line lies in the plane of the hull face beneath it, so counting
-    // its normal too would weight that one plane twice at every corner it
-    // touches and flatten the corner back towards the hull face's own
-    // direction - which is the opposite of what smoothing is for. Such a face
-    // is still given corners; they just come out zero, the same "no direction
-    // here" a flat fill already uses.
+    // Only a self-rooted face takes part in the averaging: counting a decal's normal would weight
+    // its plane twice. It still gets corners; they just come out zero.
     private static Vector3[][] BuildCornerNormals(ThreeDModel model, int[] roots, Vector3[] faceNormals)
     {
         IList<int>[] faces = new IList<int>[model.Faces.Count];

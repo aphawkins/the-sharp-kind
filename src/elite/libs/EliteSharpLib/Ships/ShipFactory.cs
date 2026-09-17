@@ -19,10 +19,7 @@ internal sealed class ShipFactory : IShipFactory
         _rng = rng;
     }
 
-    // rng is the game's: the factory's own rolls - whether an asteroid is
-    // really a Rock Hermit, which trader shows up - are game decisions. The
-    // entropy a ship draws with rides on the draw surface instead, so it
-    // cannot be confused with this one. See RenderRandom.
+    // rng is the game's: factory rolls (asteroid vs Rock Hermit, which trader) are game decisions. See RenderRandom.
     public static ShipFactory Create(IAssetLocator assetLocator, IEliteDraw draw, RNG rng)
         => Create(assetLocator, draw, rng, ShipTable.Load());
 
@@ -161,10 +158,7 @@ internal sealed class ShipFactory : IShipFactory
         return new(ships, rng);
     }
 
-    // One row of the table becomes one prototype, which CreateShip then
-    // clones. Clone has always returned a ShipBase whatever class it was
-    // called on, so building them all as ShipBase changes nothing about what
-    // the game gets.
+    // Clone has always returned a ShipBase whatever class it was called on, so building all prototypes as ShipBase changes nothing.
     private static ShipBase Build(ShipDefinition definition, IEliteDraw draw, string modelPath)
         => new(draw)
         {

@@ -6,11 +6,7 @@ using Xunit;
 
 namespace SharpKind.Assets.Tests;
 
-// Path resolution, which is all this class does. There used to be a lot more
-// to say: a category resolved to <Category>/<Rendition>/<file> and fell back
-// to <Category>/<file>, and a rendition could overlay entries onto a shared
-// manifest. None of that survives a rendition keeping its assets in its own
-// folder - the folder is the answer, and its manifest is the whole manifest.
+// A rendition keeps its assets in its own folder, so the folder is the answer and its manifest is the whole manifest.
 public class AssetLocatorRenditionTests : IDisposable
 {
     private readonly string _tempRoot;
@@ -58,8 +54,7 @@ public class AssetLocatorRenditionTests : IDisposable
     [Fact]
     public void CarriesTheNameItWasGivenWithoutPuttingItInAPath()
     {
-        // The name is a label for messages now - which rendition an asset
-        // complaint is about - and no longer decides where anything lives.
+        // The name is only a label for messages, not part of any path.
         AssetLocator locator = Locate("Psychedelic");
 
         Assert.Equal("Psychedelic", locator.Rendition);
@@ -79,9 +74,7 @@ public class AssetLocatorRenditionTests : IDisposable
     [Fact]
     public void RefusesANameThatCouldNotBeAFolder()
     {
-        // It is still written into messages and, for the game, used to find a
-        // rendition on disk, so a name with a path separator in it is refused
-        // rather than followed.
+        // Used to find a rendition on disk, so a path separator in the name is refused rather than followed.
         using MemoryStream stream = ToStream(Manifest());
 
         Assert.Throws<SharpKindException>(() => AssetLocator.Create(stream, _tempRoot, "../escape"));

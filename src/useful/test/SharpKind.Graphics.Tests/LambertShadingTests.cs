@@ -93,10 +93,7 @@ public class LambertShadingTests
         Assert.Equal(new FastColor(255, 0, 0, 0), shaded);
     }
 
-    // The models fake lighting by hand-picking a darker shade per face. Every
-    // shade of one material has to come back to the same base, or the light is
-    // shading an already-shaded model and the hand-picked steps survive as
-    // flicker.
+    // Every shade of one material has to come back to the same base, or the light shades an already-shaded model and steps survive as flicker.
     [Theory]
     [InlineData(0x555555u)] // DarkerGrey - the Coriolis station's eight main faces
     [InlineData(0x666666u)] // DarkGrey - its four next faces
@@ -134,9 +131,7 @@ public class LambertShadingTests
     public void BlackHasNoUnlitBaseToRecover()
         => Assert.Equal(new FastColor(255, 0, 0, 0), LambertShading.UnlitBase(new(255, 0, 0, 0), 255));
 
-    // The station is painted in greys no lighter than 0x88, so a fully-lit
-    // face reaches 0xAA - a quarter of headroom past it, which buys shades on
-    // a tier that quantises - and nowhere near the white a flat 255 gave.
+    // The station is painted in greys no lighter than 0x88, so a fully-lit face reaches 0xAA, not the white a flat 255 gave.
     [Fact]
     public void ALitFaceTopsOutAQuarterAboveTheModelsBrightestPaintedShade()
     {

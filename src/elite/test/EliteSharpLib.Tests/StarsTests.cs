@@ -17,17 +17,13 @@ public class StarsTests
     [Fact]
     public void NormalSpaceSimulatesTheRenditionsOwnStarCount()
     {
-        // Each rendition tunes its own star count for its own resolution,
-        // rather than one being derived from another - the fake renderer's
-        // 27 stands in for whatever a rendition author picked.
+        // Each rendition tunes its own star count for its own resolution; the fake renderer's 27 stands in.
         Stars stars = CreateStars(out FakeStarfieldRenderer renderer, normalSpaceStarCount: 27);
 
         stars.CreateNewStars();
         stars.FrontStarfield();
 
-        // The starfield pass moves the stars and collects the marks; Draw is
-        // what hands them to the rendition, now that the game ticks and the
-        // frame is composed separately.
+        // The starfield pass moves stars and collects marks; Draw hands them to the rendition.
         stars.Draw();
 
         Assert.Equal(27, renderer.LastDrawCount);
@@ -36,9 +32,7 @@ public class StarsTests
     [Fact]
     public void WitchspaceSimulatesTheRenditionsOwnStarCount()
     {
-        // Original NOSTM: 18 particles (NOST) in normal space, dropped to 3
-        // in witchspace for a visibly emptier void - each rendition tunes
-        // its own pair of counts the same way.
+        // Original NOSTM: 18 particles in normal space, dropped to 3 in witchspace for a visibly emptier void.
         Stars stars = CreateStars(out FakeStarfieldRenderer renderer, witchspaceStarCount: 5);
 
         stars.CreateNewWitchspaceStars();
@@ -48,21 +42,15 @@ public class StarsTests
         Assert.Equal(5, renderer.LastDrawCount);
     }
 
-    // The rear and side starfields recycle a star once it passes the view's
-    // edge, and that edge is in star space, which the focal length sizes. A
-    // wide field of view shortens the focal length and so stretches the view
-    // further across star space; the bounds used to be the constants 110 and
-    // 116, which are that edge only at the classic focus and fall well inside
-    // the view once it widens - leaving an empty band along the top and
-    // bottom of the rear and side views.
+    // Recycle bounds are in star space, sized by the focal length. A wide field of view shortens
+    // the focal length and stretches the view further across star space, so fixed bounds fell
+    // inside the view once it widened, leaving an empty band top and bottom.
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
     public void RearAndSideStarfieldsFillAWidenedView(bool rear)
     {
-        // Half the classic focal length, so star space is twice as tall: the
-        // view reaches 191 units either side of centre where the old
-        // constants stop at 110 and 116.
+        // Half the classic focal length: the view reaches 191 units either side of centre.
         const int frames = 200;
         const int starCount = 64;
 
@@ -89,15 +77,9 @@ public class StarsTests
             stars.Draw();
         }
 
-        // StarScale is 1 at this focus, so 116 star-space units is 116 pixels
-        // from the centre. A starfield held inside the old bounds never puts
-        // a star past that.
-        // Nearly every star should be on screen on nearly every frame. Held
-        // to the old bounds the field is thinned instead, because a star is
-        // recycled to an edge that is now inside the view and spends its life
-        // out past the drawable area: 93 % of the rear field survived and
-        // only 69 % of the side one, against 98 % of both once the bounds
-        // follow the focal length.
+        // Pins the fix: nearly every star should be on screen most frames. Fixed bounds thinned
+        // the field (93%/69% surviving) since a star recycled to an edge inside the view spent
+        // its life off-screen; matching the focal length restores ~98% for both.
         Assert.True(
             renderer.AllMarks.Count > (int)(frames * starCount * 0.95),
             $"only {renderer.AllMarks.Count} of {frames * starCount} star marks were drawn");
@@ -119,9 +101,7 @@ public class StarsTests
         int witchspaceStarCount = 3,
         float focus = 512)
     {
-        // A real stream rather than the fixed fake: where a recycled star
-        // reappears has to vary, or every star stacks on one spot and a test
-        // about how the field fills the view cannot see anything.
+        // A real stream, not the fixed fake: a recycled star's reappearance point has to vary, or they all stack on one spot.
         FakeEliteDraw draw = new() { Focus = focus, Jitter = new RenderRandom(new Random(1)) };
         renderer = new(normalSpaceStarCount, witchspaceStarCount);
 

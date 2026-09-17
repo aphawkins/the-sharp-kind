@@ -5,10 +5,7 @@ using Xunit;
 
 namespace SharpKind.Assets.Tests;
 
-// The fonts here are built rather than shipped as files: a .fon is a binary
-// whose interesting cases - several strikes, both FNT versions, proportional
-// against fixed pitch - no single real font exercises, and a built one states
-// in the test what it holds.
+// Fonts are built rather than shipped as files: no single real font exercises every case (several strikes, both FNT versions, proportional vs fixed pitch).
 public class FonFontReaderTests
 {
     [Fact]
@@ -70,8 +67,7 @@ public class FonFontReaderTests
         }
     }
 
-    // 3.0 widened the glyph offset and moved the character table down with
-    // it, so a font of each version has to decode to the same glyph.
+    // 3.0 widened the glyph offset and moved the character table down; both versions must decode to the same glyph.
     [Fact]
     public void ReadsVersionThreeGlyphs()
     {
@@ -94,8 +90,7 @@ public class FonFontReaderTests
         }
     }
 
-    // Wider than a byte, so the glyph spans two byte-columns of the packing
-    // and the second column's bits have to land in the right pixels.
+    // Spans two byte-columns of the packing; the second column's bits must land in the right pixels.
     [Fact]
     public void ReadsGlyphsWiderThanOneByte()
     {
@@ -136,8 +131,7 @@ public class FonFontReaderTests
     [InlineData(3, 8)]
     [InlineData(40, 16)]
 
-    // Exactly between two strikes, which goes to the smaller - text a pixel
-    // short of its box still fits, text a pixel over does not.
+    // Exactly between two strikes goes to the smaller.
     [InlineData(12, 8)]
     public void TakesTheNearestStrike(int wanted, int expected)
     {
@@ -182,8 +176,7 @@ public class FonFontReaderTests
         }
     }
 
-    // A character the font never claimed to cover has no glyph to fall back
-    // on, and saying so is the reader's job rather than guessing one.
+    // A character outside the declared range has no glyph, not a guessed one.
     [Fact]
     public void HasNoGlyphOutsideTheDeclaredRange()
     {
@@ -207,9 +200,7 @@ public class FonFontReaderTests
         }
     }
 
-    // A height left out of the manifest binds as zero, and nearest-strike
-    // would answer for that as readily as for any number - taking the
-    // smallest strike the file holds rather than saying no size was named.
+    // A height left out of the manifest binds as zero; nearest-strike would silently answer that as readily as any number.
     [Theory]
     [InlineData(0)]
     [InlineData(-8)]

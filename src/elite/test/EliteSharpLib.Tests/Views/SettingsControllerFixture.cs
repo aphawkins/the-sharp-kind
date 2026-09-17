@@ -77,9 +77,7 @@ internal static class SettingsControllerFixture
             rng);
     }
 
-    // The settings screens have no view of their own: they build their own
-    // controls over the surface, in the style the rendition supplies. The fake
-    // palette answers any colour name, so the real 16-bit style works here.
+    // Settings screens have no view of their own: they build controls over the surface in the rendition's style.
     internal static IBaseView CreateBaseView(FakeEliteDraw draw)
         => new SixteenBitRendition().CreateBaseView(draw);
 

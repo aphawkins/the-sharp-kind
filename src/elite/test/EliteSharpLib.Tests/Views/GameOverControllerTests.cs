@@ -19,10 +19,8 @@ using SharpKind.Fakes.Input;
 
 namespace EliteSharpLib.Tests.Views;
 
-// The game over screen, with no renderer: a dead Cobra and five pieces of
-// cargo tumbling in front of the player for a hundred ticks, then the game
-// resets. The wait is counted in ticks rather than updates, so a faster
-// frame rate must not shorten it.
+// A dead Cobra and five pieces of cargo tumble for a hundred ticks, then the game resets.
+// The wait is counted in ticks rather than updates, so a faster frame rate must not shorten it.
 public class GameOverControllerTests
 {
     [Fact]
@@ -46,9 +44,7 @@ public class GameOverControllerTests
     [Fact]
     public void ResetScattersTheCargoAndSetsItTumbling()
     {
-        // The scatter is drawn from the game's stream, so a fake that always
-        // answers with its maximum puts every piece at the same corner - it
-        // is that the offsets and spins are applied at all that this holds.
+        // Pins that offsets and spins are applied at all, not their distribution.
         GameOverController controller = CreateController(out _, out Universe universe, out _, randomValue: 32);
 
         controller.Reset();
@@ -116,9 +112,7 @@ public class GameOverControllerTests
     [Fact]
     public void TheWaitIsTheSameLengthOfTimeAtAFasterFrameRate()
     {
-        // A hundred ticks, not a hundred updates. At four times the rate each
-        // update is worth a quarter of a tick, so it takes four times as many
-        // updates to spend them - and a quarter as many must not be enough.
+        // A hundred ticks, not a hundred updates: at four times the rate it takes four times as many updates.
         GameOverController controller = CreateController(out GameState gameState, out _, out _);
         controller.Reset();
         gameState.IsInitialised = true;
@@ -140,8 +134,7 @@ public class GameOverControllerTests
         Assert.Equal("GAME OVER", view.Drawn?.Message);
     }
 
-    // Nothing on this screen answers to the keyboard - the player waits it
-    // out - so HandleInput must leave the wreckage alone.
+    // Nothing on this screen answers to the keyboard: HandleInput must leave the wreckage alone.
     [Fact]
     public void NoKeyDoesAnything()
     {

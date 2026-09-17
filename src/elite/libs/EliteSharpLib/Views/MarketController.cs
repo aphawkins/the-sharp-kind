@@ -69,9 +69,7 @@ internal sealed class MarketController : IScreenController
             _rows.Add(new TableRow(surface.Graphics, style.RowStyle, style.Columns, new MarketRowCells(stock)));
         }
 
-        // The amount is a label rather than a caption, because it is the one
-        // part of the cash line that changes. Bound to the credits, so it is
-        // read at every draw like everything else on the screen.
+        // A label, not a caption: it's the one part of the cash line that changes.
         _cashAmount = new(surface.Graphics, style.RowStyle, new CreditsText(trade))
         {
             Alignment = TextAlignment.Right,
@@ -99,8 +97,7 @@ internal sealed class MarketController : IScreenController
 
         DrawPlaced(_style.CashCaption, _style.HeadingStyle);
 
-        // Right-aligned against its own position, so the label is given no
-        // width to align inside: a zero-width box ends where it starts.
+        // Right-aligned against its own position: a zero-width box ends where it starts.
         _cashAmount.Draw();
     }
 
@@ -162,8 +159,7 @@ internal sealed class MarketController : IScreenController
     {
         public IReadOnlyList<string> Cells => BuildCells();
 
-        // A quantity of nothing is a dash, and carries no unit after it: "-t"
-        // would read as a tonne of something.
+        // A quantity of nothing is a dash with no unit: "-t" would read as a tonne of something.
         private string[] BuildCells()
         {
             string units = stock.Good.Units;
@@ -183,9 +179,7 @@ internal sealed class MarketController : IScreenController
         }
     }
 
-    // The commander's cash, as the cash line shows it. A binding rather than a
-    // string, so the label cannot be left showing what was in the hold before
-    // the last trade.
+    // A binding rather than a string, so the label can't be left stale after a trade.
     private sealed class CreditsText(Trade trade) : ISetting
     {
         public string Name => $"{trade.Credits:N1} Credits";

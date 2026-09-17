@@ -35,21 +35,13 @@ public sealed class ComboBox : UIControl
     public ComboBox(IGraphics graphics, ControlStyle style, ISetting setting)
         : base(graphics, style, setting)
     {
-        // The name's label fills the row, so everything drawn after it draws
-        // over that block and must not paint another. That is the row's own
-        // rule about the order it draws in, so it strips the backgrounds
-        // itself rather than asking the caller for a second style that
-        // happens to have none.
+        // The name label fills the row, so anything drawn after must not paint another background - strips it itself, not via a caller style.
         _valueStyle = style.WithoutBackground();
 
         _name = new(graphics, style, setting);
         _value = new(graphics, _valueStyle, new ValueOf(setting));
 
-        // Zero-width boxes: the opening arrow is right-aligned, so it ends at
-        // its position, and the closing one left-aligned, so it starts at its
-        // position. That lets both be placed against the value itself rather
-        // than at fixed columns, which would strand them when the value is
-        // short.
+        // Zero-width boxes: right/left-aligned arrows place against the value itself, not fixed columns that would strand them when short.
         _openArrow = new(graphics, _valueStyle, new TextSetting("<")) { Alignment = TextAlignment.Right };
         _closeArrow = new(graphics, _valueStyle, new TextSetting(">")) { Alignment = TextAlignment.Left };
     }
@@ -169,10 +161,7 @@ public sealed class ComboBox : UIControl
         _closeArrow.Draw();
     }
 
-    // The row's name and its value are two labels but one setting, and a label
-    // shows a setting's name. This is that setting seen from the value end -
-    // read through, never copied, so the value label cannot be left showing a
-    // value the setting has moved off.
+    // The setting seen from the value end - read through, never copied, so the label can't show a value the setting has moved off.
     private sealed class ValueOf(ISetting setting) : ISetting
     {
         public string Name => setting.Value;

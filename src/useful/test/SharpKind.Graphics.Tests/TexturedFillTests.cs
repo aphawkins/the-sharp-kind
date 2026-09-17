@@ -27,9 +27,7 @@ public class TexturedFillTests
 
         static void DoAssert(FastBitmap bmp)
         {
-            // Bilinear filtering blends near the u = 0.5 texel boundary (screen
-            // x = 50), so only assert the quarter-texel bands nearest each edge
-            // (x <= 35 and x >= 65), which stay pure under the bilinear kernel.
+            // Bilinear blends near the u = 0.5 boundary (x = 50), so only assert the quarter-texel bands nearest each edge (x <= 35, x >= 65).
             for (int y = 25; y <= 75; y += 10)
             {
                 for (int x = 25; x <= 35; x += 5)

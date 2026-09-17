@@ -13,35 +13,22 @@ using SharpKind.Fakes.Input;
 
 namespace EliteSharpLib.Tests;
 
-// Drives the real EliteMain (the same DI composition SDLProgram.Main
-// builds, AddEliteConfig + AddEliteMain) against a real SoftwareGraphics
-// with no SDL window, for tests that need several ticks of real gameplay
-// and, occasionally, a rendered frame to eyeball. EliteMain.Run is unusable
-// headlessly as-is - it hands off to GameHost.Run's real-time,
-// wall-clock-waiting loop - so this calls Update()/Draw() directly per
-// tick instead (via HeadlessGameHarnessBase).
+// Drives the real EliteMain against a real SoftwareGraphics with no SDL window. EliteMain.Run is
+// unusable headlessly as-is - it hands off to GameHost.Run's wall-clock loop - so this calls
+// Update()/Draw() directly per tick (via HeadlessGameHarnessBase).
 internal sealed class HeadlessGameHarness : HeadlessGameHarnessBase<GameStateSummary>
 {
-    // The rendition this harness draws with, loaded once and shared: a
-    // rendition holds no state, and loading it per harness reloads its
-    // assembly for every test that builds one.
+    // Loaded once and shared: a rendition holds no state, and loading it per harness reloads its assembly for every test.
     private static readonly InstalledRenditions s_renditions =
         EliteServiceCollectionExtensions.LoadRendition("16-bit", NullLoggerFactory.Instance);
 
     private readonly ServiceProvider _provider;
     private readonly string _configDirectory;
 
-    // The screen size defaults to the rendition's own. It was a hardcoded
-    // 512x512 until 2026-09-15, which had been wrong since the tier widened
-    // to 640 on 2026-07-30: the HUD art is 640 across, so every headless
-    // frame lost the right-hand dial cluster and the right edge of the
-    // canopy - a frame no commander ever sees, being signed by the golden
-    // baselines. A caller may still name a size; 0x0 is the one thing it
-    // must not, since negative ranges blow up star generation.
-    // randomSeed replaces the app's unseeded Random.Shared, so a run can be
-    // reproduced exactly. Null keeps the shipped behaviour. Golden traces
-    // need it: without a fixed seed the laser aim jitter, the encounter
-    // rolls and the ship spins all differ run to run.
+    // Screen size defaults to the rendition's own. A caller may still name a size; 0x0 is the one
+    // thing it must not, since negative ranges blow up star generation.
+    // randomSeed replaces the app's unseeded Random.Shared so a run can be reproduced exactly.
+    // Golden traces need it: without a fixed seed, laser aim jitter, encounter rolls and ship spins all differ run to run.
     public HeadlessGameHarness(
         int? width = null,
         int? height = null,
@@ -81,12 +68,8 @@ internal sealed class HeadlessGameHarness : HeadlessGameHarnessBase<GameStateSum
             services.AddSingleton(new Random(seed));
         }
 
-        // The drawing's stream is left alone by default, which is what makes
-        // the trace reproducibility test mean something: if drawing could
-        // ever reach the simulation again, an unseeded render stream would
-        // make the traces differ run to run rather than let the coupling
-        // pass unnoticed. A caller that compares *pixels* needs it fixed,
-        // because the starfield is scattered from it.
+        // Left alone by default so the trace reproducibility test can catch drawing that reaches
+        // the simulation again. A caller comparing pixels needs it fixed, since the starfield draws from it.
         if (renderSeed is int render)
         {
             services.AddSingleton(new RenderRandom(new Random(render)));
@@ -95,11 +78,7 @@ internal sealed class HeadlessGameHarness : HeadlessGameHarnessBase<GameStateSum
         _provider = services.BuildServiceProvider();
         Game = _provider.GetRequiredService<EliteMain>();
 
-        // Every Step is one update, and how much game time an update is
-        // worth is now the Fps setting. Pinned to the game's own rate by
-        // default so a step is a tick and the golden baselines keep meaning
-        // what they meant; a test that wants to prove the game plays the
-        // same at some other rate says so.
+        // Pinned to the game's own rate by default so a step is a tick and golden baselines keep their meaning.
         Game.State.Config.Engine.Graphics.Fps = updatesPerSecond;
     }
 

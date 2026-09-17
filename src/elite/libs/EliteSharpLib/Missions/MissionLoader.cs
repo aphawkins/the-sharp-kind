@@ -57,8 +57,7 @@ internal static class MissionLoader
 
         foreach (string file in Directory.EnumerateFiles(folder, "*.dll"))
         {
-            // One unreadable file is one plugin the commander does not get,
-            // not a game that will not start.
+            // One unreadable file is one plugin the commander does not get, not a game that fails to start.
             try
             {
                 assemblies.Add(AssemblyLoadContext.Default.LoadFromAssemblyPath(Path.GetFullPath(file)));

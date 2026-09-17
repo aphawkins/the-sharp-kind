@@ -11,8 +11,7 @@ namespace EliteSharpLib.Tests;
 
 public class BreakPatternTests
 {
-    // The two renditions that ship: both viewports are wider than they are
-    // tall, which is what the rings have to fit inside.
+    // Both viewports are wider than tall; the rings must fit inside that.
     public static TheoryData<string, float, float, float, float> Renditions { get; } = new()
     {
         { "16-bit", 640, 512, 128, 2 },
@@ -33,8 +32,7 @@ public class BreakPatternTests
         FakeEliteDraw draw = new() { Layout = layout, Rendition = rendition, Graphics = graphics };
         BreakPattern pattern = new(draw);
 
-        // One tick per ring, drawing after each: the last drawn frame carries
-        // the widest ring the animation ever reaches.
+        // Last drawn frame carries the widest ring the animation reaches.
         pattern.Reset();
         for (int i = 0; i < 20; i++)
         {
@@ -52,8 +50,7 @@ public class BreakPatternTests
                 $"A ring of radius {radius} runs off a viewport {layout.ViewportHeight} tall.");
         }
 
-        // The widest ring fills the viewport's shorter axis rather than
-        // stopping short of it.
+        // The widest ring fills the viewport's shorter axis.
         Assert.Equal(layout.ViewportCentre.Y, graphics.Circles.Max(c => c.Radius), 3);
     }
 }

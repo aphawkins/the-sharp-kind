@@ -7,10 +7,8 @@ using StuntCarRacerSharpLib.Tracks;
 
 namespace StuntCarRacerSharpLib.Cars;
 
-// Player car physics, ported from the original Car Behaviour.cpp.
-// All values are integer fixed-point in the original Amiga/PC formats:
-// x/z are in PC StuntCarRacerSharp format, y is in Amiga format, and angles
-// are unsigned with 65536 = 360 degrees.
+// Player car physics, ported from the original Car Behaviour.cpp. Integer fixed-point in the
+// original Amiga/PC formats: x/z in PC format, y in Amiga format, angles unsigned (65536 = 360 degrees).
 public sealed partial class CarPhysics
 {
     internal const int CarWidth = 64;
@@ -139,10 +137,8 @@ public sealed partial class CarPhysics
     // 0x200 if wrecked.
     private int _wreckWheelHeightReduction;
 
-    // Lift-onto-track ("chains") state: after the car has been off the
-    // track too long, a crane swings it back over the road and dangles it
-    // until the player presses boost/fire, then normal gravity takes over
-    // (original car.on.chains.countdown / lift.car.onto.track).
+    // Lift-onto-track ("chains") state: a crane swings the car back over the road and dangles it
+    // until boost/fire is pressed, then gravity takes over (original car.on.chains.countdown).
     private int _chainCountdown;
     private int _chainSwingMagnitude;
     private bool _chainSwingFromLeft;
@@ -297,12 +293,8 @@ public sealed partial class CarPhysics
 
     public int LapNumber { get; private set; }
 
-    // Elapsed 50Hz ticks (see ApplyEngineRevs) since the current lap
-    // started; the fastest completed lap so far, or null before the first
-    // lap finishes (original print.lap.time/show.best.lap.time, dashboard
-    // M:SS.CC read-outs - see the lap-times backlog item for the caveats
-    // around this simplified, real-time-based port of the original's BCD
-    // stopwatch).
+    // Elapsed 50Hz ticks since the current lap started (original print.lap.time). Simplified,
+    // real-time-based port of the original's BCD stopwatch - see the lap-times backlog item.
     public int CurrentLapTicks { get; private set; }
 
     public int? BestLapTicks { get; private set; }
@@ -321,11 +313,8 @@ public sealed partial class CarPhysics
 
     public bool Wrecked => _wreckWheelHeightReduction != 0;
 
-    // Speed value for display, using player z speed (original
-    // CalculateDisplaySpeed). ptitSeb's remake raised the dead zone from
-    // "< 0" to "< 0x1100" (the first few values aren't shown) and rescaled
-    // the result by 200/128 to fill the new cockpit gauge's range (full at
-    // 240, matching Rendering/HudRenderer's speed bar).
+    // Original CalculateDisplaySpeed with ptitSeb's remake fix: dead zone raised to "< 0x1100" and
+    // rescaled by 200/128 to fill the cockpit gauge (full at 240, matching HudRenderer's speed bar).
     public int DisplaySpeed
     {
         get
@@ -386,11 +375,8 @@ public sealed partial class CarPhysics
     // 0x80 when falling off the left road edge, 0x40 for the right (sparks side).
     internal int WhichSideByte { get; private set; }
 
-    // Road surface height under each wheel, in track units (the renderer
-    // uses these to keep the drawn car from sinking through the road when
-    // the suspension bottoms out). A wheel that is off the road reports
-    // OffRoadHeight, which converts to a height far below the car and so
-    // never lifts it.
+    // Road surface height under each wheel, in track units - keeps the renderer's car from
+    // sinking through the road when suspension bottoms out. An off-road wheel reports OffRoadHeight, far below the car.
     internal int FrontLeftRoadY => _frontLeftRoadHeight >> RoadHeightToTrackY;
 
     internal int FrontRightRoadY => _frontRightRoadHeight >> RoadHeightToTrackY;
@@ -403,9 +389,7 @@ public sealed partial class CarPhysics
     // 0 for standard league, 1 for super league.
     internal int RoadCushionValue { get; set; }
 
-    // Set by the opponent's collision detection; invoked during the player's
-    // collision detection to transfer car-to-car accelerations (the original
-    // CarToCarCollision call).
+    // Set by the opponent's collision detection to transfer car-to-car accelerations (original CarToCarCollision).
     internal Action? CarToCarCollision { get; set; }
 
     // Slipstream/proximity flags maintained by the opponent each frame.
@@ -413,10 +397,7 @@ public sealed partial class CarPhysics
 
     internal bool OpponentBehindPlayer { get; set; }
 
-    // Sound triggers, set for one frame when the effect should play. The
-    // *Volume/*Pitch values are only meaningful when the paired trigger is
-    // true (original DrawOtherGraphics/UpdateDamage's per-play variation -
-    // see the per-effect-sound backlog item).
+    // Set for one frame when the effect should play; *Volume/*Pitch are only meaningful when the paired trigger is true.
     internal bool GroundedSoundTriggered { get; private set; }
 
     internal float GroundedVolume { get; private set; }
@@ -560,11 +541,8 @@ public sealed partial class CarPhysics
         ResetLapData();
     }
 
-    // Point the car in the opposite direction (original 'R' key, which
-    // added 180 degrees to the player y angle and raised INITIALISE_PLAYER
-    // to push the new angle into the physics, `StuntCarRacer.cpp:1039-1045`).
-    // The port keeps no copy of the angle outside the physics, so the flip
-    // is the whole of the behaviour.
+    // Point the car in the opposite direction (original 'R' key). The port keeps no copy of the
+    // angle outside the physics, so the flip is the whole of the behaviour.
     public void TurnAround()
         => PlayerYAngle = (PlayerYAngle + AmigaTrig.Degrees180) & (Track.MaxAngle - 1);
 
@@ -606,9 +584,7 @@ public sealed partial class CarPhysics
         UpdateEffectSounds();
     }
 
-    // Apply the revs change calculated by the last physics frame. The
-    // original did this in FramesWheelsEngine at the full 50Hz frame rate,
-    // not the physics rate, so the revs ramp between physics frames.
+    // Original applied this at the full 50Hz frame rate (FramesWheelsEngine), not the physics rate.
     public void ApplyEngineRevs()
     {
         int revs = EngineRevs + _engineRevsChange;
@@ -770,10 +746,7 @@ public sealed partial class CarPhysics
         return v * RoadWidth / denominator;
     }
 
-    // The original pitches the Wreck sample (edge-scrape) by speed
-    // (AMIGA_PAL_HZ / p, DrawSparks); 360 is the divisor's ~298-422 range
-    // midpoint, chosen as the pitch=1.0 anchor for the same reason as
-    // CalculateOffRoadPitch.
+    // 360 is the divisor's ~298-422 range midpoint, chosen as the pitch=1.0 anchor for the same reason as CalculateOffRoadPitch.
     private static double CalculateWreckPitch(int p)
     {
         const int ReferenceDivisor = 360;
@@ -783,21 +756,15 @@ public sealed partial class CarPhysics
         return (double)ReferenceDivisor / divisor;
     }
 
-    // Amiga volume 28-64 scaled by damage, from the original's shared
-    // Creak/Grounded volume formula (Car_Behaviour.cpp:2194-2199,
-    // 4119-4125). MAX_AMIGA_VOLUME is 64, and SDL_mixer's per-channel
-    // volume is already a linear multiplier, so unlike the original this
-    // skips the AmigaVolumeToDirectX dB round-trip - see the
-    // per-effect-sound backlog item.
+    // Amiga volume 28-64 scaled by damage. SDL_mixer's per-channel volume is already a linear
+    // multiplier, so unlike the original this skips the AmigaVolumeToDirectX dB round-trip.
     private float CalculateDamageVolume()
     {
         int amigaVolume = Math.Clamp((_damageValue >> 8) * 4, 28, 64);
         return amigaVolume / 64f;
     }
 
-    // Sound triggers for the off-road dust clouds and edge sparks, from the
-    // original DrawOtherGraphics/DrawDustClouds/DrawSparks (which only played
-    // the sound effects in the remake).
+    // Sound triggers for off-road dust clouds and edge sparks (original DrawDustClouds/DrawSparks).
     private void UpdateEffectSounds()
     {
         if (!OnChains && _offMapStatus != 0 && TouchingRoad)
@@ -820,11 +787,8 @@ public sealed partial class CarPhysics
         WhichSideByte = 0;
     }
 
-    // The original pitches the off-road sample randomly each play
-    // (AMIGA_PAL_HZ / (450 + rand&0x1c), DrawDustClouds). 464 is the
-    // divisor's range midpoint, chosen as the pitch=1.0 anchor since the
-    // original never sets this sample's frequency anywhere else - see the
-    // per-effect-sound backlog item.
+    // 464 is the divisor's range midpoint, chosen as the pitch=1.0 anchor since the original
+    // never sets this sample's frequency anywhere else - see the per-effect-sound backlog item.
     private double CalculateOffRoadPitch()
     {
         const int ReferenceDivisor = 464;

@@ -95,8 +95,7 @@ public sealed class GoodsLoaderTests : IDisposable
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                // The loaded assembly keeps its file open, so best-effort
-                // cleanup: a leftover temp folder must not fail a test.
+                // The loaded assembly keeps its file open; a leftover temp folder must not fail a test.
             }
 
             _isDisposed = true;

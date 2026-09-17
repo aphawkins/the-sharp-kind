@@ -2,9 +2,7 @@
 
 namespace SharpKind.Input;
 
-// Whether a scripted key event presses and releases within its one tick, or
-// starts/ends a hold spanning several ticks; SaveFrame carries no key and
-// instead asks the host to dump the current framebuffer.
+// Press/release within one tick, or start/end a hold spanning several. SaveFrame carries no key; it asks the host to dump the framebuffer.
 public enum KeyScriptAction
 {
     Tap = 0,

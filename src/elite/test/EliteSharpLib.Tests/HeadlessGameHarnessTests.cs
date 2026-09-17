@@ -25,11 +25,8 @@ public class HeadlessGameHarnessTests
     {
         using HeadlessGameHarness harness = new();
 
-        // Tick 0 runs InitialiseGame(), which sets the view to IntroOne and
-        // clears any pressed keys on the way in - so the script's first key
-        // lands on tick 1. N (tap) at tick 1 answers "Load New Commander?"
-        // with No: IntroOne -> IntroTwo. Space (tap) at tick 2 leaves the
-        // ship parade: IntroTwo -> CommanderStatus.
+        // Tick 0 runs InitialiseGame(), clearing pressed keys, so the script's first key lands on
+        // tick 1. N answers "Load New Commander?" No (IntroOne -> IntroTwo); Space at tick 2 leaves the parade.
         KeyScriptEvent[] script =
         [
             new(1, ConsoleKey.N, KeyScriptAction.Tap),
@@ -43,9 +40,7 @@ public class HeadlessGameHarnessTests
         Assert.False(state.IsGameOver);
     }
 
-    // The intro screens own the title music and stop it on the way out. A
-    // chart or options key that moved the view off them skipped that, and
-    // the music played on behind the game.
+    // Intro screens own the title music and stop it on the way out; a chart/options key that skipped this left it playing behind the game.
     [Theory]
     [InlineData(ConsoleKey.F5)]
     [InlineData(ConsoleKey.F9)]
@@ -54,9 +49,7 @@ public class HeadlessGameHarnessTests
     {
         using HeadlessGameHarness harness = new();
 
-        // Tick 0 reaches IntroOne; the key lands on tick 1. N at tick 2 then
-        // proves the intro still has the input, rather than merely sitting
-        // on a screen that ignored the key.
+        // N at tick 2 proves the intro still has the input, not just that it's sitting on a screen that ignores it.
         KeyScriptEvent[] script =
         [
             new(1, key, KeyScriptAction.Tap),

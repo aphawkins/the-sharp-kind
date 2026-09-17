@@ -4,9 +4,7 @@ using SharpKind.Input;
 
 namespace SharpKind.Fakes.Input;
 
-// Minimal in-test fake implementation of IKeyboard to validate contract behavior.
-// Keys and modifiers are tracked apart, as SoftwareKeyboard tracks them, so a
-// press and the modifier it arrived with can each be read once.
+// Keys and modifiers are tracked apart, as SoftwareKeyboard tracks them, so a press and its modifier can each be read once.
 public sealed class FakeKeyboard : IKeyboard, IKeyboardSink
 {
     private readonly HashSet<ConsoleKey> _pressedKeys = [];
@@ -21,10 +19,7 @@ public sealed class FakeKeyboard : IKeyboard, IKeyboardSink
         _pressedModifiers = ConsoleModifiers.None;
     }
 
-    // One-shot, like the real SoftwareKeyboard: a fake that answered every
-    // IsPressed lets two handlers both act on one physical press, which is a
-    // real bug (a bare M reaching the mission-jump cheat before the missile)
-    // that a non-consuming fake cannot see.
+    // One-shot, like the real SoftwareKeyboard: a non-consuming fake would let two handlers act on one press.
     public bool IsPressed(ConsoleKey key) => key != ConsoleKey.None && _pressedKeys.Remove(key);
 
     public bool IsPressed(ConsoleModifiers modifiers)
@@ -68,6 +63,5 @@ public sealed class FakeKeyboard : IKeyboard, IKeyboardSink
         // No-op for the fake. Real implementations may update internal state here.
     }
 
-    // helper for tests
     public void SetClose(bool value) => Close = value;
 }

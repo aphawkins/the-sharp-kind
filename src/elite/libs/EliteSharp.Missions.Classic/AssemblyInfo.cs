@@ -4,7 +4,5 @@
 
 using System.Runtime.CompilerServices;
 
-// The stage and mission names are this plugin's own business - the game reads
-// them off IMission rather than naming them - so they stay internal, and the
-// tests that check the missions behave are let in to use them.
+// Stage and mission names stay internal - the game reads them off IMission - but the mission tests need them.
 [assembly: InternalsVisibleTo("EliteSharpLib.Tests")]

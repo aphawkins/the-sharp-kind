@@ -30,15 +30,10 @@ internal static class SDLProgram
 
     private static ServiceCollection BuildServices(string userDataPath, ILoggerFactory loggerFactory, EngineConfigSettings engine)
     {
-        // The rendition is loaded before anything else because it says what
-        // size the game draws at, and the window is made at that size. The
-        // resolution is the rendition's rather than a setting of its own, so
-        // the artwork and the resolution can never disagree.
+        // The rendition sets the screen size, so it must load before the window is created.
         InstalledRenditions renditions = EliteServiceCollectionExtensions.LoadRendition(engine.Rendition, loggerFactory);
 
-        // Which magnifications are on offer is the rendition's, so the scale
-        // the file holds is only settled now: unchosen takes the rendition's
-        // default, and a hand-edited one is pegged to the nearest it offers.
+        // Only the rendition knows which magnifications are valid, so scale is resolved after it loads.
         engine.WindowScale = WindowScales.Resolve(renditions.Chosen, engine.WindowScale);
 
         ServiceCollection services = new();

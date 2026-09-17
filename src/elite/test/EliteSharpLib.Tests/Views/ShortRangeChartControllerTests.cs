@@ -14,16 +14,11 @@ using SharpKind.Fakes.Input;
 
 namespace EliteSharpLib.Tests.Views;
 
-// The short range chart's behaviour, exercised without a renderer. Unlike
-// every other controller this one works in screen space, so it is the tier's
-// layout - not the galaxy - that decides where the cross-hair may go, and
-// most of what is worth asserting is about that boundary.
+// Unlike every other controller, this one works in screen space: the tier's layout, not the
+// galaxy, decides where the cross-hair may go, so most assertions are about that boundary.
 public class ShortRangeChartControllerTests
 {
-    // The 16-bit tier: a 512x512 screen above a 128-row console, at scale 2.
-    // Viewport height is 384, so the cross-hair's box is x 1..510, y 37..351:
-    // one pixel inside the viewport's own right edge, and clear of the
-    // header and the console top and bottom.
+    // 16-bit tier: 512x512 screen, 384 viewport height, so the cross-hair's box is x 1..510, y 37..351.
     private const float MinX = 1;
     private const float MaxX = 510;
     private const float MinY = 37;
@@ -39,9 +34,7 @@ public class ShortRangeChartControllerTests
         ShortRangeChartModel model = controller.BuildModel();
         Assert.NotEmpty(model.Planets);
 
-        // The window is 20 galaxy units either side on D and 38 on B, which
-        // at 4 and 2 pixels per unit times the tier's scale of 2 is 160 and
-        // 152 pixels from the centre.
+        // Window is 20 galaxy units either side on D and 38 on B, at 4 and 2 px/unit and scale 2: 160 and 152 px from centre.
         Assert.All(
             model.Planets,
             planet =>
@@ -58,18 +51,13 @@ public class ShortRangeChartControllerTests
 
         controller.Reset();
 
-        // Names are packed one to an 8-pixel row, so two planets sharing a
-        // row means one of them goes unnamed. There can never be more labels
-        // than planets, nor more than the rows the chart has.
+        // Names are packed one to a row, so two planets sharing a row means one of them goes unnamed.
         ShortRangeChartModel model = controller.BuildModel();
         Assert.True(model.Labels.Count <= model.Planets.Count);
         Assert.True(model.Labels.Count <= 64 - 4);
     }
 
-    // A design scale large enough to plot the 38-unit spread past the
-    // viewport's top puts a planet's y above it, and its label row negative
-    // with it. The row used to be read out of rowUsed before the guard that
-    // rejects it, so this threw rather than leaving that planet unnamed.
+    // Pins a fix: a planet's label row going negative used to throw rather than leaving it unnamed.
     [Theory]
     [InlineData(3)]
     [InlineData(4)]
@@ -82,9 +70,7 @@ public class ShortRangeChartControllerTests
 
         controller.Reset();
 
-        // The point is that it returns at all. What it returns still has to
-        // make sense: no more labels than planets, and none in a row the
-        // chart does not have.
+        // The point is that it returns at all; what it returns still has to make sense.
         ShortRangeChartModel model = controller.BuildModel();
         Assert.True(model.Labels.Count <= model.Planets.Count);
         Assert.True(model.Labels.Count <= 64 - 4);
@@ -136,9 +122,7 @@ public class ShortRangeChartControllerTests
         ShortRangeChartController controller = CreateController(out FakeKeyboard keyboard, out _);
         controller.Reset();
 
-        // Far more presses than the box is wide, so the clamp is what stops
-        // it rather than the count. The keyboard consumes a press when it is
-        // read, so each update needs its own.
+        // Far more presses than the box is wide, so the clamp stops it, not the count.
         for (int i = 0; i < 300; i++)
         {
             keyboard.KeyDown(key, default);
@@ -157,9 +141,7 @@ public class ShortRangeChartControllerTests
         keyboard.KeyDown(ConsoleKey.O, default);
         controller.HandleInput();
 
-        // O recentres and then measures, and measuring snaps the cross onto
-        // whichever planet the centre named, so this is about the planet the
-        // centre found rather than the centre itself.
+        // O recentres then measures; measuring snaps the cross onto whichever planet the centre named.
         Assert.InRange(controller.Cross.X, MinX, MaxX);
         Assert.InRange(controller.Cross.Y, MinY, MaxY);
         Assert.NotEmpty(controller.BuildModel().Caption);
@@ -219,8 +201,7 @@ public class ShortRangeChartControllerTests
         ShortRangeChartController controller = CreateController(out FakeKeyboard keyboard, out GameState gameState);
         controller.Reset();
 
-        // The planet the chart opened on, so the search is bound to find it
-        // however the seeds happen to fall.
+        // The planet the chart opened on, so the search is bound to find it however the seeds fall.
         string target = gameState.PlanetName.ToUpperInvariant();
         Assert.NotEmpty(target);
 
@@ -247,8 +228,7 @@ public class ShortRangeChartControllerTests
         Press(controller, keyboard, ConsoleKey.RightArrow);
         gameState.PlanetName = "STALE";
 
-        // The readout is left alone while the player is still moving, so the
-        // name only catches up on the fifth update after the last press.
+        // The readout is left alone while the player moves; the name catches up on the fifth update after the last press.
         for (int i = 0; i < 4; i++)
         {
             controller.Update();
@@ -281,9 +261,7 @@ public class ShortRangeChartControllerTests
         ShortRangeChartController controller = CreateController(out FakeKeyboard keyboard, out GameState gameState);
         controller.Reset();
 
-        // The cross starts on the planet the commander is bound for, which at
-        // the start of a game is the one it is docked at: no distance to
-        // print.
+        // At the start of a game the cross starts on the planet it's docked at: no distance to print.
         Assert.Equal(0, gameState.DistanceToPlanet);
         Assert.Equal(string.Empty, controller.BuildModel().Detail);
 
@@ -305,9 +283,7 @@ public class ShortRangeChartControllerTests
     [Fact]
     public void TheEightBitTiersChartIsTheSixteenBitOneHalved()
     {
-        // The controller derives its bounds from the tier's scale, which is
-        // the whole reason one controller serves both. The 8-bit chart is a
-        // 320x256 screen behind a 320x56 scanner at scale 1.
+        // The controller derives its bounds from the tier's scale, the whole reason one controller serves both.
         ShortRangeChartController controller = CreateController(
             out FakeKeyboard keyboard,
             out _,
@@ -351,9 +327,7 @@ public class ShortRangeChartControllerTests
         }
     }
 
-    // The cross starts on whichever planet the commander is bound for, which
-    // can be against an edge; walk it to the middle of the chart so a clamp
-    // cannot hide a step.
+    // The starting planet can be against an edge; walk it to the middle so a clamp cannot hide a step.
     private static void CentreCross(ShortRangeChartController controller, FakeKeyboard keyboard)
     {
         keyboard.KeyDown(ConsoleKey.O, default);
@@ -382,10 +356,8 @@ public class ShortRangeChartControllerTests
             draw.Layout = layout;
         }
 
-        // The classic first galaxy, and the position the game itself starts a
-        // commander at, so the chart has real planets on it: a bare GameState
-        // carries an all-zero seed, which generates 256 nameless planets all
-        // stacked at (0, 0).
+        // The classic first galaxy, so the chart has real planets: a bare GameState's all-zero seed
+        // generates 256 nameless planets stacked at (0, 0).
         gameState.Cmdr.Galaxy = new GalaxySeed { A = 0x4A, B = 0x5A, C = 0x48, D = 0x02, E = 0x53, F = 0xB7 };
         PlanetController planet = new(gameState);
         view = new FakeShortRangeChartView();

@@ -65,8 +65,7 @@ internal sealed class InventoryController : IScreenController
             Spacing = style.RowHeight,
             VisibleCount = style.VisibleRows,
 
-            // Nothing on this screen can be chosen, so the cursor that moves
-            // the window is not drawn.
+            // Nothing on this screen can be chosen, so the cursor is not drawn.
             ShowCursor = false,
         };
 
@@ -124,8 +123,7 @@ internal sealed class InventoryController : IScreenController
             Position = new(placed.X, placed.Y),
         };
 
-    // Only what is aboard appears. The rows themselves are built once, so this
-    // reorders an existing list rather than making controls every tick.
+    // Rows are built once; this just reorders which of them are shown.
     private void RefreshCarried()
     {
         _carried.Clear();

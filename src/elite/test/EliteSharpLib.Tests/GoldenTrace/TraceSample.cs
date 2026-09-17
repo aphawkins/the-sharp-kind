@@ -6,14 +6,10 @@ using EliteSharpLib.Views;
 
 namespace EliteSharpLib.Tests.GoldenTrace;
 
-// Everything one tick of the game is, as far as the rate rework can disturb
-// it. Deliberately not a rendered frame: the seven frame-rate items change
-// when things happen, not what they look like, and a pixel comparison would
-// fail for reasons that have nothing to do with them.
+// Deliberately not a rendered frame: the frame-rate rework changes when things happen, not what
+// they look like, and a pixel comparison would fail for unrelated reasons.
 //
-// Note there is no player position. Elite holds the player at the origin and
-// moves the universe past it, so the player's motion shows up in every
-// object's Location rather than in a coordinate of its own.
+// No player position: Elite holds the player at the origin and moves the universe past it, so player motion shows up in every object's Location.
 internal sealed record TraceSample(
     int Tick,
     Screen Screen,

@@ -36,10 +36,8 @@ internal class BaseView8Bit : IBaseView
     // Low enough to stay clear of the cockpit view, five rows off the bottom.
     internal const int InfoMessageRow = 20;
 
-    // The 8-bit font is a monospaced 8x8 sheet - Small and Large are the same
-    // bbc-micro cell - so a row is 8 pixels and a character is 8 wide, both
-    // fixed, unlike the 16-bit proportional font. The viewport is a whole
-    // number of these: 40 columns by 25 rows.
+    // Small and Large share the same fixed 8x8 bbc-micro cell, unlike the 16-bit proportional font -
+    // the viewport is a whole 40x25 of them.
     internal const int CharacterWidth = 8;
     internal const int RowHeight = 8;
 
@@ -60,10 +58,7 @@ internal class BaseView8Bit : IBaseView
 
     public ViewLayout Layout { get; }
 
-    // Row 0 and the outermost columns belong to the border, which overlays
-    // their first pixel; most of this font's glyphs ink theirs, so no text
-    // goes there. The chrome band is row 1, and the rule under it is row 2,
-    // which leaves row 3 as the first row a screen's content may use.
+    // Row 0 and the outermost columns are the border's overlay pixel - most glyphs there would ink over it.
     public void DrawFps(int fps)
         => Graphics.DrawTextRight(
             new(Column(LastTextColumn + 1), Row(ChromeRow)),

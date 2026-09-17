@@ -38,9 +38,7 @@ public class ModelReaderTests
             // Act
             ThreeDModel model = ModelReader.Read(tempFile, palette);
 
-            // Assert: the model-level FaceNormals collection must stay at its original size -
-            // regression test for a bug where per-point face-normal references were mistakenly
-            // appended to this list instead of the point's own FaceNormals collection.
+            // Pins the model-level FaceNormals count against per-point references leaking into it.
             Assert.Equal(2, model.FaceNormals.Count);
 
             // Point 0 references face-normal indices 0 and 1.

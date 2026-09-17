@@ -10,11 +10,8 @@ namespace SharpKind.Graphics;
 
 public sealed partial class SoftwareGraphics : IGraphics, IDisposable
 {
-    // Bounded LRU cache of rendered text bitmaps, keyed by (font, colour,
-    // text). Elite draws ever-changing strings (bounties, countdowns) that
-    // would otherwise accumulate forever; capping the entry count and
-    // evicting the least-recently-used bitmap keeps memory bounded while
-    // keeping frequently redrawn text (HUD labels) warm.
+    // Bounded LRU cache of rendered text bitmaps, keyed by (font, colour, text): ever-changing
+    // strings (bounties, countdowns) would otherwise accumulate forever.
     private const int TextCacheCapacity = 256;
 
     private readonly FastBitmap _screen;
@@ -22,9 +19,7 @@ public sealed partial class SoftwareGraphics : IGraphics, IDisposable
     private readonly Dictionary<string, LinkedListNode<(string Key, FastBitmap Bitmap)>> _textCache = [];
     private readonly LinkedList<(string Key, FastBitmap Bitmap)> _textCacheOrder = new();
 
-    // How text becomes pixels, in each kind the rendition offers. This
-    // renderer neither knows nor cares how any of them work - only that the
-    // one in use turns a string into a bitmap it can blit.
+    // This renderer neither knows nor cares how any font kind works, only that it can blit the result.
     private readonly FontRasteriserSet _fontRasterisers;
 
     // Inverse depth (1/z) per pixel, 0 = infinitely far; allocated on first
@@ -36,14 +31,9 @@ public sealed partial class SoftwareGraphics : IGraphics, IDisposable
     private int[]? _surfaceIds;
     private bool _isDisposed;
 
-    // Clip rectangle in whole pixels - left and top inclusive, right and
-    // bottom exclusive - defaulting to the whole screen so callers that
-    // never call SetClipRegion see no change in behaviour. Always kept
-    // clamped to the screen bounds, so clamping a loop to these bounds
-    // keeps it both inside the clip region and inside the framebuffer: the
-    // fills, rectangles and images below narrow their ranges to them once
-    // and then write pixels without testing anything. Held as int so no
-    // pixel path converts them to float.
+    // Clip rectangle in whole pixels - left/top inclusive, right/bottom exclusive - always clamped
+    // to the screen bounds, so a loop clamped to these bounds needs no further test. Int, so no
+    // pixel path converts to float.
     private int _clipLeft;
     private int _clipTop;
     private int _clipRight;
@@ -154,10 +144,8 @@ public sealed partial class SoftwareGraphics : IGraphics, IDisposable
         Array.Clear(_surfaceIds);
     }
 
-    // Nothing to do: every draw goes straight into the one shared buffer and
-    // is clipped as it rasterises, so depth-tested content is already on the
-    // screen and already trimmed to the clip region that was active when it
-    // was drawn. The method exists for the backends that composite instead.
+    // Nothing to do: every draw goes straight into the one shared buffer already clipped as it
+    // rasterises. Exists for the backends that composite instead.
     public void FlushDepth()
     {
     }
@@ -522,11 +510,8 @@ public sealed partial class SoftwareGraphics : IGraphics, IDisposable
         _clipBottom = (int)Math.Clamp(position.Y + height, 0, ScreenHeight);
     }
 
-    // Textured variant of DrawTriangleFilled: texture coordinates are
-    // interpolated affinely in screen space (no perspective correction,
-    // which is fine for the small triangles a scene decomposes into) and
-    // sampled bilinearly, from whichever mip level best matches this
-    // triangle's texel-to-pixel ratio, with edge clamping.
+    // Texture coordinates interpolated affinely (no perspective correction, fine for small
+    // triangles), sampled bilinearly from whichever mip level best matches the texel-to-pixel ratio.
     internal void DrawTriangleTextured(
         Vector2 a,
         Vector2 b,
@@ -603,11 +588,8 @@ public sealed partial class SoftwareGraphics : IGraphics, IDisposable
         }
     }
 
-    // Depth-tested variant of DrawTriangleFilled: inverse depth (1/z) is
-    // interpolated linearly in screen space (which is perspective-correct
-    // for depth) and each pixel only draws when it passes the depth test.
-    // writeColor false runs the depth test and its writes but draws nothing,
-    // which is how a hidden-line pass primes the buffer.
+    // Inverse depth (1/z) interpolated linearly (perspective-correct); each pixel only draws when
+    // it passes the depth test. writeColor false primes the buffer for a hidden-line pass without drawing.
     internal void DrawTriangleFilledDepth(
         Vector2 a,
         Vector2 b,
@@ -683,10 +665,8 @@ public sealed partial class SoftwareGraphics : IGraphics, IDisposable
         }
     }
 
-    // Depth-tested variant of DrawTriangleTextured: texture coordinates are
-    // interpolated divided by depth and recovered per pixel (perspective
-    // correct, unlike the affine DrawTriangleTextured), since the road
-    // polygons near the viewpoint cover large parts of the screen.
+    // Texture coordinates interpolated divided by depth and recovered per pixel (perspective
+    // correct, unlike DrawTriangleTextured), needed since near-viewpoint road polygons cover large screen areas.
     internal void DrawTriangleTexturedDepth(
         Vector2 a,
         Vector2 b,
@@ -812,10 +792,7 @@ public sealed partial class SoftwareGraphics : IGraphics, IDisposable
 
     private void DrawImage(FastBitmap bitmap, Vector2 position)
     {
-        // Clipped once here rather than per pixel: the loops are narrowed to
-        // the part of the bitmap landing inside the clip rectangle, which is
-        // inside the framebuffer by construction, so the pixel path tests
-        // nothing.
+        // Clipped once here: loops narrow to the part of the bitmap inside the clip rectangle, so the pixel path tests nothing.
         int left = Math.Max(0, _clipLeft - (int)position.X);
         int top = Math.Max(0, _clipTop - (int)position.Y);
         int right = Math.Min(bitmap.Width, _clipRight - (int)position.X);
@@ -958,13 +935,9 @@ public sealed partial class SoftwareGraphics : IGraphics, IDisposable
         }
     }
 
-    // Draw one depth-tested scanline of a textured triangle. The texture
-    // coordinates arrive already divided by depth and are recovered per
-    // pixel. The mip level is chosen once for the whole span, from how many
-    // texels the recovered UV covers at each end versus how many pixels the
-    // span covers - this is what keeps distant, receding faces (SCR's road,
-    // seen nearly edge-on) sampling a pre-averaged level instead of aliasing
-    // against the full-resolution texture.
+    // Texture coordinates arrive divided by depth and are recovered per pixel. Mip level is chosen
+    // once for the whole span, from texels-per-pixel at each end, so distant receding faces sample
+    // a pre-averaged level instead of aliasing.
     private void DrawSpanTexturedDepth(
         int y,
         float x0,
@@ -1007,10 +980,7 @@ public sealed partial class SoftwareGraphics : IGraphics, IDisposable
 
         while (true)
         {
-            // The walk runs over the whole line, so which pixels it picks
-            // never depends on where it was clipped; only the write is gated,
-            // and by the clip rectangle alone - that rectangle is inside the
-            // framebuffer, so the one test is the whole of the bounds check.
+            // The walk runs over the whole line; only the write is gated, by the clip rectangle alone.
             if (x0 >= _clipLeft && x0 < _clipRight && y0 >= _clipTop && y0 < _clipBottom)
             {
                 StorePixel(x0, y0, color);
@@ -1081,18 +1051,12 @@ public sealed partial class SoftwareGraphics : IGraphics, IDisposable
         }
     }
 
-    // The one place a colour reaches the framebuffer. A translucent one is
-    // composited with what is already there; the opaque case, which is nearly
-    // every draw, skips the read.
+    // The one place a colour reaches the framebuffer. Opaque (nearly every draw) skips the read; translucent composites.
     private void StorePixel(int x, int y, in FastColor color)
         => _screen.SetPixel(x, y, color.A == 255 ? color : FastColor.Blend(color, _screen.GetPixel(x, y)));
 
-    // Test-and-set a pixel's inverse depth: the draw passes when at least
-    // as near as what is already there, so later draws win ties (as the
-    // original Direct3D LESSEQUAL depth test). A non-zero surfaceId also
-    // passes against itself - the caller is drawing the same surface that
-    // already owns the pixel, so there is nothing to hide it behind - and
-    // that case leaves the stored depth alone rather than pushing it back.
+    // Later draws win ties (matching the original Direct3D LESSEQUAL test). A non-zero surfaceId
+    // also passes against itself, leaving the stored depth alone rather than pushing it back.
     private bool DepthTest(int x, int y, float inverseDepth, int surfaceId)
     {
         _depth ??= new float[(int)ScreenWidth * (int)ScreenHeight];

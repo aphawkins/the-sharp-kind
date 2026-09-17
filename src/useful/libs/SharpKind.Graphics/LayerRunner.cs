@@ -36,11 +36,7 @@ public sealed class LayerRunner
             _graphics.SetClipRegion(layer.Position, layer.Width, layer.Height);
             layer.Drawer.Draw();
 
-            // Before the next layer's clip region replaces this one. A
-            // backend that composites depth-tested content applies the clip
-            // region at that composite, so a layer that skipped this would
-            // have its ships and its track trimmed to the rectangle of
-            // whichever layer draws next - see IGraphics.FlushDepth.
+            // Must run before the next layer's clip region replaces this one, or a depth-compositing backend would trim this layer's content to the next layer's rectangle - see IGraphics.FlushDepth.
             _graphics.FlushDepth();
         }
     }

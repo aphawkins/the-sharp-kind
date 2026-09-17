@@ -30,9 +30,7 @@ public sealed class PaletteQuantiser : IColourQuantiser
 
     public int Period => 1;
 
-    // A hand-picked palette has no even spacing to read off, so this is the
-    // average distance from an entry to its nearest neighbour, converted from
-    // a distance in RGB to a gap per channel.
+    // A hand-picked palette has no even spacing to read off, so this averages distance to the nearest neighbour, converted to a gap per channel.
     public float LevelGap { get; }
 
     public FastColor Quantise(in FastColor colour, int x, int y)

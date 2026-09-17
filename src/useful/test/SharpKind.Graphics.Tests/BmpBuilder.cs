@@ -4,9 +4,7 @@ using System.Buffers.Binary;
 
 namespace SharpKind.Graphics.Tests;
 
-// Builds minimal BITMAPINFOHEADER BMPs so the decoder tests can cover bit
-// depths and layouts no committed asset uses. Deliberately hand-rolled
-// rather than routed through BitmapWriter, which only emits 32bpp.
+// Deliberately hand-rolled rather than routed through BitmapWriter, which only emits 32bpp.
 internal static class BmpBuilder
 {
     private const int FileHeaderSize = 14;

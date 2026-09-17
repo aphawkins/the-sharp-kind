@@ -39,7 +39,6 @@ internal sealed class ShortRangeChartView16Bit : BaseView16Bit, IView<ShortRange
 
         DrawViewHeader(model.Title);
 
-        // Fuel radius
         Vector2 centre = _surface.Layout.ViewportCentre;
         float scale = _surface.Layout.DesignScale;
         float radius = model.FuelLightYears * 10 * scale;
@@ -58,7 +57,6 @@ internal sealed class ShortRangeChartView16Bit : BaseView16Bit, IView<ShortRange
             Graphics.DrawCircleFilled(position, size, _colorGold);
         }
 
-        // Cross
         Graphics.DrawLine(new(model.Cross.X - CrossSize, model.Cross.Y), new(model.Cross.X + CrossSize, model.Cross.Y), _colorLighterRed);
         Graphics.DrawLine(new(model.Cross.X, model.Cross.Y - CrossSize), new(model.Cross.X, model.Cross.Y + CrossSize), _colorLighterRed);
 

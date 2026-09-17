@@ -116,8 +116,7 @@ internal sealed class EquipmentController : IScreenController
     {
     }
 
-    // Exposed for tests: the visible rows in draw order, and which one the
-    // cursor is on.
+    // Exposed for tests: the visible rows in draw order, and which one the cursor is on.
     internal EquipmentModel BuildModel()
     {
         List<EquipmentRow> rows = [];

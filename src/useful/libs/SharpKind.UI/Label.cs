@@ -55,9 +55,7 @@ public sealed class Label(IGraphics graphics, ControlStyle style, ISetting setti
         Graphics.DrawTextLeft(new(TextLeft(), Position.Y), Text, Style.FontType, colors.Text);
     }
 
-    // Alignment is resolved here rather than leaning on DrawTextRight or
-    // DrawTextCentre: those align against a point and the screen respectively,
-    // and what is wanted is alignment against this label's own box.
+    // Aligns against this label's own box, not a point or the screen.
     private float TextLeft()
     {
         if (Alignment == TextAlignment.Left)
@@ -67,23 +65,14 @@ public sealed class Label(IGraphics graphics, ControlStyle style, ISetting setti
 
         float textWidth = Graphics.MeasureText(Text, Style.FontType).X;
 
-        // Odd-width text cannot sit exactly in the middle of an even-width
-        // box, so the leftover half pixel goes to the left of it. Rounded up
-        // rather than down because that is the side the surfaces' own text
-        // centring has always given it, and a text renderer floors to whole
-        // pixels afterwards either way.
+        // Leftover half pixel from odd-width text rounds to the left, matching the surfaces' own text centring.
         float offset = Alignment == TextAlignment.Right
             ? Width - textWidth
             : MathF.Ceiling((Width - textWidth) / 2);
 
         float left = Position.X + offset;
 
-        // Snapped as an absolute position, not as an offset within the label:
-        // a label is not necessarily on a cell boundary itself - a 25-cell bar
-        // centred in a 40-cell screen starts on half a cell - and it is the
-        // glyphs that have to land on the grid, not the gap in front of them.
-        // Truncated rather than rounded to nearest, matching the integer
-        // division a fixed-cell tier centres whole character counts with.
+        // Snapped as an absolute position, not an offset within the label, since the label itself need not sit on a cell boundary.
         if (SnapToCell > 0)
         {
             left = MathF.Floor(left / SnapToCell) * SnapToCell;

@@ -30,17 +30,12 @@ public sealed class EightBitRendition : IRendition
 
     public int DesignScale => 1;
 
-    // 320x256 is a postage stamp on a modern display, so this tier magnifies
-    // further than the 16-bit one does: quadrupled it is 1280x1024, which is
-    // the largest window a common display still shows whole.
+    // Quadrupled (1280x1024) is the largest window a common display still shows whole.
     public IReadOnlyList<int> WindowScales => [1, 2, 4];
 
     public int DefaultWindowScale => 4;
 
-    // Sixteen colours is no budget for shaded ramps, but the palette's six
-    // greys are one, and a lit face lands on whichever entry is nearest. Reds
-    // and blues come apart into far fewer steps than the greys do - the cost
-    // of standing in for an indexed machine, not a fault in the shading.
+    // Shading snaps to the nearest of sixteen colours; the six greys give a real ramp, reds and blues far fewer steps.
     public bool ShadesShips => true;
 
     public IBaseView CreateBaseView(IViewSurface surface) => new BaseView8Bit(surface);
@@ -138,11 +133,8 @@ public sealed class EightBitRendition : IRendition
             .Add(new ShortRangeChartView8Bit(surface));
     }
 
-    // One definition of what a ship is painted, read by the scanner and by the
-    // beam a ship fires, so the two cannot disagree. Police are cyan here
-    // rather than the 16-bit purple: this palette has one purple and the
-    // missile already has it, and a commander has to be able to tell an
-    // incoming missile from a Viper at a glance.
+    // Shared by the scanner and the beam a ship fires, so the two agree.
+    // Police are cyan not purple here - this palette's one purple is already the missile.
     private static ShipColours Ships(IViewSurface surface) => new(
         Default: surface.Palette["White"],
         Station: surface.Palette["Green"],

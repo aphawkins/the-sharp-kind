@@ -17,9 +17,7 @@ namespace EliteSharpLib.Views;
 /// </summary>
 internal sealed class GalacticChartController : IScreenController
 {
-    // Galaxy-space bounds for the cross-hair. These are the original's
-    // 512-space clamps (x 1-510, y 37-293) expressed in galaxy units, so the
-    // reachable area is unchanged.
+    // The original's 512-space clamps (x 1-510, y 37-293) expressed in galaxy units.
     private const float MinCrossX = 0.5f;
     private const float MaxCrossX = 255;
     private const float MinCrossY = 0;
@@ -137,8 +135,7 @@ internal sealed class GalacticChartController : IScreenController
         }
     }
 
-    // Exposed for tests: the caption/detail pair the view prints, and the
-    // rest of the frame's data.
+    // Exposed for tests: the caption/detail pair the view prints, and the rest of the frame's data.
     internal GalacticChartModel BuildModel()
     {
         (string caption, string detail) = CurrentLabel();
@@ -153,8 +150,7 @@ internal sealed class GalacticChartController : IScreenController
             detail);
     }
 
-    // The find prompt while typing, otherwise the selected planet and how
-    // far away it is.
+    // The find prompt while typing, otherwise the selected planet and how far away it is.
     private (string Caption, string Detail) CurrentLabel()
     {
         if (_isFind)

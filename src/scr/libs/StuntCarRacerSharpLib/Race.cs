@@ -13,10 +13,8 @@ using StuntCarRacerSharpLib.Tracks;
 
 namespace StuntCarRacerSharpLib;
 
-// The track/car/opponent state and its world/HUD rendering: the part of the
-// game screens actually drive, split out of StuntCarRacerMain (which keeps
-// only the run loop, screen wiring and audio setup) so screens depend on
-// this instead of the whole game object.
+// The track/car/opponent state and its world/HUD rendering, split out of StuntCarRacerMain
+// (which keeps only the run loop, screen wiring and audio setup) so screens depend on this instead.
 internal sealed class Race
 {
     private const int DefaultFrameGap = 4;
@@ -79,9 +77,7 @@ internal sealed class Race
     // the frame gap can be tuned as the original's -/+ keys did.
     internal int FrameGap { get; set; } = DefaultFrameGap;
 
-    // The remake's per-car debug freezes (bPlayerPaused / bOpponentPaused,
-    // `StuntCarRacer.cpp:1710-1716`) and its stats overlay (bShowStats):
-    // dev aids, toggled by F6/F7/F5, and reset when a race starts.
+    // Dev aids (remake's bPlayerPaused/bOpponentPaused/bShowStats), toggled by F6/F7/F5, reset when a race starts.
     internal bool PlayerPaused { get; set; }
 
     internal bool OpponentPaused { get; set; }
@@ -154,15 +150,8 @@ internal sealed class Race
         }
     }
 
-    // A screen's frame, as the three layers both games now draw: the
-    // backdrop furthest, the world over it, and the screen's own cockpit or
-    // text over both. SCR's window region is the whole display on every
-    // screen it draws, so all three carry the same rectangle - the layers
-    // are here for the ordering and the depth flush between them, not to
-    // clip anything.
-    //
-    // Built once per screen and kept, because the set never changes: which
-    // cars a screen shows is fixed when the screen is constructed.
+    // Backdrop, world, then the screen's own overlay. SCR's window region is the whole display,
+    // so all three carry the same rectangle - the layers are for ordering and the depth flush, not clipping.
     internal LayerRunner Layers(bool showOpponent, bool showPlayer, ILayerDrawer overlay)
         => new(
             _graphics,
@@ -174,11 +163,8 @@ internal sealed class Race
                 new WorldLayer(this, showOpponent, showPlayer)),
             new RenderLayer(Vector2.Zero, _screen.ScreenWidth, _screen.ScreenHeight, overlay));
 
-    // The F5 stats overlay (the remake's bShowStats block,
-    // `StuntCarRacer.cpp:1343-1361`). The reference printed DXUT's frame and
-    // device stats, which mean nothing here; what is worth seeing instead is
-    // the state the other debug keys change - the frame gap F9/F10 tune and
-    // the per-car freezes F6/F7 toggle.
+    // The reference printed DXUT's frame/device stats, meaningless here; shows instead the state
+    // the other debug keys change - the frame gap F9/F10 tune and the per-car freezes F6/F7 toggle.
     internal void DrawStats()
     {
         FastColor white = _palette.Colour(Track.ScrBaseColour + 15);
@@ -232,9 +218,7 @@ internal sealed class Race
         }
     }
 
-    // Engine sound sample and pitch, from the original FramesWheelsEngine.
-    // The samples were recorded at 11025Hz; the original played them at
-    // AMIGA_PAL_HZ / period.
+    // Original FramesWheelsEngine. Samples recorded at 11025Hz; original played them at AMIGA_PAL_HZ / period.
     internal void UpdateEngineSound()
     {
         const int amigaPalHz = 3546895;
@@ -272,9 +256,7 @@ internal sealed class Race
         _sound.PlayLoop(sample, frequency / sampleRate);
     }
 
-    // The in-game display: the cockpit overlay (wheels, engine, damage
-    // crack/holes, speed bar, lap/boost/distance read-outs) plus the
-    // remake's text overlays (opponent name at race start, race result).
+    // Cockpit overlay (wheels, engine, damage, speed/lap/boost/distance) plus text overlays (opponent name, race result).
     internal void DrawHud(bool gameOver)
     {
         FastColor white = _palette.Colour(Track.ScrBaseColour + 15);
@@ -332,9 +314,7 @@ internal sealed class Race
             Car.CurrentLapTicks,
             Car.BestLapTicks));
 
-    // Layer 0, the backdrop: the sky and ground fill and the scenery
-    // skyline. Clears the frame first, which is where that has always
-    // happened - the backdrop is what paints over it.
+    // Layer 0, the backdrop: sky, ground fill and scenery skyline. Clears the frame first.
     private sealed class BackdropLayer(Race race) : ILayerDrawer
     {
         public void Draw()
@@ -344,9 +324,7 @@ internal sealed class Race
         }
     }
 
-    // Layer 1, the world: the track, and the cars that are visible from
-    // this screen. Everything here is depth-tested, and the runner flushes
-    // that depth content before the layer above draws over it.
+    // Layer 1, the world: track and visible cars, depth-tested and flushed before the layer above draws.
     private sealed class WorldLayer(Race race, bool showOpponent, bool showPlayer) : ILayerDrawer
     {
         public void Draw()
@@ -357,9 +335,7 @@ internal sealed class Race
                 race._opponentRenderer.AppendWorldPolygons(race._worldPolygons);
             }
 
-            // the player's car is only ever visible from the outside view -
-            // the cockpit view sits inside it
-            // (`StuntCarRacer.cpp:1600-1605`)
+            // The player's car is only ever visible from the outside view - the cockpit view sits inside it.
             if (showPlayer && race.OutsideView)
             {
                 race._playerRenderer.AppendWorldPolygons(race._worldPolygons);

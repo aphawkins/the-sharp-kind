@@ -6,9 +6,7 @@ using SharpKind.Input;
 
 namespace SharpKind.SDL.Tests;
 
-// SDL sends a hat's whole state on every change and never a separate
-// release, so each direction is compared with what it was. These cover the
-// edges that comparison exists to get right.
+// SDL sends a hat's whole state on every change, never a separate release, so each direction is compared with what it was.
 public class SDLInputHatTests
 {
     private const int Device = 1;

@@ -5,10 +5,8 @@ using System.IO.Compression;
 
 namespace SharpKind.Graphics;
 
-// Decodes non-interlaced PNGs of every colour type, on the framework's own
-// ZLibStream rather than a third-party imaging library. Interlaced (Adam7)
-// files are rejected outright instead of being decoded wrongly, and chunk
-// CRCs are skipped - a corrupt asset surfaces as a decode failure anyway.
+// Decodes non-interlaced PNGs on the framework's own ZLibStream, not a third-party library.
+// Interlaced (Adam7) files are rejected outright; chunk CRCs are skipped since a corrupt asset surfaces as a decode failure anyway.
 public static class PngReader
 {
     private const int SignatureLength = 8;
@@ -212,9 +210,7 @@ public static class PngReader
         return raw;
     }
 
-    // Each scanline is prefixed with a filter byte; reversing the filter needs
-    // the already-reconstructed bytes to the left and above, so this walks
-    // forwards and rewrites the buffer in place.
+    // Reversing the filter needs already-reconstructed bytes to the left and above, so this walks forwards, rewriting in place.
     private static void Unfilter(byte[] raw, int height, int stride, int unit)
     {
         for (int y = 0; y < height; y++)
@@ -301,9 +297,7 @@ public static class PngReader
         return pixels;
     }
 
-    // Reads one channel, indexed in units of bitDepth across the scanline.
-    // 16-bit samples are truncated to their high byte: FastBitmap is 8 bits
-    // per channel, so the low byte has nowhere to go.
+    // 16-bit samples truncate to their high byte: FastBitmap is 8 bits per channel.
     private static int Sample(byte[] raw, int row, int index, byte bitDepth)
     {
         if (bitDepth == 8)

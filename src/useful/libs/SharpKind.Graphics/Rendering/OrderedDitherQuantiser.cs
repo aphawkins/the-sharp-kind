@@ -23,9 +23,7 @@ namespace SharpKind.Graphics.Rendering;
 /// </remarks>
 public sealed class OrderedDitherQuantiser : IColourQuantiser
 {
-    // The 4x4 Bayer matrix, in the usual recursive order, row after row.
-    // Small enough that the pattern does not read as a texture of its own at
-    // these resolutions, large enough for sixteen levels between two colours.
+    // Small enough not to read as a texture of its own at these resolutions, large enough for sixteen levels between two colours.
     private static readonly int[] s_threshold =
     [
         0, 8, 2, 10,
@@ -50,15 +48,9 @@ public sealed class OrderedDitherQuantiser : IColourQuantiser
         ArgumentNullException.ThrowIfNull(inner);
         _inner = inner;
 
-        // -0.5 .. +0.5 of a step, centred so dithering does not shift the
-        // average brightness of a face. The nudge spans one gap, so it reaches
-        // the colour either side and no further - more would dither between
-        // colours that are not neighbours and read as noise.
-        // The +0.5 centres each cell within its slice, so the nudge spans
-        // (-0.5, +0.5) of a gap rather than [-0.5, +0.5). Without it the
-        // lowest cell lands exactly on the midpoint between two displayable
-        // colours, and a colour the display can already show is dithered off
-        // it for a sixteenth of the screen.
+        // -0.5..+0.5 of a step, centred so dithering doesn't shift a face's average brightness; spans one gap so it never dithers
+        // between non-neighbouring colours. The +0.5 centres each cell so the range is open, not [-0.5, +0.5), else the lowest
+        // cell would land exactly on the midpoint between two displayable colours.
         for (int cell = 0; cell < _nudges.Length; cell++)
         {
             _nudges[cell] = (((s_threshold[cell] + 0.5f) / 16f) - 0.5f) * inner.LevelGap;

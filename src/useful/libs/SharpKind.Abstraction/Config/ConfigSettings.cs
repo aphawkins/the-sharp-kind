@@ -31,10 +31,7 @@ public abstract class ConfigSettings
     {
         bool repaired = false;
 
-        // A version from the future means the file was written by a later
-        // build whose shape this one doesn't know. There's nothing to migrate
-        // to, so it's stamped back and the settings are taken as read - the
-        // caller keeps a copy of the original either way.
+        // A future version means a later build wrote this file; nothing to migrate to, so it's stamped back and taken as read.
         if (Version < 1 || Version > ConfigSchema.CurrentVersion)
         {
             Version = ConfigSchema.CurrentVersion;

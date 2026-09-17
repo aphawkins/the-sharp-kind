@@ -10,8 +10,7 @@ namespace EliteSharpLib.Tests.Controls;
 
 public class ControlBindingsTests
 {
-    // The file is only as good as its vocabulary: an action nothing binds
-    // cannot be performed at all, so a new one must arrive with a binding.
+    // An action nothing binds cannot be performed; a new one must arrive with a binding.
     [Fact]
     internal void EveryActionIsBoundSomewhere()
     {
@@ -27,15 +26,11 @@ public class ControlBindingsTests
         List<EliteAction> unbound = [.. Enum.GetValues<EliteAction>()
             .Where(action => action != EliteAction.None && !actions.Contains(action))];
 
-        // Galactic hyperspace is Ctrl-H, which is a modifier and not a
-        // binding, so nothing binds it.
+        // Galactic hyperspace is Ctrl-H, a modifier not a binding, so nothing binds it.
         Assert.Equal([EliteAction.GalacticHyperspace], unbound);
     }
 
-    // The library takes an enum's zero value to mean "nothing", so both of
-    // Elite's must reserve it. Without that, whichever control happened to
-    // be declared first would be dropped from every file as though the game
-    // had never heard of it - which is exactly what happened to Roll.
+    // The library treats an enum's zero value as "nothing"; both of Elite's must reserve it or the first-declared control is silently dropped.
     [Fact]
     internal void BothEnumsReserveZero()
     {
@@ -48,8 +43,7 @@ public class ControlBindingsTests
     internal void TheDefaultsSurviveTheirOwnRepair()
         => Assert.False(Repair(EliteControlDefaults.Create()));
 
-    // Empty is what a missing file binds to, and the defaults are what it
-    // has to become - otherwise every control is dead on a first run.
+    // Empty is what a missing file binds to; must become the defaults, or every control is dead on first run.
     [Fact]
     internal void AnEmptyFileTakesTheKeyboardFromTheDefaults()
     {
@@ -105,8 +99,7 @@ public class ControlBindingsTests
         Assert.True(controller.Buttons.ContainsKey(nameof(EliteAction.Ecm)));
     }
 
-    // A stick axis named as a trigger would fire the lasers whenever the
-    // stick was pushed over, so only the real triggers are allowed.
+    // A stick axis named as a trigger would fire the lasers whenever the stick was pushed over.
     [Theory]
     [InlineData(nameof(GamepadAxis.LeftX), false)]
     [InlineData(nameof(GamepadAxis.Throttle), false)]
@@ -132,8 +125,7 @@ public class ControlBindingsTests
         Assert.Empty(controller.Axes);
     }
 
-    // An axis the game does not have is dropped too, which is what keeps
-    // the library honest about whose vocabulary it is validating.
+    // An axis the game does not have is dropped too.
     [Fact]
     internal void AnAxisTheGameDoesNotHaveIsDropped()
     {
@@ -144,8 +136,7 @@ public class ControlBindingsTests
         Assert.Empty(controller.Axes);
     }
 
-    // No shipped controller entry may bind one control to two things, or a
-    // single press would run two commands.
+    // No shipped entry may bind one control to two things, or a single press runs two commands.
     [Fact]
     internal void NoShippedEntryBindsAButtonTwice()
     {

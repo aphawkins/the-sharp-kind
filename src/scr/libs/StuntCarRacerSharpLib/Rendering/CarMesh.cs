@@ -9,16 +9,12 @@ using StuntCarRacerSharpLib.Tracks;
 
 namespace StuntCarRacerSharpLib.Rendering;
 
-// The visible car shape from the original Car.cpp (CreateCarInVB): four flat
-// wheel quads and a wedge-shaped body, loaded from car.obj and coloured via
-// CarPalette. The mesh is oriented onto a frame derived from the car's wheel
-// positions.
+// Original Car.cpp's CreateCarInVB: four flat wheel quads and a wedge-shaped body, loaded from
+// car.obj and coloured via CarPalette, oriented onto a frame derived from the car's wheel positions.
 public sealed class CarMesh
 {
-    // The original VISIBLE_CAR dimensions (Car.h:12-15). car.obj carries
-    // them as +/- half the width and length, and +/- a quarter of the
-    // height, around its origin - so these are also the footprint anything
-    // positioning the mesh has to reckon with.
+    // Original VISIBLE_CAR dimensions. car.obj carries these as +/- half width/length and +/- a
+    // quarter height around its origin, so anything positioning the mesh has to reckon with them.
     internal const int CarWidth = 162;
 
     internal const int CarLength = 256;

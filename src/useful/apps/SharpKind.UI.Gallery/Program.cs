@@ -29,24 +29,16 @@ internal static class Program
     private const string Title = "SharpKind UI - Gallery";
     private const string ConfigFileName = "gallery.sharp";
 
-    // The 8-bit tier's canvas width, so what shows here is what that tier
-    // draws. The height is in rows rather than pixels: the gallery lays itself
-    // out a row at a time, and a row is as tall as the font the backend
-    // actually uses - 8 pixels from the bitmap sheet the software renderer
-    // draws from, around twice that from the 12pt true-type face the hardware
-    // one does. A canvas fixed in pixels would crop half the gallery on one of
-    // them.
+    // 8-bit tier's canvas width. Height is in rows, not pixels: the gallery lays out a row at a
+    // time, and row height follows the backend's actual font (8px bitmap vs ~2x that for the
+    // hardware backend's 12pt TrueType face) - a fixed pixel canvas would crop one of them.
     private const int Width = 320;
     private const int BitmapRowHeight = 8;
 
-    // Rounded up from the 12pt face's real line height rather than down: the
-    // gallery holds itself to whatever the canvas can show, so slack at the
-    // foot costs a band of empty pixels while a shortfall would cost a row.
+    // Rounded up, not down: slack at the foot costs empty pixels, but a shortfall would cost a whole row.
     private const int TrueTypeRowHeight = 18;
 
-    // Keeps the window on a laptop screen: a canvas of taller rows magnified
-    // as far as a canvas of short ones would be goes off the bottom of the
-    // display, which no window scale in the config file can be blamed for.
+    // Keeps the window on a laptop screen: a taller-row canvas magnified as far as a short one would go off the bottom.
     private const int MaxWindowHeight = 900;
 
     public static int Main()
@@ -70,9 +62,7 @@ internal static class Program
         ILoggerFactory loggerFactory,
         EngineConfigSettings engine)
     {
-        // Row height follows the font, not the backend: both backends draw
-        // text the same way now, and it is the kind of font that decides how
-        // tall a row of it is.
+        // Row height follows the font kind, not the backend, since both backends draw text the same way now.
         int rowHeight = engine.Graphics.FontKind == FontKind.TrueType ? TrueTypeRowHeight : BitmapRowHeight;
         int height = Gallery.LayoutRows * rowHeight;
 

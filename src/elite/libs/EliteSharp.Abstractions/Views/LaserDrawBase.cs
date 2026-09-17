@@ -59,18 +59,12 @@ public abstract class LaserDrawBase
 
         if (wireframe)
         {
-            // Left laser
             Surface.Graphics.DrawTriangle(leftA, target, leftB, color);
-
-            // Right laser
             Surface.Graphics.DrawTriangle(rightA, target, rightB, color);
         }
         else
         {
-            // Left laser
             Surface.Graphics.DrawTriangleFilled(leftA, target, leftB, color);
-
-            // Right laser
             Surface.Graphics.DrawTriangleFilled(rightA, target, rightB, color);
         }
     }

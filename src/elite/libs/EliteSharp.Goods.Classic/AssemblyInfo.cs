@@ -4,7 +4,5 @@
 
 using System.Runtime.CompilerServices;
 
-// The goods table is this plugin's own business - the game reads it off
-// IGoodsSet rather than naming any of it - so it stays internal, and the tests
-// that check the classic economy is intact are let in to use it.
+// The goods table stays internal - the game reads it off IGoodsSet - but the economy tests need it.
 [assembly: InternalsVisibleTo("EliteSharpLib.Tests")]

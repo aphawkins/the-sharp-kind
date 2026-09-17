@@ -92,6 +92,17 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - If a question is conceptual, answer in concise bullet points.
 - Write all responses in ASD-STE100 (Simplified Technical English): one topic per sentence, active voice, present tense, approved words in their approved meaning only, and no more than 20 words per sentence.
 
+## 6. Agents
+
+Do not delegate work to subagents (the Agent/Task tool) — they consume tokens
+at a high rate relative to the work done. Do the work directly in this
+session instead.
+
+If a task is large, warn the user up front so they can switch to a weaker
+model if needed, then chunk the work and check in with the user for
+verification as you progress, rather than running it all unsupervised in one
+pass.
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

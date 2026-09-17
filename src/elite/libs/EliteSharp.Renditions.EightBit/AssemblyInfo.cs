@@ -4,7 +4,5 @@
 
 using System.Runtime.CompilerServices;
 
-// The views are this rendition's own business - the game only ever sees them as
-// IView, off the rendition - so they stay internal, and the tests that check what
-// this tier draws are let in to use them.
+// Views stay internal - the game only ever sees them as IView - but the draw tests need them.
 [assembly: InternalsVisibleTo("EliteSharpLib.Tests")]

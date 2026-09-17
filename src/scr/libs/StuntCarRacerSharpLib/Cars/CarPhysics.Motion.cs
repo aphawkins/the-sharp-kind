@@ -10,10 +10,7 @@ namespace StuntCarRacerSharpLib.Cars;
 // (from Car Behaviour.cpp).
 public sealed partial class CarPhysics
 {
-    // Rotate a car-local offset into world space, in track units (the
-    // original WorldOffset run against the player's own YXZ coefficients,
-    // as CalcGameViewpoint does for the outside view). Local axes are the
-    // physics ones: x right, y up, z forward.
+    // Original WorldOffset. Local axes are the physics ones: x right, y up, z forward.
     public Coord3D RotateToWorld(int x, int y, int z)
     {
         _trig.CalculateYXZ(PlayerXAngle, PlayerYAngle, PlayerZAngle);
@@ -24,16 +21,8 @@ public sealed partial class CarPhysics
             ((x * _trig.XZ) + (y * _trig.YZ) + (z * _trig.ZZ)) / AmigaTrig.Precision);
     }
 
-    // The y value for positioning the game viewpoint (the original
-    // LimitViewpointY): PlayerY, limited so the viewpoint cannot go below
-    // or too close to the road - i.e. prevents seeing under the track when
-    // the car bottoms out. When a front wheel would show more than the
-    // threshold below the road surface, the y is recalculated to hold that
-    // wheel at the threshold (the CalculateActualWheelHeights sums in
-    // reverse, with the road height in place of the wheel height). Only
-    // the rendered viewpoint uses the result; the physics state is not
-    // repositioned (though as in the original, the wheel/road heights are
-    // recalculated in place).
+    // Original LimitViewpointY: prevents seeing under the track when the car bottoms out, by
+    // holding a too-low front wheel at the threshold. Only the rendered viewpoint uses the result.
     public int LimitViewpointY()
     {
         int savedPlayerZSpeed = PlayerZSpeed;
@@ -78,9 +67,7 @@ public sealed partial class CarPhysics
         return leftY != 0 ? leftY : PlayerY;
     }
 
-    // Clamp a body angle to +/- limit, stopping the rotation if it is still
-    // being pushed past that limit. Angles arrive and leave in PC
-    // StuntCarRacerSharp format (i.e. 0 to 360 degrees).
+    // Clamp a body angle to +/- limit, stopping rotation pushed past it. Angles in PC format (0-360 degrees).
     private static int ClampBodyAngle(int bodyAngle, int limit, ref int rotationSpeed)
     {
         // get angle in Amiga StuntCarRacerSharp format (i.e. correct sign)
@@ -122,20 +109,15 @@ public sealed partial class CarPhysics
         _frontLeftActualHeight >>= 8;
     }
 
-    // Front wheel rotation speed for the cockpit display (the original
-    // SetOneWheelRotationSpeed, called at the physics rate): faster when
-    // touching the road, decaying otherwise.
+    // Original SetOneWheelRotationSpeed (physics rate): faster when touching the road, decaying otherwise.
     private void SetWheelRotationSpeed()
     {
         _frontLeftWheelSpeed = CalculateWheelRotationSpeed(_frontLeftAmountBelowRoad, _frontLeftWheelSpeed);
         _frontRightWheelSpeed = CalculateWheelRotationSpeed(_frontRightAmountBelowRoad, _frontRightWheelSpeed);
     }
 
-    // Advance the cockpit wheel angles by the last-computed rotation speed
-    // (the original FramesWheelsEngine, called every 50Hz tick rather than
-    // the physics rate so the wheels spin at full speed). The right wheel
-    // angle is accumulated from the left wheel's already-updated angle,
-    // matching the original's literal source.
+    // Original FramesWheelsEngine, called every 50Hz tick so the wheels spin at full speed. Right
+    // wheel accumulates from the left's already-updated angle, matching the original's literal source.
     private void AdvanceWheelAngles()
     {
         LeftWheelAngle = (LeftWheelAngle + _frontLeftWheelSpeed) & WheelAngleMask;
@@ -500,9 +482,7 @@ public sealed partial class CarPhysics
         }
     }
 
-    // Work out how far the car's y angle differs from the road's, normalised to
-    // -90 to 90 degrees so the track can be driven in either direction, and
-    // biased on a curve. Returns whether the car is on a left hand bend.
+    // Difference between car's and road's y angle, normalised to -90..90 so the track can be driven either direction.
     private bool CalculateYAngleDifference(TrackPiece piece)
     {
         bool backwards = false;

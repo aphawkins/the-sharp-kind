@@ -5,12 +5,8 @@ using SharpKind.Graphics.Rendering;
 
 namespace SharpKind.SDL;
 
-// The Gouraud fill for the CPU depth layer: a colour per corner blended
-// across the polygon, rather than one colour for the whole of it. Its own
-// file because the flat and textured rasterisers already fill SDLGraphics to
-// the size the repo allows one file to be, and it mirrors
-// SoftwareGraphics.Gouraud.cs as the rest of the layer mirrors
-// SoftwareGraphics.
+// Gouraud fill for the CPU depth layer. Its own file for the repo's per-file size limit, and
+// mirrors SoftwareGraphics.Gouraud.cs as the rest of the layer mirrors SoftwareGraphics.
 public sealed unsafe partial class SDLGraphics
 {
     public void DrawPolygonFilledDepth(
@@ -48,10 +44,7 @@ public sealed unsafe partial class SDLGraphics
         _depthLayerDirty = true;
     }
 
-    // Gouraud variant of DrawTriangleFilledDepthToLayer: a colour per corner,
-    // blended down each edge and across each span. Mirrors
-    // SoftwareGraphics.DrawTriangleFilledDepthGouraud, as the flat pair above
-    // mirror their software counterparts.
+    // Mirrors SoftwareGraphics.DrawTriangleFilledDepthGouraud, as the flat pair above mirror their software counterparts.
     private void DrawTriangleFilledDepthGouraudToLayer(
         Vector2 a,
         Vector2 b,
@@ -131,10 +124,8 @@ public sealed unsafe partial class SDLGraphics
         }
     }
 
-    // As DrawSpanFilledDepthToLayer, blending the colour across the span. The
-    // quantiser is asked at every pixel whether or not it dithers - an
-    // interpolated colour differs at each one, so the caller cannot have
-    // resolved it for the whole face.
+    // As DrawSpanFilledDepthToLayer, blending across the span. The quantiser is asked at every
+    // pixel since an interpolated colour differs at each one.
     private void DrawSpanFilledDepthGouraudToLayer(
         int y,
         float x0,

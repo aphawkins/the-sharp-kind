@@ -11,19 +11,8 @@ namespace SharpKind.Graphics.Benchmarks;
 
 internal static class Program
 {
-    // Plain `dotnet run -c Release` (no arguments) runs every benchmark under
-    // the full DefaultConfig job, same as before. Pass CLI arguments to speed
-    // up local iteration instead, e.g.:
-    //   dotnet run -c Release -- --filter *DrawPixel* --job short
-    //
-    // Runs in-process (no separate throwaway project generated/built per
-    // run): avoids BenchmarkDotNet's project-file lookup, which searches the
-    // whole repo tree by project name and throws if it finds more than one
-    // (e.g. when a git worktree checkout sits nested under the repo, as
-    // Claude Code's isolated-worktree agents create). Slightly less
-    // isolation between iterations than the default out-of-process
-    // toolchain, which is an acceptable trade for a benchmark suite whose
-    // numbers are read as relative comparisons rather than absolute ones.
+    // No arguments runs every benchmark; pass CLI arguments to speed up local iteration, e.g. --filter *DrawPixel* --job short.
+    // In-process, not out-of-process: avoids BenchmarkDotNet's project-file lookup, which throws if a nested worktree checkout gives it more than one match.
     public static void Main(string[] args) => BenchmarkSwitcher
         .FromAssembly(typeof(Program).Assembly)
         .Run(
@@ -31,10 +20,7 @@ internal static class Program
             ManualConfig
                 .Create(DefaultConfig.Instance)
 
-                // Relative to the project directory, which is where both
-                // `dotnet run` and the benchmarks workflow start from. Kept
-                // in step with .gitignore's src/*/perf/*/reports/ and with
-                // the workflow's output-file-path.
+                // Kept in step with .gitignore's src/*/perf/*/reports/ and the workflow's output-file-path.
                 .WithArtifactsPath("reports")
                 .AddJob(Job.Default.WithToolchain(InProcessNoEmitToolchain.Instance)));
 }

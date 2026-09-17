@@ -7,11 +7,8 @@ using StuntCarRacerSharpLib.Cars;
 
 namespace StuntCarRacerSharpLib.Screens;
 
-// Turns the analog readings of an IGamepad into the digital controls this
-// game has: the physics only knows "left" and "right" (CarControl in
-// ptitSeb's Car_Behaviour.cpp:812-815 sets a fixed +/-15 either way), so
-// travel past a threshold is all that can be used. A digital HID stick sits
-// at the ends of the range, so it passes the threshold whatever it is set to.
+// Physics only knows a fixed left/right steer, so a threshold is all that's needed; a digital HID
+// stick sits at the range ends, so it always passes it.
 internal static class GamepadControls
 {
     private const float Threshold = 0.5f;
@@ -24,13 +21,8 @@ internal static class GamepadControls
         return x <= -Threshold ? -1 : x >= Threshold ? 1 : 0;
     }
 
-    // Two layouts at once, because the two target devices have nothing in
-    // common but the stick. An XInput pad drives as ptitSeb's remake maps it
-    // (Car_Behaviour.cpp:793-817): right trigger = accelerate, (B) or left
-    // trigger = brake, (A) = boost. A one-stick joystick has no triggers, so
-    // it drives the arcade way instead: stick forward = accelerate, back =
-    // brake, fire = boost. Neither layout can reach the other's controls, so
-    // both are read unconditionally rather than guessing at the device.
+    // XInput drives as ptitSeb's remake maps it (Car_Behaviour.cpp:793-817); a one-stick joystick drives the arcade way instead.
+    // Both layouts are read unconditionally, since neither can reach the other's controls.
     internal static CarInput ReadCarInput(IGamepad gamepad)
     {
         CarInput input = CarInput.None;
@@ -46,8 +38,7 @@ internal static class GamepadControls
                 break;
         }
 
-        // SDL's Y axis is positive downwards, so forward on the stick is
-        // negative - the same convention the screen has.
+        // SDL's Y axis is positive downwards, so forward on the stick is negative - same convention as the screen.
         float y = gamepad.Axis(GamepadAxis.LeftY);
 
         if (IsPulled(gamepad, GamepadAxis.RightTrigger) || y <= -Threshold)
@@ -55,8 +46,7 @@ internal static class GamepadControls
             input |= CarInput.Accelerate;
         }
 
-        // Buttons 1 and 3 as the device numbers them, which is what falls
-        // under the thumb and the trigger finger on a Competition Pro.
+        // Buttons 1 and 3 as the device numbers them - thumb and trigger finger on a Competition Pro.
         if (gamepad.IsHeld(GamepadButton.A) || gamepad.IsHeld(GamepadButton.X))
         {
             input |= CarInput.Boost;

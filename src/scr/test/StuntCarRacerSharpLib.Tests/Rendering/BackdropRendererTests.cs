@@ -21,14 +21,10 @@ public class BackdropRendererTests
     // which the horizon and track projections used to disagree.
     private const int Height = 400;
 
-    // The horizon fill line is the projection of the ground plane (world
-    // y = 0) at a horizontal distance of 2 * 0x10000 track units (the
-    // original uses points at z = 0x10000 with the viewpoint height halved).
+    // The projection of the ground plane at 2 * 0x10000 track units (original uses z = 0x10000, viewpoint height halved).
     private const int GroundLineDistance = 2 * 0x00010000;
 
-    // The ground fill must sit exactly where the track projection puts the
-    // ground plane, otherwise the track appears to float above the ground
-    // when the camera pitches (regression test for the floating track bug).
+    // Regression test for the floating track bug: a mismatch makes the track appear to float above the ground when the camera pitches.
     [Theory]
     [InlineData(500, 8000)] // shallow pitch down
     [InlineData(2000, 8000)] // steep pitch down

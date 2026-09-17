@@ -7,10 +7,7 @@ using StuntCarRacerSharpLib.Tracks;
 
 namespace StuntCarRacerSharpLib.Cars;
 
-// Opponent car behaviour, ported from the original Opponent Behaviour.cpp.
-// The opponent is not a full physics simulation: it rides the road surface
-// at scripted per-piece speeds, with randomized steering, wheel height
-// spring dynamics, and interaction with (and collision against) the player.
+// Not a full physics simulation: rides the road surface at scripted per-piece speeds, with randomized steering and spring dynamics.
 public sealed partial class OpponentPhysics
 {
     internal const int NumOpponents = 11;

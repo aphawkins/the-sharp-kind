@@ -173,9 +173,7 @@ public sealed partial class CarPhysics
         // get angle in Amiga StuntCarRacerSharp format (i.e. correct sign)
         int angle = PlayerXAngle < AmigaTrig.Degrees180 ? PlayerXAngle : PlayerXAngle - AmigaTrig.Degrees360;
 
-        // use the height as-is when moving quickly or pitched steeply, otherwise
-        // average the new height with the previous value - possibly for when
-        // the car is being lowered onto the road
+        // Use the height as-is when moving quickly or pitched steeply, otherwise average with the previous value (lowering onto the road).
         heightOut = Math.Abs(PlayerZSpeed) >= 0xA00 || Math.Abs(angle) >= 0x600
             ? height
             : (height + heightOut) / 2;
@@ -724,9 +722,7 @@ public sealed partial class CarPhysics
         return sectionYAngle & (Track.MaxAngle - 1);
     }
 
-    // Calculates the y angle within the piece at the x/z point, the inner or
-    // outer edge radius of the piece, and the distance from the piece's
-    // circle centre to the point. Assumes x/z are relative to the piece.
+    // Y angle within the piece, edge radius, and distance from the piece's circle centre. Assumes x/z relative to the piece.
     private void CalcCurveMeasurements(int piece, int x, int z, out int curveAngle, out int radius, out double distanceFromCentre)
     {
         curveAngle = 0;

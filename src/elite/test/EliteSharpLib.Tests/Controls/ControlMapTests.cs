@@ -9,17 +9,14 @@ using SharpKind.Input;
 
 namespace EliteSharpLib.Tests.Controls;
 
-// The shipped bindings must still do what the hardcoded layouts did, so
-// these are the same checks the profiles had, asked of the file instead.
+// Same checks the hardcoded layouts had, now asked of the file.
 public class ControlMapTests
 {
     private const string SideWinder = "Microsoft SideWinder Precision 2 Joystick";
     private const string CompetitionPro = "STK-7024X";
     private const string Xbox = "Xbox One Controller";
 
-    // The clearest case for per-device bindings at all: button 1 fires the
-    // laser on a SideWinder, fires a missile on a Competition Pro, and
-    // slows an Xbox pad down. No single assignment could serve all three.
+    // Button 1 means something different per device; no single assignment could serve all three.
     [Theory]
     [InlineData(SideWinder, EliteAction.FireLaser)]
     [InlineData(CompetitionPro, EliteAction.FireMissile)]
@@ -43,8 +40,7 @@ public class ControlMapTests
         Assert.True(controls.IsHeld(EliteAction.FireLaser));
     }
 
-    // A pad fires on its triggers, because both face buttons are spent on
-    // speed. A trigger is an axis, so this is the threshold, not a press.
+    // Both face buttons are spent on speed, so a pad fires on trigger axis threshold, not a press.
     [Fact]
     internal void APadFiresOnItsTriggers()
     {
@@ -58,8 +54,7 @@ public class ControlMapTests
         Assert.True(controls.IsHeld(EliteAction.FireMissile));
     }
 
-    // The SideWinder's lever owns speed outright, so no button on it may
-    // also claim speed - or the lever and the button would fight.
+    // The SideWinder's lever owns speed outright; no button may also claim it.
     [Fact]
     internal void TheSideWinderKeepsNoSpeedButtons()
     {
@@ -74,8 +69,7 @@ public class ControlMapTests
         }
     }
 
-    // All eight of the SideWinder's buttons are spoken for, and each does
-    // one thing only, or two commands would run on a single press.
+    // Each of the SideWinder's eight buttons does one thing, or two commands run on a single press.
     [Theory]
     [InlineData(GamepadButton.A)]
     [InlineData(GamepadButton.B)]
@@ -109,8 +103,7 @@ public class ControlMapTests
         Assert.True(controls.WasPressed(expected));
     }
 
-    // Forward is fast, and SDL reports forward as negative. That flip is
-    // the game's own convention, so it lives here rather than in the file.
+    // SDL reports forward as negative; the flip to "forward is fast" is the game's convention, not the file's.
     [Theory]
     [InlineData(-1f, 1f)]
     [InlineData(0f, 0.5f)]
@@ -124,8 +117,7 @@ public class ControlMapTests
         Assert.Equal(expected, controls.Throttle(EliteAxis.Speed)!.Value, 3);
     }
 
-    // A device with no lever must report none, or a centred axis would read
-    // as half speed and hold the ship there.
+    // A device with no lever must report none, or a centred axis reads as half speed.
     [Theory]
     [InlineData(Xbox)]
     [InlineData(CompetitionPro)]
@@ -136,9 +128,7 @@ public class ControlMapTests
         Assert.Null(controls.Throttle(EliteAxis.Speed));
     }
 
-    // The deflection is the stick's own position, not the roll rate: the
-    // game's convention that a roll to the right is negative lives in the
-    // game, so a commander correcting a backwards stick need not know it.
+    // Deflection is the stick's raw position; the roll-right-is-negative convention lives in the game, not here.
     [Fact]
     internal void TheDeflectionIsTheStickPosition()
     {
@@ -149,8 +139,7 @@ public class ControlMapTests
         Assert.Equal(1f, controls.Deflection(EliteAxis.Roll), 3);
     }
 
-    // A digital stick has no position, so its axis has to answer the
-    // direction actions instead - which is how a Competition Pro flies.
+    // A digital stick has no position, so its axis answers the direction actions instead.
     [Theory]
     [InlineData(GamepadAxis.LeftX, -1f, EliteAction.RollLeft)]
     [InlineData(GamepadAxis.LeftX, 1f, EliteAction.RollRight)]
@@ -164,8 +153,7 @@ public class ControlMapTests
         Assert.True(controls.IsHeld(expected));
     }
 
-    // A stick resting at centre holds no direction, or the ship would turn
-    // on its own.
+    // A stick resting at centre holds no direction, or the ship would turn on its own.
     [Fact]
     internal void ACentredStickHoldsNoDirection()
     {
@@ -179,8 +167,7 @@ public class ControlMapTests
         Assert.False(controls.IsHeld(EliteAction.PitchDown));
     }
 
-    // A digital stick has no position to report, so the caller falls
-    // through to the ramp.
+    // A digital stick has no position to report, so the caller falls through to the ramp.
     [Fact]
     internal void ADigitalStickHasNoDeflection()
     {
@@ -191,8 +178,7 @@ public class ControlMapTests
         Assert.Equal(0f, controls.Deflection(EliteAxis.Roll));
     }
 
-    // A worn potentiometer wanders around its centre, and none of that is
-    // the pilot.
+    // A worn potentiometer wanders around its centre, and none of that is the pilot.
     [Fact]
     internal void TheDeadzoneSwallowsAStickAtRest()
     {
@@ -212,8 +198,7 @@ public class ControlMapTests
         Assert.True(controls.IsHeld(EliteAction.FireLaser));
     }
 
-    // An unrecognised stick gets the catch-all entry rather than nothing,
-    // so it can still be flown.
+    // An unrecognised stick gets the catch-all entry rather than nothing, so it can still be flown.
     [Fact]
     internal void AnUnknownDeviceGetsTheCatchAllEntry()
     {
@@ -255,8 +240,7 @@ public class ControlMapTests
         pad.PreferredDevice = SideWinder;
         pad.ButtonDown(2, GamepadButton.A);
 
-        // The same button fires the laser on the stick, and the pad's
-        // slow-down is no longer anybody's business.
+        // Same button fires the laser on the stick; the pad's slow-down is no longer anybody's business.
         Assert.True(controls.IsHeld(EliteAction.FireLaser));
         Assert.False(controls.IsHeld(EliteAction.SlowDown));
     }

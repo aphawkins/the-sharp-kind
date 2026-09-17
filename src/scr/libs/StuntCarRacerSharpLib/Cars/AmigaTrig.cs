@@ -6,9 +6,7 @@ using StuntCarRacerSharpLib.Tracks;
 
 namespace StuntCarRacerSharpLib.Cars;
 
-// Fixed-point sine/cosine table from the original 3D Engine.cpp.
-// Angles are in internal format with 65536 representing 360 degrees and
-// results are scaled by the fixed-point precision of 16384.
+// From the original 3D Engine.cpp. Angles are internal format (65536 = 360 degrees); results are scaled by 16384.
 internal static class AmigaTrig
 {
     internal const int Precision = 1 << Track.LogPrecision;

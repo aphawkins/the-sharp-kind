@@ -331,10 +331,7 @@ public abstract class ScannerViewBase : IView<ScannerModel>
 
             FastColor color = Ships.For(blip.Kind);
 
-            // Both ends floored before the difference is taken, rather than
-            // sizing the stick by its own fractional length: the drawing
-            // floors a position and a height separately, so a stick reaching
-            // up to the blip could floor a row short of it and leave a gap.
+            // Floor both ends separately, not the difference, or the stick can fall a row short.
             float stickTop = MathF.Floor(MathF.Min(blipY, stickY));
             float stickBottom = MathF.Floor(MathF.Max(blipY, stickY));
 

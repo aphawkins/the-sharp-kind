@@ -21,8 +21,7 @@ public abstract class WireframePlanetRendererBase : IPlanetRenderer
     // Segments per half ellipse; the original steps a 64-segment circle by 4.
     private const int HalfEllipseSegments = 8;
 
-    // The crater's centre is offset from the planet's by 222/256 of the radius
-    // along roofv (PLS3).
+    // Offset from the planet's centre along roofv, 222/256 of the radius (PLS3).
     private const float CraterOffset = 222f / 256;
 
     private readonly IViewSurface _surface;
@@ -45,8 +44,7 @@ public abstract class WireframePlanetRendererBase : IPlanetRenderer
     {
         _surface.Graphics.DrawCircle(planet.Centre, planet.Radius, Colour);
 
-        // The threshold is in the original's 256-wide space, so it is scaled
-        // to pixels the same way the radius was.
+        // The threshold is in the original's 256-wide space, scaled to pixels the same way the radius was.
         if (planet.Radius < MinDetailRadius * planet.UnitScale)
         {
             return;

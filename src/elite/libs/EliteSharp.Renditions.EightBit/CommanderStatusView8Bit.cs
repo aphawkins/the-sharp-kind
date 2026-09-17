@@ -75,9 +75,7 @@ internal sealed class CommanderStatusView8Bit : BaseView8Bit, IView<CommanderSta
         }
     }
 
-    // One column, unlike the 16-bit view's two: even the longest equipment
-    // string ("Front Military Laser") already needs most of the screen's
-    // 40-character width, so a second column would overlap it.
+    // One column, unlike the 16-bit view's two: "Front Military Laser" alone needs most of the 40-character width.
     private void DrawEquipment(IReadOnlyList<string> equipment)
     {
         int row = EquipmentFirstRow;

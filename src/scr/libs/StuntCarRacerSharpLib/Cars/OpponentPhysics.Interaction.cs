@@ -13,10 +13,7 @@ public sealed partial class OpponentPhysics
     // Adjust a per-piece required speed value (used by the draw bridge animation).
     internal void SetSpeedValue(int piece, byte value) => _speedValueOverrides[piece] = value;
 
-    // Required speed for a piece (original Opponent_Speed_Value): a random
-    // value masked and based per track, 10 faster on sections the car can be
-    // put on, re-rolled only when the piece changes. Draw bridge pieces are
-    // overridden by the bridge animation, as the Amiga's precomputed table was.
+    // Original Opponent_Speed_Value: re-rolled only when the piece changes. Draw bridge pieces are overridden by the bridge animation.
     internal int SpeedValue(int piece)
     {
         if (_speedValueOverrides[piece] >= 0)
@@ -366,9 +363,7 @@ public sealed partial class OpponentPhysics
         _player.AddCollisionDamage(damage);
     }
 
-    // One of the cars is airborne: work out the vertical part of the collision
-    // from the height difference. Returns false when the cars are too far apart
-    // vertically to have collided at all.
+    // Returns false when the cars are too far apart vertically to have collided at all.
     private bool CalculateAirborneCollisionY()
     {
         int playersSmallerY = _player.PlayerY >> 11;
@@ -398,9 +393,7 @@ public sealed partial class OpponentPhysics
         return true;
     }
 
-    // Transfers the accumulated car-to-car accelerations into the player's
-    // collision accelerations (original CarToCarCollision, called from the
-    // player's collision detection).
+    // Original CarToCarCollision, called from the player's collision detection.
     private void TransferCollisionToPlayer()
     {
         if (_carsCollidedDelay > 0)

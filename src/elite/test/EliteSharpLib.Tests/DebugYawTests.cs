@@ -7,21 +7,14 @@ using SharpKind.Input;
 
 namespace EliteSharpLib.Tests;
 
-// Yaw is not Elite's. It exists behind ELITE_DEBUG_YAW, so what these check
-// is the switch as much as the axis: with the variable unset the yaw keys do
-// nothing at all, which is what keeps the shipped game the original's two
-// axes and the golden traces unchanged.
+// Yaw is not Elite's; lives behind ELITE_DEBUG_YAW. Unset, the keys must do nothing, keeping the shipped game and golden traces unchanged.
 [Trait("Level", "Integration")]
 
-// Serialised against the other classes that read or write ELITE_DEBUG_YAW.
-// EnvironmentVariableScope puts a variable back, but it cannot stop another
-// class reading it in the meantime: an environment variable belongs to the
-// process, and xUnit runs test classes in parallel.
+// Serialised against other classes touching ELITE_DEBUG_YAW: it's process-wide, and xUnit runs classes in parallel.
 [Collection("EnvironmentVariables")]
 public class DebugYawTests
 {
-    // Into flight: N past the title, Space past the parade, F1 to launch.
-    // Launch zeroes the yaw, so the key has to be held after it.
+    // Launch zeroes the yaw, so the key must be held after it.
     private static readonly KeyScriptEvent[] s_launchThenYawLeft =
     [
         new(1, ConsoleKey.N, KeyScriptAction.Tap),
@@ -52,8 +45,7 @@ public class DebugYawTests
         Assert.Equal(0, harness.Resolve<PlayerShip>().Yaw);
     }
 
-    // The stick centres itself the way the roll does, so a released yaw
-    // decays to nothing rather than leaving the ship turning for ever.
+    // The stick centres itself like roll, so a released yaw decays rather than turning forever.
     [Fact]
     public void AReleasedYawLevelsOut()
     {

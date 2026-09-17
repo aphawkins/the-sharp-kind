@@ -51,18 +51,14 @@ internal sealed class RaceScreen : IGameScreen, ILayerDrawer
         _race.RaceFinishedTick = 0;
         _paused = false;
 
-        // the reference clears the per-car freezes when a race starts
-        // (`StuntCarRacer.cpp:1254`, `:1312`)
+        // the reference clears the per-car freezes when a race starts (StuntCarRacer.cpp:1254, :1312)
         _race.PlayerPaused = false;
         _race.OpponentPaused = false;
     }
 
     public void Update()
     {
-        // 'P' pauses and 'O' resumes, as the remake does
-        // (`StuntCarRacer.cpp:1743-1749`). They are two keys rather than one
-        // toggle, so a repeated press is harmless and no key-down latch is
-        // needed alongside IsPressed's one-shot read.
+        // 'P' pauses, 'O' resumes, as the remake does (StuntCarRacer.cpp:1743-1749); two keys rather than a toggle, so repeats are harmless.
         if (_keyboard.IsPressed(ConsoleKey.P))
         {
             _paused = true;
@@ -73,40 +69,27 @@ internal sealed class RaceScreen : IGameScreen, ILayerDrawer
             _paused = false;
         }
 
-        // The pad has no second button to spare for resuming, so Start is the
-        // toggle the two keys deliberately are not. IsPressed is one-shot, so
-        // a held Start cannot flip the pause every tick.
+        // Start toggles pause (the pad has no spare button for a second key); IsPressed is one-shot so holding it can't flip every tick.
         if (_gamepad.IsPressed(GamepadButton.Start))
         {
             _paused = !_paused;
         }
 
-        // 'M' abandons the race and returns to the track menu, as the remake
-        // does (`StuntCarRacer.cpp:1731-1741`). The menu screen's Reset does
-        // the rest of what the reference does there - clearing the opponent
-        // and stopping the engine sound - and the drawbridge reset already
-        // happens when the next race starts.
+        // 'M' abandons the race, as the remake does (StuntCarRacer.cpp:1731-1741); the menu screen's Reset clears the opponent and engine sound.
         if (_keyboard.IsPressed(ConsoleKey.M) || _gamepad.IsPressed(GamepadButton.Back))
         {
             _screens.Set(GameMode.TrackMenu);
             return;
         }
 
-        // Backspace swaps the cockpit for a chase camera behind the car
-        // (`StuntCarRacer.cpp:1727-1729`). The reference builds that key
-        // into debug builds only; this port ships its debug keys (F5-F10)
-        // unconditionally, so this one is no different. Like 'R' it sits
-        // ahead of the paused return, so the view can be changed while the
-        // race is frozen.
+        // Backspace swaps to a chase camera (StuntCarRacer.cpp:1727-1729; debug-only there, but this port ships debug keys unconditionally).
+        // Sits ahead of the paused return, so the view can change while the race is frozen.
         if (_keyboard.IsPressed(ConsoleKey.Backspace))
         {
             _race.OutsideView = !_race.OutsideView;
         }
 
-        // 'R' points the car the opposite way, so a car facing backwards can
-        // recover (`StuntCarRacer.cpp:1039-1045`). The reference accepts it
-        // whenever a race is in progress, pause included, so it sits ahead of
-        // the paused return here and takes effect on the next physics frame.
+        // 'R' turns the car around to recover (StuntCarRacer.cpp:1039-1045); accepted even while paused, so it sits ahead of the paused return.
         if (_keyboard.IsPressed(ConsoleKey.R))
         {
             _race.Car.TurnAround();
@@ -114,18 +97,12 @@ internal sealed class RaceScreen : IGameScreen, ILayerDrawer
 
         if (_paused)
         {
-            // Silences the engine and freezes everything the race advances:
-            // the physics, the drawbridge, and the tick the lap and result
-            // timers count. StopLoop is idempotent, so calling it every
-            // paused tick costs nothing - the reference calls
-            // StopEngineSound the same way (`StuntCarRacer.cpp:1001-1004`).
+            // StopLoop is idempotent, so calling it every paused tick costs nothing, as the reference's StopEngineSound does (StuntCarRacer.cpp:1001-1004).
             _sound.StopLoop();
             return;
         }
 
-        // The full-rate part of the race (the original FramesWheelsEngine
-        // call plus the race-finished timing, which the original drove from
-        // the wall clock).
+        // Original FramesWheelsEngine call plus race-finished timing, which the original drove from the wall clock.
         _race.RaceTick++;
         _race.Car.ApplyEngineRevs();
         _race.UpdateEngineSound();
@@ -142,11 +119,8 @@ internal sealed class RaceScreen : IGameScreen, ILayerDrawer
             return;
         }
 
-        // One physics frame of the race (every FrameGap ticks).
-        // F6 freezes the player by skipping CarBehaviour outright; F7 freezes
-        // the opponent inside its own update, which still tracks the distance
-        // between the cars (`StuntCarRacer.cpp:1056-1071`,
-        // `Opponent_Behaviour.cpp:376-383`).
+        // One physics frame of the race (every FrameGap ticks). F6 skips CarBehaviour outright to freeze the player; F7 freezes the
+        // opponent inside its own update, which still tracks distance between the cars (StuntCarRacer.cpp:1056-1071, Opponent_Behaviour.cpp:376-383).
         _race.FrameMoved = true;
         if (!_race.PlayerPaused)
         {
@@ -173,22 +147,11 @@ internal sealed class RaceScreen : IGameScreen, ILayerDrawer
 
     public void Draw() => _layers.Draw();
 
-    // The HUD layer's content. Explicitly implemented so it cannot be
-    // mistaken for Draw() above: that one draws the whole frame, this one
-    // draws only what goes over the world.
+    // Explicit so it can't be mistaken for Draw() above, which draws the whole frame not just the HUD overlay.
     void ILayerDrawer.Draw() => _race.DrawHud(gameOver: false);
 
-    // ptitSeb's stuntcarremake keyboard controls: Left/Right arrows =
-    // steer, Up = accelerate, Down = brake, Space = boost (applies with
-    // either accelerate or brake held). Uses IsHeld rather than IsPressed:
-    // these are continuous controls polled every physics tick, not
-    // one-shot menu actions, so they must reflect whether the key is
-    // physically down rather than being consumed after the first read
-    // (IsPressed's one-shot consumption meant driving felt "stuck" as
-    // soon as a second key was held, since a held key's state was cleared
-    // on the previous tick and nothing but a fresh SDL key-repeat event —
-    // which the OS doesn't reliably send per-key once several keys are
-    // down at once — would set it again).
+    // ptitSeb's stuntcarremake mapping: arrows steer, Up accelerate, Down brake, Space boost.
+    // IsHeld not IsPressed: these are continuous per-tick controls, not one-shot menu actions.
     private CarInput ReadInput()
     {
         CarInput input = CarInput.None;
@@ -218,8 +181,7 @@ internal sealed class RaceScreen : IGameScreen, ILayerDrawer
             input |= CarInput.Boost;
         }
 
-        // The pad is only read when the keyboard is idle, as the remake does
-        // (Car_Behaviour.cpp:791), so keyboard driving is unaffected.
+        // Pad only read when the keyboard is idle, as the remake does (Car_Behaviour.cpp:791).
         return input == CarInput.None ? GamepadControls.ReadCarInput(_gamepad) : input;
     }
 }

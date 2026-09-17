@@ -18,16 +18,12 @@ internal static class FrameRecorder
     {
         ArgumentNullException.ThrowIfNull(scenario);
 
-        // Same reason as TraceRecorder: a frame must show the commander the
-        // game ships with, not the one the machine asks for. Commander Max
-        // carries different equipment, and the HUD draws it.
+        // Same reason as TraceRecorder: a frame must show the commander the game ships with, not the one the machine asks for.
         using EnvironmentVariableScope commander =
             EnvironmentVariableScope.Set(SaveFile.DebugCommanderEnvVar, null);
         using EnvironmentVariableScope yaw = EnvironmentVariableScope.Set(DebugYaw.EnvVar, null);
 
-        // Unlike the traces, this one pins the drawing's stream too: the
-        // starfield is scattered from it, and a frame hash cannot be
-        // compared against a committed one if the stars move each run.
+        // Unlike the traces, this pins the drawing's stream too: a frame hash can't compare against a committed one if stars move each run.
         using HeadlessGameHarness harness = new(
             randomSeed: scenario.RandomSeed,
             renderSeed: scenario.RandomSeed);

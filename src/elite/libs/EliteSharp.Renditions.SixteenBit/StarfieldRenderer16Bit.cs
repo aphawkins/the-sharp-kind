@@ -26,9 +26,7 @@ internal sealed class StarfieldRenderer16Bit : StarfieldRendererBase
         HaloColour = surface.Palette["LighterGrey"];
     }
 
-    // Tuned by eye for the 640x512 canvas - denser than the 8-bit tier's 18,
-    // since a starfield that sparse looks empty stretched across four times
-    // the area.
+    // Denser than the 8-bit tier's 18; that sparse looks empty over four times the area.
     public override int NormalSpaceStarCount => 55;
 
     public override int WitchspaceStarCount => 9;

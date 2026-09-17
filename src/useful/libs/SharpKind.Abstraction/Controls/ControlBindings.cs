@@ -71,10 +71,7 @@ public sealed class ControlBindings
     {
         bool repaired = false;
 
-        // A version from the future means the file was written by a later
-        // build whose shape this one does not know. There is nothing to
-        // migrate to, so it is stamped back and the bindings are taken as
-        // read - the original is kept alongside either way.
+        // A future version means a later build wrote this file; nothing to migrate to, so it's stamped back and taken as read.
         if (Version < 1 || Version > ConfigSchema.CurrentVersion)
         {
             Version = ConfigSchema.CurrentVersion;

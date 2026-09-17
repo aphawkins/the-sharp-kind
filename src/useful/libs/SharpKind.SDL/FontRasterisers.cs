@@ -31,9 +31,7 @@ public static class FontRasterisers
             { FontKind.Bitmap, new BitmapFontRasteriser(assets.BitmapFonts) },
         };
 
-        // A kind is offered only where the rendition declared a font for it.
-        // Loading one that was never declared would mean inventing a size and
-        // a face for it, and neither is the engine's to choose.
+        // Loading a kind never declared would mean inventing a size and face for it, and neither is the engine's to choose.
         if (assets.FonFonts.Count > 0)
         {
             RequireEveryFontType(assets.BitmapFonts.Keys, assets.FonFonts.Keys, FontKind.Fon, assetLocator.Rendition);
@@ -54,12 +52,8 @@ public static class FontRasterisers
         return new(rasterisers, kind);
     }
 
-    // Declaring nothing for a kind is a choice - the rendition's own sheets
-    // stand in for it. Declaring some of it is a mistake, and one that would
-    // otherwise wait until a screen drew text in the type that was left out,
-    // since a kind is chosen as a whole and nothing checks a type until it is
-    // asked for. The sheets say which types the game asks for, being the one
-    // kind every rendition has.
+    // Declaring nothing for a kind is a valid choice (the rendition's sheets stand in); declaring
+    // some of it is a mistake caught here rather than waiting for a screen to draw the missing type.
     internal static void RequireEveryFontType(
         IEnumerable<string> sheets,
         IEnumerable<string> declared,

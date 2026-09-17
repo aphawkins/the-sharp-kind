@@ -4,9 +4,7 @@ namespace SharpKind.Assets;
 
 //// JSON serializable
 
-// A bitmap font sheet's layout. Glyphs are laid out left to right, top to
-// bottom, starting at space (ASCII 32), so a character's cell is found from
-// its code alone.
+// A bitmap font sheet's layout. Glyphs run left to right, top to bottom, starting at space (ASCII 32).
 public class BitmapFontEntry
 {
     public string File { get; set; } = string.Empty;

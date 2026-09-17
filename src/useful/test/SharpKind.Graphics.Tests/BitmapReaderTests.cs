@@ -81,9 +81,7 @@ public class BitmapReaderTests
     [InlineData(-2, 0xFFFF0000u)]
     public void HonoursRowOrderFromTheSignOfTheHeight(int signedHeight, uint expectedTopLeft)
     {
-        // Arrange: the first row stored is red, the second white. A positive
-        // height means bottom-up, so red lands at the bottom and white at the
-        // top; a negative height means top-down, leaving red at the top.
+        // Positive height means bottom-up, so red lands at the bottom; negative means top-down, leaving red at the top.
         byte[] pixels = [0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
         using TempImageFile file = TempImageFile.From(BmpBuilder.Build(1, signedHeight, 32, pixels));
 

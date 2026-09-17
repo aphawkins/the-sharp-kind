@@ -184,9 +184,7 @@ public class HudRendererTests
         RecordingGraphics graphics = new(640, 480);
         HudRenderer hud = new(graphics, graphics.Layout);
 
-        // wheel frame is always 0-5 in practice (CarPhysics masks the
-        // rotation angle to a non-negative value); other fields can still
-        // take on unusual values (negative damage/boost, huge distances).
+        // Wheel frame is always 0-5 in practice (masked non-negative); other fields can still take unusual values.
         hud.Draw(new CockpitState(0, 0, 0, 0, false, 0, 0, 0, 0, 0, 0, false, false, 0, 0, null));
         hud.Draw(new CockpitState(5, 5, 200, 200, true, 238, 8, 0x7FFF, 4, 99, 9999, false, false, 0, 0, null));
         hud.Draw(new CockpitState(0, 5, -50, -50, false, -10, 0, -100, -1, -5, -12345, false, false, 0, 0, null));

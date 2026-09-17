@@ -4,10 +4,8 @@ using System.Numerics;
 
 namespace SharpKind.Graphics.Rendering;
 
-// The classic painter's algorithm: the back-to-front chain alone decides
-// occlusion via a plain (non-depth-tested) fill, unlike ZBufferRenderer's
-// per-pixel z-buffer test — solid polygons only, wireframe is a separate
-// WireframeRenderer selected instead of this at DI-registration time.
+// The back-to-front chain alone decides occlusion, unlike ZBufferRenderer's per-pixel test. Solid
+// polygons only; wireframe is a separate WireframeRenderer selected instead at DI-registration time.
 public sealed class PainterRenderer(IGraphics graphics) : IPolygonRenderer
 {
     private readonly IGraphics _graphics = graphics;

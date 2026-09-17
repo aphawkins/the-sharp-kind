@@ -13,10 +13,7 @@ public sealed unsafe class SDLWindow : IDisposable
 
     public SDLWindow(int screenWidth, int screenHeight, string title)
     {
-        // Note: SDL3 handles the Visual Studio debugger's 0x406D1388 thread-naming
-        // exception internally, so the SDL_HINT_WINDOWS_DISABLE_THREAD_NAMING hint
-        // that the previous SDL 2.x binding needed for this has been removed and
-        // is no longer set here.
+        // SDL3 handles the debugger's thread-naming exception internally, so the SDL 2.x-era disable hint is no longer needed here.
         SDLGuard.Execute(() => SDL_Init(SDL_InitFlags.SDL_INIT_VIDEO));
         SDLGuard.Execute(() => TTF_Init());
 

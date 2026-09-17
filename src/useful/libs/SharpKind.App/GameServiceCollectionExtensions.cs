@@ -41,10 +41,7 @@ public static class GameServiceCollectionExtensions
 
         services.AddSingleton(loggerFactory);
 
-        // The two backends differ only in which one is constructed - they take
-        // the same arguments, the font kind among them, and expose the same
-        // abstraction - so the choice is the only thing the config decides
-        // here.
+        // The two backends take the same arguments and expose the same abstraction, so the config only decides which one is constructed.
         services.AddSingleton<IAbstraction>(sp => engine.Backend == Backend.Hardware
             ? new SDLAbstraction(
                 screenWidth,

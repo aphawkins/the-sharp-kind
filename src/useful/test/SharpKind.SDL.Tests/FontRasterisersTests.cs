@@ -4,9 +4,7 @@ using SharpKind.Graphics;
 
 namespace SharpKind.SDL.Tests;
 
-// Which kinds a rendition is allowed to offer. Loading the kinds themselves
-// needs assets on disk and an initialised SDL_ttf, so what is checked here is
-// the rule that decides whether a kind is offered at all.
+// Loading the kinds themselves needs assets on disk and an initialised SDL_ttf, so this checks only the rule that decides whether a kind is offered.
 public class FontRasterisersTests
 {
     // Declaring nothing for a kind is a choice - the sheets stand in for it.

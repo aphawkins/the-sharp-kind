@@ -58,10 +58,8 @@ public sealed class EliteMain : IGame, IGameApp
     // Which mission screen the next Ctrl-M jumps to (HandleMissionJumpKeys).
     private int _missionJumpStage;
 
-    // What this tick decided the two flight overlays should say, captured at
-    // the moment it decided - see UpdateInFlight for why they cannot simply
-    // be read again while the frame is composed. Cleared at the top of every
-    // tick, so a docked or paused frame shows neither.
+    // What this tick decided the two flight overlays should say; see UpdateInFlight for
+    // why they can't be read again while composing. Cleared each tick.
     private string? _pendingMessage;
 
     /// <inheritdoc cref="_pendingMessage"/>
@@ -117,13 +115,8 @@ public sealed class EliteMain : IGame, IGameApp
         _space = space;
         _scanner = scanner;
 
-        // The three bands a frame is, furthest first. Built once rather than
-        // per tick: the set never changes, and a band with nothing to draw
-        // this tick draws nothing rather than leaving the list.
-        //
-        // The window region is the opening the cockpit art leaves for the
-        // universe to be seen through, and ViewLayout's viewport already is
-        // exactly that - derived from the rendition's own scanner height.
+        // The three bands a frame is, furthest first, built once since the set never changes. The
+        // window region is the opening the cockpit art leaves for the universe, matching ViewLayout's viewport.
         _layers = new LayerRunner(
             _graphics,
             new RenderLayer(
@@ -145,47 +138,27 @@ public sealed class EliteMain : IGame, IGameApp
 
     public bool IsRunning => !State.ExitGame;
 
-    // Exposed (GameState itself stays internal) for headless test harnesses
-    // that need to observe screen/docked/game-over state without a rendered
-    // frame.
+    // Exposed (GameState itself stays internal) for headless test harnesses observing
+    // screen/docked/game-over state without a rendered frame.
     internal GameState State { get; }
 
-    // What one call to Update is worth in game time. Read rather than fixed:
-    // GameLoop is a fixed timestep, so an update is always worth the same
-    // amount of time, but which amount is now the commander's setting.
+    // Read rather than fixed: the commander's fps setting decides how much game time an update is worth.
     private float SecondsPerUpdate => 1f / State.Config.Engine.Graphics.Fps;
 
-    // One rate for both halves. The game used to simulate at a fixed 13.5Hz
-    // and present at the configured rate, which meant most presents
-    // redisplayed a frame nothing had changed. It now simulates and composes
-    // at that one rate, because every rate it was written with - the
-    // housekeeping, the motion, the animations - is expressed per second
-    // rather than per update, so the game plays the same however often it is
-    // asked to.
+    // Simulate and compose at the same configured rate: every rate the game logic was written
+    // with is expressed per second, not per update, so it plays the same at any rate.
     public void Run()
     {
         float fps = State.Config.Engine.Graphics.Fps;
         GameHost.Run(_abstraction, this, fps, fps);
     }
 
-    // One fixed-rate game tick: move the game on, paint what it now looks
-    // like, then read the controls.
-    //
-    // Simulate and Compose were one method until 2026-08-26, because Elite's
-    // update drew the universe as it moved it (as The New Kind did). They
-    // are separated so the two can eventually run at rates of their own;
-    // both still run exactly once per tick here, and the frame is unchanged.
-    //
-    // Input stays a third phase at the end because that is where this port
-    // has always read it: moving it ahead of Compose would show a screen
-    // change a tick earlier than it does today. Which phase it really
-    // belongs to is the last frame-rate item's question, not this one's.
+    // One fixed-rate game tick: move the game on, paint what it now looks like, then read the
+    // controls. Simulate and Compose are separate so each can eventually run at its own rate.
     public void Update()
     {
-        // Applied every update rather than once at startup: the commander
-        // can change it on the settings screen, and a stick can be plugged
-        // in after the game has begun. It is a string assignment - which
-        // device that names is worked out where the devices are known.
+        // Applied every update, not once at startup: the commander can change it on the settings
+        // screen, and a stick can be plugged in mid-game.
         _gamepad.PreferredDevice = State.Config.Engine.ActiveController;
 
         if (!Simulate())
@@ -215,9 +188,7 @@ public sealed class EliteMain : IGame, IGameApp
         _graphics.ScreenUpdate();
     }
 
-    // Everything the tick changes. Returns false when the game is paused,
-    // which is also the signal not to compose: the framebuffer is left
-    // alone so the paused frame stays on screen.
+    // Returns false when paused, the signal not to compose - the framebuffer stays as the paused frame.
     private bool Simulate()
     {
         InitialiseGame();
@@ -269,9 +240,7 @@ public sealed class EliteMain : IGame, IGameApp
         return true;
     }
 
-    // Everything the tick draws, in the order the frame is built up: the
-    // starfield behind the universe, the universe behind the view's own
-    // chrome, and the console across the bottom of all of it.
+    // Frame build order: starfield behind the universe, universe behind the view's own chrome, console on top.
     private void Compose()
     {
         _draw.SetFullScreenClipRegion();
@@ -279,15 +248,9 @@ public sealed class EliteMain : IGame, IGameApp
         _layers.Draw();
     }
 
-    // The part of a tick that only applies while flying: laser cooling,
-    // messages, the hyperspace countdown and the MCount-driven housekeeping.
-    //
-    // The two overlays are recorded rather than drawn, and that is not
-    // tidiness - it is the whole reason the fields exist. Both say something
-    // about the middle of the tick that is no longer true at the end of it:
-    // the countdown is shown before it is decremented, and the message is
-    // the one already on screen, not the "ENERGY LOW" this same method may
-    // raise a few lines further down. Compose cannot read either back.
+    // Laser cooling, messages, hyperspace countdown, MCount-driven housekeeping. The two overlays
+    // are recorded rather than drawn: they say something true at the middle of the tick, not
+    // necessarily by the end - Compose cannot read either back.
     private void UpdateInFlight()
     {
         _combat.CoolLaser();
@@ -313,12 +276,9 @@ public sealed class EliteMain : IGame, IGameApp
         _combat.TimeECM();
     }
 
-    // One step of the MCount clock and the jobs hung off it.
-    //
-    // The order is the original's and the phases are load-bearing: the
-    // hyperspace countdown and the docking-computer reminder read the count
-    // *before* it moves, everything below reads it after. Swapping either
-    // side of the decrement shifts which tick those jobs land on.
+    // One step of the MCount clock and the jobs hung off it. Order is load-bearing: the
+    // hyperspace countdown and docking-computer reminder read the count before it moves,
+    // everything below reads it after.
     private void Housekeeping()
     {
         if (_space.IsHyperspaceReady && (State.MCount & 3) == 0)
@@ -326,10 +286,7 @@ public sealed class EliteMain : IGame, IGameApp
             _space.CountdownHyperspace();
         }
 
-        // Moved here from beside the autopilot itself, which still steers
-        // every update: the reminder is a periodic message, so it belongs on
-        // the clock rather than firing on every frame the count happens to
-        // be sitting on a multiple of 128.
+        // Reminder is periodic, so it belongs on the clock rather than firing every frame the count is a multiple of 128.
         if (_pilot.IsAutoPilotOn && (State.MCount & 127) == 0)
         {
             State.InfoMessage("Docking Computers On");
@@ -368,9 +325,7 @@ public sealed class EliteMain : IGame, IGameApp
         }
     }
 
-    // The intro screens take only their own keys. They own the title music,
-    // and they stop it on the way out; a chart or options key that moved the
-    // view straight off them left the music playing behind the game.
+    // Intro screens own the title music and stop it on the way out, else it plays behind the game.
     private void HandleViewKeys()
     {
         if (State.CurrentScreen is Screen.IntroOne or Screen.IntroTwo)
@@ -384,17 +339,12 @@ public sealed class EliteMain : IGame, IGameApp
         HandleMissionJumpKeys();
     }
 
-    // Ctrl-M: cycle the mission briefings, which normal play puts hours away.
-    // One key rather than five. Ctrl-modified because the briefings are read
-    // while docked and a bare M would fire from the commander-name screens,
-    // which take typed letters; F12 was the obvious key but GameHost has it
-    // for frame dumps. Off unless MissionJump's environment variable is set -
-    // see MissionJump for what each jump costs.
+    // Ctrl-M: cycle the mission briefings, which normal play puts hours away. Ctrl-modified since
+    // a bare M fires from commander-name screens and F12 is taken by GameHost's frame dumps. Off
+    // unless MissionJump's environment variable is set; see MissionJump for what each jump costs.
     private void HandleMissionJumpKeys()
     {
-        // Ctrl first, and held rather than pressed: IsPressed(M) consumes the
-        // press, so testing M first ate the bare M that fires a missile, and
-        // consuming Ctrl here would take it from Ctrl-H's galactic hyperspace.
+        // Ctrl first, and held not pressed: testing M first would eat the bare M that fires a missile.
         if (!MissionJump.IsEnabled ||
             !_keyboard.IsHeld(ConsoleModifiers.Control) ||
             !_keyboard.IsPressed(ConsoleKey.M))
@@ -406,12 +356,9 @@ public sealed class EliteMain : IGame, IGameApp
         _missionJumpStage = (_missionJumpStage + 1) % MissionJump.Count;
     }
 
-    // F1 - F4, or the stick's hat, which double as the docked screens.
-    //
-    // Chained as else-if, where the keys alone did not need to be: a hat
-    // pushed to a corner reports both of its directions at once, and two
-    // SetView calls in one tick would load a view only to throw it away -
-    // each one resets its screen and flips the starfield.
+    // F1 - F4, or the stick's hat, which double as the docked screens. Chained as else-if: a hat
+    // pushed to a corner reports both directions at once, and two SetView calls in one tick
+    // would load a view only to throw it away.
     private void HandleFlightViewKeys()
     {
         if (_controls.WasPressed(EliteAction.FrontView))
@@ -508,9 +455,7 @@ public sealed class EliteMain : IGame, IGameApp
         public void Draw() => game._stars.Draw();
     }
 
-    // Layer 1, the universe: ships, sun, planet, and the break pattern -
-    // which is seen through the canopy like the rest of them, so it draws
-    // here rather than with the cockpit over it.
+    // Layer 1, the universe: ships, sun, planet, and the break pattern - seen through the canopy like the rest.
     private sealed class UniverseLayer(EliteMain game) : ILayerDrawer
     {
         public void Draw()
@@ -520,10 +465,7 @@ public sealed class EliteMain : IGame, IGameApp
         }
     }
 
-    // Layer 2, the HUD: the screen the commander is on, the two flight
-    // overlays and the console, over the other two and across the whole
-    // display. The console draws last because it is the nearest thing there
-    // is.
+    // Layer 2, the HUD: screen, flight overlays and console. Console draws last as the nearest thing.
     private sealed class HudLayer(EliteMain game) : ILayerDrawer
     {
         public void Draw()

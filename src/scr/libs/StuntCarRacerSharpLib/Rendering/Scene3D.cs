@@ -9,17 +9,12 @@ using StuntCarRacerSharpLib.Tracks;
 
 namespace StuntCarRacerSharpLib.Rendering;
 
-// Software view transform, near-plane clipping and perspective projection,
-// following the original software pipeline in 3D Engine.cpp (the parts the
-// Direct3D remake had disabled). Works in 'track units' - see SceneCamera.
+// Following the original software pipeline in 3D Engine.cpp (the parts the Direct3D remake had
+// disabled). Works in 'track units' - see SceneCamera.
 public sealed class Scene3D
 {
-    // The remake's projection near plane (D3DXMatrixPerspectiveFovLH zn).
-    // The original software engine clipped at Z_CLIP_BOUNDARY = 128 to
-    // avoid fixed-point overflow, which amputated the nearest 128 units of
-    // road - visible along the bottom of the screen whenever the car
-    // pitches. Clipping is done in floats here, so the boundary can sit as
-    // close as the remake's.
+    // The original software engine clipped at Z_CLIP_BOUNDARY = 128 to avoid fixed-point overflow,
+    // amputating the nearest road. Done in floats here, so the boundary can sit as close as the remake's.
     internal const float NearPlane = 0.5f;
 
     // Original FOCUS was 512 for a screen width of 640.

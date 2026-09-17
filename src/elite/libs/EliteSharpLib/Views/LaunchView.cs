@@ -34,8 +34,7 @@ internal sealed class LaunchView : IScreenController
         _breakPattern = new(draw);
     }
 
-    // Nothing: this screen is the break pattern, which is drawn into the
-    // universe layer below, and the HUD art draws the canopy over it.
+    // The break pattern draws in the universe layer; the HUD art draws the canopy over it.
     public void Draw()
     {
     }

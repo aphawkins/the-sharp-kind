@@ -10,10 +10,8 @@ using SharpKind.Maths;
 
 namespace EliteSharpLib.Tests;
 
-// Arming, locking and hitting are three separate steps that only meet in the
-// real update loop - Space moves the ships, Combat.Tactics steers the missile,
-// and the lock happens off the drawn (view-space) position. These drive the
-// whole loop rather than Combat alone, so a break anywhere along it shows up.
+// Arming, locking and hitting only meet in the real update loop, so these drive the whole loop
+// rather than Combat alone, so a break anywhere along it shows up.
 [Trait("Level", "Integration")]
 public class MissileFlightTests
 {
@@ -84,10 +82,7 @@ public class MissileFlightTests
             $"missile never detonated; closest approach was {closest}, missile at {missile.Location}");
     }
 
-    // Close enough is a box, not a sphere: each axis within 256, which the
-    // 6502 gets by ORing the three high bytes and the New Kind spells out.
-    // (200, 200, 200) is 346 away, so a distance test would have let this one
-    // sail through - which is what the port used to do.
+    // Close enough is a box, not a sphere: each axis within 256. (200, 200, 200) is 346 away, so a distance test would let it slip by.
     [Fact]
     public void AMissileDetonatesInTheCornersOfItsBoxNotJustInsideASphere()
     {

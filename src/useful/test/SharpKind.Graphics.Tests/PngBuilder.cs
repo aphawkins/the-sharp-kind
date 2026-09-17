@@ -5,9 +5,7 @@ using System.IO.Compression;
 
 namespace SharpKind.Graphics.Tests;
 
-// Builds PNGs from raw filtered scanlines. Chunk CRCs are written as zero:
-// PngReader skips them, and a test that had to compute real ones would be
-// testing its own CRC implementation.
+// Chunk CRCs are written as zero: PngReader skips them, and computing real ones would just test the test's own CRC implementation.
 internal static class PngBuilder
 {
     public static byte[] Build(

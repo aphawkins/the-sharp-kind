@@ -5,30 +5,20 @@ using System.Text.Json.Serialization;
 
 namespace SharpKind.Assets;
 
-// The one place asset paths are built: <Category>/<file>, under whatever
-// directory this locator was pointed at. There is no rendition segment in a
-// path any more - a rendition keeps its assets in its own folder, so the
-// folder is the answer and the name is only a label for messages. A game
-// wanting both its own assets and a rendition's composes two of these.
+// Builds asset paths as <Category>/<file> under wherever this locator was pointed. A game wanting
+// both its own assets and a rendition's composes two of these.
 public sealed class AssetLocator : IAssetLocator
 {
     private const string AssetManifestFilename = "AssetManifest.json";
     private const string DefaultRendition = "16-bit";
     private const string ImagesCategory = "Images";
 
-    // Every kind of font shares one folder: what differs between a sheet, a
-    // .fon and a TrueType face is how the manifest declares it, not where the
-    // file lives, and three folders holding one font each was three places to
-    // look for the same thing.
+    // Every font kind (sheet, .fon, TrueType) shares one folder; only the manifest entry differs.
     private const string FontsCategory = "Fonts";
     private const string ModelsCategory = "Models";
     private const string PaletteCategory = "Palette";
 
-    // A section this build does not know is a mistake rather than something
-    // to skip: a misspelled one would otherwise read as declaring nothing,
-    // and the set would fail much later with an asset it could not find -
-    // a missing font type surfacing as a crash on the first screen that
-    // draws text, rather than as the typo it is.
+    // Disallow unmapped members so a misspelled manifest section fails fast rather than as a missing asset later.
     private static readonly JsonSerializerOptions s_manifestOptions = new()
     {
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
@@ -41,9 +31,7 @@ public sealed class AssetLocator : IAssetLocator
     {
         ArgumentNullException.ThrowIfNull(assetManifest);
 
-        // The name becomes a directory segment, so it may not climb out of
-        // the assets folder. A rendition the game was never built against
-        // names itself, and a name is not a path.
+        // The name becomes a directory segment, so it may not climb out of the assets folder.
         if (string.IsNullOrWhiteSpace(rendition) || rendition.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
         {
             throw new SharpKindException($"'{rendition}' cannot be used as a folder name, so no assets could be found for it.");

@@ -20,9 +20,7 @@ namespace SharpKind.UI;
 /// </summary>
 public sealed class TextBox : UIControl
 {
-    // Listed rather than ranged over, because ConsoleKey's space, digits and
-    // letters are three separate stretches of the enum with keys that are not
-    // typeable in between.
+    // Listed rather than ranged over: ConsoleKey's space, digits and letters are three separate stretches of the enum.
     private static readonly ConsoleKey[] s_typeable =
     [
         ConsoleKey.Spacebar,
@@ -126,8 +124,7 @@ public sealed class TextBox : UIControl
         return null;
     }
 
-    // The key names are the characters: D0 to D9 are the digits with a letter
-    // in front, and A to Z are themselves.
+    // D0 to D9 are the digits with a letter in front; A to Z are themselves.
     private static string CharacterOf(ConsoleKey key) => key switch
     {
         ConsoleKey.Spacebar => " ",
@@ -135,9 +132,7 @@ public sealed class TextBox : UIControl
         _ => key.ToString(),
     };
 
-    // What the box draws: the bound text, and a cursor after it while the box
-    // has the cursor on it. Read through rather than stored, so the label
-    // cannot be showing a name that has since been typed into.
+    // Read through rather than stored, so the label cannot show a name that has since been typed into.
     private sealed class Shown(ISetting setting, TextBox box) : ISetting
     {
         public string Name => setting.Value + (box.State == ControlState.Selected ? box.Cursor : string.Empty);

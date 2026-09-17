@@ -18,10 +18,7 @@ namespace EliteSharpLib.Tests.Save;
 /// difference between a file a commander can repair and a file they cannot.
 /// The screen used to say "Error Loading Commander!" whichever it was.
 /// </summary>
-// Serialised against the other classes that read or write ELITE_DEBUG_COMMANDER.
-// EnvironmentVariableScope puts a variable back, but it cannot stop another
-// class reading it in the meantime: an environment variable belongs to the
-// process, and xUnit runs test classes in parallel.
+// Serialised against other classes reading/writing ELITE_DEBUG_COMMANDER: it belongs to the process, and xUnit runs test classes in parallel.
 [Collection("EnvironmentVariables")]
 public class SaveFileErrorTests
 {
@@ -153,10 +150,7 @@ public class SaveFileErrorTests
 
         controller.Reset();
 
-        // The commander is saved under the name the keys actually produced,
-        // not under a second copy of it spelled out here. Spelling it again
-        // lets the test pick a case the keyboard cannot make, which Windows
-        // forgives and Linux does not.
+        // Saved under the name the keys actually produced, not a second copy spelled out here, since that could pick a case the keyboard can't make.
         string typed = Type(controller, keyboard, "BROKEN");
         saveFile.SaveCommander(typed);
         Edit(saveFile, typed, save => save["fuel"] = 99);
@@ -182,9 +176,7 @@ public class SaveFileErrorTests
         return controller.BuildModel().Name;
     }
 
-    // The path comes from the save file itself. A test that rebuilds it here
-    // is free to disagree with the game about case or extension, and on
-    // Windows nothing would ever say so.
+    // The path comes from the save file itself, not rebuilt here, since a mismatch on case or extension would be silent on Windows.
     private static void Edit(SaveFile saveFile, string name, Action<JsonObject> edit)
     {
         string path = saveFile.PathFor(name);

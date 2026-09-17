@@ -9,8 +9,7 @@ using SharpKind.Input;
 
 namespace StuntCarRacerSharpLib.Screens;
 
-// The original freezes the action and silences the engine once the game is
-// over; M returns to the track menu.
+// Freezes the action and silences the engine once the game is over; M returns to the track menu.
 internal sealed class GameOverScreen : IGameScreen, ILayerDrawer
 {
     private readonly Race _race;
@@ -47,8 +46,6 @@ internal sealed class GameOverScreen : IGameScreen, ILayerDrawer
 
     public void Draw() => _layers.Draw();
 
-    // The HUD layer's content. Explicitly implemented so it cannot be
-    // mistaken for Draw() above: that one draws the whole frame, this one
-    // draws only what goes over the world.
+    // Explicit so it can't be mistaken for Draw() above, which draws the whole frame not just the HUD overlay.
     void ILayerDrawer.Draw() => _race.DrawHud(gameOver: true);
 }

@@ -29,9 +29,7 @@ public static class EliteServiceCollectionExtensions
 {
     private const string ConfigFileName = "elite.sharp";
 
-    // EliteConfig is internal, so Program.Main can't reference or
-    // construct a ConfigFile<EliteConfig> directly; this registers it
-    // from inside the assembly that can.
+    // EliteConfig is internal, so Program.Main can't construct a ConfigFile<EliteConfig> directly.
     public static IServiceCollection AddEliteConfig(this IServiceCollection services, string userDataPath)
         => services.AddSingleton(sp => new ConfigFile<EliteConfig>(
             userDataPath,
@@ -39,27 +37,17 @@ public static class EliteServiceCollectionExtensions
             RepairConfig,
             sp.GetRequiredService<ILoggerFactory>().CreateLogger<ConfigFile<EliteConfig>>()));
 
-    // Exposes the (public) engine settings from the (internal) EliteConfig, so
-    // Program.Main - which picks between SoftwareAbstraction and SDLAbstraction
-    // and therefore needs to reference SharpKind.SDL, a dependency EliteSharpLib
-    // itself deliberately does not have - can read the backend, the tier and
-    // the window scale before the DI container (and its own
-    // ConfigFile<EliteConfig> registration via AddEliteConfig) exists.
+    // Lets Program.Main (which needs SharpKind.SDL, a dependency EliteSharpLib deliberately lacks)
+    // read backend/tier/window scale before the DI container exists.
     public static EngineConfigSettings ReadEngineSettings(string userDataPath, ILoggerFactory loggerFactory)
         => EngineConfigReader.Read<EliteConfig>(userDataPath, ConfigFileName, RepairConfig, loggerFactory);
 
-    // The whole domain graph below is internal to EliteSharpLib (same
-    // reason as ConfigFile above), so it can only be registered from in
-    // here; EliteMain's constructor now just receives it instead of
-    // building it.
+    // The whole domain graph below is internal to EliteSharpLib, so it can only be registered from here.
     public static IServiceCollection AddEliteMain(this IServiceCollection services, InstalledRenditions renditions)
     {
         ArgumentNullException.ThrowIfNull(renditions);
 
-        // Loaded before the container exists, because the window has to be
-        // made at the size the rendition draws at. Registered rather than
-        // looked up again so there is one of it - and the names of the others
-        // with it, since the settings screen offers them.
+        // Loaded before the container exists: the window is made at the size the rendition draws at.
         services.AddSingleton(renditions);
         services.AddSingleton(renditions.Chosen);
         services.AddEliteCore();
@@ -67,9 +55,7 @@ public static class EliteServiceCollectionExtensions
         services.AddEliteSimulation();
         services.AddEliteViews();
 
-        // Populating the screen map needs every view registered above, so it
-        // happens here rather than inside EliteMain's own constructor —
-        // EliteMain no longer news up (or even sees) any view.
+        // Needs every view registered above; EliteMain no longer news up (or sees) any view.
         services.AddSingleton(sp =>
         {
             PopulateScreens(sp);
@@ -96,9 +82,7 @@ public static class EliteServiceCollectionExtensions
         return services;
     }
 
-    // Finds the rendition the commander configured. The app needs it before
-    // the container exists, because the window is made at the size the
-    // rendition draws at, so this is the one thing loaded up front.
+    // The app needs the rendition before the container exists, since the window is made at its size.
     public static InstalledRenditions LoadRendition(string name, ILoggerFactory loggerFactory)
     {
         ArgumentNullException.ThrowIfNull(loggerFactory);
@@ -115,9 +99,7 @@ public static class EliteServiceCollectionExtensions
 
     private static void AddEliteCore(this IServiceCollection services)
     {
-        // The single shared source of entropy for this app instance: an
-        // unseeded Random in production, replaceable with a seeded one in
-        // tests via RNG's constructor seam.
+        // The single shared source of entropy: unseeded in production, replaceable via RNG's constructor seam in tests.
         services.AddSingleton(_ => Random.Shared);
         services.AddSingleton(sp => new RNG(sp.GetRequiredService<Random>()));
 
@@ -126,9 +108,7 @@ public static class EliteServiceCollectionExtensions
         {
             EliteConfig config = sp.GetRequiredService<ConfigFile<EliteConfig>>().ReadConfig();
 
-            // The same resolution the app made before the window was sized -
-            // the rendition owns the scales on offer - so the settings screen
-            // shows the scale the window was actually made at.
+            // The rendition owns the scales on offer, so the settings screen shows the scale actually used.
             config.Engine.WindowScale = WindowScales.Resolve(
                 sp.GetRequiredService<IRendition>(),
                 config.Engine.WindowScale);
@@ -142,11 +122,7 @@ public static class EliteServiceCollectionExtensions
         });
         services.AddSingleton(sp => new PlayerShip(sp.GetRequiredService<GameState>()));
 
-        // The goods are a plugin too, found in the Goods folder beside the
-        // executable the same way the missions and renditions are. Unlike a
-        // mission and like a rendition, a missing set is fatal - there is no
-        // market without one - so the loader throws and names the folder rather
-        // than starting a game that cannot trade.
+        // A plugin like missions/renditions, but unlike a mission a missing goods set is fatal - no market without one.
         services.AddSingleton(sp => new GoodsRegistry(
             GoodsLoader.LoadFrom(
                 AppContext.BaseDirectory,
@@ -158,11 +134,7 @@ public static class EliteServiceCollectionExtensions
             sp.GetRequiredService<GoodsRegistry>()));
         services.AddSingleton(sp => new PlanetController(sp.GetRequiredService<GameState>()));
 
-        // Every mission is a plugin now, including the two the game has always
-        // had: they are found in the Missions folder beside the executable, the
-        // same way anyone else's would be. MEF finds them; the instances it
-        // produces are registered here like anything else, so the composition
-        // host is gone by the time the registry exists.
+        // Every mission is a plugin, including the two the game has always had; MEF finds them in the Missions folder.
         services.AddSingleton(sp => new MissionRegistry(
             MissionLoader.LoadFrom(
                 AppContext.BaseDirectory,
@@ -275,9 +247,7 @@ public static class EliteServiceCollectionExtensions
         views.Add(Screen.GameOver, sp.GetRequiredService<GameOverController>());
     }
 
-    // The four cockpit windows share one PilotController, differing only in
-    // which direction they face, so PopulateScreens constructs each directly
-    // rather than resolving four otherwise-identical registrations by type.
+    // The four cockpit windows share one PilotController, differing only in facing, so PopulateScreens constructs each directly.
     private static PilotController CreatePilotController(IServiceProvider sp, PilotDirection direction) => new(
         sp.GetRequiredService<GameState>(),
         sp.GetRequiredService<EliteControlMap>(),
@@ -323,23 +293,16 @@ public static class EliteServiceCollectionExtensions
             sp.GetRequiredService<IEliteDraw>()));
     }
 
-    // The tier's shared chrome: EliteMain draws the frame rate, the info
-    // message and the hyperspace countdown through this, and the tier-split
-    // screens their headers. It comes off the rendition with everything else.
+    // The tier's shared chrome: frame rate, info message, hyperspace countdown and tier-split screen headers.
     private static void AddBaseView(this IServiceCollection services)
     {
         services.AddSingleton(sp => sp.GetRequiredService<RenditionRegistry>().BaseView);
 
-        // The HUD comes off the rendition like any screen. Its controller is
-        // registered with the simulation rather than the screens, because
-        // EliteMain and the equip-ship screen both refresh it directly and
-        // it never enters the screen map.
+        // Registered with the simulation, not the screens: EliteMain and equip-ship both refresh it directly.
         services.AddSingleton(sp => sp.GetRequiredService<RenditionRegistry>().View<ScannerModel>());
     }
 
-    // What the configured rendition drew, checked against the screens the game
-    // has. The game's own drawing is what its views are handed, narrowed to the
-    // three members IViewSurface publishes.
+    // What the configured rendition drew, checked against the game's screens, narrowed to IViewSurface's three members.
     private static void AddRendition(this IServiceCollection services)
         => services.AddSingleton(sp => new RenditionRegistry(
             sp.GetRequiredService<IRendition>(),

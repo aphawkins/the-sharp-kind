@@ -6,17 +6,11 @@ using StuntCarRacerSharpLib.Tracks;
 
 namespace StuntCarRacerSharpLib.Cars;
 
-// Lift-onto-track ("chains") sequence: after the car has been off the track
-// too long, a crane swings it back above the road and dangles it until the
-// player presses boost/fire, at which point normal gravity (the existing
-// drop-start fall) takes back over. Ported in spirit from the original's
-// car.on.chains.countdown state machine (lift.car.onto.track,
-// raise.car.off.ground, swing.car); the raise/swing feedback loop there
-// runs on 68k fixed-point constants that aren't recoverable from either C++
-// reference port (both explicitly skipped implementing chains), so this
-// drives the car's position/angle directly rather than through the
-// acceleration integrator, reaching the same visual beats: swing settles,
-// car dangles, release drops it, existing gravity lands it.
+// A crane swings the car back above the road and dangles it until boost/fire is pressed, then
+// normal gravity takes back over. Ported in spirit from the original's chain state machine, whose
+// 68k fixed-point constants aren't recoverable from either C++ reference port (both skipped
+// chains entirely) - this drives position/angle directly rather than through the acceleration
+// integrator, reaching the same visual beats: swing settles, dangle, release, land.
 public sealed partial class CarPhysics
 {
     private static int MoveTowards(int value, int target, int step)
@@ -50,9 +44,7 @@ public sealed partial class CarPhysics
         _offTrackCount = 0;
     }
 
-    // One physics frame of the chain sequence: settle the swing, then dangle
-    // until boost/fire is pressed, holding the car at the raised height
-    // throughout so normal gravity has nothing to do until release.
+    // Settle the swing, then dangle until boost/fire is pressed, holding the car at the raised height so gravity does nothing until release.
     private void AnimateChainLift(CarInput input)
     {
         const int SwingStep = ChainSwingFullMagnitude / ChainSwingSettleFrames;

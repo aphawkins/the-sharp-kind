@@ -18,10 +18,7 @@ namespace SharpKind.Graphics.Rendering;
 /// </remarks>
 public sealed class LambertShading(Vector3 lightDirection, float ambient) : IShadingModel
 {
-    // How lit a face turned fully away from the light still is. Not zero: an
-    // unlit face of a ship in front of the player would otherwise be a black
-    // silhouette against black space, and the ship would lose its shape
-    // entirely rather than merely be dim.
+    // Not zero: an unlit face would otherwise be a black silhouette against black space, losing its shape entirely.
     private readonly Vector3 _lightDirection = Vector3.Normalize(lightDirection);
     private readonly float _ambient = Math.Clamp(ambient, 0f, 1f);
 
@@ -32,10 +29,7 @@ public sealed class LambertShading(Vector3 lightDirection, float ambient) : ISha
 
     public static float DefaultAmbient => 0.35f;
 
-    // Over the camera's shoulder and slightly to the left, the convention
-    // flight simulators settled on: it lights what the pilot is looking at
-    // while still turning the near faces of a ship away from each other. The
-    // normals it meets are camera-space, so this is camera-space too.
+    // Over the camera's shoulder and slightly to the left, the flight-sim convention. Camera-space, matching the normals it meets.
     public static Vector3 DefaultLightDirection { get; } = Vector3.Normalize(new(-0.4f, 0.5f, -1f));
 
     /// <summary>
@@ -124,10 +118,7 @@ public sealed class LambertShading(Vector3 lightDirection, float ambient) : ISha
     public FastColor Shade(in FastColor faceColour, Vector3 cameraNormal, byte fullyLit)
         => Shade(faceColour, cameraNormal, _lightDirection, _ambient, fullyLit);
 
-    // The Lambert term, lifted onto the ambient floor so it spans
-    // [ambient, 1] rather than [0, 1]. A degenerate normal - a face whose
-    // points are collinear, which the models do contain - has no direction to
-    // light, so it takes the full value and looks as it did before.
+    // Lifted onto the ambient floor so it spans [ambient, 1], not [0, 1]. A degenerate (collinear) normal takes the full value.
     internal static float Intensity(Vector3 cameraNormal, Vector3 lightDirection, float ambient)
     {
         if (cameraNormal == Vector3.Zero)

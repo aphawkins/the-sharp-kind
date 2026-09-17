@@ -31,11 +31,8 @@ internal sealed class Planet : IObject
 
         if (spins)
         {
-            // Pitch and roll pegged at 127, as the original (SOS1), so the
-            // planet keeps turning without damping and its surface detail
-            // sweeps round. Only the outlined style does this: the surfaced
-            // ones map their detail from Rotmat's rows and expect it to stay
-            // put.
+            // Pitch and roll pegged at 127, as the original (SOS1), so the surface detail keeps sweeping round.
+            // Only the outlined style does this: the surfaced styles map detail from Rotmat's rows and expect it to stay put.
             RotX = 127;
             RotZ = 127;
         }

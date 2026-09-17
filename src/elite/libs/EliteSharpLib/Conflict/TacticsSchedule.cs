@@ -42,8 +42,7 @@ internal sealed class TacticsSchedule
     /// </summary>
     private const int NoThoughtYet = -1;
 
-    // Indexed the way Space walks the universe: the planet, then the station
-    // or sun, then the ships.
+    // Indexed the way Space walks the universe: planet, then station or sun, then ships.
     private readonly int[] _lastThoughtOn = new int[Universe.MaxUniverseObjects + 2];
 
     internal TacticsSchedule() => Reset();

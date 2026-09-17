@@ -117,9 +117,7 @@ public sealed class ClassicGoodsSet : IGoodsSet
         return file;
     }
 
-    // What the game cannot check later. Duplicate names and the goods a wrecked
-    // ship drops are the registry's business, because they depend on what else
-    // is installed; a blank field is this file's own problem.
+    // Only checks what this file can know alone - duplicates and wreck drops depend on what else is installed.
     private static void Check(string path, GoodsEntry entry, int index)
     {
         if (string.IsNullOrWhiteSpace(entry.Id))

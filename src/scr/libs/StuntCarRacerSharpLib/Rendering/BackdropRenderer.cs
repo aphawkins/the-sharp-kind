@@ -9,11 +9,8 @@ using StuntCarRacerSharpLib.Tracks;
 
 namespace StuntCarRacerSharpLib.Rendering;
 
-// Draws the horizon (sky/ground fill) and the scenery skyline, ported from
-// the original Backdrop.cpp. The sky is filled first and the ground drawn
-// as one large polygon below the projected horizon line, which replaces the
-// original's rectangle/clipping case analysis; the scenery objects are the
-// original's mountains, buildings and lake on a ring around the viewpoint.
+// Ported from the original Backdrop.cpp. Ground draws as one large polygon below the projected
+// horizon line, replacing the original's rectangle/clipping case analysis.
 public sealed class BackdropRenderer
 {
     private const int SkyColour = Track.ScrBaseColour + 7;
@@ -76,9 +73,7 @@ public sealed class BackdropRenderer
         DrawHorizon(RenderY(camera), RenderXAngle(camera), RenderZAngle(camera));
     }
 
-    // The original backdrop maths works in the render space of the original
-    // software pipeline: y positive downwards, which negates the camera's
-    // height and its x/z rotation directions (y rotations are unaffected).
+    // Original render space has y positive downwards, negating the camera's height and x/z rotation directions.
     private static int RenderY(SceneCamera camera) => -camera.Y;
 
     private static int RenderXAngle(SceneCamera camera) => -camera.XAngle & (Track.MaxAngle - 1);
@@ -90,10 +85,7 @@ public sealed class BackdropRenderer
         float width = _screen.ScreenWidth;
         float height = _screen.ScreenHeight;
 
-        // y adjustment depending upon the viewpoint x angle - needed because
-        // only two horizon points are used rather than four (when the rotated
-        // z values are negative the y values are negated, so the adjustment
-        // must also change sign)
+        // Needed since only two horizon points are used, not four: negative rotated z flips the sign of this adjustment.
         bool rotatedZNegative = angleX is >= AmigaTrig.Degrees90 and < AmigaTrig.Degrees270;
         int adjustY = (rotatedZNegative ? viewpointY : -viewpointY) / 2;
 
@@ -104,11 +96,8 @@ public sealed class BackdropRenderer
         int sinZ = AmigaTrig.Sin(angleZ);
         int cosZ = AmigaTrig.Cos(angleZ);
 
-        // project with the same focus as the track projection (Scene3D). The
-        // original divided by height * 512/480, which only equals the track's
-        // focus at 4:3 - at other aspect ratios the ground line pitched and
-        // rolled by a different amount to the track, so the track appeared to
-        // float above the ground (or sink into it) whenever the camera tilted.
+        // Uses the track's own focus (Scene3D). The original's height*512/480 divisor only matched
+        // it at 4:3, so at other aspect ratios the ground pitched/rolled differently and appeared to float or sink.
         float focus = width * Scene3D.FocusFactor;
 
         Span<Vector2> screen = stackalloc Vector2[2];
@@ -200,9 +189,7 @@ public sealed class BackdropRenderer
         }
     }
 
-    // Rotate one scenery object's points about the y/x/z axes and project them
-    // into screen space. Returns false if any point is behind the viewpoint, in
-    // which case the object is not drawn at all.
+    // Returns false if any point is behind the viewpoint, in which case the object is not drawn at all.
     private bool ProjectScenery(
         Coord3D[] coords,
         in Span<Vector2> screen,

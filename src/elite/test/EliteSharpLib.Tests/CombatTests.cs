@@ -26,8 +26,7 @@ public class CombatTests
     [Fact]
     public void CreateThargoidLaunchesTharglet()
     {
-        // Arrange: the 1-in-256-ish escort roll (RNG.Random(256) > 64) is
-        // forced deterministically instead of hunting for a seed that hits it.
+        // Arrange: forces the ~1-in-256 escort roll (RNG.Random(256) > 64) deterministically.
         Combat combat = CreateCombat(out Universe universe, out _, out _, out _, randomValue: 254);
 
         // Act
@@ -53,8 +52,7 @@ public class CombatTests
     [Fact]
     public void ScoopingWithAFullHoldDestroysTheCanisterWithoutDamage()
     {
-        // Arrange: original MA59 - scooping fails because the hold is full,
-        // which only plays a destruction sound, no OOPS damage call.
+        // Arrange: original MA59 - full hold destroys the canister without OOPS damage.
         Combat combat = CreateCombat(out _, out PlayerShip ship, out _, out _, randomValue: 0);
         ship.HasFuelScoop = true;
         ship.CargoCapacity = 0;
@@ -76,8 +74,7 @@ public class CombatTests
     [Fact]
     public void ScoopingWithNoFuelScoopFittedTakesCollisionDamage()
     {
-        // Arrange: original MA58 - can't scoop at all, so this is a genuine
-        // collision and takes full OOPS damage.
+        // Arrange: original MA58 - no scoop means a genuine collision, full OOPS damage.
         Combat combat = CreateCombat(out _, out PlayerShip ship, out _, out _, randomValue: 0);
         ship.HasFuelScoop = false;
         ship.CargoCapacity = 100;
@@ -96,10 +93,7 @@ public class CombatTests
     [Fact]
     public void DestroyingAnAsteroidWithAPulseLaserYieldsAlloyAndCargoButNoSplinters()
     {
-        // Arrange: original CMP #Mlas only spawns splinters when the killing
-        // laser is exactly the mining laser - Pulse-laser kills get none -
-        // but every kill, asteroids included, still falls through to spawn
-        // alloy plates and cargo canisters.
+        // Arrange: original CMP #Mlas - splinters only from a mining-laser kill; alloy/cargo spawn regardless.
         Combat combat = CreateCombat(out Universe universe, out _, out _, out _, randomValue: 2);
         SetLaserType(combat, LaserType.Pulse);
         FakeShip asteroid = new(new FakeEliteDraw()) { Id = ObjectIds.Asteroid, LootMax = 15 };
@@ -113,8 +107,7 @@ public class CombatTests
     [Fact]
     public void DestroyingAnAsteroidWithAMiningLaserYieldsSplintersAlloyAndCargo()
     {
-        // Arrange: a mining-laser kill gets splinters in addition to the
-        // alloy/cargo every kill yields, not instead of it.
+        // Arrange: mining-laser kill adds splinters on top of the usual alloy/cargo.
         Combat combat = CreateCombat(out Universe universe, out _, out _, out _, randomValue: 2);
         SetLaserType(combat, LaserType.Mining);
         FakeShip asteroid = new(new FakeEliteDraw()) { Id = ObjectIds.Asteroid, LootMax = 15 };
@@ -128,12 +121,7 @@ public class CombatTests
     [Fact]
     public void FiringTacticsSetsFiringAndHostileRegardlessOfHitChance()
     {
-        // Arrange: best-effort re-derivation of the original TACTICS/CPX #160
-        // - the same gate governs both "may fire" and "sets Firing flag", so
-        // FiringTactics no longer re-checks a separate (and un-original)
-        // -0.917 threshold before setting the flag. -0.90 is between the old
-        // dead zone and the hit threshold, and previously wouldn't have set
-        // either flag.
+        // Arrange: original TACTICS/CPX #160 - one gate governs both firing and the Firing flag. -0.90 sits between the dead zone and the hit threshold.
         Combat combat = CreateCombat(out _, out PlayerShip ship, out _, out _, randomValue: 0);
         ship.ShieldFront = PlayerShip.ShieldMax;
         FakeShip enemy = new(new FakeEliteDraw()) { LaserStrength = 10 };
@@ -148,9 +136,7 @@ public class CombatTests
     [Fact]
     public void AttackTacticsDoesNotFireBetweenTheOldAndNewThreshold()
     {
-        // Arrange: -0.86 is between the old -0.833 gate and the re-derived
-        // -0.889 (-32/36) gate, so it used to enter firing tactics and set
-        // the Firing flag; it shouldn't any more.
+        // Arrange: -0.86 sits below the re-derived -0.889 (-32/36) gate, so tactics must not fire.
         Combat combat = CreateCombat(out Universe universe, out _, out _, out _, randomValue: 0);
         FakeShip enemy = new(new FakeEliteDraw())
         {
@@ -172,9 +158,7 @@ public class CombatTests
     [Fact]
     public void PoliceIgnoreLegalStatusWithNoPoliceNearby()
     {
-        // Arrange: original LDX MANY+COPS; BEQ P%+5 skips ORing in our legal
-        // status when there are no cops in the bubble yet - they haven't
-        // scanned us, so a bad reputation alone shouldn't summon them.
+        // Arrange: original LDX MANY+COPS; BEQ P%+5 - no cops in the bubble means legal status isn't ORed in yet.
         Combat combat = CreateCombat(out Universe universe, out _, out _, out GameState gameState, randomValue: 50);
         gameState.Cmdr.LegalStatus = 200;
 
@@ -186,8 +170,7 @@ public class CombatTests
     [Fact]
     public void PoliceFactorInLegalStatusWhenAlreadyPresent()
     {
-        // Arrange: with cops already in the bubble, our legal status is ORed
-        // into the spawn chance - they've almost certainly scanned us.
+        // Arrange: with cops already in the bubble, legal status is ORed into the spawn chance.
         Combat combat = CreateCombat(out Universe universe, out _, out _, out GameState gameState, randomValue: 50);
         gameState.Cmdr.LegalStatus = 200;
         FakeShip existingPolice = new(new FakeEliteDraw()) { Id = ObjectIds.Viper };
@@ -202,9 +185,7 @@ public class CombatTests
     [Fact]
     public void ABountyHunterLoneWolfIsNotHostileBelowLegalStatus40()
     {
-        // Arrange: original TACTICS part 3 - a bounty hunter (NEWB bit 1)
-        // only turns hostile once FIST >= 40, an "Offender" but not yet a
-        // "Fugitive."
+        // Arrange: original TACTICS part 3 - a bounty hunter (NEWB bit 1) turns hostile only once FIST >= 40.
         Combat combat = CreateCombat(out Universe universe, out _, out _, out GameState gameState, randomValue: 0);
         gameState.Cmdr.LegalStatus = 39;
 
@@ -227,10 +208,7 @@ public class CombatTests
     [Fact]
     public void AnEcmBurstLastsThirtyTwoTicksWhateverTheUpdateRate()
     {
-        // No golden scenario fires an E.C.M., so this is the only thing that
-        // holds the burst to a length in time rather than in updates. At a
-        // quarter of a tick an update it takes four times as many updates to
-        // spend the same thirty-two ticks.
+        // Pins burst length to time, not update count: quarter-tick updates take 4x as many updates for the same 32 ticks.
         Combat combat = CreateCombat(out _, out PlayerShip ship, out _, out GameState state, randomValue: 0);
         ship.EcmActive = 32;
         state.Clock.BeginUpdate(1f / GameClock.StepsPerSecond / 4f);
@@ -250,9 +228,7 @@ public class CombatTests
     [Fact]
     public void AnEcmBurstCostsTheSameEnergyWhateverTheUpdateRate()
     {
-        // Ours to run, so it drains a unit of energy per tick. The drain has
-        // to follow the same clock as the countdown or a faster rate would
-        // make E.C.M. cheap.
+        // Drain must follow the same clock as the countdown, or a faster rate makes E.C.M. cheap.
         Combat combat = CreateCombat(out _, out PlayerShip whole, out _, out GameState wholeState, randomValue: 0);
         float startingEnergy = whole.Energy;
         whole.EcmActive = 32;
@@ -278,10 +254,7 @@ public class CombatTests
     [Fact]
     public void AMissileAsksForAccelerationInProportionToTheTick()
     {
-        // A missile is the one thing that steers on every update rather than
-        // one count in eight, so what it asks for has to be a rate. Left as a
-        // whole step it gained speed at the update rate and became four and a
-        // half times harder to outrun at sixty frames a second.
+        // Missiles steer every update, not one-in-eight, so acceleration must be expressed as a rate.
         Combat combat = CreateCombat(out Universe universe, out _, out _, out GameState state, randomValue: 0);
         FakeShip whole = LaunchedMissile(universe);
         FakeShip quarter = LaunchedMissile(universe);

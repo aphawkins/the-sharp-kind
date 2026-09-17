@@ -27,8 +27,7 @@ public class ConfigFileTests
         Assert.Equal(60f, config.Engine.Graphics.Fps);
         Assert.False(config.Engine.Graphics.ShowFps);
 
-        // The renditions' own sheets, so a commander who has chosen nothing
-        // gets the text each rendition was drawn for.
+        // Default is the renditions' own sheets, not a commander's choice.
         Assert.Equal(FontKind.Bitmap, config.Engine.Graphics.FontKind);
         Assert.Equal("8-bit", config.Engine.Rendition);
         Assert.Null(config.Engine.WindowScale);
@@ -36,9 +35,7 @@ public class ConfigFileTests
         Assert.True(config.Engine.Sound.Effects);
     }
 
-    // A font kind the build does not know - a hand-edit, or a file from a
-    // later build - goes back to the sheets rather than leaving the game
-    // drawing with nothing.
+    // An unknown font kind goes back to the sheets rather than drawing with nothing.
     [Fact]
     public void RepairReplacesAnUnknownFontKind()
     {
@@ -53,9 +50,7 @@ public class ConfigFileTests
         Assert.Equal(FontKind.Bitmap, graphics.FontKind);
     }
 
-    // A kind the build does know is left alone, whether or not the rendition
-    // in use has such a font - what a rendition offers is settled when its
-    // assets are loaded, not here.
+    // A known kind is left alone; what a rendition offers is settled when its assets load, not here.
     [Fact]
     public void RepairKeepsAKnownFontKind()
     {
@@ -69,8 +64,7 @@ public class ConfigFileTests
         Assert.Equal(FontKind.Fon, graphics.FontKind);
     }
 
-    // The setting has to survive the file, not just the object: it is written
-    // by the settings screen and read back at the next launch.
+    // Must survive the file, not just the object: written by the settings screen, read back next launch.
     [Fact]
     public void WriteConfigThenReadConfigKeepsTheFontKind()
     {
@@ -110,9 +104,7 @@ public class ConfigFileTests
     [Fact]
     public void ReadConfigWithAMistypedValueReturnsDefaultsInsteadOfThrowing()
     {
-        // Arrange: a hand-edited/corrupt file where a bool field holds a
-        // non-boolean string - Microsoft.Extensions.Configuration.Binder
-        // wraps this as InvalidOperationException, not FormatException.
+        // A bool field holding a non-boolean string: the binder wraps this as InvalidOperationException, not FormatException.
         string directory = CreateTempDirectory();
         Directory.CreateDirectory(directory);
         File.WriteAllText(Path.Combine(directory, ConfigFileName), /*lang=json,strict*/ "{\"game\": {\"instantDock\": \"hello!\"}}");
@@ -128,9 +120,7 @@ public class ConfigFileTests
     [Fact]
     public void ReadConfigWithInvalidFpsRepairsOnlyTheFps()
     {
-        // Arrange: exercises AddEliteConfig's actual repair, not just the
-        // generic ConfigFile<T> plumbing. The unreadable fps must not cost
-        // the user the settings either side of it.
+        // Exercises AddEliteConfig's actual repair; the unreadable fps must not cost the settings either side of it.
         EliteConfig config = ReadWritten(
             /*lang=json,strict*/ "{\"engine\": {\"graphics\": {\"fps\": 0}}, \"game\": {\"instantDock\": true}}");
 
@@ -151,12 +141,7 @@ public class ConfigFileTests
     [Fact]
     public void ReadConfigKeepsARenditionNameItDoesNotRecognise()
     {
-        // A name the game has never heard of is not a mistake to repair: the
-        // whole point of renditions being named rather than enumerated is
-        // that the game cannot know what exists. Whether one by that name is
-        // installed is settled when it is looked for, and that failure names
-        // it - repairing to the default here would quietly ignore what the
-        // commander asked for.
+        // An unrecognised rendition name is not a mistake to repair: renditions are named, not enumerated, so the game cannot know what exists.
         EliteConfig config = ReadWritten(
             /*lang=json,strict*/ "{\"engine\": {\"rendition\": \"Psychedelic\"}, \"game\": {\"sunStyle\": \"Solid\"}}");
 
@@ -164,10 +149,7 @@ public class ConfigFileTests
         Assert.Equal(SunType.Solid, config.Game.SunStyle);
     }
 
-    // The limit of repairing in place: a value the binder cannot even parse
-    // (a misspelt enum name, a string where a number belongs) fails the whole
-    // bind, so there is nothing to repair and the defaults stand. The file
-    // itself is kept as .bad, which is the only reason that is survivable.
+    // An unparseable value fails the whole bind; defaults stand and the file is kept as .bad.
     [Fact]
     public void ReadConfigWithAnUnparseableValueFallsBackToDefaultsAndKeepsTheFile()
     {
@@ -201,8 +183,7 @@ public class ConfigFileTests
     [Fact]
     public void ReadConfigKeepsAWindowScaleItCanHonour()
     {
-        // The scale is independent of the rendition: a magnified 8-bit window
-        // is the point of the setting, not a contradiction to repair away.
+        // Scale is independent of rendition: a magnified 8-bit window is the point, not a contradiction.
         EliteConfig config = ReadWritten(
             /*lang=json,strict*/ "{\"engine\": {\"windowScale\": 3, \"tier\": \"8Bit\"}}");
 
@@ -213,16 +194,12 @@ public class ConfigFileTests
     [Fact]
     public void ReadConfigStampsTheCurrentSchemaVersion()
     {
-        // A file from before versioning has no version at all, and one from a
-        // later build claims a version this one cannot honour; both are
-        // brought back to what this build writes.
+        // Missing or unrecognised version both get stamped with what this build writes.
         Assert.Equal(ConfigSchema.CurrentVersion, ReadWritten(/*lang=json,strict*/ "{\"game\": {}}").Version);
         Assert.Equal(ConfigSchema.CurrentVersion, ReadWritten(/*lang=json,strict*/ "{\"version\": 99}").Version);
     }
 
-    // A rendition is written under the name it calls itself. The game has no
-    // spelling of its own to apply - it cannot have one for a rendition it
-    // has never seen.
+    // A rendition is written under the name it calls itself; the game has no spelling of its own to apply.
     [Theory]
     [InlineData("8-bit")]
     [InlineData("Psychedelic")]
@@ -237,9 +214,7 @@ public class ConfigFileTests
         Assert.Contains($"\"rendition\": \"{rendition}\"", json, StringComparison.Ordinal);
     }
 
-    // Files written before renditions existed say "tier", and spell it with a
-    // digit. Both the old key and the old spelling have to survive, or every
-    // config file written before this change quietly loses its choice.
+    // Old files use the "tier" key with digit spelling; both must still be read or old configs lose their choice.
     [Theory]
     [InlineData("8Bit", "8-bit")]
     [InlineData("16Bit", "16-bit")]
@@ -253,8 +228,7 @@ public class ConfigFileTests
         Assert.Null(engine.Tier);
     }
 
-    // The old key only wins where the new one was never written, so a file
-    // holding both - which only a hand-edit produces - keeps the new one.
+    // The old key only wins where the new one was never written.
     [Fact]
     public void RepairKeepsTheRenditionWhenBothAreSet()
     {

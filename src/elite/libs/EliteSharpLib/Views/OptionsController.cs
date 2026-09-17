@@ -48,9 +48,7 @@ internal sealed class OptionsController : IScreenController
 
     public void HandleInput()
     {
-        // The cursor wraps rather than stopping at the ends: Back is the last
-        // row, so one press up from the top is the shortest way to it, and the
-        // menu is short enough to read as a ring.
+        // The cursor wraps: Back is last, so up from the top reaches it in one press.
         if (_keyboard.IsPressed(ConsoleKey.S) || _keyboard.IsPressed(ConsoleKey.UpArrow))
         {
             _highlightedItem = (_highlightedItem + _optionList.Length - 1) % _optionList.Length;

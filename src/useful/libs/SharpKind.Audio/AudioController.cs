@@ -27,14 +27,11 @@ public sealed class AudioController
         MusicOn = options.MusicOn;
         EffectsOn = options.EffectsOn;
 
-        // Two effect names may share one SfxSample to share its cooldown
-        // (e.g. sounds that played on one buffer in the original hardware),
-        // so the per-update tick runs over the distinct samples.
+        // Two effect names may share one SfxSample (shared cooldown, matching one hardware buffer), so ticking runs over the distinct samples.
         _samples = [.. new HashSet<SfxSample>(sfx.Values)];
     }
 
-    // Settable so a settings screen can turn sound on and off mid-game; the
-    // starting values come from the config file via AudioOptions.
+    // Settable so a settings screen can toggle sound mid-game.
     public bool EffectsOn { get; set; }
 
     public bool MusicOn { get; set; }
@@ -54,9 +51,7 @@ public sealed class AudioController
             return;
         }
 
-        // An effect with no registered sample is a content gap, not a
-        // fatal error: log it and play nothing rather than throwing from
-        // whatever gameplay code happened to ask for the sound.
+        // Missing sample is a content gap, not a fatal error - log and play nothing.
         if (!_sfx.TryGetValue(effectType, out SfxSample? sample))
         {
             if (_logger is not null)
@@ -86,8 +81,7 @@ public sealed class AudioController
         _sound.Play(musicType, loop);
     }
 
-    // Unconditional: this is also how the settings screen silences music that
-    // is already playing at the moment music is switched off.
+    // Unconditional: also how the settings screen silences music already playing when switched off.
     public void StopMusic() => _sound.StopMusic();
 
     /// <summary>

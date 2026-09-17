@@ -163,9 +163,7 @@ internal sealed class ShortRangeChartController : IScreenController
                     _planet.NamePlanet(glx).CapitaliseFirstLetter()));
             }
 
-            // The next bit calculates the size of the circle used to represent
-            // a planet.  The carry_flag is left over from the name generation.
-            // Yes this was how it was done... don't ask :-(
+            // Circle size for a planet; carry_flag is left over from name generation, as the original did it.
             float blobSize = ((glx.F & 1) + 2 + _gameState.CarryFlag) * scale;
             _planets.Add(new(new(px, py), blobSize));
 
@@ -217,10 +215,7 @@ internal sealed class ShortRangeChartController : IScreenController
     {
         int row = (int)(py / (RowHeight * scale));
 
-        // Checked before rowUsed is read rather than after, which is what the
-        // FirstPackedRow test below used to do on its own: a design scale
-        // that plots the spread wider than the viewport puts py outside it,
-        // and the row with it.
+        // Checked before rowUsed is read: a design scale wider than the viewport puts py outside it, and the row with it.
         if (row is < FirstPackedRow or >= PackedRows)
         {
             return null;

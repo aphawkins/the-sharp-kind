@@ -4,9 +4,7 @@ using SharpKind.Graphics.Fakes;
 
 namespace SharpKind.UI.Tests;
 
-// The cursor and the window it moves inside. A list shorter than its window
-// never scrolls, which is what lets a screen that used to draw a fixed number
-// of rows keep drawing them exactly where it did.
+// A list shorter than its window never scrolls, letting a screen that used to draw a fixed number of rows keep drawing them where it did.
 public class ListViewTests
 {
     private static readonly FastColor s_text = new(0xFFFFFFFF);

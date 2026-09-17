@@ -132,11 +132,7 @@ public class TrackRendererTests
         Assert.InRange(graphics.TexturedPolygons.Count, 1, 23 * 4);
     }
 
-    // DrawPolygonFilled fills polygons as a triangle fan, which only fills
-    // the intended shape when the outline is simple and the fan triangles
-    // all wind the same way. Twisted quads straddling the near plane used to
-    // reach it as self-intersecting outlines, painting large spurious
-    // triangles on/beside the track (regression test for that bug).
+    // Regression: twisted quads straddling the near plane used to reach DrawPolygonFilled's triangle fan as self-intersecting outlines.
     [Theory]
     [InlineData(TrackId.LittleRamp)]
     [InlineData(TrackId.SteppingStones)]

@@ -73,18 +73,12 @@ public class FrameCheckTests
         IReadOnlyList<FrameSignature> expected = FrameFile.Read(File.ReadAllText(baselinePath));
         IReadOnlyList<FrameSignature> actual = FrameFile.Read(text);
 
-        // Assert.True rather than Assert.Null: the difference string carries
-        // the two thumbnail grids side by side, and Assert.Null truncates it
-        // to the first few characters - which throws away the half a reviewer
-        // actually reads.
+        // Assert.True, not Assert.Null: Assert.Null truncates the diff string, throwing away the thumbnail grids a reviewer actually reads.
         string? difference = FrameComparer.FindFirstDifference(expected, actual);
         Assert.True(difference is null, difference);
     }
 
-    // The baselines are only worth committing if the same script composes the
-    // same pixels every run. It does not in the shipped game - the opponent's
-    // steering and the engine note are drawn from Random.Shared - so this
-    // checks the harness's seed actually pins them.
+    // The shipped game doesn't compose the same pixels every run (opponent steering, engine note draw from Random.Shared) - checks the harness's seed pins them.
     [Fact]
     public void TheSameScenarioComposesTheSameFrameTwice()
     {

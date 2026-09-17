@@ -2,9 +2,7 @@
 
 namespace SharpKind.Graphics;
 
-// Single entry point for loading image assets. The format is taken from the
-// file's own magic bytes rather than its extension, so a mislabelled asset
-// still loads.
+// Single entry point for loading image assets. Format is taken from the file's magic bytes, not its extension, so a mislabelled asset still loads.
 public static class ImageReader
 {
     public static FastBitmap Read(string path)

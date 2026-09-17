@@ -95,30 +95,20 @@ public static class GameApp
 
         Microsoft.Extensions.Logging.ILogger logger = loggerFactory.CreateLogger(nameof(GameApp));
 
-        // Logged before the composition rather than after it, so a startup
-        // failure still leaves behind which build and which settings were being
-        // tried. It used to be the other way round, and a failure to compose
-        // took this diagnostic down with it.
+        // Logged before composition, so a startup failure still leaves behind which build and settings were tried.
         LogMessages.StartingTitle(logger, title);
         LogStartupDiagnostics(logger, engine);
 
         try
         {
-            // The composition is inside the try because it is where the
-            // startup failures actually happen - the configured rendition, its
-            // assets, the mission plugins. It used to sit outside, so those
-            // unwound through Main as a raw stack trace and, from a shortcut,
-            // as a window that never appeared.
+            // Composition sits inside the try: it's where startup failures actually happen (rendition, assets, plugins).
             using ServiceProvider provider = buildServices(userDataPath, loggerFactory, engine).BuildServiceProvider();
             IGameApp game = provider.GetRequiredService<IGameApp>();
             game.Run();
         }
         catch (Exception ex)
         {
-            // The exception is logged in full above, so the player gets a hint
-            // and a non-zero exit rather than a raw stack dump on the console -
-            // which is what the previous Environment.Exit(-1) achieved by
-            // terminating before the rethrow could surface.
+            // Logged in full above, so the player gets a hint and a non-zero exit rather than a raw stack dump.
             LogMessages.CriticalAppTerminated(logger, ex);
             AppStartup.WriteFailureHint(ex, userDataPath);
 
@@ -131,12 +121,8 @@ public static class GameApp
         return 0;
     }
 
-    // A bug report rarely comes with the reporter's machine spec or config
-    // file attached, so the log itself carries what a fix usually needs
-    // first: which build, which OS/runtime, and which engine settings were
-    // in effect. Shared by every game via this one call. Logged as JSON
-    // (rather than a prose sentence) so the two facts can be machine-parsed
-    // back out of the log file.
+    // Carries what a bug report rarely comes with: build, OS/runtime, and engine settings. Logged
+    // as JSON so it can be machine-parsed back out.
     private static void LogStartupDiagnostics(Microsoft.Extensions.Logging.ILogger logger, EngineConfigSettings engine)
     {
         string version = Assembly.GetEntryAssembly()
@@ -171,9 +157,7 @@ public static class GameApp
         LogMessages.EngineSettings(logger, engineSettingsJson);
     }
 
-    // Null means the environment variable was unset or unparseable; the
-    // caller falls back to the config value (and ultimately its default)
-    // rather than a level of its own.
+    // Null means unset or unparseable; the caller falls back to the config value.
     private static LogEventLevel? ReadEnvironmentLevel(string logLevelEnvironmentVariable)
         => Enum.TryParse(
             Environment.GetEnvironmentVariable(logLevelEnvironmentVariable),
@@ -182,13 +166,8 @@ public static class GameApp
             ? envLevel
             : null;
 
-    // The engine's Logging settings live in the config file the game itself
-    // reads, but reading it needs a logger - one that cannot yet know the
-    // config's own retained-file-count, since that is exactly what it is
-    // about to read. A console-only bootstrap logger breaks the cycle: it
-    // never touches the log file, so it needs no retention setting, and its
-    // level is already fully known (the environment variable, or the
-    // default) without the config.
+    // Reading the config needs a logger, which can't yet know the config's own retention setting.
+    // A console-only bootstrap logger breaks the cycle: it needs no retention setting and its level is already known.
     private static EngineConfigSettings ReadEngineSettings(
         string userDataPath,
         LogEventLevel? environmentLevel,

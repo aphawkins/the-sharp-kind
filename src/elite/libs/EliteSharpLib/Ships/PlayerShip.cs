@@ -223,8 +223,7 @@ internal sealed class PlayerShip
         shield -= damage * ShieldStep;
         if (shield < ShieldMin)
         {
-            // Shields and banks are on the same scale, so whatever the shield
-            // couldn't absorb carries straight over as a fraction.
+            // Shields and banks are on the same scale, so the shield's overflow carries straight over as a fraction.
             Energy += shield;
             shield = ShieldMin;
         }

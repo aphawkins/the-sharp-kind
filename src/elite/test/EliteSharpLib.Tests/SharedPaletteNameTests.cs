@@ -36,9 +36,7 @@ public class SharedPaletteNameTests
         Assert.Empty(missing);
     }
 
-    // The names above are the ones shared code uses; the renditions are free
-    // to disagree about everything else, and do - the 8-bit palette is
-    // sixteen web colour names against the 16-bit ramp of twenty-nine.
+    // Renditions are free to disagree about everything else: the 8-bit palette is sixteen web colour names against the 16-bit ramp of twenty-nine.
     [Fact]
     public void TheRenditionsDoNotOtherwiseShareAPalette()
     {

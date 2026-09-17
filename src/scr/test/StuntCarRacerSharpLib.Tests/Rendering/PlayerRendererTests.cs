@@ -40,10 +40,7 @@ public class PlayerRendererTests
         }
     }
 
-    // The bug this guards: the car's centre drops below the road surface
-    // whenever the suspension bottoms out, which drew the car half-buried
-    // in the track. Over a driven run the mesh must never sink below the
-    // road under its wheels.
+    // The bug this guards: the car's centre drops below the road when suspension bottoms out, drawing it half-buried.
     [Fact]
     public void CarStaysOnTopOfTheRoadWhileDriving()
     {

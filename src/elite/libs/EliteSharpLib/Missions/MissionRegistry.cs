@@ -30,8 +30,7 @@ internal sealed class MissionRegistry
     /// </exception>
     public MissionRegistry(IEnumerable<IMission> missions, ILogger<MissionRegistry> logger)
     {
-        // Ordinal, because a mission name is a save-file key and the contract
-        // compares stage and mission names that way throughout.
+        // Ordinal: a mission name is a save-file key, compared that way throughout the contract.
         _missions = new(StringComparer.Ordinal);
 
         foreach (IMission mission in missions)

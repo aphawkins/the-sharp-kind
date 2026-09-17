@@ -45,9 +45,7 @@ public class Intro2ControllerTests
     [Fact]
     public void RightArrowKeepsAShipOnShow()
     {
-        // FakeShipFactory.CreateParade returns a single ship, so this can't
-        // assert the *name* changes - only that cycling past the end of the
-        // parade still leaves a ship in view rather than clearing it.
+        // FakeShipFactory.CreateParade returns a single ship, so this only pins that a ship stays in view.
         Intro2Controller controller = CreateController(out FakeKeyboard keyboard);
         controller.Reset();
 

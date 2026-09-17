@@ -17,13 +17,8 @@ using SharpKind.Input;
 
 namespace EliteSharpLib;
 
-// The half of the split-screen registrations whose screens run under their
-// own animation: the sequence screens and the flight screens. Split out of
-// EliteSplitScreensServiceCollectionExtensions once each screen's second
-// (8-bit) view pushed that class over CA1506's class-coupling limit (96) -
-// the metric is per class, so an extra static class is what resolves it. The
-// views themselves have since gone to plugins and the coupling with them, but
-// the split stays: the two halves are a reasonable size each.
+// Sequence and flight screens, split out of EliteSplitScreensServiceCollectionExtensions once it
+// tripped CA1506's class-coupling limit. Views have since gone to plugins, but the split stays.
 internal static class EliteSplitAnimatedScreensServiceCollectionExtensions
 {
     internal static void AddSplitAnimatedScreens(this IServiceCollection services)
@@ -76,12 +71,9 @@ internal static class EliteSplitAnimatedScreensServiceCollectionExtensions
             sp.GetRequiredService<ILoggerFactory>().CreateLogger<GameOverController>()));
     }
 
-    // The ship parade and the four cockpit windows: screens whose Update
-    // drives the universe directly rather than a screen-local timer. The
-    // four cockpit windows share one IView<PilotModel> registration, since
-    // none varies the layout - PopulateScreens builds the four
-    // PilotControllers directly (see CreatePilotController) rather than
-    // resolving them here, since they aren't otherwise-distinct types.
+    // Screens whose Update drives the universe directly rather than a screen-local timer. The
+    // four cockpit windows share one IView<PilotModel>; PopulateScreens builds the four
+    // PilotControllers directly since they aren't otherwise-distinct types.
     private static void AddSplitFlightScreens(this IServiceCollection services)
     {
         services.AddSingleton(sp => sp.GetRequiredService<RenditionRegistry>().View<Intro2Model>());

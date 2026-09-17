@@ -4,11 +4,8 @@
 
 namespace StuntCarRacerSharpLib.Cars;
 
-// Player control flags, following ptitSeb's stuntcarremake KEY_P1_*
-// definitions (which replaced the original fluffyfreak remake's combined
-// accelerate+boost/brake+boost keys with independent ones). Keyboard
-// controls: Left/Right arrows = steer, Up = accelerate, Down = brake,
-// Space = boost (applies with either accelerate or brake held).
+// Following ptitSeb's stuntcarremake KEY_P1_* definitions, which made accelerate/brake/boost
+// independent keys rather than the original fluffyfreak remake's combined ones.
 [Flags]
 public enum CarInput
 {

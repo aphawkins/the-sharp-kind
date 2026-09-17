@@ -4,9 +4,7 @@ using SharpKind.Graphics.Fakes;
 
 namespace SharpKind.UI.Tests;
 
-// Cells anchored at columns, sharing one block. A cell is placed against a
-// point rather than laid out in a box, which is what lets a units suffix share
-// a column with the quantity it follows.
+// A cell is placed against a point rather than laid out in a box, letting a units suffix share a column with the quantity it follows.
 public class TableRowTests
 {
     private static readonly FastColor s_text = new(0xFFFFFFFF);

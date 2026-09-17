@@ -22,10 +22,7 @@ using SharpKind.Fakes.Input;
 
 namespace EliteSharpLib.Tests.Views;
 
-// What the one briefing screen puts up, with no renderer involved. Every
-// briefing is now drawn by the same view, so what tells them apart is what is
-// in them - a headline, how many paragraphs, whether somebody is pictured - and
-// that is what these check, rather than which mission is speaking.
+// One view draws every briefing; what tells them apart is a headline, paragraph count and portrait.
 public class MissionBriefingControllerTests
 {
     // The galaxy the Thargoid run happens in, and the two systems it runs
@@ -171,9 +168,7 @@ public class MissionBriefingControllerTests
     [Fact]
     public void SpaceShowsTheNextMissionsMessageRatherThanRepeatingTheFirst()
     {
-        // Arrange: the two screens used to chain into one another, and one
-        // docking can still earn both - the Constrictor's debrief is what makes
-        // the Navy call about the Thargoids.
+        // One docking can still earn both: the Constrictor's debrief is what makes the Navy call about the Thargoids.
         MissionBriefingController controller = CreateController(out GameState gameState);
         gameState.Cmdr.Missions.MoveTo(ConstrictorMission.Id, ConstrictorMission.Destroyed);
         gameState.Cmdr.Score = 1280 - 256;
@@ -207,9 +202,7 @@ public class MissionBriefingControllerTests
         Assert.Equal(Screen.CommanderStatus, gameState.CurrentScreen);
     }
 
-    // The mission compares planet numbers, so a test cannot fake a system by
-    // overwriting two of the docked planet's six seed bytes any more: it has to
-    // put the commander at the real one.
+    // The mission compares planet numbers, so a test can't fake a system by overwriting seed bytes; it has to use the real one.
     private static void GivenDockedAt(GameState gameState, int planetNumber)
     {
         gameState.Cmdr.GalaxyNumber = ThargoidGalaxy;

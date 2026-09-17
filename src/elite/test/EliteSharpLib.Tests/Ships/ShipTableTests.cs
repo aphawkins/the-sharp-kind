@@ -14,9 +14,7 @@ namespace EliteSharpLib.Tests.Ships;
 [Trait("Level", "Integration")]
 public sealed class ShipTableTests : IDisposable
 {
-    // The fixtures are real files, read from beside the assembly, rather than
-    // JSON spelled out in C#: the subject here is a file, and a string literal
-    // that happens to be JSON is not one.
+    // Real files, not JSON spelled out in C#: the subject here is a file, and a string literal isn't one.
     private static readonly string s_oneShip = Fixture("one-ship.json");
 
     private readonly string _directory;
@@ -163,9 +161,7 @@ public sealed class ShipTableTests : IDisposable
         Assert.Contains("twice", ex.Message, StringComparison.Ordinal);
     }
 
-    // The table travels with the assembly, so the shipped one has to be found
-    // and read without anybody saying where it is - and it has to still hold
-    // every ship the game knows how to ask for.
+    // The shipped table has to be found and read with nobody saying where it is, and must hold every ship the game asks for.
     [Fact]
     public void TheShippedTableIsFoundBesideTheAssembly()
     {

@@ -28,9 +28,7 @@ public sealed class PlanetSurface
         _draw = surface;
     }
 
-    // The colour map wrapped round the sphere, which the style fills. Kept
-    // inside the contracts: a rendition supplies colours through one of the
-    // style bases rather than filling the map itself.
+    // A rendition supplies colours through one of the style bases rather than filling this itself.
     internal FastColor[,] Landscape { get; } = new FastColor[LandXMax + 1, LandYMax + 1];
 
     /// <summary>
@@ -81,9 +79,7 @@ public sealed class PlanetSurface
             Y = offsetY + centre.Y,
         };
 
-        // Bottom is the last row of the viewport and nothing is drawn over it -
-        // the 8-bit border has no bottom edge - so the planet fills right down
-        // to the scanner, as the suns already do.
+        // The 8-bit border has no bottom edge, so the planet fills right down to the scanner, as suns do.
         if (s.Y < _draw.Layout.ViewportTop || s.Y > _draw.Layout.ViewportBottom)
         {
             return;

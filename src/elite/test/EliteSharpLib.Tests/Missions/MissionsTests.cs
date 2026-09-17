@@ -15,10 +15,7 @@ namespace EliteSharpLib.Tests.Missions;
 // IMissionContext and nothing else.
 public class MissionsTests
 {
-    // The systems the missions name by number rather than by seed. This is the
-    // one translation the port had to make - the game used to compare two of
-    // the six seed bytes, which a mission cannot see - so it is worth a test
-    // that the numbers still name the systems the story is about.
+    // The one translation the port had to make: the original compared seed bytes, which a mission can't see, so this checks the numbers still name the right systems.
     [Theory]
     [InlineData(1, 193, "ORARRA")]
     [InlineData(2, 83, "CEERDI")]
@@ -126,10 +123,7 @@ public class MissionsTests
     [Fact]
     public void TheRumourIsWhatTheyAreSayingHereRatherThanAboutAnywhereChosen()
     {
-        // Arrange: this is the bug the port fixes. The data screen shows any
-        // system picked off the chart, and the rumour used to be printed for
-        // whichever one that was, so Reesdice was named from anywhere in the
-        // first galaxy.
+        // The bug this fixes: the rumour used to print for whichever system the data screen happened to show, not the one the story is about.
         ConstrictorMission mission = new();
         FakeContext atReesdice = new() { IsDocked = true, CurrentPlanetNumber = 150 };
         FakeContext elsewhere = new() { IsDocked = true, CurrentPlanetNumber = 42 };

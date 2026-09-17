@@ -7,19 +7,8 @@ using SharpKind.Fakes.Assets;
 
 namespace SharpKind.Audio.Tests;
 
-// Exercises SoftwareSound end to end against small, self-authored fixtures
-// built at test setup time: a hand-built minimal Standard MIDI File, a
-// hand-built minimal SoundFont2 (one sample, one instrument, one preset),
-// and .ogg files produced with the OggVorbisEncoder package. None of these
-// reach into any game project's asset folder.
-//
-// AudioAssetFixture is nested (rather than CA1034's preferred top-level,
-// non-public type) because it is xunit's own IClassFixture<T> pattern: T
-// must be constructible by the test framework and is conventionally kept
-// alongside the test class that uses it. Both must stay public: xunit's
-// own analyzer (xUnit1000) requires public test classes, and a public
-// primary-constructor parameter type must itself be public (CS0051) -
-// there is no accessibility this can be narrowed to.
+// Exercises SoftwareSound against small, self-authored fixtures (a minimal MIDI file, SoundFont2 and .ogg files) rather than any game project's assets.
+// AudioAssetFixture is nested rather than top-level (CA1034) because it is xunit's IClassFixture<T>, which must be public alongside the public test class (xUnit1000, CS0051).
 #pragma warning disable CA1034, CA1515
 public sealed class SoftwareSoundTests(SoftwareSoundTests.AudioAssetFixture fixture)
     : IClassFixture<SoftwareSoundTests.AudioAssetFixture>
@@ -227,9 +216,7 @@ public sealed class SoftwareSoundTests(SoftwareSoundTests.AudioAssetFixture fixt
         float[] bufferSeventeen = new float[2048 * SoftwareSound.Channels];
         seventeen.Render(bufferSeventeen);
 
-        // The 17th Play() must have been dropped, not queued: with the
-        // pool full, its output is byte-for-byte identical to only ever
-        // having played 16.
+        // Pins that the 17th Play() is dropped, not queued: output is byte-for-byte identical to only ever having played 16.
         Assert.Equal(bufferSixteen, bufferSeventeen);
 
         (float rms, _) = Measure(bufferSixteen);
@@ -250,11 +237,7 @@ public sealed class SoftwareSoundTests(SoftwareSoundTests.AudioAssetFixture fixt
         return (rms, maxAbs);
     }
 
-    // A 'fmt ' chunk carrying only 4 bytes (formatTag + channels) rather
-    // than the 16 bytes DecodeWavFully needs to also read sampleRate and
-    // bitsPerSample - a truncated/malformed chunk should throw
-    // SharpKindException, not an out-of-range exception from slicing past the
-    // chunk's own bounds.
+    // A truncated 'fmt ' chunk (4 bytes, missing sampleRate/bitsPerSample) should throw SharpKindException, not slice out of range.
     private static byte[] BuildTruncatedFmtChunkWav()
     {
         using MemoryStream stream = new();
@@ -295,11 +278,7 @@ public sealed class SoftwareSoundTests(SoftwareSoundTests.AudioAssetFixture fixt
         return crossings;
     }
 
-    // Builds and tears down the small, hand-authored/synthesised assets
-    // shared across the tests above: one minimal SoundFont, one minimal
-    // MIDI file, and a few short/long .ogg files encoded at test-setup
-    // time. Shared via IClassFixture so the (mildly expensive) Vorbis
-    // encoding only happens once per test run.
+    // Shared via IClassFixture so the mildly expensive Vorbis encoding only happens once per test run.
     public sealed class AudioAssetFixture : IDisposable
     {
         private readonly string _directory;
@@ -342,9 +321,7 @@ public sealed class SoftwareSoundTests(SoftwareSoundTests.AudioAssetFixture fixt
             }
         }
 
-        // A single note-on/note-off SMF (format 0, one track): delta 0 note
-        // on (channel 0, key 60, velocity 100), delta 240 ticks (0.25s at
-        // the default 120bpm/480 ticks-per-quarter) note off, end of track.
+        // A single note-on/note-off SMF (format 0, one track): key 60 vel 100, off after 240 ticks (0.25s at default 120bpm/480 ticks-per-quarter).
         private static byte[] BuildMinimalMidiFile()
         {
             using MemoryStream stream = new();
@@ -385,11 +362,7 @@ public sealed class SoftwareSoundTests(SoftwareSoundTests.AudioAssetFixture fixt
             writer.Write((byte)value);
         }
 
-        // The smallest RIFF/SoundFont2 file MeltySynth's SoundFont parser
-        // will accept: one INFO list, one mono 1-second sine sample, one
-        // instrument with a single zone (SampleID only, so key/velocity
-        // range default to "everything"), and one preset (bank 0, patch 0 -
-        // the default MIDI channel program) pointing at that instrument.
+        // The smallest RIFF/SoundFont2 file MeltySynth's parser will accept: one sample, one instrument with a single zone, one preset (bank 0, patch 0) pointing at it.
         private static byte[] BuildMinimalSoundFont()
         {
             short[] pcm = GenerateSinePcm16(SoftwareSound.SampleRate, frequencyHz: 440, amplitude: 0.5);
@@ -570,10 +543,7 @@ public sealed class SoftwareSoundTests(SoftwareSoundTests.AudioAssetFixture fixt
             return BuildChunk("LIST", combined);
         }
 
-        // A minimal RIFF/WAVE file matching the format real .wav assets are
-        // authored in (format tag 3 = IEEE float, stereo, 32-bit, at the
-        // mixer's own sample rate): a 'fmt ' chunk followed directly by
-        // 'data', no extra chunks.
+        // Matches the format real .wav assets are authored in: format tag 3 (IEEE float), stereo, 32-bit, at the mixer's own sample rate.
         private static byte[] BuildTestWavFloat32(double frequencyHz, double durationSeconds, float amplitude)
         {
             int sampleRate = SoftwareSound.SampleRate;
@@ -613,9 +583,7 @@ public sealed class SoftwareSoundTests(SoftwareSoundTests.AudioAssetFixture fixt
             return stream.ToArray();
         }
 
-        // Encodes a mono sine wave (duplicated to both channels) to .ogg
-        // using the OggVorbisEncoder package, adapted from its own example
-        // (OggVorbisEncoder.Example/Encoder.cs).
+        // Adapted from OggVorbisEncoder's own example (OggVorbisEncoder.Example/Encoder.cs).
         private static byte[] BuildTestOgg(double frequencyHz, double durationSeconds, float amplitude)
         {
             int sampleRate = SoftwareSound.SampleRate;
@@ -640,9 +608,7 @@ public sealed class SoftwareSoundTests(SoftwareSoundTests.AudioAssetFixture fixt
             using MemoryStream outputData = new();
             OggVorbisEncoder.VorbisInfo info = OggVorbisEncoder.VorbisInfo.InitVariableBitRate(channels, sampleRate, 0.5f);
 
-            // Each test fixture file is encoded into its own independent
-            // stream, so a fixed serial (rather than a random one) is fine
-            // and keeps fixture generation deterministic.
+            // A fixed serial is fine since each fixture file gets its own independent stream, and keeps generation deterministic.
             OggVorbisEncoder.OggStream oggStream = new(serialNumber: 1);
 
             OggVorbisEncoder.Comments comments = new();

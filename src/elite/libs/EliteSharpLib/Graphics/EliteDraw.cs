@@ -20,15 +20,11 @@ namespace EliteSharpLib.Graphics;
 
 internal sealed class EliteDraw : IEliteDraw
 {
-    // Upper bound on the points in any ship model, so the explosion
-    // projection buffer never has to grow.
+    // Upper bound on points in any ship model, so the explosion buffer never has to grow.
     private const int MaxModelPoints = 100;
 
-    // The original's projection is x * 256 / z against a 256-square view -
-    // a focal length of exactly one screen height, which is a vertical field
-    // of view of 2*atan(0.5), or 53.13 degrees. A commander who has chosen no
-    // field of view gets this factor rather than 53 degrees put back through
-    // the arithmetic, so the classic view is bit-for-bit the classic view.
+    // The original's projection was x * 256 / z against a 256-square view: a focal length of one screen height, i.e. a vertical FOV of 53.13 degrees.
+    // Used directly rather than recomputed from 53 degrees, so the classic view stays bit-for-bit the classic view.
     private const float ClassicFocusFactor = 1.0f;
 
     private readonly FastColor _colorWhite;
@@ -38,9 +34,7 @@ internal sealed class EliteDraw : IEliteDraw
     private readonly RenderRandom _rng;
     private readonly bool _shadesShips;
 
-    // The pipeline's shading and output stages. Which of each is in use comes
-    // from the live config, so the Settings view takes effect on the next
-    // frame; the instances themselves never change.
+    // Which stage is in use comes from the live config so Settings take effect next frame; the instances themselves never change.
     private readonly IShadingModel _unlit = new UnlitShading();
     private readonly IShadingModel _lambert = new LambertShading();
     private readonly IColourQuantiser _nearest;
@@ -71,20 +65,13 @@ internal sealed class EliteDraw : IEliteDraw
         Palette = PaletteReader.Read(assetLocator.PalettePath);
         _shadesShips = rendition.ShadesShips;
 
-        // Shading invents colours the assets never carried, so it answers to
-        // the same limits the asset validator holds the assets to: an indexed
-        // rendition can show only what its palette names, a direct-colour one
-        // anything its DAC reaches.
+        // Shading invents colours the assets never carried, so it is bound by the same palette limits as the asset validator.
         _nearest = assetLocator.Colours.PaletteNamesEveryColour
             ? new PaletteQuantiser(Palette.Values)
             : new ChannelGridQuantiser(assetLocator.Colours.ChannelBits);
         _dithered = new OrderedDitherQuantiser(_nearest);
 
-        // Blending a shade across a face is only worth doing where the
-        // rendition has shades to blend through. An indexed one can show no
-        // colour its palette does not name, so a smooth gradient quantises
-        // straight back to the same handful of steps a flat fill already
-        // gives - the same reasoning as _shadesShips, one tier further on.
+        // Only worth blending where the rendition has shades to blend through: an indexed palette quantises a gradient back to a flat fill's few steps anyway.
         BlendsShades = !assetLocator.Colours.PaletteNamesEveryColour;
 
         // After Palette: the rendition looks its colours up through this.
@@ -94,15 +81,8 @@ internal sealed class EliteDraw : IEliteDraw
 
     public ViewLayout Layout { get; }
 
-    // Derived from the tier's height, which holds the vertical field of view
-    // constant: a wider screen shows more to the left and right rather than
-    // magnifying everything (decided 2026-07-29; deriving it from the width
-    // instead narrows the vertical view as the screen widens). It is
-    // deliberately not tied to DesignScale, which is where chrome is drawn,
-    // not how much of the universe is in front of the ship.
-    //
-    // Read off the config on each use rather than captured, so the Field of
-    // View setting shows on the next frame drawn.
+    // Derived from the tier's height, holding vertical FOV constant; not tied to DesignScale, which only affects chrome.
+    // Read from the live config, not captured, so the Field of View setting shows next frame.
     public float Focus => Layout.ScreenHeight * FocusFactor(_gameState.Config.Engine.FieldOfView);
 
     public IRandomSource Jitter => _rng;
@@ -113,22 +93,13 @@ internal sealed class EliteDraw : IEliteDraw
 
     public ShipColours Ships { get; }
 
-    // Read from the live config for the same reason Shading is. Gouraud is
-    // the one model whose colour varies within a face, so it is the one that
-    // makes this true - and only where the rendition can show the difference.
+    // Gouraud is the only model whose colour varies within a face, and only where the rendition can show the difference.
     public bool ShadesPerVertex
         => BlendsShades
             && Shading != _unlit
             && _gameState.Config.Engine.Graphics.Shading == ShadingModelKind.Gouraud;
 
-    // Read from the live config rather than cached, so the Settings view's
-    // rows show on the next frame - the same reason ConfigPolygonRenderer
-    // picks its strategy per frame. A wireframe world has no face to shade,
-    // and a rendition with no colours to spare for shading stays unlit
-    // whatever the commander asked for.
-    // Whether the rendition has enough colours for a blend across a face to
-    // survive being quantised. Set once: it is the rendition's, not the
-    // commander's.
+    // Whether the rendition has enough colours for a blend to survive quantising. Set once: it is the rendition's, not the commander's.
     private bool BlendsShades { get; }
 
     private IShadingModel Shading
@@ -145,55 +116,39 @@ internal sealed class EliteDraw : IEliteDraw
         }
     }
 
-    // Dithering an unshaded world would only dither the model's own colours,
-    // which are already displayable, so it follows the shading model.
+    // Dithering an unshaded world would only dither colours that are already displayable, so it follows the shading model.
     private IColourQuantiser Quantiser
         => _gameState.Config.Engine.Graphics.Quantisation == Quantisation.Ordered && Shading != _unlit
             ? _dithered
             : _nearest;
 
-    // depths is the camera-space depth at each point, which the z-buffered
-    // strategy interpolates per pixel; z is one whole-face key, which the
-    // painter's strategy sorts the face by. Decal faces (cockpit windows
-    // etc) sit exactly on the hull face beneath, so the caller gives them
-    // their base face's z key to tie in the painter's order, and a small
-    // near bias in depths to win outright under the per-pixel test.
+    // depths is per-point camera-space depth (for the z-buffer strategy); z is one whole-face key (for the painter strategy).
+    // Decal faces share their base face's z key, plus a small near bias in depths, to win the per-pixel test.
     public void DrawPolygonFilled(Vector2[] points, float[] depths, FastColor faceColor, float z)
     {
-        // A dither travels with the polygon because only the fill can apply
-        // it, one answer per pixel; anything else already resolved in
-        // ShadeFace and nothing needs to go down.
+        // A dither travels with the polygon: only the fill can apply it, per pixel; ShadeFace already resolved anything else.
         IColourQuantiser quantiser = Quantiser;
 
         _shipRenderer.Submit(points, depths, faceColor, z, quantiser.IsPositionDependent ? quantiser : null);
     }
 
-    // As above with a colour per point. The quantiser always travels with the
-    // polygon here, dithering or not: a blended colour is a different colour
-    // at every pixel, so there is nothing ShadeVertex could have resolved for
-    // the whole face.
+    // The quantiser always travels with the polygon here: a blended colour differs per pixel, so nothing could be resolved for the whole face in ShadeVertex.
     public void DrawPolygonFilled(Vector2[] points, float[] depths, FastColor[] cornerColors, float z)
         => _shipRenderer.Submit(points, depths, cornerColors, z, Quantiser);
 
-    // Read from the live config rather than cached, so the Settings view's
-    // toggle shows on the next frame - the same reason ConfigPolygonRenderer
-    // picks its strategy per frame. Wireframe has no faces to light.
+    // Read from the live config so a Settings toggle shows next frame, as ConfigPolygonRenderer does. Wireframe has no faces to light.
     public FastColor ShadeFace(FastColor faceColour, Vector3 cameraNormal, byte fullyLit)
     {
         FastColor shaded = Shading.Shade(faceColour, cameraNormal, fullyLit);
 
-        // A dither has to be asked per pixel, so it is left to the fill and
-        // the face colour travels unquantised; anything else resolves the
-        // whole face once, here.
+        // A dither must be asked per pixel, so it is left to the fill unquantised; anything else resolves here, once.
         IColourQuantiser quantiser = Quantiser;
 
         return quantiser.IsPositionDependent ? shaded : quantiser.Quantise(shaded, 0, 0);
     }
 
-    // Deliberately unquantised, unlike ShadeFace: the fill blends between the
-    // corners and quantises what it arrives at, per pixel. Quantising here
-    // would reduce the ends of the gradient and then blend between the
-    // reduced values, which is a worse approximation of the same curve.
+    // Deliberately unquantised, unlike ShadeFace: the fill blends between corners and quantises per pixel.
+    // Quantising here first would blend between already-reduced values, a worse approximation of the same curve.
     public FastColor ShadeVertex(FastColor faceColour, Vector3 cameraNormal, byte fullyLit)
         => Shading.Shade(faceColour, cameraNormal, fullyLit);
 
@@ -210,7 +165,6 @@ internal sealed class EliteDraw : IEliteDraw
             return;
         }
 
-        // Only display ships in front of us.
         if (obj.Location.Z <= 0)
         {
             return;
@@ -228,7 +182,6 @@ internal sealed class EliteDraw : IEliteDraw
             return;
         }
 
-        // Check for field of vision.
         if (MathF.Abs(obj.Location.X) > obj.Location.Z ||
             MathF.Abs(obj.Location.Y) > obj.Location.Z)
         {
@@ -242,11 +195,7 @@ internal sealed class EliteDraw : IEliteDraw
 
     public void RenderStart() => _shipRenderer.StartFrame();
 
-    // One debris offset, uniform inside a disc of radius 128. A pair of
-    // independent axes would fill the square that encloses that disc and the
-    // cloud would read as a box, so a point outside the radius is re-rolled
-    // rather than clamped - clamping would pile the rejected corners onto the
-    // rim.
+    // One debris offset, uniform inside a disc of radius 128. Points outside are re-rolled rather than clamped, which would pile rejected corners onto the rim.
     internal static Vector2 ScatterOffset(IRandomSource rng)
     {
         while (true)
@@ -260,32 +209,20 @@ internal sealed class EliteDraw : IEliteDraw
         }
     }
 
-    // How far a scatter offset reaches on screen. The offset is a radius-128
-    // disc in the original's 256-wide space and q is the cloud's spread in
-    // the same terms, so the result follows the projection's focal length -
-    // exactly as WorldProjection's unitScale does - rather than being pixels.
-    // Without the focal term the cloud is the same pixel size whatever the
-    // rendition draws at, so it reads twice as large on a 320-wide screen as
-    // on a 640-wide one while the ship it came from does not.
+    // Offset is a radius-128 disc and q a spread, both in the original's 256-wide space, so the result follows the focal length rather than being pixels.
+    // Without the focal term the cloud would read twice as large on a 320-wide screen as on a 640-wide one.
     internal static float ScatterSpread(float q, float focus) => 2 * q / 256 * (focus / 256);
 
-    // Draws the cloud at whatever age Space.AgeExplosion has already given
-    // it this tick. The age itself is not touched here: a renderer that
-    // advanced it would run the explosion at the frame rate rather than the
-    // game's, which is exactly what the frame-rate rework exists to stop.
-    // Half the screen height over the tangent of the half-angle - the focal
-    // length that puts a vertical field of view of that many degrees across
-    // the viewport - expressed as a factor of the height so the line above
-    // reads the same either way.
+    // Half the screen height over the tangent of the half-angle: the focal length for a vertical FOV of that many degrees, expressed as a factor of the height.
     private static float FocusFactor(int? fieldOfView)
         => fieldOfView is null
             ? ClassicFocusFactor
             : 0.5f / MathF.Tan(float.DegreesToRadians(fieldOfView.Value) / 2);
 
+    // The age is not advanced here: Space.AgeExplosion sets it, so the cloud runs at the game's rate rather than the frame rate.
     private void DrawExplosion(IShip ship)
     {
-        // The tick the cloud expires it is flagged for removal and not drawn;
-        // Space takes it out of the universe on the next one.
+        // Flagged for removal here; Space removes it from the universe on the next tick.
         if (ship.Flags.HasFlag(ShipProperties.Remove))
         {
             return;
@@ -296,8 +233,7 @@ internal sealed class EliteDraw : IEliteDraw
             return;
         }
 
-        // The camera-vector / face-normal visibility check needs the rotation matrix's basis
-        // vectors transposed relative to the direct point-transform below (see ShipBase.Draw).
+        // Needs the rotation matrix's basis vectors transposed relative to the point-transform below (see ShipBase.Draw).
         Matrix4x4 cameraMat = ship.Rotmat;
         (cameraMat.M12, cameraMat.M21) = (cameraMat.M21, cameraMat.M12);
         (cameraMat.M13, cameraMat.M31) = (cameraMat.M31, cameraMat.M13);
@@ -327,25 +263,18 @@ internal sealed class EliteDraw : IEliteDraw
         DrawExplosionParticles(np, q, ParticleColour(ship.ExpDelta));
     }
 
-    // The original cloud was solid white for its whole life, because the BBC
-    // had no way to draw anything else. Fading the particles out as the cloud
-    // spreads makes it read as debris thinning into space rather than a block
-    // of white that vanishes. Gated the same way shading is: an indexed
-    // rendition can show no colour its palette does not name, so a blend
-    // there quantises straight back to white and buys nothing.
+    // The original cloud was solid white for its whole life (the BBC couldn't draw anything else); fading it reads as debris thinning rather than a block vanishing.
+    // Gated like shading: an indexed rendition would quantise the blend straight back to white.
     private FastColor ParticleColour(float expDelta)
         => BlendsShades
             ? new((byte)(255 - (expDelta * 200 / 256)), _colorWhite.R, _colorWhite.G, _colorWhite.B)
             : _colorWhite;
 
-    // Project the ship's visible points into _pointList, returning how many
-    // of them were written.
     private int ProjectExplosionPoints(IShip ship)
     {
         int np = 0;
 
-        // Through the interface: Projector is a default implementation, so it
-        // is not in scope on the implementing class.
+        // Through the interface: Projector is a default implementation, not in scope on the implementing class.
         PerspectiveProjector projector = ((IEliteDraw)this).Projector;
 
         for (int i = 0; i < ship.Model.Points.Count; i++)
@@ -364,15 +293,11 @@ internal sealed class EliteDraw : IEliteDraw
         return np;
     }
 
-    // Scatter a cloud of debris blocks around each of the np projected points,
-    // spread wider as the explosion grows (q).
     private void DrawExplosionParticles(int np, float q, in FastColor color)
     {
         float spread = ScatterSpread(q, Focus);
 
-        // The blocks are chrome rather than geometry - the original's pixel,
-        // not a point in space - so they follow Scale, like every other piece
-        // of the render written in the original's pixels.
+        // Blocks are chrome (the original's pixel), not geometry, so they follow DesignScale like the rest of the render.
         int blockScale = (int)Layout.DesignScale;
 
         for (int cnt = 0; cnt < np; cnt++)

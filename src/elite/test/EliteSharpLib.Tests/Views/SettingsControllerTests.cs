@@ -66,9 +66,7 @@ public class SettingsControllerTests
         Assert.Equal(PlanetType.Fractal, gameState.Config.Game.PlanetStyle);
     }
 
-    // The cursor is a ring here as it is on the options menu, and Back is the
-    // last row: one press up from the first setting is the way out. Covers
-    // SettingsListController, which the engine settings screen shares.
+    // The cursor wraps as on the options menu; Back is the last row, so one press up from the first setting is the way out.
     [Fact]
     public void TheCursorWrapsUpFromTheFirstSettingToBack()
     {

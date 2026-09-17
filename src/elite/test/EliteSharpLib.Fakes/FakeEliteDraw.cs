@@ -26,10 +26,7 @@ internal class FakeEliteDraw : IEliteDraw
     // EliteDraw derives this from the screen height and the chosen angle.
     public float Focus { get; set; } = 512;
 
-    // No jitter at all, rather than a seeded stream: the shimmer is
-    // cosmetic, and a test asserting where a laser bolt lands wants the
-    // geometry, not a random offset it would have to model to predict.
-    // Settable so a test that does care can force a spread.
+    // No jitter, not a seeded stream: a test asserting where a bolt lands wants the geometry, not a random offset to model. Settable when a test does care.
     public IRandomSource Jitter { get; set; } = new FakeRandomSource();
 
     public IGraphics Graphics { get; set; } = new RecordingGraphics();

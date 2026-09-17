@@ -31,10 +31,7 @@ public class ControlMap<TAction, TAxis>
     // no press of its own; crossing the threshold is the nearest thing.
     private const float TriggerThreshold = 0.5f;
 
-    // Enough to clear a worn potentiometer's wander. A SideWinder Precision 2
-    // sitting untouched reports up to 0.03 on its X axis, drifting
-    // continuously, so anything under this is the stick's rest position
-    // rather than the pilot's hand.
+    // Enough to clear a worn potentiometer's wander: a SideWinder Precision 2 at rest drifts up to 0.03 on its X axis.
     private const float Deadzone = 0.1f;
 
     // How far a stick must travel before it counts as held in a direction.
@@ -108,9 +105,7 @@ public class ControlMap<TAction, TAxis>
         }
     }
 
-    // The entry for the device being flown: the one naming it, or failing
-    // that the catch-all. Resolved per read, so swapping sticks mid-game is
-    // picked up without rebuilding the map.
+    // The entry naming the device being flown, or the catch-all. Resolved per read, so swapping sticks mid-game just works.
     private DeviceMap? Active
     {
         get
@@ -169,9 +164,7 @@ public class ControlMap<TAction, TAxis>
     /// </remarks>
     public bool WasPressed(TAction action)
     {
-        // Both sides are read, and neither short-circuits the other: each
-        // consumes its own one-shot, and skipping one would leave a press
-        // in hand to fire on the next update.
+        // Both sides read, neither short-circuits: skipping one would leave its one-shot press to fire on the next update.
         bool key = KeyPressed(action);
         bool button = DevicePressed(action);
 
@@ -289,10 +282,7 @@ public class ControlMap<TAction, TAxis>
                 || AxisPushed(active, action));
     }
 
-    // A stick pushed far enough one way counts as holding that direction.
-    // This is how a digital stick flies at all - it has no position to
-    // report, so the ramp is all it has - and it stays true for an analog
-    // one, which simply reaches the threshold on the way over.
+    // How a digital stick flies at all - it has no position, so the ramp is all it has. An analog one just reaches the threshold on the way over.
     private bool AxisPushed(DeviceMap active, TAction action)
     {
         if (!_directions.TryGetValue(action, out (TAxis Axis, int Sign) direction)

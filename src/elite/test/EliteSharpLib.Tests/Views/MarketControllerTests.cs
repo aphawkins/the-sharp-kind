@@ -14,13 +14,7 @@ using SharpKind.UI;
 
 namespace EliteSharpLib.Tests.Views;
 
-// The market's cursor and its window, with no rendition involved. The cursor is
-// a row in the list: the goods used to be an enum running 1 (Food) to 17 (Alien
-// Items) and the cursor was clamped to that range, which is what a 0-based
-// clamp over an ordered list says without needing the numbering. The bug the
-// old comment recorded - a [0, Count-1] clamp leaving nothing highlighted at
-// reset, because 0 was the enum's None - cannot come back: there is no None,
-// and row 0 is a good.
+// The cursor is a 0-based row over the goods list; row 0 is a real good, never a None sentinel.
 public class MarketControllerTests
 {
     [Fact]
@@ -80,9 +74,7 @@ public class MarketControllerTests
         Assert.Equal(4, trade.StockMarket[0].CurrentQuantity);
     }
 
-    // The window is the rendition's answer to how many rows it has room for.
-    // A list that fits never scrolls, which is what makes the classic
-    // seventeen draw where they always did.
+    // The window is the rendition's answer to how many rows it has room for; a list that fits never scrolls.
     [Fact]
     public void AListThatFitsTheWindowNeverScrolls()
     {
@@ -99,9 +91,7 @@ public class MarketControllerTests
         Assert.Equal(0, controller.FirstVisibleRow);
     }
 
-    // And a list that does not fit scrolls exactly far enough to keep the
-    // cursor on screen - which is the thing that lets a goods set larger than
-    // the screen be traded at all.
+    // A list that does not fit scrolls exactly far enough to keep the cursor on screen.
     [Fact]
     public void ACursorLeavingASmallWindowScrollsIt()
     {

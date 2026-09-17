@@ -59,9 +59,7 @@ public class LayerRunnerTests
 
         runner.Draw();
 
-        // The universe layer's flush had already happened by the time the HUD
-        // layer drew, so a compositing backend trims that layer's depth-tested
-        // content to 512x384 rather than to the HUD's full screen.
+        // The universe layer's flush already happened by the time the HUD drew, so a compositing backend trims to 512x384, not the full screen.
         Assert.Equal(0, window.FlushesWhenDrawn);
         Assert.Equal(1, hud.FlushesWhenDrawn);
         Assert.Equal(2, graphics.FlushDepthCount);

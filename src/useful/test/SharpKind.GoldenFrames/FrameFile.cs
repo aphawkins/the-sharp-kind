@@ -5,9 +5,7 @@ using System.Text;
 
 namespace SharpKind.GoldenFrames;
 
-// Reads and writes the committed frame-signature baselines, in the same
-// line-based text as the traces and for the same reason: a change should be
-// reviewable in a pull request without special tooling.
+// Line-based text, like the traces, so a change is reviewable in a pull request without special tooling.
 public static class FrameFile
 {
     private const int SchemaVersion = 1;
@@ -63,8 +61,7 @@ public static class FrameFile
             }
             else
             {
-                // "| " prefix, so a row of leading dots cannot be mistaken
-                // for blank and trimmed away by an editor.
+                // "| " prefix so leading dots aren't mistaken for blank and trimmed by an editor.
                 thumbnail.Add(line[2..]);
             }
         }

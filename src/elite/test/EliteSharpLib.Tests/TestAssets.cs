@@ -7,11 +7,8 @@ using SharpKind.Assets;
 
 namespace EliteSharpLib.Tests;
 
-// The game's assets and a rendition's, composed as the game composes them.
-// Artwork, palettes, fonts and ship models live with the rendition that draws
-// them now, so a test wanting any of those has to say which rendition it
-// means - AssetLocator.Create() on its own finds only the music and the
-// sound effects, which is all the game keeps for itself.
+// Artwork, palettes, fonts and ship models live with the rendition, so a test wanting any of
+// those has to say which one; AssetLocator.Create() alone finds only music/effects.
 internal static class TestAssets
 {
     private const string SixteenBit = "16-bit";

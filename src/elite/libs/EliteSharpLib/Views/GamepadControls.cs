@@ -6,22 +6,12 @@ using SharpKind.Input;
 
 namespace EliteSharpLib.Views;
 
-// What is left of the gamepad once the flight controls became bindings:
-// the "press fire to continue" prompts, which are not a binding and should
-// not be one.
-//
-// Everything a commander can rebind goes through ControlMap and
-// elite.controls.sharp. These prompts do not, deliberately - they are the
-// first thing a player meets, and a stick the file has no entry for should
-// still get past the title screen.
+// "Press fire to continue" prompts, deliberately not a ControlMap binding: they are the first
+// thing a player meets, and a stick the controls file has no entry for should still get past them.
 internal static class GamepadControls
 {
-    // Any button at all, as a one-shot. Held-based would fire again on
-    // every tick the button stayed down and skip straight through the
-    // screen behind it.
-    //
-    // Every button is read rather than stopping at the first: IsPressed
-    // consumes, and one left unread would fire on the next update.
+    // One-shot, not held: held would skip straight through the screen behind it. Every button
+    // is read rather than stopping at the first, since IsPressed consumes and would miss one.
     internal static bool WasFirePressed(IGamepad gamepad)
     {
         ArgumentNullException.ThrowIfNull(gamepad);

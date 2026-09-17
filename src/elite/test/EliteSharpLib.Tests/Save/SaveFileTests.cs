@@ -14,9 +14,7 @@ using SharpKind.Fakes.Input;
 
 namespace EliteSharpLib.Tests.Save;
 
-// Serialised against the other classes that read or write ELITE_DEBUG_COMMANDER.
-// EnvironmentVariableScope puts a variable back, but it cannot stop another
-// class reading it in the meantime: an environment variable belongs to the
+// Serialised against other classes reading/writing ELITE_DEBUG_COMMANDER: it belongs to the
 // process, and xUnit runs test classes in parallel.
 [Collection("EnvironmentVariables")]
 public class SaveFileTests
@@ -227,9 +225,7 @@ public class SaveFileTests
     [Fact]
     public void LoadCommanderReadsAMissionTheSaveDoesNotMentionAsNotStarted()
     {
-        // Arrange: a commander saved before a mission existed, or one who has simply
-        // never met it. Either way the absence is the answer, not a reason to refuse
-        // the file.
+        // A commander saved before a mission existed, or who never met it: absence is the answer, not a refusal.
         SaveFile saveFile = CreateSaveFile(out _, out _, out GameState gameState);
         saveFile.SaveCommander("PartWay");
         Edit(
@@ -356,10 +352,8 @@ public class SaveFileTests
         Assert.Single(Directory.GetFiles(directory));
     }
 
-    // The load and save screens can only make upper-case names, because a
-    // letter arrives as a ConsoleKey. A file whose name is in any other case -
-    // hand-edited, or written by an older build - would be unreachable on a
-    // case-sensitive filesystem while looking perfectly present in the folder.
+    // The load/save screens can only make upper-case names (a letter arrives as a ConsoleKey), so a
+    // hand-edited or older-build file in any other case must still be reachable on a case-sensitive filesystem.
     [Theory]
     [InlineData("Mixed", "MIXED")]
     [InlineData("lower", "LOWER")]
@@ -386,9 +380,7 @@ public class SaveFileTests
         Assert.Single(Directory.GetFiles(directory));
     }
 
-    // Both helpers ask the save file where a commander lives. Rebuilding the
-    // path here would let the tests disagree with the game about case, which
-    // only a case-sensitive filesystem would ever report.
+    // Both helpers ask the save file where a commander lives, rather than rebuilding the path here and risking a case mismatch.
     private static JsonObject ReadSave(SaveFile saveFile, string name)
         => JsonNode.Parse(File.ReadAllText(saveFile.PathFor(name)))!.AsObject();
 
@@ -408,10 +400,7 @@ public class SaveFileTests
 
     private static SaveFile CreateSaveFile(out string directory, out Trade trade, out GameState gameState)
     {
-        // These tests are written against Commander Jameson, so the debug commander is
-        // cleared rather than left to whatever the machine has set. Only
-        // SaveFile's constructor reads it, so the scope ends with this method
-        // and the process is left as it was found.
+        // Written against Commander Jameson, so the debug commander is cleared rather than left to the machine's setting.
         using EnvironmentVariableScope commander =
             EnvironmentVariableScope.Set(SaveFile.DebugCommanderEnvVar, null);
 

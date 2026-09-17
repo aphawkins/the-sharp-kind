@@ -18,9 +18,7 @@ public sealed class LoggingConfigSettings
 
     private const LogLevel DefaultMinimumLevel = LogLevel.Information;
 
-    // The lowest level written to the log file and console. The
-    // ELITE_LOG_LEVEL/SCR_LOG_LEVEL environment variables still override
-    // this for when the config file itself is what needs debugging.
+    // The ELITE_LOG_LEVEL/SCR_LOG_LEVEL environment variables still override this for when the config file itself needs debugging.
     public LogLevel MinimumLevel { get; set; } = DefaultMinimumLevel;
 
     // How many rolling daily log files are kept before the oldest are

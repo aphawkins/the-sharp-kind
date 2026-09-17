@@ -149,9 +149,7 @@ public sealed class ListView<TControl>(IGraphics graphics, ControlStyle style)
         }
     }
 
-    // The least scrolling that puts the cursor back on screen: nothing while it
-    // is already there, one row when it has just stepped off an edge, and a
-    // jump only when something else moved it a long way.
+    // The least scrolling that puts the cursor back on screen.
     private void ScrollToSelection()
     {
         int window = Window;
@@ -171,8 +169,7 @@ public sealed class ListView<TControl>(IGraphics graphics, ControlStyle style)
             FirstVisible = _selectedIndex - window + 1;
         }
 
-        // Rows can be removed under a window that had scrolled past them, so
-        // the last row is pinned to the bottom rather than leaving a gap.
+        // Pins the last row to the bottom rather than leaving a gap if rows are removed under a scrolled window.
         FirstVisible = Math.Clamp(FirstVisible, 0, Math.Max(0, _rows.Count - window));
     }
 }

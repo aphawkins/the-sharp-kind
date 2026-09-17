@@ -12,18 +12,12 @@ using StuntCarRacerSharpLib.Screens;
 
 namespace StuntCarRacerSharpLib.Tests;
 
-// Drives the real StuntCarRacerMain against a real SoftwareGraphics with no
-// SDL window (generalising StuntCarRacerMainTests.StartRace's menu->race
-// key sequence into a scripted timeline any test can replay), for tests
-// that need several ticks of real gameplay and, occasionally, a rendered
-// frame to eyeball.
+// Drives the real StuntCarRacerMain against a real SoftwareGraphics with no SDL window, generalising
+// StuntCarRacerMainTests.StartRace's menu->race key sequence into a scripted timeline any test can replay.
 internal sealed class HeadlessGameHarness : HeadlessGameHarnessBase<GameStateSummary>
 {
-    // randomSeed replaces the game's unseeded Random.Shared, so a run can be
-    // reproduced exactly. Null keeps the shipped behaviour. Frame baselines
-    // need it: the opponent's steering jitter and the engine sound's period
-    // are both drawn from it, so without a fixed seed no two runs compose the
-    // same frame.
+    // randomSeed replaces the game's unseeded Random.Shared. Frame baselines need it: the
+    // opponent's steering jitter and engine sound period both draw from it, so no two runs would otherwise compose the same frame.
     public HeadlessGameHarness(int width = 640, int height = 400, int? randomSeed = null)
         : base(width, height, AssetLocator.Create())
     {

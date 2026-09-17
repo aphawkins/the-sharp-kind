@@ -7,9 +7,7 @@ using SharpKind.Input;
 
 namespace EliteSharpLib.Tests;
 
-// One game played at one update rate, with the player's speed noted at the
-// updates a test wants to look at. The harness is kept afterwards so a test
-// can also ask about the state the run finished in.
+// The harness is kept afterwards so a test can also ask about the state the run finished in.
 internal sealed class FrameRateRun : IDisposable
 {
     private readonly List<float> _speeds = [];

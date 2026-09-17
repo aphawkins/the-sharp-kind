@@ -17,8 +17,7 @@ namespace EliteSharp.Renditions.SixteenBit;
 /// </summary>
 internal class BaseView16Bit : IBaseView
 {
-    // The 16-bit font is proportional, so this is the nominal character width
-    // the word-wrap estimates against rather than a measured one.
+    // Nominal width for word-wrap; the font is proportional so this isn't measured.
     private const int CharacterWidth = 8;
 
     private readonly FastColor _colorGold;
@@ -40,8 +39,7 @@ internal class BaseView16Bit : IBaseView
 
     public ViewLayout Layout { get; }
 
-    // Right-aligned, so the proportional font's width never has to be
-    // estimated to place this.
+    // Right-aligned so the proportional font's width doesn't need estimating.
     public void DrawFps(int fps)
         => Graphics.DrawTextRight(
             new(Layout.ViewportRight - 4, Layout.ViewportTop + 4),

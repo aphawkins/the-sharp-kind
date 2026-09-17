@@ -7,9 +7,7 @@ using EliteSharpLib.Missions;
 
 namespace EliteSharpLib.Tests.Missions;
 
-// Stages are strings now, because an enum cannot cover a mission that arrives
-// in an assembly the game was never built against. These are what stands in
-// for the enum's guarantee: a stage nobody declared cannot be reached.
+// Stages are strings, since an enum can't cover a mission in an assembly the game was never built against.
 public class MissionProgressTests
 {
     [Fact]

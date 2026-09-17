@@ -14,9 +14,7 @@ namespace EliteSharpLib.Tests.Trader;
 [Trait("Level", "Integration")]
 public sealed class ClassicGoodsFileTests : IDisposable
 {
-    // The fixtures are real files, read from beside the assembly, rather than
-    // JSON spelled out in C#: the subject here is a file, and a string literal
-    // that happens to be JSON is not one.
+    // Real files on disk: the subject under test is a file, not a JSON string literal.
     private static readonly string s_oneGood = Fixture("one-good.json");
 
     private readonly string _directory;

@@ -14,9 +14,7 @@ public sealed class OpponentRenderer
 {
     private const int ShadowColour = Track.ScrBaseColour + 5;
 
-    // The Amiga had no transparency, so its shadow was a solid fill of the
-    // colour above. Drawn translucent instead, the road's own markings stay
-    // visible through it and the quad reads as a shadow rather than a hole.
+    // The Amiga had no transparency, so its shadow was a solid fill. Drawn translucent instead, so road markings stay visible through it.
     private const byte ShadowAlpha = 160;
 
     private readonly OpponentPhysics _opponent;

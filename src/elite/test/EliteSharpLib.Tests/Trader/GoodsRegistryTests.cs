@@ -9,10 +9,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace EliteSharpLib.Tests.Trader;
 
-// What a goods set has to satisfy to be traded. The rest of the game takes two
-// things on trust - that an id is a usable key, and that the goods a wrecked
-// ship drops all exist - and this is where a set that breaks either is turned
-// away.
+// A goods set must give every id as a usable key, and every wrecked-ship drop must exist in it.
 public class GoodsRegistryTests
 {
     private static readonly Good[] s_shipDrops =

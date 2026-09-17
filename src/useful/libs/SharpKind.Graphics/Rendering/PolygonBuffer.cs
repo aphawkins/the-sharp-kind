@@ -2,12 +2,8 @@
 
 namespace SharpKind.Graphics.Rendering;
 
-// Backing storage for the renderers' per-frame polygon lists. The New Kind
-// capped its poly_chain at 100 and dropped whatever arrived after that
-// silently; the cap is reachable here (20 universe objects against models
-// running to 29 faces), so the buffer grows instead and nothing is dropped.
-// It is reused frame to frame, so the doubling settles at the busiest scene
-// seen and stops allocating.
+// The New Kind capped its poly_chain at 100 and dropped anything after silently. That cap is
+// reachable here, so this buffer grows instead; reused frame to frame, it settles at the busiest scene seen.
 internal static class PolygonBuffer
 {
     // Covers an ordinary scene without a resize; the old fixed cap was 100.

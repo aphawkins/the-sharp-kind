@@ -13,13 +13,8 @@ namespace EliteSharpLib.Planets;
 
 internal static class PlanetFactory
 {
-    // A wireframe world overrides the planet style; the original picks a
-    // crater or an equator-and-meridian from bit 1 of the system's tech
-    // level (SOS1).
-    //
-    // Which style applies stays the game's decision - the commander chose it
-    // in the settings - and what that style looks like is the rendition's.
-    // This no longer knows which renditions exist.
+    // A wireframe world overrides the planet style; the original picks crater vs equator-and-meridian from bit 1 of the system's tech level (SOS1).
+    // Which style applies is the game's decision (from settings); what it looks like is the rendition's.
     internal static IObject Create(
         FillMode style,
         PlanetType type,
@@ -40,10 +35,7 @@ internal static class PlanetFactory
                 _ => throw new EliteException(),
             };
 
-        // Reference: fesh0r/newkind's generate_fractal_landscape(rnd_seed)
-        // reseeds a single stream for the whole landscape, so the same system
-        // always renders the same planet. The game owns that stream, as it
-        // owns every other one.
+        // Reseeds a single stream for the whole landscape (fesh0r/newkind's generate_fractal_landscape), so the same system always renders the same planet.
         Random random = new(seed);
         PlanetLook look = new(planetStyle, (techLevel & 2) != 0, new RandomSource(random));
 

@@ -70,9 +70,7 @@ public class VertexNormalsTests
         Assert.Equal(expectSmoothed, normals[0][1] != a);
     }
 
-    // A decal or detail line lies in the plane of the hull face beneath it, so
-    // averaging its normal in would count that plane twice and pull every
-    // corner it touches back towards flat.
+    // Averaging a decal's normal in would count its hull face's plane twice and pull every corner it touches back towards flat.
     [Fact]
     public void AFaceWithNoNormalNeitherSmoothsNorIsSmoothed()
     {
