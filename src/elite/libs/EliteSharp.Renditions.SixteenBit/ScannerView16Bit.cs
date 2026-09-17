@@ -45,9 +45,9 @@ internal sealed class ScannerView16Bit : ScannerViewBase
 
     protected override int IndicatorWidth => 4;
 
-    protected override Vector2 ShieldFrontPosition => new(31, 7);
+    protected override Vector2 ShieldFrontPosition => new(31, 8);
 
-    protected override Vector2 ShieldRearPosition => new(31, 23);
+    protected override Vector2 ShieldRearPosition => new(31, 24);
 
     protected override Vector2 FuelPosition => new(31, 44);
 
