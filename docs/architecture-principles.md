@@ -87,6 +87,13 @@ every Elite screen and to any new one.
 * **Palette names are per tier and the two sets need not overlap.** The 8-bit palette is sixteen web colour names, the 16-bit one is 29 ramp names; nothing may assume a name exists in both. This is why the models are tier-scoped, and why a `Palette["..."]` lookup in shared code is a latent startup crash — it must sit in tier-specific code or use a name both palettes define.
 * **A tier's channel depth is enforced, not assumed.** `AssetColourBudget.ChannelBits` says how many bits per channel the tier's hardware could drive — four for 16-bit, its 12-bit DAC — and `AssetSet.Load` fails startup on any palette entry or bitmap pixel that sits between those levels. Widen an n-bit channel by **replication** (`0xE` → `0xEE`), never a left shift (`0xE0`), which cannot reach white. Anything that authors a colour for a tier — art, palette, a literal in a view — has to land on the grid.
 
+### Code comments
+
+* Comments are terse and to the point. One line where one line does.
+* A comment explains **why**, not what — the code already says what it does.
+* No justification, no history, no dated rationale, no argument for the decision taken. That belongs in [decisions.md](decisions.md) and the commit message.
+* Delete a comment rather than update it to say what the code now plainly says.
+
 ### Solution hygiene
 
 * NuGet package versions are managed centrally (`Directory.Packages.props`); shared `PackageReference` blocks (analyzers) live in `Directory.Build.props`/`.targets`, not copy-pasted per project.
