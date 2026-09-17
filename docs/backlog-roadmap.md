@@ -483,6 +483,32 @@ closes the side-plane clipping entry under Won't in
       not at all. Sequence after the z-buffer defect fix, which changes
       `Submit`'s signature.
 
+### Asset structure
+
+- [ ] [StuntCarRacerSharpLib] Split `Assets/Images/atlas.bmp` into one image
+  per sprite and drop the packed sheet. It is 1024x1024 at 32bpp — a 4 MB
+  binary — inherited from ptitSeb's remake, and its contents are addressed
+  by fifteen hard-coded `AtlasRect` constants in
+  `Rendering/HudRenderer.cs` (`s_hole`, `s_cockpitTop`, `s_engineFlames0`
+  and the rest). Those constants are a second source of truth for where the
+  art lives: move a sprite in the sheet and nothing fails until it renders
+  wrong.
+
+  Packing earns nothing here. `SDLGraphics` holds one texture per image
+  name and issues one `SDL_RenderTexture` per `DrawImagePart`, and
+  `SoftwareGraphics` blits per pixel from a `FastBitmap` looked up by name,
+  so neither backend batches and the number of draw calls is the same
+  either way. Splitting turns each sprite into a manifest entry with a
+  name, makes the art diffable, and lets the colour-budget check report per
+  sprite rather than per sheet.
+
+  Same reasoning that removed the packed atlas from Bubble Bobble's
+  Phase 2 — see [bb-port-plan.md](bb-port-plan.md).
+
+  Note the open SCR road-line-texture item below assumes `atlas.bmp`
+  exists; settle this one first or update that one with it. Low priority:
+  nothing is broken, and the win is maintainability rather than behaviour.
+
 ### Cleanups and small refactors
 
 3D pipeline sharing (split 2026-07-14 from the "unify the two 3D

@@ -33,6 +33,30 @@ public sealed class SpriteAtlas
             StringComparer.Ordinal));
     }
 
+    // Most sheets are a plain grid of equal cells, where an index file would say nothing the dimensions do not.
+    // Names run "{prefix}-{n}" in reading order, so a sheet is usable before anyone knows what its cells depict -
+    // which is the state a translation is in until the routine that draws each one turns up.
+    public static SpriteAtlas Grid(string prefix, int cellWidth, int cellHeight, int columns, int rows)
+    {
+        if (cellWidth <= 0 || cellHeight <= 0 || columns <= 0 || rows <= 0)
+        {
+            throw new SharpKindException(
+                $"A {columns}x{rows} grid of {cellWidth}x{cellHeight} cells describes no sprites.");
+        }
+
+        Dictionary<string, SpriteRect> sprites = new(StringComparer.Ordinal);
+
+        for (int index = 0; index < columns * rows; index++)
+        {
+            int column = index % columns;
+            int row = index / columns;
+
+            sprites[$"{prefix}-{index}"] = new(column * cellWidth, row * cellHeight, cellWidth, cellHeight);
+        }
+
+        return new(sprites);
+    }
+
     public SpriteRect Sprite(string name)
         => _sprites.TryGetValue(name, out SpriteRect rect) ? rect
             : throw new SharpKindException($"The sprite atlas has no sprite named '{name}'.");

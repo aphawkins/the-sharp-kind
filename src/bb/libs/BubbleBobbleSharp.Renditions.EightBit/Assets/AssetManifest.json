@@ -5,13 +5,26 @@
     "ChannelBits": 8
   },
   "Palette": "palette.json",
+  "Images": {
+    "SpritesGame": "sprites-game.tga",
+    "SoftwareSprites": "software-sprites.tga",
+    "LevelTiles": "level-tiles.tga",
+    "Sidebars": "sidebars.tga",
+    "BubbleMasks": "bubble-masks.tga",
+    "BubbleDragonInBubble": "bubble-dragon-in-bubble.tga",
+    "GrumpleGromit": "grumple-gromit.tga",
+    "DiamondSprite": "diamond-sprite.tga",
+    "BonusCake": "bonus-cake.tga",
+    "BonusDiamond": "bonus-diamond.tga",
+    "BonusMelon": "bonus-melon.tga"
+  },
   "Fonts": {
     "Bitmap": {
       "Small": {
-        "File": "bbc-micro.bmp",
+        "File": "charset.tga",
         "CellWidth": 8,
         "CellHeight": 8,
-        "Columns": 12
+        "Columns": 16
       }
     }
   }

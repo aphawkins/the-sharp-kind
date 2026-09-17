@@ -36,6 +36,28 @@ public class SpriteAtlasTests
     }
 
     [Fact]
+    public void BuildsAGridInReadingOrder()
+    {
+        SpriteAtlas atlas = SpriteAtlas.Grid("tile", 8, 8, 5, 3);
+
+        Assert.Equal(15, atlas.Count);
+        Assert.Equal(new SpriteRect(0, 0, 8, 8), atlas.Sprite("tile-0"));
+        Assert.Equal(new SpriteRect(32, 0, 8, 8), atlas.Sprite("tile-4"));
+        Assert.Equal(new SpriteRect(0, 8, 8, 8), atlas.Sprite("tile-5"));
+        Assert.Equal(new SpriteRect(32, 16, 8, 8), atlas.Sprite("tile-14"));
+        Assert.False(atlas.Has("tile-15"));
+    }
+
+    [Theory]
+    [InlineData(0, 8, 2, 2)]
+    [InlineData(8, 0, 2, 2)]
+    [InlineData(8, 8, 0, 2)]
+    [InlineData(8, 8, 2, 0)]
+    public void RefusesAGridThatDescribesNothing(int cellWidth, int cellHeight, int columns, int rows)
+        => Assert.Throws<SharpKindException>(
+            () => SpriteAtlas.Grid("tile", cellWidth, cellHeight, columns, rows));
+
+    [Fact]
     public void NamesTheSpriteItCannotFind()
     {
         SpriteAtlas atlas = new(new Dictionary<string, SpriteRect> { ["one"] = new(0, 0, 8, 8) });

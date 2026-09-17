@@ -60,11 +60,15 @@ being written. So:
 
 ## 3. Preconditions
 
-- [ ] **Licence.** `rebb64` has no `LICENSE` file and contains Taito and
-      Firebird material in derived form. Settle what the port may ship
-      before writing code that ships it.
-- [ ] **Toolchain.** .NET 10 SDK, Python 3, and `cc65`.
+- [x] **Licence.** `rebb64` has no `LICENSE` file and contains Taito and
+      Firebird material in derived form. **Decided: the port ships the
+      derived assets in this repo.** Andy's call, made deliberately and with
+      the position understood. Revisit it before any release that is
+      distributed more widely than the repo itself.
+- [ ] **Toolchain.** .NET 10 SDK, Python 3, and `cc65`. .NET 10 and Python 3
+      are present; `cc65` is not installed yet.
 - [ ] **VICE.** Installed. It is the reference runner for visual comparison.
+      Not installed yet, which is what blocks every VICE verify step below.
 - [ ] **Baseline.** `make verify` passes in `rebb64/build/`. It checks the
       assembled output against the SHA256 of the original PRG, and it is
       what makes every later fidelity claim mean anything.
@@ -335,26 +339,76 @@ other suite pass, golden frames included.
 `rebb64/data/` already holds the data in editable form. This converts it to
 what the engine reads.
 
-- [ ] `rebb64/build/export-csharp-assets.py`, reusing the parsers in
-      `convert-levels.py`, `convert-zone-data.py` and `convert-tga.py`. Do
-      not re-invent them.
-- [ ] `Images/atlas.bmp` — every `.tga` packed into one 24-bit BMP, indices
-      resolved to RGB, index 0 the transparent colour, with a recoloured
-      copy of the tile set per level colour. The engine reads TGA directly
-      now, so this is packing and recolouring, not format conversion - and
-      a single sprite can be read straight from `rebb64/data` while the
-      atlas is still being built.
-- [ ] `Images/atlas.json` — the sprite index the `SpriteSheet` reads.
-- [ ] `Levels/levels.json` — 100 levels: the 32x23 bitmap as a string array,
+Being done in two chunks: the data first, the artwork second.
+
+**Done — the data**
+
+- [x] `rebb64/build/export-csharp-assets.py`, reusing the parsers in
+      `convert-levels.py` and `convert-zone-data.py` by importing them, so
+      what it exports is parsed by the very code `make verify` proves. Its
+      atlas half is still to come.
+- [x] `Levels/levels.json` — 100 levels: the 32x23 bitmap as a string array,
       plus `colors`, `sidebar`, `bubbleCurrent`, `wrapOpenings`, `foodDrop`,
       `powerupSpawn`, `spawnFlags` and the enemy list.
-- [ ] `Levels/zones.json` — from `zone-data.txt`, mirroring already applied.
-- [ ] Replace `bbc-micro.bmp` with the game's own font from
-      `charset.tga` and `hud-font.tga`.
-- [ ] `LevelStore` and `AtlasIndex` in the lib.
+- [x] `Levels/zones.json` — from `zone-data.txt`, with `mirror` expanded and
+      `level N -> M` redirects resolved, so the port reads rectangles and
+      nothing else. The mirror axis is column 16, which is the one
+      `convert-levels.py`'s `is_symmetric` uses.
+- [x] `LevelStore` in the lib, plus `Level`, `EnemySpawn` and `LevelPoint`.
+      Levels are asked for by the number the game counts in, 1 to 100.
 
-**Verify:** a test loads all 100 levels, asserts there are 100, and asserts
-level 1's bitmap row 8 is `..##...##################...##..`.
+**Verified:** 15/15 in `BubbleBobbleSharpLib.Tests`. A test loads all 100
+levels, asserts there are 100 and that they are numbered 1 to 100, asserts
+every bitmap is 23 rows of 32 `#`/`.`, and asserts level 1's row 8 is
+`..##...##################...##..`.
+
+**To do — the artwork**
+
+Amended 2026-09-17: no packed atlas. The original plan packed every `.tga`
+into one BMP with a recoloured copy of the tile set per level colour. Both
+halves of that are dropped, for separate reasons.
+
+*Packing buys nothing here.* An atlas exists to keep a batched renderer
+from rebinding textures. Neither backend batches: `SDLGraphics` holds one
+texture per image name and issues one `SDL_RenderTexture` per
+`DrawImagePart`, and `SoftwareGraphics` blits per pixel from a `FastBitmap`
+it looks up by name. Thirty sprites cost thirty draw calls either way, and
+at 320x200 the difference is unmeasurable. Against that, a packed atlas is
+a generated blob that has to be rebuilt whenever any `.tga` changes, whose
+diffs say nothing, and it needs an index file that is a second source of
+truth. The engine reads TGA directly and `AssetManifest.Images` is already
+a name-to-file map, so separate files are also the shorter path.
+
+*Recolouring belongs at draw time, not in a committed asset.* See Phase 3.
+
+- [x] Each `.tga` is its own image, declared in `AssetManifest.Images` and
+      read by `TgaReader`. Eleven sheets. The export rewrites the 24-bit
+      colour map as 32-bit so index 0 can carry alpha 0: these are C64
+      multicolour sheets, where bit-pair 00 is the background showing
+      through rather than a colour, and `TgaReader` would otherwise make it
+      opaque black. Every colour in every sheet was already one of the 16
+      Pepto values `palette.json` names, so the budget needed no work.
+- [x] `SpriteAtlas.Grid` in the engine, for sheets that are a plain grid of
+      equal cells - which all of these are, so no JSON index is needed.
+      Names run `{prefix}-{n}` in reading order. Each sheet's cell size gets
+      declared with the view that draws it, in Phase 3, rather than guessed
+      at now.
+- [x] Replaced `bbc-micro.bmp` with the game's own `charset.tga`. It had to
+      be reordered, not copied: the game's charset runs digits first, and
+      only the letters happen to fall where `char - ' '` looks for them.
+      The export rewrites it into the order `BitmapFont` reads, 16 columns
+      of 8x8, leaving unmapped cells blank.
+- [ ] `hud-font.tga` is still unexported - 10 cells of 8x8, almost
+      certainly the HUD's digits. Deferred deliberately: it is a second
+      font entry, and what it is for is only decidable when there is a HUD
+      drawing it, in Phase 3. `digit-font.tga` is in the same position.
+
+**Verified:** 26/26 in `BubbleBobbleSharpLib.Tests`. `AssetSet.Load` opens
+every file the manifest names and passes the C64 colour budget - 16
+colours, all named, no partial alpha. Tests prove the sheets kept both
+transparent and opaque pixels, and that `0`, `9`, `A` and `Z` have ink
+where `BitmapFont` looks for them while space stays blank. Elite (726 +
+39), SCR (246) and `SharpKind.Graphics` (294) all pass.
 
 ## Phase 3 — Static rendering
 
@@ -368,6 +422,12 @@ sidebar handling in `render-screen.s`.
       chosen by the level's `sidebar` byte.
 - [ ] `PlayfieldModel` / `PlayfieldViewC64` — the 32x23 tile grid, using the
       level's `colors` byte, clipped so nothing spills into the sidebars.
+- [ ] Recolour the tile sheet at level load, from the level's `colors` byte,
+      and hold the recoloured `FastBitmap` for as long as the level lasts.
+      The tiles are 2-bit multicolour and the colour byte picks what the
+      four entries mean, so keeping the indices until draw time is both the
+      faithful model and the one that costs nothing: a recolour per level
+      beats a baked copy per colour combination.
 - [ ] `HudModel` / `HudViewC64` — both scores, high score, lives.
 - [ ] A debug key that steps to the next level.
 - [ ] Confirm the fourteen unverified palette entries against VICE.
