@@ -7,7 +7,8 @@ using SharpKind.Graphics;
 
 namespace SharpKind.GoldenFrames;
 
-// A form small enough to commit and legible enough to review. The hash catches any pixel change; the thumbnail shows where, since the repo has no image diff.
+// A form small enough to commit and legible enough to review. The thumbnail is what is compared, cell by cell;
+// the hash only names a frame.
 public sealed record FrameSignature(int Tick, string Hash, IReadOnlyList<string> Thumbnail)
 {
     // Enough to place the planet disc, viewport border and HUD band; small enough to keep frames at a few kilobytes.
@@ -16,11 +17,43 @@ public sealed record FrameSignature(int Tick, string Hash, IReadOnlyList<string>
     // '.' rather than ' ' for empty space so trailing cells survive a trim and rows stay aligned in a diff.
     private const string Ramp = ".:-=+*#%@";
 
+    // One step of drift is codegen, not a rendering change: the JIT may contract a multiply-add into an FMA,
+    // which varies by machine and is worth a pixel of brightness. A real change moves a cell further.
+    private const int CellTolerance = 1;
+
     public static FrameSignature Capture(int tick, FastBitmap frame)
     {
         ArgumentNullException.ThrowIfNull(frame);
 
         return new(tick, HashOf(frame), ThumbnailOf(frame));
+    }
+
+    /// <summary>
+    /// Whether two rows of the grid agree to within <see cref="CellTolerance"/>.
+    /// </summary>
+    public static bool RowsMatch(string expected, string actual)
+    {
+        ArgumentNullException.ThrowIfNull(expected);
+        ArgumentNullException.ThrowIfNull(actual);
+
+        if (expected.Length != actual.Length)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < expected.Length; i++)
+        {
+            int before = Ramp.IndexOf(expected[i], StringComparison.Ordinal);
+            int after = Ramp.IndexOf(actual[i], StringComparison.Ordinal);
+
+            // A character off the ramp cannot be off by a little.
+            if (before < 0 || after < 0 || Math.Abs(before - after) > CellTolerance)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public string Describe()

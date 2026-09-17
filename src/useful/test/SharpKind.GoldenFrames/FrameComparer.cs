@@ -1,4 +1,4 @@
-// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
+﻿// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
 
 using System.Text;
 
@@ -9,11 +9,12 @@ namespace SharpKind.GoldenFrames;
 /// what moved when they disagree.
 /// </summary>
 /// <remarks>
-/// The message is the reason this is not a bare hash comparison. A changed
-/// hex string tells a reviewer that something changed and nothing else;
-/// neither repo has an image diff, so the thumbnail grids printed side by
-/// side are all there is to say whether the planet moved, the HUD vanished
-/// or the backdrop painted over the world.
+/// The thumbnail grid is compared, not the hash: a pixel-exact hash of a
+/// floating-point render is pinned to the machine that regenerated it, and
+/// fails elsewhere over rounding. The grids are also the message - neither
+/// repo has an image diff, so printing them side by side is all there is to
+/// say whether the planet moved, the HUD vanished or the backdrop painted
+/// over the world.
 /// </remarks>
 public static class FrameComparer
 {
@@ -35,7 +36,7 @@ public static class FrameComparer
 
         for (int i = 0; i < expected.Count; i++)
         {
-            if (expected[i].Hash != actual[i].Hash)
+            if (Differs(expected[i], actual[i]))
             {
                 return Report(expected[i], actual[i]);
             }
@@ -44,8 +45,27 @@ public static class FrameComparer
         return null;
     }
 
-    // Both grids side by side, with the rows that differ marked, so the
-    // failure message alone says what moved.
+    private static bool Differs(FrameSignature expected, FrameSignature actual)
+    {
+        if (expected.Thumbnail.Count != actual.Thumbnail.Count)
+        {
+            return true;
+        }
+
+        for (int row = 0; row < expected.Thumbnail.Count; row++)
+        {
+            if (!FrameSignature.RowsMatch(expected.Thumbnail[row], actual.Thumbnail[row]))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // Both grids side by side, so the failure message alone says what moved.
+    // Only the rows that broke the tolerance are marked: a row that drifted a
+    // single step is not what failed.
     private static string Report(FrameSignature expected, FrameSignature actual)
     {
         StringBuilder message = new();
@@ -56,7 +76,7 @@ public static class FrameComparer
         {
             string before = expected.Thumbnail[row];
             string after = row < actual.Thumbnail.Count ? actual.Thumbnail[row] : string.Empty;
-            _ = message.Append(before == after ? "     " : "  != ");
+            _ = message.Append(FrameSignature.RowsMatch(before, after) ? "     " : "  != ");
             _ = message.Append(before).Append("  ").Append(after).Append('\n');
         }
 
