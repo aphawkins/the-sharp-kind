@@ -304,12 +304,19 @@ New shared code in `SharpKind.Graphics`, on top of `IGraphics`. It is shared
 rather than local because a 2D sprite layer is engine work, not Bubble
 Bobble's.
 
-- [ ] `SpriteSheet` — loads an atlas bitmap plus its JSON index.
-- [ ] `SpriteAtlas` — name to source rectangle.
-- [ ] `SpriteBatch` (or similar) — draws a named sprite at a position,
-      mirrored on request, over `IGraphics.DrawImagePart`.
-- [ ] Unit tests in `SharpKind.Graphics.Tests`.
-- [ ] `RecordingGraphics` records whatever new calls it makes.
+- [x] `SpriteSheet` — pairs the atlas bitmap's image name with its JSON
+      index, and checks every rectangle lies inside the sheet at load. The
+      bitmap itself stays with `AssetSet`, as every other image does, rather
+      than being decoded a second time.
+- [x] `SpriteAtlas` — name to `SpriteRect`, read from the index file. An
+      unknown name faults rather than drawing nothing.
+- [x] `SpriteRenderer` — draws a named sprite at a position, mirrored on
+      request, over `IGraphics.DrawImagePart`. Named for what it does: it
+      holds no frame state, so `SpriteBatch` would have misread.
+- [x] Unit tests in `SharpKind.Graphics.Tests`.
+- [x] `RecordingGraphics` records whatever new calls it makes — it needed
+      nothing new. The renderer adds no method to `IGraphics`, and
+      `ImageParts` already records `DrawImagePart`.
 
 Rules, because this touches shared code:
 
@@ -319,8 +326,9 @@ Rules, because this touches shared code:
 - Elite's and SCR's full suites pass before and after, golden frames
   included.
 
-**Verify:** `SharpKind.Graphics.Tests` covers the new types, and Elite and
-SCR are untouched and still green.
+**Verified:** the solution builds with 0 warnings; `SharpKind.Graphics.Tests`
+is 289/289 with the new types covered; Elite (726 + 39), SCR (246) and every
+other suite pass, golden frames included.
 
 ## Phase 2 — Asset extraction
 
