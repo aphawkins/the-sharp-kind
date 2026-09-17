@@ -98,7 +98,34 @@ SPRITE_SHEETS = [
 ]
 
 
-def write_tga(path, image, transparent_index):
+def load_canonical_palette(out_dir):
+    """
+    The rendition's own palette.json, as a list of (r, g, b), by entry number.
+
+    The sheets are written in these rather than in the colours rebb64's TGAs
+    carry. A sheet's pixel value is a C64 entry number, not a colour - that is
+    what MulticolourSheet repaints at load time - so the colour map is only a
+    naming convention, and the one name that matters is the rendition's. Taking
+    it from anywhere else means a sheet can disagree with the palette, and with
+    PaletteNamesEveryColour declared that is a broken asset set rather than a
+    cosmetic difference.
+    """
+    path = os.path.join(out_dir, "Palette", "palette.json")
+
+    with open(path, encoding="utf-8") as f:
+        palette = json.load(f)
+
+    return [
+        (
+            int(palette[str(entry)][2:4], 16),
+            int(palette[str(entry)][4:6], 16),
+            int(palette[str(entry)][6:8], 16),
+        )
+        for entry in range(len(palette))
+    ]
+
+
+def write_tga(path, image, transparent_index, canonical):
     """
     Write a colour-mapped TGA with a 32-bit colour map.
 
@@ -108,8 +135,17 @@ def write_tga(path, image, transparent_index):
     index that stands for it is written with alpha 0 and the renderer skips it.
     Passing transparent_index=None keeps every entry opaque, which is what a
     font sheet wants: the engine treats a grid font's black as the key itself.
+
+    The map written is the rendition's own, cut to the length the source used -
+    see load_canonical_palette.
     """
-    palette = image["palette"]
+    if len(image["palette"]) > len(canonical):
+        raise SystemExit(
+            f"{path} indexes {len(image['palette'])} colours, and the "
+            f"rendition's palette names {len(canonical)}."
+        )
+
+    palette = canonical[: len(image["palette"])]
 
     header = bytearray(18)
     header[1] = 1  # colour map present
@@ -136,11 +172,11 @@ def write_tga(path, image, transparent_index):
         f.write(bytes(header) + bytes(body))
 
 
-def export_images(out_dir):
+def export_images(out_dir, canonical):
     """Copy each sprite sheet across, with colour index 0 made transparent."""
     for name in SPRITE_SHEETS:
         image = tga_mod.parse_tga(os.path.join(DATA, name))
-        write_tga(os.path.join(out_dir, "Images", name), image, transparent_index=0)
+        write_tga(os.path.join(out_dir, "Images", name), image, 0, canonical)
 
     return len(SPRITE_SHEETS)
 
@@ -186,7 +222,7 @@ def charset_source_cells():
     return cells
 
 
-def export_font(out_dir):
+def export_font(out_dir, canonical):
     """charset.tga -> a grid font sheet in the order BitmapFont reads."""
     source = tga_mod.parse_tga(os.path.join(DATA, "charset.tga"))
     cells = charset_source_cells()
@@ -215,7 +251,7 @@ def export_font(out_dir):
 
     # Opaque: a grid sheet's black background is the transparency key the
     # renderer already knows, so an alpha channel would only fight it.
-    write_tga(os.path.join(out_dir, "Fonts", "charset.tga"), font, transparent_index=None)
+    write_tga(os.path.join(out_dir, "Fonts", "charset.tga"), font, None, canonical)
 
     return len(cells)
 
@@ -241,7 +277,7 @@ TILE_EDGE_COUNT = 6
 TILE_EDGE_WIDTH = 4
 
 
-def export_tile_edges(out_dir):
+def export_tile_edges(out_dir, canonical):
     """charset.tga's screen codes $0A-$0F -> a multicolour sheet of 4x8 cells."""
     source = tga_mod.parse_tga(os.path.join(DATA, "charset.tga"))
     palette = source["palette"]
@@ -278,7 +314,7 @@ def export_tile_edges(out_dir):
         "palette": palette,
     }
 
-    write_tga(os.path.join(out_dir, "Images", "tile-edges.tga"), edges, transparent_index=0)
+    write_tga(os.path.join(out_dir, "Images", "tile-edges.tga"), edges, 0, canonical)
 
     return TILE_EDGE_COUNT
 
@@ -433,6 +469,9 @@ def main():
 
     load_converters(os.path.abspath(args.rebb64))
 
+    canonical = load_canonical_palette(args.out)
+    print(f"Writing sheets in the rendition's {len(canonical)} palette colours")
+
     levels_path = os.path.join(args.out, "Levels", "levels.json")
     zones_path = os.path.join(args.out, "Levels", "zones.json")
 
@@ -442,13 +481,13 @@ def main():
     count = export_zones(zones_path)
     print(f"Wrote {count} zone levels -> {zones_path}")
 
-    count = export_images(args.out)
+    count = export_images(args.out, canonical)
     print(f"Wrote {count} sprite sheets -> {os.path.join(args.out, 'Images')}")
 
-    count = export_font(args.out)
+    count = export_font(args.out, canonical)
     print(f"Wrote a {count}-glyph font -> {os.path.join(args.out, 'Fonts', 'charset.tga')}")
 
-    count = export_tile_edges(args.out)
+    count = export_tile_edges(args.out, canonical)
     print(
         f"Wrote {count} tile edge characters -> "
         f"{os.path.join(args.out, 'Images', 'tile-edges.tga')}"

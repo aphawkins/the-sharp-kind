@@ -267,7 +267,18 @@ is what is left.
 - [x] `FakeAbstraction` and two passing tests
 - [x] Font: `bbc-micro.bmp` from Elite's 8-bit rendition — 8x8 cells,
       12 columns, which is the C64 character grid exactly
-- [x] `palette.json`: the 16 C64 colours, Pepto values
+- [x] `palette.json`: the 16 C64 colours, Pepto values. Corrected
+      2026-09-17 — the values first committed here were not Pepto's. Only
+      black and white matched; the other fourteen were wrong, and are now
+      taken from `Assets/Images/c64-pepto-colodore.png`, a 16x1 truecolour
+      strip of one pixel per colour, running 0 to 15 in C64 colour order
+      and verified to match `palette.json` entry for entry. These sixteen
+      are now the only colours the rendition uses.
+
+      It carries no palette chunk, being truecolour rather than indexed,
+      so it is read by its pixels. Nothing in the build reads it at all -
+      it is the palette's provenance kept beside the palette, not a
+      loaded asset.
 - [x] `AssetManifest.json`: `MaxColours: 16`, `PaletteNamesEveryColour: true`,
       `ChannelBits: 8` — the same profile Elite's 8-bit rendition declares
 - [x] Verified: solution builds with 0 warnings, 2/2 tests pass, and a
@@ -394,8 +405,25 @@ a name-to-file map, so separate files are also the shorter path.
       colour map as 32-bit so index 0 can carry alpha 0: these are C64
       multicolour sheets, where bit-pair 00 is the background showing
       through rather than a colour, and `TgaReader` would otherwise make it
-      opaque black. Every colour in every sheet was already one of the 16
-      Pepto values `palette.json` names, so the budget needed no work.
+      opaque black. The colour map written is the rendition's own rather
+      than the one rebb64's TGAs carry — see `load_canonical_palette`.
+
+      Amended 2026-09-17 with the palette correction above. This bullet
+      used to claim every colour in every sheet was already one of the 16
+      values `palette.json` named, so the budget needed no work. That was
+      true only because the palette had been written to agree with the
+      sheets. Against Pepto's real values the sheets carried two colours
+      no entry named, and the union came to 18 against a cap of 16.
+
+      The fix is not to repaint the sheets but to stop reading a colour
+      out of them. A sheet's pixel value is a C64 entry number rather than
+      a colour — `MulticolourSheet` repaints entries 1, 2 and 3 at load
+      time, so what is committed is never what reaches the screen — which
+      makes the colour map pure naming. The export now writes the
+      rendition's palette, cut to the length the source indexed, so a
+      sheet cannot disagree with `palette.json` again. Ten of the sheets
+      changed; `bubble-masks.tga`, `charset.tga` and `tile-edges.tga` did
+      not, because they index only black and white.
 - [x] `SpriteAtlas.Grid` in the engine, for sheets that are a plain grid of
       equal cells - which all of these are, so no JSON index is needed.
       Names run `{prefix}-{n}` in reading order. Each sheet's cell size gets
@@ -689,7 +717,13 @@ counts settle the rest. Rows 5, 12 and 20 hold 30 pixels each, which is one
 and 14 hold 96, which is three markers at the 32 pixels cell `$1D` carries.
 
 - [ ] A debug key that steps to the next level.
-- [ ] Confirm the fourteen unverified palette entries against VICE.
+- [x] Confirm the fourteen unverified palette entries against VICE. Settled
+      2026-09-17 without VICE, and settled the other way: the fourteen were
+      not merely unverified but wrong. Andy supplied Pepto's own values and
+      `palette.json` now carries them, so there is nothing left to confirm
+      — the palette is the published one rather than a guess awaiting a
+      check. What VICE is still wanted for is the tile layout and the
+      per-level colour choices, which the verify step below covers.
 
 **Verify:** VICE screenshots of levels 1, 30 and 100 against F12 frame dumps
 of the same three. Tile layout, colours and sidebars match. Commit those
@@ -807,6 +841,40 @@ golden frame, so it lands *before* the frames are taken, not after.
         `SidebarView8BitTests`.
       - `BannerModel` and its view, drawing an image Andy supplies. It is
         the one part of the frame with no counterpart in `rebb64`.
+
+        Supplied 2026-09-17, ahead of the rest of this bullet:
+        `Assets/Images/banner.png` in the 8-bit rendition. It is 320x56 -
+        the screen's full width, and exactly the 56 lines this bullet
+        asks for - as a 4-bit indexed PNG of three colours.
+
+        Three things follow from it, none of them blocking:
+
+        - **The format is fine.** `ImageReader` takes the format from the
+          file's magic bytes rather than its extension and tries PNG
+          first, so a `.png` among the exporter's `.tga` files loads
+          like any other image.
+        - **It is not in `AssetManifest.json` yet**, so nothing loads it
+          and nothing checks it. That is the right state until there is a
+          view to draw it.
+        - **It conforms to the palette.** Andy's decision was that the
+          banner conforms rather than being exempt, and as revised on
+          2026-09-17 it does: three colours, all named — `#000000`
+          (entry 0) over 72.68% of it, `#75CEC8` (entry 3) over 26.31%,
+          and `#FFFFFF` (entry 1) over the remaining 1.02%. So it will
+          pass `IsWithinPalette` when the manifest names it, and the
+          budget check needs no exemption.
+
+          Two earlier drafts did not conform. The first was `#181818`,
+          `#B5FFFF` and white, of which only white was a C64 colour; the
+          second fixed the black and the cyan but left 40 pixels of
+          `#B5FFFF` as a highlight. Those 40 are now cyan, which is why
+          entry 3's share is 26.31% rather than 26.08%.
+
+        It is also the one asset in that folder the exporter does not
+        produce. `export-csharp-assets.py` neither regenerates nor
+        clobbers it, which is what we want - but it does mean it is not
+        reproducible from a `rebb64` checkout the way everything else
+        there is.
 
       Two consequences:
 
