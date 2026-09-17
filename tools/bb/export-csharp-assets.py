@@ -158,6 +158,18 @@ FONT_COLUMNS = 16
 FONT_ROWS = 4
 CELL = 8
 
+# The HUD marks a player's remaining lives with screen code $1D, which the
+# routine at $046C writes seven times over. It is a charset cell like any
+# other, so it travels in the font sheet rather than in an image of its own -
+# that is what lets the view colour it the way colour RAM does, since a grid
+# font's white ink takes whatever colour it is drawn in.
+#
+# It is not an ASCII character, so it takes the sheet's last cell, which ASCII
+# spells underscore and this game never prints. LIFE_ICON is the character the
+# view asks for; LIFE_ICON_CELL is where it comes from in the charset.
+LIFE_ICON = "_"
+LIFE_ICON_CELL = 0x1D
+
 
 def charset_source_cells():
     """ASCII glyph index (char - ' ') -> the cell in charset.tga holding it."""
@@ -168,6 +180,8 @@ def charset_source_cells():
 
     for letter in range(26):
         cells[ord("A") + letter - ord(" ")] = 33 + letter
+
+    cells[ord(LIFE_ICON) - ord(" ")] = LIFE_ICON_CELL
 
     return cells
 

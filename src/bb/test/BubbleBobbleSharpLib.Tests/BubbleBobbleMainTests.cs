@@ -61,16 +61,30 @@ public sealed class BubbleBobbleMainTests
         Assert.Equal(1, game.CurrentLevel);
     }
 
-    // Two bands: the level trimmed to the 28 columns the decoration leaves, and the decoration over
-    // the whole 32. Both are the full height of the screen.
+    // Three bands: the level trimmed to the 28 columns the decoration leaves, the decoration over
+    // the whole 32, and the HUD in the eight columns past them. All three are the full height of
+    // the screen.
     [Fact]
-    public void ComposesTheLevelAndItsDecorationAsTwoLayers()
+    public void ComposesTheLevelItsDecorationAndTheHudAsThreeLayers()
     {
         RecordingGraphics graphics = Draw();
 
         Assert.Equal(
-            [(new Vector2(16, 0), 224f, 200f), (new Vector2(0, 0), 256f, 200f)],
+            [(new Vector2(16, 0), 224f, 200f),
+             (new Vector2(0, 0), 256f, 200f),
+             (new Vector2(256, 0), 64f, 200f)],
             graphics.ClipRegions);
+    }
+
+    // The HUD opens on what $0969 and $0956 leave: both scores and the high score cleared, and three
+    // lives each. A cleared score is still drawn, as a single zero.
+    [Fact]
+    public void OpensWithClearedScoresAndThreeLivesEach()
+    {
+        RecordingGraphics graphics = Draw();
+
+        Assert.Equal(3, graphics.LeftTexts.Count(x => x.Text == "     0"));
+        Assert.Equal(2, graphics.LeftTexts.Count(x => x.Text == "___"));
     }
 
     // The level is drawn first and the decoration over it, which is the order the reference works in:

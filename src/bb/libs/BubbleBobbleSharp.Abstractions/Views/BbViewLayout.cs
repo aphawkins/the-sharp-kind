@@ -60,6 +60,14 @@ public sealed record BbViewLayout(float ScreenWidth, float ScreenHeight)
     public int SidebarColumns { get; init; } = 2;
 
     /// <summary>
+    /// Gets the columns the HUD is drawn in - the eight the level leaves at the
+    /// right of the screen. The scores and lives are written straight into
+    /// screen memory past the level's last column, which is what puts them
+    /// there.
+    /// </summary>
+    public int HudColumns { get; init; } = 8;
+
+    /// <summary>
     /// Gets the whole screen's character grid, counted from its top-left
     /// corner - the forty by twenty-five the hardware addresses.
     /// </summary>
@@ -94,5 +102,14 @@ public sealed record BbViewLayout(float ScreenWidth, float ScreenHeight)
     public (Vector2 Position, float Width, float Height) PlayfieldInterior => (
         Playfield.Cell(SidebarColumns, 0),
         (PlayfieldColumns - (2 * SidebarColumns)) * CellWidth,
+        PlayfieldRows * CellHeight);
+
+    /// <summary>
+    /// Gets the HUD as a rectangle on the screen: the columns past the level's
+    /// last, for the whole of the screen's height.
+    /// </summary>
+    public (Vector2 Position, float Width, float Height) HudArea => (
+        Screen.Cell(PlayfieldColumn + PlayfieldColumns, PlayfieldRow),
+        HudColumns * CellWidth,
         PlayfieldRows * CellHeight);
 }

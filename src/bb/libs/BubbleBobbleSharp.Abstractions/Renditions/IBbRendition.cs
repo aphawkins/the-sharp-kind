@@ -58,4 +58,11 @@ public interface IBbRendition
     /// <param name="surface">Everything the view draws with.</param>
     /// <returns>The view.</returns>
     public IView<PlayfieldModel> CreatePlayfieldView(IViewSurface surface);
+
+    /// <summary>
+    /// Creates the view that draws the scores and lives beside the level.
+    /// </summary>
+    /// <param name="surface">Everything the view draws with.</param>
+    /// <returns>The view.</returns>
+    public IView<HudModel> CreateHudView(IViewSurface surface);
 }

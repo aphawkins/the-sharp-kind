@@ -406,6 +406,13 @@ a name-to-file map, so separate files are also the shorter path.
       only the letters happen to fall where `char - ' '` looks for them.
       The export rewrites it into the order `BitmapFont` reads, 16 columns
       of 8x8, leaving unmapped cells blank.
+
+      Amended 2026-09-17 with the HUD below: the sheet carries one cell that
+      is not an ASCII character. Screen code `$1D` is the marker the HUD
+      counts a player's lives in, and it goes in the sheet's last cell,
+      which ASCII spells underscore and this game never prints. A charset
+      cell belongs in the font rather than in an image of its own, because
+      that is what lets a view colour it the way colour RAM does.
 - [x] `tile-edges.tga`, added 2026-09-17 with the playfield below. The level
       renderer draws a tile's right-hand edges and the shadow it casts from
       screen codes `$0A` to `$0F`, which live in the charset rather than in a
@@ -416,10 +423,12 @@ a name-to-file map, so separate files are also the shorter path.
       one pixel per bit, so the export re-reads each row's eight bits as the
       four bit-pairs the hardware makes of them. That is also the proof: read
       as bits the six are a dither, and read as pairs they are solid edges.
-- [ ] `hud-font.tga` is still unexported - 10 cells of 8x8, almost
-      certainly the HUD's digits. Deferred deliberately: it is a second
-      font entry, and what it is for is only decidable when there is a HUD
-      drawing it, in Phase 3. `digit-font.tga` is in the same position.
+- [ ] `hud-font.tga` is still unexported - 10 cells of 8x8, guessed here to
+      be the HUD's digits. Phase 3 has settled that it is not: the HUD draws
+      screen codes `$00` to `$09`, which are the charset's own digits, so
+      the HUD needs none of this file. What it *is* for is still open, and
+      still only decidable from something that draws it. `digit-font.tga`
+      is in the same position.
 
 **Verified:** 26/26 in `BubbleBobbleSharpLib.Tests`. `AssetSet.Load` opens
 every file the manifest names and passes the C64 colour budget - 16
@@ -625,7 +634,60 @@ than colour 1: 32 x 222 tile characters is the 7 104 white pixels, and the
 3 072 more red ones are 1 536 edge pixels at double width. Entry 01 was
 painted the high nibble, as the reference has it.
 
-- [ ] `HudModel` / `HudViewC64` — both scores, high score, lives.
+- [x] `HudModel` / `HudView8Bit` — both scores, high score, lives. Named for
+      the tier like the other two views, rather than `HudViewC64` as this
+      bullet first had it.
+
+      The HUD is the eight columns the level leaves at the right of the
+      screen. Five of its rows fall out of the pointers
+      `update_sprite_animations` builds at `$E3A7` and the arguments `$046C`
+      passes for the lives: on a forty-column screen from `$5000`, `$50E9`,
+      `$5139`, `$5201`, `$5251` and `$5341` are rows 5, 7, 12, 14 and 20,
+      all at column 33. The labels come from the string at `$AB93`, which
+      positions each one itself at column 35, a row above the score it
+      names.
+
+      A score is three bytes of packed BCD, which is six digits, because
+      `add_score` at `$7C24` adds in decimal mode and carries from one byte
+      to the next. `$3FB0` blanks a leading zero until it has seen a digit
+      that is not one, and always writes the last digit, so a cleared score
+      reads as a single zero rather than an empty row. That is a rule about
+      the score rather than about drawing it, so `HudModel` settles it and
+      the view draws what it is handed. The lives fill their row of seven
+      from the right-hand end, and a negative count leaves the row alone
+      altogether — which is how a player who is out gets no row rather than
+      a row of spaces.
+
+      The HUD is hires, not multicolour. `fill_color_ram` does put `$0D`
+      over the whole screen before the level is drawn, but
+      `display_text_string` writes a colour byte beside every character it
+      prints, so `$AB93` repaints these columns on its way past. None of the
+      four bytes it leaves has bit 3 set: the labels are colour 7, player
+      one's rows 5, player two's 3, and the high score 1. So nothing here is
+      repainted per level and no sheet is touched — it is all font.
+
+      The digits are screen codes `$00` to `$09`, which the charset already
+      holds in that order and the export already maps to ASCII. The life
+      marker is screen code `$1D`, and it now travels in the font sheet too,
+      in the cell ASCII spells underscore and this game never prints. That
+      is what lets the view colour it the way colour RAM does, since a grid
+      font's white ink takes whatever colour it is drawn in. `hud-font.tga`
+      is therefore still unexported and is **not** the HUD's digits, as the
+      Phase 2 bullet guessed — the HUD draws none of it.
+
+**Verified:** the solution builds with 0 warnings and
+`BubbleBobbleSharpLib.Tests` is 85/85. Elite (726 + 39), SCR (246) and every
+engine suite pass unchanged. The digits and the blanking are proved against
+the model, and the positions, colours and right-hand fill against
+`RecordingGraphics`.
+
+Proved in the real app too, through `GAME_KEY_SCRIPT` and
+`GAME_FRAME_DUMP_DIR`: the game exits 0 and dumps a frame whose HUD columns
+hold ink on exactly the eight rows above, in exactly those four colours. The
+counts settle the rest. Rows 5, 12 and 20 hold 30 pixels each, which is one
+`0` glyph — six drawn digits would be 180, so the blanking is real. Rows 7
+and 14 hold 96, which is three markers at the 32 pixels cell `$1D` carries.
+
 - [ ] A debug key that steps to the next level.
 - [ ] Confirm the fourteen unverified palette entries against VICE.
 
