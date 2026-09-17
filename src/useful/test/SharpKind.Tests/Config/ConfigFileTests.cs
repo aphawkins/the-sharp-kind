@@ -43,9 +43,7 @@ public class ConfigFileTests
     [Fact]
     public void ReadConfigWithAMistypedValueReturnsDefaultsInsteadOfThrowing()
     {
-        // Arrange: a hand-edited/corrupt file where a bool field holds a
-        // non-boolean string - Microsoft.Extensions.Configuration.Binder
-        // wraps this as InvalidOperationException, not FormatException.
+        // A hand-edited/corrupt file with a non-boolean string in a bool field; the binder wraps this as InvalidOperationException.
         string directory = CreateTempDirectory();
         Directory.CreateDirectory(directory);
         File.WriteAllText(Path.Combine(directory, ConfigFileName), /*lang=json,strict*/ "{\"Flag\": \"hello!\"}");
@@ -142,10 +140,7 @@ public class ConfigFileTests
     [Fact]
     public void ReadConfigWithAMistypedValueLogsAWarningAndADebugDetailWithTheException()
     {
-        // Arrange: the Warning is always visible (no exception attached, so
-        // no stack trace at the default level); the Debug-level message
-        // carries the exception, so the stack trace only appears once that
-        // level is turned on.
+        // The Warning is always visible (no exception, so no stack trace at default level); Debug carries it.
         string directory = CreateTempDirectory();
         Directory.CreateDirectory(directory);
         File.WriteAllText(Path.Combine(directory, ConfigFileName), /*lang=json,strict*/ "{\"Flag\": \"hello!\"}");
@@ -203,9 +198,7 @@ public class ConfigFileTests
         public int Number { get; set; } = 5;
     }
 
-    // Minimal in-test fake: the [LoggerMessage] source generator calls
-    // ILogger.Log directly, which Moq's generic-method verification
-    // handles awkwardly, so a recording fake is simpler than a mock here.
+    // A recording fake, not a mock: [LoggerMessage] calls ILogger.Log directly, which Moq's generic-method verification handles awkwardly.
     private sealed class RecordingLogger<TCategory> : ILogger<TCategory>
     {
         public List<(LogLevel Level, Exception? Exception)> Entries { get; } = [];

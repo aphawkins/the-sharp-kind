@@ -6,9 +6,7 @@ using SharpKind.Graphics.Rendering;
 
 namespace SharpKind.Graphics.Tests;
 
-// The renderers used to hold a fixed 100-polygon chain and drop everything
-// after it without a word. A busy Elite scene passes 100 easily, so a frame
-// well past the old cap has to draw every polygon it was given.
+// Regression: renderers used to hold a fixed 100-polygon chain and drop everything after it silently; a busy scene passes 100 easily.
 public class PolygonRendererCapacityTests
 {
     private const int PolyCount = 500;

@@ -7,20 +7,13 @@ using StuntCarRacerSharpLib.Tracks;
 
 namespace StuntCarRacerSharpLib.Rendering;
 
-// Draws the player's own car, for the outside view only - in the cockpit
-// view the camera sits inside it. The original had no player mesh in world
-// space either: the remake's SetCarWorldTransform builds one from the
-// player's position and angles, which is what this mirrors, orienting the
-// shared CarMesh on four corners rotated out of the car's own frame rather
-// than on measured wheel positions the way the opponent does.
+// Outside view only - in the cockpit view the camera sits inside the car. Mirrors the remake's
+// SetCarWorldTransform, orienting CarMesh on four corners rotated out of the car's own frame,
+// unlike the opponent's measured wheel positions.
 public sealed class PlayerRenderer
 {
-    // The remake raises the car mesh by VCAR_HEIGHT/3 "so wheels are fully
-    // visible" (`StuntCarRacer.cpp:935-936`), and the mesh's own wheels
-    // reach VCAR_HEIGHT/4 below its origin - so the wheels end up this far
-    // above the car's centre. CarMesh puts the mesh bottom on the corner
-    // frame, so the same offset applied to the corners gives the same
-    // result.
+    // The remake raises the car mesh by VCAR_HEIGHT/3 so wheels are fully visible, and the mesh's
+    // wheels reach VCAR_HEIGHT/4 below its origin. Applying the same offset to the corners gives the same result.
     private const int RideHeight = (CarMesh.CarHeight / 3) - (CarMesh.CarHeight / 4);
 
     private readonly CarPhysics _car;
@@ -44,10 +37,7 @@ public sealed class PlayerRenderer
         int y = _car.PlayerY >> (Track.LogPrecision - 2);
         int z = _car.PlayerZ >> Track.LogPrecision;
 
-        // the mesh's own footprint, not the physics car's: CarMesh only
-        // takes orientation and centre from the frame, so corners that
-        // match the visible wheels are what the road clearance below has
-        // to be measured at
+        // The mesh's own footprint, not the physics car's: road clearance below is measured at the corners matching the visible wheels.
         const int halfWidth = CarMesh.CarWidth / 2;
         const int halfLength = CarMesh.CarLength / 2;
 
@@ -56,13 +46,8 @@ public sealed class PlayerRenderer
         Coord3D frontLeft = Corner(x, y, z, -halfWidth, halfLength);
         Coord3D frontRight = Corner(x, y, z, halfWidth, halfLength);
 
-        // The car's centre is not its wheel contact line: under a hard
-        // landing the suspension bottoms out and the body drops below the
-        // road, which drew the car half-buried in it. Lift the whole frame
-        // clear rather than clamping each corner, so the car stays rigid
-        // and keeps the roll and pitch the angles give it. This is the
-        // player's version of the max(road, actual) heights the opponent
-        // draws itself on.
+        // Lift the whole frame clear, not each corner, so the car stays rigid and keeps its roll
+        // and pitch - the player's version of the max(road, actual) heights the opponent uses.
         int lift = Math.Max(
             Math.Max(_car.FrontLeftRoadY - frontLeft.Y, _car.FrontRightRoadY - frontRight.Y),
             Math.Max(_car.RearRoadY - rearLeft.Y, _car.RearRoadY - rearRight.Y));

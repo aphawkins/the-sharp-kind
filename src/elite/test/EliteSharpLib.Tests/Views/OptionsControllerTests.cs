@@ -11,9 +11,7 @@ using SharpKind.Fakes.Input;
 
 namespace EliteSharpLib.Tests.Views;
 
-// The options menu's row-enabled state, with no renderer involved - a
-// docked-only row is greyed out (not hidden) while undocked, so the model
-// carries that as a per-row flag rather than a shorter list.
+// A docked-only row is greyed out, not hidden, while undocked, so the model carries that as a per-row flag rather than a shorter list.
 public class OptionsControllerTests
 {
     [Fact]
@@ -80,9 +78,7 @@ public class OptionsControllerTests
         Assert.Equal(0, controller.BuildModel().HighlightedIndex);
     }
 
-    // The options are reachable from the title screens, which have no other way
-    // out: Back has to return to whichever screen the commander opened them
-    // from rather than to a fixed one.
+    // Options are reachable from the title screens, so Back must return to whichever screen opened them, not a fixed one.
     [Fact]
     public void BackReturnsToTheScreenTheOptionsWereOpenedFrom()
     {
@@ -113,9 +109,7 @@ public class OptionsControllerTests
         Assert.Equal(Screen.IntroTwo, gameState.CurrentScreen);
     }
 
-    // The key that opens the options closes them again, rather than reopening
-    // them over themselves - which used to leave Back returning to the options
-    // and no way out at all.
+    // The key that opens options closes them again, rather than reopening them over themselves.
     [Fact]
     public void OpeningTheOptionsAgainClosesThem()
     {

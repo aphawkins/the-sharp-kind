@@ -35,8 +35,7 @@ internal static class WorldProjection
     {
         centre = draw.Projector.Project(location.X, location.Y, location.Z);
 
-        // Planets are BIG! The radius is in the original's 256-wide space, so
-        // it follows the projection's focal length rather than the scale.
+        // Planets are BIG! Radius is in the original's 256-wide space, so it follows the focal length, not the scale.
         unitScale = draw.Focus / 256;
         radius = 6291456 / location.Length() * unitScale;
 

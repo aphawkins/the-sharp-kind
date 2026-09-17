@@ -20,28 +20,21 @@ public sealed class SixteenBitRendition : IRendition
 {
     public Rendition Rendition => Rendition.SixteenBit;
 
-    // Widened from 512 to 640 on 2026-07-30 alongside a 640-wide scanner. The
-    // height is unchanged, so the vertical field of view is too.
     public int ScreenWidth => 640;
 
     public int ScreenHeight => 512;
 
-    // The bottom 128 rows of the HUD art, where the console's own frame
-    // starts. The 2026-07-30 widening left it alone - only the console's
-    // width grew with the screen.
+    // Rows of HUD art below where the console's own frame starts.
     public int ConsoleHeight => 128;
 
     public int DesignScale => 2;
 
-    // 640x512 doubled is 1280x1024; there is no room above that on a common
-    // display, so this tier stops where the 8-bit one keeps going.
+    // 640x512 doubled is 1280x1024; no room above that on a common display.
     public IReadOnlyList<int> WindowScales => [1, 2];
 
     public int DefaultWindowScale => 2;
 
-    // 4096 colours, and a palette that does not have to name them all, so a
-    // lit face can take any tone its DAC reaches rather than the nearest one
-    // an artist named.
+    // 4096-colour palette, so a lit face can take any tone the DAC reaches.
     public bool ShadesShips => true;
 
     public IBaseView CreateBaseView(IViewSurface surface) => new BaseView16Bit(surface);
@@ -122,8 +115,7 @@ public sealed class SixteenBitRendition : IRendition
     public InventoryListStyle CreateInventoryListStyle(IViewSurface surface)
         => InventoryListStyle16Bit.Create(surface);
 
-    // Split from CreateViews to keep each method under CA1506's coupling
-    // limit, which naming every screen in one place goes past.
+    // Split from CreateViews to stay under CA1506's coupling limit.
     private static ViewSet AddFlightViews(ViewSet views, IViewSurface surface)
     {
         ArgumentNullException.ThrowIfNull(views);
@@ -139,8 +131,7 @@ public sealed class SixteenBitRendition : IRendition
             .Add(new ShortRangeChartView16Bit(surface));
     }
 
-    // One definition of what a ship is painted, read by the scanner and by the
-    // beam a ship fires, so the two cannot disagree.
+    // One definition, shared by the scanner and the ship's laser beam, so the two cannot disagree.
     private static ShipColours Ships(IViewSurface surface) => new(
         Default: surface.Palette["White"],
         Station: surface.Palette["Green"],

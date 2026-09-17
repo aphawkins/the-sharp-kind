@@ -18,11 +18,7 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
     private readonly SDLRenderer _renderer;
     private readonly Dictionary<(string FontType, string Text, uint Color), TextTextureEntry> _textTextures = [];
 
-    // How text becomes pixels, in each kind the rendition offers. Shared with
-    // the software backend rather than rasterised here: text drawn through
-    // SDL_ttf while the software renderer drew the renditions' own sheets is
-    // what made the same game read differently depending on which backend was
-    // running.
+    // Shared with the software backend so text reads the same on both.
     private FontRasteriserSet _fontRasterisers = FontRasteriserSet.Only(new BitmapFontRasteriser([]));
     private Dictionary<string, FastBitmap> _images = [];
     private Dictionary<string, nint> _imageTextures = [];
@@ -30,40 +26,21 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
 
     // CPU-rasterised, per-pixel depth-tested layer for DrawPolygonFilledDepth
     // / DrawPolygonTexturedDepth: SDL's accelerated 2D renderer has no depth
-    // buffer of its own, so without this, depth-tested polygons (a whole
-    // track, a rotating ship) draw in submission order and pop/flicker
-    // wherever that order doesn't match actual camera distance. Allocated on
-    // first ClearDepth() call; composited onto the renderer as one texture
-    // blit the next time anything else is drawn (FlushDepthLayer), so it
-    // lands after whatever was drawn before it (e.g. a backdrop) and before
-    // whatever is drawn after (e.g. the HUD), and inherits whatever clip
-    // region is active at that point - the same clip that was active while
-    // the depth-tested content was rasterised, since nothing else runs in
-    // between.
+    // buffer, so depth-tested polygons would otherwise pop/flicker in
+    // submission order. Composited onto the renderer as one blit
+    // (FlushDepthLayer) so it lands in the right place in the draw order and
+    // inherits the clip active when it was rasterised.
     //
-    // ZBufferRenderer interleaves depth-tested faces with plain 2-point
-    // line submissions in the same z-sorted chain (undecorated hull edges
-    // draw as lines, not faces) and calls DrawLine directly for those - if
-    // DrawLine drew straight to the renderer, a line landing between two
-    // faces would need the layer flushed around it, and *every* later face
-    // in the same pass would need re-flushing too, repainting that line's
-    // pixels with content submitted after it regardless of who's actually
-    // nearer. Routing DrawLine into this same CPU layer while a pass is
-    // open keeps every draw in one pass in the one buffer, submission order
-    // intact, with a single flush at the end - exactly how SoftwareGraphics
-    // gets this right, by writing every draw straight into one shared
-    // buffer with no batching to reorder.
+    // DrawLine also routes through this layer while a depth pass is open, so
+    // a line submitted between two depth-tested faces stays in submission
+    // order with a single flush at the end, rather than needing every later
+    // face re-flushed around it.
     private FastBitmap? _depthLayer;
 
-    // The GPU-side counterpart of _depthLayer, created alongside it and
-    // reused for every flush: compositing used to build a surface and a
-    // texture from the layer and destroy both again on each flush, i.e. a
-    // GPU allocation and a synchronous upload for every frame that draws
-    // any depth-tested geometry. Streaming + SDL_UpdateTexture re-uploads
-    // into this one instead. Its blend mode is set explicitly because,
-    // unlike SDL_CreateTextureFromSurface, SDL_CreateTexture does not infer
-    // it from the pixels' alpha channel - and the layer is transparent
-    // everywhere nothing was rasterised.
+    // GPU counterpart of _depthLayer, created once and reused via streaming
+    // + SDL_UpdateTexture to avoid a fresh GPU allocation and sync upload per
+    // frame. Blend mode is set explicitly: SDL_CreateTexture (unlike
+    // SDL_CreateTextureFromSurface) does not infer it from pixel alpha.
     private nint _depthTexture;
 
     private float[]? _depthBuffer;
@@ -74,19 +51,11 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
     private bool _depthLayerDirty;
     private bool _depthPassOpen;
 
-    // All drawing targets this persistent off-screen texture rather than
-    // the window's swap-chain backbuffer directly. The game only composes
-    // a new frame once per game tick but presents at the display's own
-    // rate, which is usually higher and not a whole multiple of the tick
-    // rate; a multi-buffered accelerated swap chain cycles through 2+
-    // buffers on each present; presenting without redrawing means most of
-    // those buffers still hold whatever was drawn into them ticks ago,
-    // which reads as flicker (and, mid-window-drag, a frozen "ghost" of
-    // one stale buffer). ScreenUpdate() blits this texture onto the
-    // backbuffer fresh on every present instead, so every buffer gets
-    // current content regardless of how many times it's presented between
-    // ticks - the same trick SoftwareAbstraction already gets for free by
-    // re-uploading its CPU bitmap every present.
+    // All drawing targets this persistent off-screen texture rather than the
+    // swap-chain backbuffer directly: present rate outpaces the game's tick
+    // rate, so a multi-buffered swap chain would otherwise flicker between
+    // stale buffers. ScreenUpdate() blits this onto the backbuffer fresh on
+    // every present instead.
     private nint _frameTarget;
 
     private SDLGraphics(SDLRenderer renderer, float screenWidth, float screenHeight)
@@ -122,9 +91,7 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
 
             FontKind previous = _fontRasterisers.Kind;
 
-            // Every cached texture holds text drawn in the kind that was in
-            // use when it was uploaded, so a change makes the lot of them
-            // stale.
+            // A kind change makes every cached texture's rasterised text stale.
             if (_fontRasterisers.Select(value) != previous)
             {
                 ClearTextTextures();
@@ -147,9 +114,7 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
     {
         ArgumentNullException.ThrowIfNull(assetLocator);
 
-        // Images come from the shared managed decoder rather than SDL_LoadBMP,
-        // so this backend sees the same pixels as the software one and the
-        // tier's colour budget is checked whichever backend is running.
+        // Shared managed decoder, not SDL_LoadBMP, so both backends see the same pixels.
         AssetSet assets = AssetSet.Load(assetLocator, logger);
 
         SDLGraphics graphics = new(renderer, screenWidth, screenHeight)
@@ -159,9 +124,7 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
             _fontRasterisers = FontRasterisers.Load(assets, assetLocator, fontKind),
         };
 
-        // Textures are created once here rather than per-draw: creating one
-        // is a synchronous GPU upload, and images are static assets that
-        // never change after load.
+        // Created once, not per-draw: a texture upload is synchronous and images are static.
         graphics._imageTextures = graphics._images.ToDictionary(
             x => x.Key,
             x => CreateImageTexture(graphics.NativeRenderer, x.Value));
@@ -173,23 +136,17 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
             (int)screenWidth,
             (int)screenHeight));
 
-        // Magnifying must duplicate pixels rather than blend them: SDL's
-        // default is linear, which would show a filtered image instead of
-        // the tier's own whenever the window is larger than the frame.
+        // Nearest, not SDL's default linear, so magnifying duplicates pixels rather than filtering them.
         SDLGuard.Execute(() => SDL_SetTextureScaleMode(
             (SDL_Texture*)graphics._frameTarget,
             SDL_ScaleMode.SDL_SCALEMODE_NEAREST));
 
-        // A draw colour's alpha only means anything with a blend mode set:
-        // SDL's default is NONE, which writes the source through and ignores
-        // it. The software backend blends in DrawPixel for the same reason.
+        // SDL's default blend mode is NONE, which ignores alpha entirely.
         SDLGuard.Execute(() => SDL_SetRenderDrawBlendMode(
             graphics.NativeRenderer,
             SDL_BlendMode.SDL_BLENDMODE_BLEND));
 
-        // All drawing targets _frameTarget from here on (see its field
-        // comment); ScreenUpdate() briefly switches back to the window to
-        // blit it, then restores this.
+        // Drawing targets _frameTarget from here on; ScreenUpdate() switches to the window briefly to blit it.
         SDLGuard.Execute(() => SDL_SetRenderTarget(graphics.NativeRenderer, (SDL_Texture*)graphics._frameTarget));
 
         return graphics;
@@ -240,11 +197,7 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
         _depthPassOpen = true;
     }
 
-    // The public seam onto the lazy composite below. A caller that is about
-    // to change the clip region has to ask for this: FlushDepthLayer's blit
-    // is trimmed by whichever clip region is active when it runs, and it runs
-    // by itself only at the next ordinary draw - which may be past the clip
-    // change, and in a layered frame usually is.
+    // Callers changing the clip region must flush first: an unflushed depth layer blits under the new clip, not the one it was rasterised under.
     public void FlushDepth() => FlushDepthLayer();
 
     public void Dispose()
@@ -279,9 +232,7 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
             return;
         }
 
-        // There is no equivalent filled-circle primitive without the removed
-        // gfx dependency - build the same shape as DrawPolygonFilled does:
-        // a triangle fan sharing the centre.
+        // No filled-circle primitive without the removed gfx dependency, so build a triangle fan sharing the centre.
         Vector2 previous = centre + new Vector2(radius, 0);
 
         for (int i = 1; i <= CircleSegments; i++)
@@ -467,10 +418,7 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
             return;
         }
 
-        // The SDL renderer cannot sample a FastBitmap directly, so
-        // approximate with a flat fill of the texture colour at the
-        // polygon's average texture coordinate. The software rasterizer is
-        // the primary rendering path for textured polygons.
+        // SDL can't sample a FastBitmap directly, so approximate with a flat fill at the average texture coordinate.
         Vector2 averageUv = Vector2.Zero;
         for (int i = 0; i < points.Length; i++)
         {
@@ -671,9 +619,7 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
 
         FlushDepthLayer();
 
-        // Blit the persistent frame texture onto whichever swap-chain
-        // buffer is current, every time, rather than presenting whatever
-        // was left in it - see _frameTarget's field comment.
+        // Blit the persistent frame texture onto whichever swap-chain buffer is current; see _frameTarget's field comment.
         SDLGuard.Execute(() => SDL_SetRenderTarget(NativeRenderer, null));
         SDLGuard.Execute(() =>
         {
@@ -740,10 +686,7 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
         });
     }
 
-    // Uploads a decoded bitmap as a static texture. The blend mode has to be
-    // set explicitly: unlike SDL_CreateTextureFromSurface, SDL_CreateTexture
-    // does not infer it from the pixels' alpha channel, and the HUD sprites
-    // are transparent everywhere they aren't drawn.
+    // Uploads a decoded bitmap as a static texture. Blend mode is set explicitly since SDL_CreateTexture, unlike SDL_CreateTextureFromSurface, does not infer it from pixel alpha.
     private static nint CreateImageTexture(SDL_Renderer* renderer, FastBitmap image)
     {
         nint texture = SDLGuard.Execute(() => (nint)SDL_CreateTexture(
@@ -775,12 +718,7 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
         a = color.A / 255f,
     };
 
-    // The interpolation parameter of the edge p0-p1 at scanline y, clamped
-    // to the edge's endpoints (p0.Y must not be greater than p1.Y). A
-    // horizontal or degenerate edge yields 0. Mirrors SoftwareGraphics's
-    // EdgeT: the depth layer is a second, independent CPU rasterizer, since
-    // this one only ever runs for the small slice of draws SDL's
-    // accelerated renderer cannot depth-test itself.
+    // Interpolation parameter of edge p0-p1 at scanline y (p0.Y <= p1.Y); 0 for a horizontal/degenerate edge. Mirrors SoftwareGraphics's EdgeT.
     private static float EdgeT(Vector2 p0, Vector2 p1, float y)
     {
         float dy = p1.Y - p0.Y;
@@ -795,10 +733,7 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
         return texture.GetPixel(x, y);
     }
 
-    // Rendering a glyph texture is a CPU render plus a synchronous GPU
-    // upload, so cache by (font, text, colour) instead of doing it on every
-    // draw call. Entries not reused since the last frame's Clear() are
-    // evicted there, keeping the cache bounded to what's currently on screen.
+    // Cached by (font, text, colour): a glyph texture is a CPU render plus a synchronous GPU upload. Entries unused since the last Clear() are evicted there.
     private TextTextureEntry GetOrCreateTextTexture(string fontType, string text, in FastColor color)
     {
         (string FontType, string Text, uint Color) key = (fontType, text, color.Argb);
@@ -857,13 +792,9 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
         }
     }
 
-    // Composites the accumulated depth layer onto the renderer as one
-    // texture blit and clears the pending flag, so the next call is a
-    // no-op. Called at the top of every other draw method (and
-    // ScreenUpdate/SaveScreen): the first non-depth call after a run of
-    // DrawPolygonFilledDepth/DrawPolygonTexturedDepth calls is exactly the
-    // point the composited depth content needs to land on the renderer, in
-    // between whatever was drawn before it and whatever draws after.
+    // Composites the accumulated depth layer as one texture blit; a no-op once flushed. Called at
+    // the top of every other draw method (and ScreenUpdate/SaveScreen) so it lands between
+    // whatever was drawn before and after it.
     private void FlushDepthLayer()
     {
         if (!_depthLayerDirty || _depthLayer == null || _depthTexture == nint.Zero)
@@ -886,19 +817,11 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
             return SDL_RenderTexture(NativeRenderer, (SDL_Texture*)_depthTexture, null, &dest);
         });
 
-        // Closing the pass (above) means DrawLine stops routing here once
-        // this flush runs, so in the normal case there is nothing left to
-        // draw into this layer until the next ClearDepth(). Clearing it
-        // anyway is cheap insurance: if something unexpected flushes twice
-        // within one pass, the second flush won't repaint the first flush's
-        // (already on-screen) pixels over whatever was drawn in between.
+        // Cheap insurance against a double flush within one pass repainting already-on-screen pixels.
         _depthLayer.Clear(BaseColors.TransparentBlack);
     }
 
-    // Bresenham line into the CPU depth layer, matching SoftwareGraphics's
-    // DrawLineInt. Writes pixels directly with no depth test - the untested
-    // edge case, for callers that have no depth for the line. Callers that
-    // do go through DrawLineDepthToLayer instead.
+    // Bresenham line into the CPU depth layer, matching SoftwareGraphics's DrawLineInt. No depth test, for callers with no depth for the line; others use DrawLineDepthToLayer.
     private void DrawLineToDepthLayer(Vector2 lineStart, Vector2 lineEnd, in FastColor color)
     {
         int x0 = (int)MathF.Floor(lineStart.X);
@@ -1024,12 +947,9 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
         _depthLayerDirty = true;
     }
 
-    // Depth-tested triangle fill into the CPU depth layer: inverse depth
-    // (1/z) is interpolated linearly in screen space (perspective-correct
-    // for depth) and each pixel only draws when it passes the depth test.
-    // writeColor false runs the depth test and its writes but draws nothing,
-    // which is how a hidden-line pass primes the buffer.
-    // Mirrors SoftwareGraphics.DrawTriangleFilledDepth.
+    // Depth-tested triangle fill into the CPU depth layer; inverse depth (1/z) interpolated
+    // linearly (perspective-correct). writeColor false primes the buffer for a hidden-line pass
+    // without drawing. Mirrors SoftwareGraphics.DrawTriangleFilledDepth.
     private void DrawTriangleFilledDepthToLayer(
         Vector2 a,
         Vector2 b,

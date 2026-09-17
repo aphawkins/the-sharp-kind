@@ -20,8 +20,7 @@ public class BaseViewTests
     {
         BaseView16Bit baseView = new(Draw(out _));
 
-        // No spaces/commas/periods anywhere, so the line-width scan must
-        // never find a break point and previously underflowed past index 0.
+        // No break point exists in the text; guards against underflowing past index 0.
         string unbreakableText = new('a', 200);
 
         Exception? exception = Record.Exception(() => baseView.DrawTextPretty(new(0, 0), 64, unbreakableText));
@@ -29,9 +28,7 @@ public class BaseViewTests
         Assert.Null(exception);
     }
 
-    // Unchosen means the original's projection, which is a focal length of
-    // exactly one screen height - not 53 degrees put back through the
-    // arithmetic, which lands 0.3 % away from it.
+    // Unchosen means the original's focal length of exactly one screen height, not 53 degrees reconstructed (0.3% off).
     [Fact]
     public void FocusWithNoChosenFieldOfViewIsTheScreenHeight()
     {
@@ -42,8 +39,6 @@ public class BaseViewTests
         Assert.Equal(draw.Layout.ScreenHeight, draw.Focus);
     }
 
-    // Widening the view shortens the focal length, so more of the universe
-    // fits across the same viewport.
     [Theory]
     [InlineData(65)]
     [InlineData(90)]
@@ -58,7 +53,6 @@ public class BaseViewTests
         Assert.True(draw.Focus < classic);
     }
 
-    // And narrowing it lengthens the focal length, magnifying what is left.
     [Fact]
     public void ANarrowerFieldOfViewLengthensTheFocalLength()
     {
@@ -72,9 +66,7 @@ public class BaseViewTests
 
     private static EliteDraw Draw(out GameState gameState)
     {
-        // The 16-bit tier's own canvas: Focus is derived from the screen
-        // height, so a zero-sized fake would make every assertion about it
-        // vacuously true.
+        // Focus derives from screen height; a zero-sized fake would make Focus assertions vacuously true.
         RecordingGraphics graphics = new(640, 512);
         gameState = new(new ScreenManager<Screen, IScreenController>(new FakeKeyboard()), TestMissions.Registry());
         ZBufferRenderer shipRenderer = new(graphics);

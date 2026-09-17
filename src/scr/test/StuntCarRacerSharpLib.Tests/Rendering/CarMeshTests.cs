@@ -45,9 +45,7 @@ public class CarMeshTests
         Assert.Single(polygons, p => p.Colour == bottomColour);
     }
 
-    // The mesh bottom must sit exactly at wheel-corner level, whatever the
-    // orientation frame - here a level frame, so the wheel quads' lowest
-    // points should land at the corners' Y (0).
+    // A level frame here, so the wheel quads' lowest points should land at the corners' Y (0).
     [Fact]
     public void MeshBottomSitsAtCornerLevelOnALevelFrame()
     {
@@ -61,10 +59,7 @@ public class CarMeshTests
         Assert.Equal(0, lowestY);
     }
 
-    // The mesh is placed on a single-precision frame, far from the track
-    // origin and at an angle - where rounding has the most room to show. The
-    // shape must arrive intact: the car is rigid, so the distance between two
-    // of its points cannot change with where it sits or which way it faces.
+    // Far from the origin and at an angle, where rounding has the most room to show: the car is rigid, so point-to-point distance must not change.
     [Fact]
     public void TheMeshKeepsItsShapeOnAFarOffAngledFrame()
     {

@@ -10,10 +10,8 @@ using SharpKind.Graphics.Rendering;
 
 namespace EliteSharpLib.Graphics;
 
-// Picks the ship rendering strategy from the live config once per frame, so
-// changing the setting in the Settings view takes effect on the next frame
-// rather than at the next restart. The strategy is fixed for the duration of
-// a frame so Submit/EndFrame always reach the renderer that started it.
+// Picks the strategy from the live config once per frame, so a Settings change takes effect next frame.
+// Fixed for the frame's duration so Submit/EndFrame always reach the renderer that started it.
 internal sealed class ConfigPolygonRenderer : IPolygonRenderer
 {
     private readonly GameState _gameState;

@@ -7,12 +7,9 @@ using SharpKind.Assets.Palettes;
 
 namespace SharpKind.Graphics;
 
-// Every image and bitmap font for the active tier, decoded once up front -
-// assets are never loaded on demand. Both graphics backends take their
-// bitmaps from here rather than decoding their own, so the tier's colour
-// budget is checked in one place whichever backend is running. The sheets are
-// decoded whatever font kind is selected: they are part of the tier's set, so
-// they count against its budget, and every other kind falls back to them.
+// Every image and bitmap font for the active tier, decoded once up front so both backends share one place the
+// colour budget is checked. Sheets are always decoded regardless of font kind selected, since every other kind
+// falls back to them.
 public sealed class AssetSet
 {
     private AssetSet(
@@ -31,10 +28,7 @@ public sealed class AssetSet
 
     public Dictionary<string, BitmapFont> BitmapFonts { get; }
 
-    // The .fon strikes the rendition declares, if any. Unlike the sheets,
-    // these carry no colours of their own - a strike is one bit per pixel and
-    // takes the colour it is drawn in - so they are loaded here but have
-    // nothing to contribute to the budget below.
+    // .fon strikes the rendition declares, if any. Unlike sheets, a strike is 1 bit per pixel and takes the drawn colour, so it contributes nothing to the budget below.
     public Dictionary<string, FonFont> FonFonts { get; }
 
     public AssetColourBudget Budget { get; }
@@ -69,9 +63,7 @@ public sealed class AssetSet
             budget);
     }
 
-    // Reports every missing file at once. Decoding them one at a time
-    // surfaces only the first, which turns filling in a new rendition.s asset
-    // set into a game of whack-a-mole.
+    // Reports every missing file at once rather than one at a time, to avoid whack-a-mole when filling in a new rendition's asset set.
     private static void RequireEveryFile(IAssetLocator assetLocator)
     {
         string[] missing =
@@ -91,9 +83,7 @@ public sealed class AssetSet
         }
     }
 
-    // The named palette counts against the rendition's budget like any other
-    // asset: colours the game draws with are colours the rendition has to be
-    // able to show, whether they arrive as pixels or as a name.
+    // The named palette counts against the budget like any other asset - colours drawn with have to be showable whether they arrive as pixels or a name.
     private static HashSet<uint> PaletteColours(IAssetLocator assetLocator)
         => string.IsNullOrEmpty(assetLocator.PalettePath) ? []
             : !File.Exists(assetLocator.PalettePath)
@@ -144,9 +134,7 @@ public sealed class AssetSet
         return new(assetLocator.Rendition, assetLocator.Colours, distinct.Count, partialAlpha, perAsset, outsidePalette, offGrid);
     }
 
-    // Colours from one asset that the tier's DAC could not have produced.
-    // Recorded rather than counted, because fixing one means knowing which
-    // colour to snap.
+    // Colours the tier's DAC couldn't produce, recorded (not just counted) since fixing one needs knowing which colour to snap.
     private static void AddOffGrid(
         Dictionary<string, uint[]> offGrid,
         string asset,
@@ -161,8 +149,6 @@ public sealed class AssetSet
         }
     }
 
-    // One asset's distinct opaque colours, and how many of its pixels have an
-    // alpha the renderer cannot express.
     private static (HashSet<uint> Colours, int PartialAlpha) Scan(FastBitmap asset)
     {
         HashSet<uint> colours = [];
@@ -192,10 +178,8 @@ public sealed class AssetSet
         return (colours, partialAlpha);
     }
 
-    // A set that breaks its tier's budget fails the game at startup rather
-    // than rendering something the tier could never have displayed. The
-    // per-asset breakdown is logged first, so the message names which files
-    // to look at. See docs/asset-structure.md.
+    // A set that breaks budget fails at startup rather than rendering something the tier couldn't show. Per-asset
+    // breakdown is logged first so the message names which files to check. See docs/asset-structure.md.
     private static void Validate(AssetColourBudget budget, ILogger? logger)
     {
         if (budget.IsWithinBudget && budget.IsWithinPalette && budget.IsOnColourGrid && budget.PartialAlphaCount == 0)
@@ -239,8 +223,7 @@ public sealed class AssetSet
         throw new SharpKindException($"{partial}; the renderer needs alpha to be either 0 or 255.");
     }
 
-    // Names each asset with the colours at fault, so the message says which
-    // file to open and what to look for in it.
+    // Names each asset with its offending colours, so the message says exactly what to open and look for.
     private static string Offenders(IReadOnlyDictionary<string, uint[]> assets)
         => string.Join(
             "; ",

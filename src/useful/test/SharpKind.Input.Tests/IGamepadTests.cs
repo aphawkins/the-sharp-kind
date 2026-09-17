@@ -6,9 +6,7 @@ namespace SharpKind.Input.Tests;
 
 public class IGamepadTests
 {
-    // Writes now name the device they came from, so every test that presses
-    // a button attaches one first - which is what the backend does, since
-    // SDL opens a device before reporting anything it did.
+    // Writes now name the device they came from, so every test attaches one first, matching what the backend does (SDL opens before reporting).
     private const int DeviceA = 1;
     private const int DeviceB = 2;
 
@@ -377,9 +375,7 @@ public class IGamepadTests
         Assert.True(pad.IsAnalog(GamepadAxis.LeftX));
     }
 
-    // Both implementations of the interface must behave the same, so every
-    // contract test runs against each. A fresh instance per case keeps the
-    // one-shot reads of one test out of the next.
+    // Both implementations must behave the same, so every contract test runs against each with a fresh instance per case.
     private static IGamepad Create(bool software)
         => software ? new SoftwareGamepad(new FakeInput()) : new FakeGamepad();
 

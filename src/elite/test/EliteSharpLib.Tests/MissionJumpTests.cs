@@ -8,17 +8,13 @@ using SharpKind.Input;
 
 namespace EliteSharpLib.Tests;
 
-// The jumps set the state each mission screen's own Reset tests for and let
-// that Reset run, so a jump landing on the wrong screen - or on the right
-// screen with the wrong briefing - means the entry conditions have drifted
-// from the controllers. That is exactly what these check.
+// Checks that a jump lands on the right screen with the right briefing - i.e. the entry
+// conditions still match what each screen's Reset tests for.
 [Trait("Level", "Integration")]
 public class MissionJumpTests
 {
-    // The first two stages belong to the Constrictor mission and the rest to
-    // the Thargoid one, and the pair of stages is which briefing the screen
-    // then shows - the Thargoid jumps also want the Constrictor paid for,
-    // which is the one dependency between the two missions.
+    // The first two stages belong to the Constrictor mission and the rest to the Thargoid one;
+    // Thargoid jumps also want the Constrictor paid for, the one dependency between the two.
     [Theory]
     [InlineData(0, ConstrictorMission.Briefed, ThargoidMission.None)]
     [InlineData(1, ConstrictorMission.Rewarded, ThargoidMission.None)]
@@ -52,10 +48,7 @@ public class MissionJumpTests
         }
     }
 
-    // The cheat shares its key with the missile. Reading M before checking
-    // Ctrl consumed the press - IsPressed is one-shot - so with the cheat
-    // enabled a bare M stopped firing missiles. The jump must leave an
-    // unmodified M for whoever else wants it.
+    // Reading M before checking Ctrl consumed the one-shot press, so a bare M stopped firing missiles when the cheat was enabled.
     [Fact]
     public void ABareMIsLeftForTheMissile()
     {

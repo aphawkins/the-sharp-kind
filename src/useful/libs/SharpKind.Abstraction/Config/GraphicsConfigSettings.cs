@@ -20,35 +20,26 @@ public sealed class GraphicsConfigSettings
     // Maximum render frame rate. The game speed is independent of it.
     public float Fps { get; set; } = DefaultFps;
 
-    // Whether the 3D world is drawn as outlines or as filled faces. A game's
-    // own per-object style settings (its planet or sun style, say) only apply
-    // when this is Solid.
+    // Outlines vs filled faces. A game's own per-object style settings only apply when this is Solid.
     public FillMode FillMode { get; set; } = FillMode.Solid;
 
     // Which depth-sort strategy backs filled rendering; only takes effect
     // when FillMode is Solid.
     public DepthSort DepthSort { get; set; } = DepthSort.ZBuffer;
 
-    // What colour a face takes. Only applies when FillMode is Solid - an
-    // outline has no face to shade - and only in a rendition that shades at
-    // all; one standing in for a machine with no colours to spare for it
-    // stays Unlit whatever this says.
+    // Only applies when FillMode is Solid, and only in a rendition that shades at all; one
+    // standing in for a machine with no colours to spare stays Unlit whatever this says.
     public ShadingModelKind Shading { get; set; } = ShadingModelKind.Unlit;
 
     // How a shaded colour is reduced to one the rendition can display. Only
     // the method is set here; what the rendition can show is its own.
     public Quantisation Quantisation { get; set; } = Quantisation.Nearest;
 
-    // Which kind of font text is drawn with. Both backends honour it, so it
-    // decides how the text looks rather than which machine is drawing it - the
-    // two used to disagree, sheets in software against TrueType in hardware.
-    // A rendition that declares no font of the chosen kind draws with its own
-    // sheets instead.
+    // Both backends honour it now, so it's about how text looks, not which machine draws it (they
+    // used to disagree - sheets in software, TrueType in hardware).
     public FontKind FontKind { get; set; } = FontKind.Bitmap;
 
-    // Whether to overlay the measured frame rate. Off by default: it is a
-    // diagnostic, not part of the game's display. Nothing to repair - a bool
-    // the binder cannot read simply stays false.
+    // Off by default: a diagnostic, not part of the game's display.
     public bool ShowFps { get; set; }
 
     /// <summary>

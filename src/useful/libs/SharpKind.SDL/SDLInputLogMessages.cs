@@ -5,10 +5,7 @@ using SharpKind.Input;
 
 namespace SharpKind.SDL;
 
-// A pad that "does nothing" is almost always a mapping question - which
-// physical button is index 3, whether the stick is on axes or a hat - and
-// none of that can be answered from the game's side. These messages put the
-// device's own account of itself in the log.
+// A pad that "does nothing" is almost always a mapping question that can't be answered from the game's side; these messages log the device's own account.
 internal static partial class SDLInputLogMessages
 {
     [LoggerMessage(

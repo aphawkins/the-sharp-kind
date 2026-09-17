@@ -36,13 +36,11 @@ internal sealed class GalacticChartView16Bit : BaseView16Bit, IView<GalacticChar
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        // Header
         DrawViewHeader(model.Title);
 
         _surface.Graphics.DrawLine(
             new(0 + _surface.Layout.ViewportLeft, 36 + 258), new(_surface.Layout.ViewportRight, 36 + 258), _colorWhite);
 
-        // Fuel radius
         Vector2 centre = ToScreen(model.DockedPlanet);
         float radius = model.FuelLightYears * 2.5f * _surface.Layout.DesignScale;
         float cross_size = 7 * _surface.Layout.DesignScale;
@@ -50,7 +48,6 @@ internal sealed class GalacticChartView16Bit : BaseView16Bit, IView<GalacticChar
         _surface.Graphics.DrawLine(new(centre.X, centre.Y - cross_size), new(centre.X, centre.Y + cross_size), _colorWhite);
         _surface.Graphics.DrawLine(new(centre.X - cross_size, centre.Y), new(centre.X + cross_size, centre.Y), _colorWhite);
 
-        // Planets
         foreach (GalacticChartStar star in model.Stars)
         {
             Vector2 pixel = ToScreen(star.Position);
@@ -62,13 +59,11 @@ internal sealed class GalacticChartView16Bit : BaseView16Bit, IView<GalacticChar
             }
         }
 
-        // Cross
         centre = ToScreen(model.Cross);
 
         _surface.Graphics.DrawLine(new(centre.X - 8, centre.Y), new(centre.X + 8, centre.Y), _colorLighterRed);
         _surface.Graphics.DrawLine(new(centre.X, centre.Y - 8), new(centre.X, centre.Y + 8), _colorLighterRed);
 
-        // Text
         _surface.Graphics
             .DrawTextLeft(
                 new(16 + _surface.Layout.ViewportLeft, _surface.Layout.ViewportHeight - 55),
@@ -83,9 +78,7 @@ internal sealed class GalacticChartView16Bit : BaseView16Bit, IView<GalacticChar
                 _colorWhite);
     }
 
-    // Galaxy space (D, B) to this tier's screen coordinates. The star
-    // field's own span is 512-wide regardless of the viewport, so it is
-    // centred in the wider 640-wide viewport with a fixed +64 offset.
+    // Star field space is fixed at 512-wide; centred in the viewport with a +64 offset.
     private Vector2 ToScreen(Vector2 galaxy) => new(
         (galaxy.X * _surface.Layout.DesignScale) + _surface.Layout.ViewportLeft + 64,
         (galaxy.Y * _surface.Layout.DesignScale / 2) + (18 * _surface.Layout.DesignScale) + 1);

@@ -16,9 +16,7 @@ public class GamepadControlsTests
     public void AnIdlePadAsksForNothing()
         => Assert.Equal(CarInput.None, GamepadControls.ReadCarInput(new FakeGamepad()));
 
-    // An analog stick has to travel a good way before it counts as a steer,
-    // so a resting stick's drift cannot creep the car sideways. A digital
-    // stick reports the ends of the range, so it always passes.
+    // An analog stick has to travel a good way before it counts as a steer, so resting drift can't creep the car sideways.
     [Theory]
     [InlineData(-1f, CarInput.Left)]
     [InlineData(-0.6f, CarInput.Left)]

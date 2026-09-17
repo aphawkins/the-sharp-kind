@@ -32,8 +32,7 @@ internal static class MarketListStyle16Bit
     private const float RowHeight = 15;
     private const float CashY = 340;
 
-    // The cursor block is inset two pixels from each edge of the viewport, as
-    // the hand-drawn screen had it.
+    // Matches the hand-drawn screen's 2px inset from each edge.
     private const float RowsLeft = 2;
     private const float RowInset = 2 * RowsLeft;
 
@@ -77,7 +76,6 @@ internal static class MarketListStyle16Bit
             CashAmount: new(string.Empty, 277, CashY, TextAlignment.Right));
     }
 
-    // A cell's offset is from the row's left edge, and the row starts inside
-    // the viewport rather than at the text margin.
+    // Offset is from the row's left edge, which starts inside the viewport, not the text margin.
     private static TableColumn Cell(float x, TextAlignment alignment) => new(x - RowsLeft, alignment);
 }

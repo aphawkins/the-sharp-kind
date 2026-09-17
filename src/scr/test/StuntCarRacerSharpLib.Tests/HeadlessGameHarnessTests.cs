@@ -27,9 +27,7 @@ public class HeadlessGameHarnessTests
     {
         using HeadlessGameHarness harness = new();
 
-        // S (tap) at tick 0 selects the track: menu -> preview. Holding S
-        // from tick 1 to tick 4 gives the preview's 4-tick physics gate a
-        // chance to read it and start the race; released once it has.
+        // S at tick 0 selects the track: menu -> preview. Held to tick 4 to give the preview's physics gate a chance to read it.
         KeyScriptEvent[] script =
         [
             new(0, ConsoleKey.S, KeyScriptAction.Tap),

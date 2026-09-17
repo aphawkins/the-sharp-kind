@@ -6,9 +6,7 @@ using SharpKind.GoldenFrames;
 
 namespace StuntCarRacerSharpLib.Tests.GoldenFrames;
 
-// Where SCR's committed baselines live. The mechanics are shared with
-// Elite's - see BaselineFolder - and only the names are SCR's. Its own
-// variable, so regenerating one game's baselines never rewrites the other's.
+// The mechanics are shared with Elite's - see BaselineFolder. Its own variable, so regenerating one game's baselines never rewrites the other's.
 internal static class FrameBaselines
 {
     internal const string RegenerateEnvVar = "SCR_REGENERATE_TRACES";

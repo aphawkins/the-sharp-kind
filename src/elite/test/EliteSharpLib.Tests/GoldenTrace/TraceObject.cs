@@ -4,15 +4,10 @@
 
 namespace EliteSharpLib.Tests.GoldenTrace;
 
-// One universe slot as the trace records it. The player is always at the
-// origin in Elite, so a slot's Location is already relative to the ship and
-// needs no camera applied to be meaningful.
+// The player is always at the origin in Elite, so a slot's Location is already relative to the ship.
 //
-// ExpDelta is the explosion cloud's age, and it is here because it is the
-// one piece of game state the renderer currently owns: EliteDraw seeds it
-// and advances it by four every drawn frame. Separating simulate from
-// compose moves that advance, and without ExpDelta in the trace the move
-// would only show up indirectly, as the tick a wreck is finally removed.
+// ExpDelta is here because it's the one piece of game state the renderer owns: EliteDraw seeds and
+// advances it. Without it in the trace, a simulate/compose split would only show up indirectly.
 internal readonly record struct TraceObject(
     int Slot,
     string Type,

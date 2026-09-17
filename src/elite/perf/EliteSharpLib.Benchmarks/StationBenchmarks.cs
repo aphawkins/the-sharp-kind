@@ -58,19 +58,12 @@ public class StationBenchmarks : IDisposable
         _cobra.Rotmat = VectorMaths.GetLeftHandedBasisMatrix;
     }
 
-    // Camera-space Z. The Coriolis' bounding radius projects to roughly
-    // Focus * radius / Z pixels, and Focus is the screen height here, so
-    // these run from a distant speck to a station overflowing a 512x512
-    // view - the shape of a docking approach.
+    // Camera-space Z, running from a distant speck to a station overflowing a 512x512 view - the shape of a docking approach.
     [Params(1000f, 250f)]
     public float Distance { get; set; }
 
-    // The four graphics settings that differ in how often the quantiser is
-    // asked. Unlit/Nearest never asks it per pixel; ordered dithering makes
-    // it a per-pixel call with one answer per 4x4 cell; Gouraud makes it a
-    // per-pixel call whose answer varies with the interpolated colour, dither
-    // or no dither. Which of those the drop was seen under decides which fix
-    // is worth doing.
+    // Four settings differing in how often the quantiser is asked: never (Unlit/Nearest), per 4x4
+    // cell (ordered dithering), or per pixel with a varying answer (Gouraud).
     [Params(
         GraphicsPreset.UnlitNearest,
         GraphicsPreset.LambertOrdered,

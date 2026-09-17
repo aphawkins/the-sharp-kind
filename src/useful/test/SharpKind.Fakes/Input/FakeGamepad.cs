@@ -4,20 +4,14 @@ using SharpKind.Input;
 
 namespace SharpKind.Fakes.Input;
 
-// Minimal in-test fake implementation of IGamepad, tracking state per
-// device as SoftwareGamepad does, so a test can attach two sticks and check
-// that only the active one flies the ship.
-//
-// Every write also has a one-device shorthand, which is what nearly every
-// test wants: it addresses a single implicit device and attaches it on
-// first use, so a test about buttons does not have to talk about devices.
+// Tracks state per device as SoftwareGamepad does, so a test can attach two sticks and check only the active one flies the ship.
+// Every write also has a one-device shorthand that attaches on first use, for tests that don't care about devices.
 public sealed class FakeGamepad : IGamepad, IGamepadSink
 {
     private readonly Dictionary<int, Device> _devices = [];
     private readonly List<int> _arrivals = [];
 
-    // The device the shorthand writes to. Any id would do; this one is
-    // named so the shorthand and the explicit calls can be mixed.
+    // Any id would do; named so the shorthand and explicit calls can be mixed.
     public static int DefaultDeviceId => 0;
 
     public bool IsConnected => _arrivals.Count > 0;
@@ -142,10 +136,7 @@ public sealed class FakeGamepad : IGamepad, IGamepadSink
         // No-op for the fake. Real implementations may update internal state here.
     }
 
-    // A write to a device nothing has announced attaches it unnamed, so a
-    // test can press a button without first staging a connection. The real
-    // gamepad ignores such a write, because SDL always opens a device
-    // before it reports anything the device did.
+    // Attaches an unannounced device unnamed, so a test can press a button without staging a connection first; SDL never behaves this way.
     private Device Attached(int deviceId)
     {
         if (!_devices.TryGetValue(deviceId, out Device? device))

@@ -40,9 +40,7 @@ public class RenditionViewTests
 {
     public static TheoryData<string> Renditions => ["8-bit", "16-bit"];
 
-    // One entry per screen the renditions offer. The models are filled in
-    // rather than left at their defaults: an empty list draws nothing, which
-    // would let a smoke test pass without reaching the code it is here for.
+    // Models are filled in, not left at defaults: an empty list would let a smoke test pass without reaching the code.
     private static (Type Model, Action<ViewSet> Draw)[] Screens => [
         (typeof(CommanderStatusModel), DrawCommanderStatus),
         (typeof(CreditsModel), DrawCredits),
@@ -62,12 +60,8 @@ public class RenditionViewTests
         (typeof(ShortRangeChartModel), DrawShortRangeChart),
     ];
 
-    // What Compose draws into the HUD layer that no screen owns. The break
-    // pattern is deliberately not here: it draws into the universe layer,
-    // which keeps the window region's clip, and it needs that clip - its
-    // widest ring reaches exactly ViewportHeight, one row past the last
-    // pixel inside, so the 8-bit tier would put 29 pixels into the console
-    // band without it. BreakPatternTests covers the rings themselves.
+    // The break pattern is deliberately excluded: it draws into the universe layer and needs that
+    // clip, since its widest ring reaches exactly ViewportHeight. BreakPatternTests covers it.
     private static (string Name, Action<ViewSet, IEliteDraw, IBaseView> Draw)[] Overlays => [
         ("DrawFps", (_, _, baseView) => baseView.DrawFps(60)),
         ("DrawInfoMessage", (_, _, baseView) => baseView.DrawInfoMessage("DOCKING COMPUTER ON")),
@@ -87,17 +81,9 @@ public class RenditionViewTests
         }
     }
 
-    // The three-layer work puts every screen in a full-screen HUD layer, so
-    // the viewport clip that stops a screen painting into the console band
-    // today would no longer be there to stop it. This draws each screen with
-    // the clip left full screen and reports any pixel below the window
-    // region - which is what that change would newly put on the display.
-    //
-    // Real SoftwareGraphics rather than RecordingGraphics, because the
-    // question is about pixels: text has to rasterise to have an extent, and
-    // RecordingGraphics neither measures text nor records every primitive.
-    // It also loads the scanner art, without which ViewportHeight is the
-    // whole screen and there is no band to overflow into.
+    // A full-screen HUD layer removes the viewport clip stopping a screen painting into the console
+    // band, so this draws with the clip left full screen and reports any pixel below the window
+    // region. Real SoftwareGraphics, not RecordingGraphics: text must rasterise to have an extent.
     [Theory]
     [MemberData(nameof(Renditions))]
     public void NoScreenDrawsBelowTheWindowRegion(string renditionName)
@@ -127,11 +113,8 @@ public class RenditionViewTests
         Assert.True(overflows.Count == 0, $"{renditionName} draws below the window region:{Environment.NewLine}{report}");
     }
 
-    // The same question for the drawing Compose does outside any screen: the
-    // three in-flight overlays and the break pattern. These run under the
-    // view clip today just as the screens do, and move into the same
-    // full-screen HUD layer, so they need the same guard - the screen table
-    // above cannot reach them because none of them belongs to a screen.
+    // Same question for what Compose draws outside any screen (the overlays and break pattern),
+    // which the screen table above can't reach since none of them belongs to a screen.
     [Theory]
     [MemberData(nameof(Renditions))]
     public void NoOverlayDrawsBelowTheWindowRegion(string renditionName)
@@ -173,9 +156,7 @@ public class RenditionViewTests
 
         DrawCommanderStatus(views);
 
-        // Both tiers print the system the commander is at and the equipment
-        // fitted, so finding them says the model reached the page rather than
-        // that the page drew something.
+        // Finding these confirms the model reached the page, not just that the page drew something.
         List<string> text = [.. AllText(graphics)];
         Assert.Contains("LAVE", text);
         Assert.Contains("Large Cargo Bay", text);
@@ -304,10 +285,8 @@ public class RenditionViewTests
         .. graphics.CentredTexts.Select(t => t.Text),
     ];
 
-    // Draws one thing onto a real framebuffer with the clip left full screen,
-    // and reports any pixel that lands below the window region. Null when
-    // nothing does. A fresh graphics each time, so every caller starts from a
-    // cleared frame and is charged only for what it drew itself.
+    // Draws onto a real framebuffer with the clip full screen, reporting any pixel below the
+    // window region (null if none). Fresh graphics each time, so each caller starts from a cleared frame.
     private static string? MeasureOverflow(
         string renditionName,
         Action<ViewSet, IEliteDraw, IBaseView> draw)

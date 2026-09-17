@@ -6,15 +6,9 @@ using SharpKind.Assets.Palettes;
 
 namespace SharpKind.Graphics.Rendering;
 
-// Outline-only rendering with hidden-line removal: every submitted polygon
-// draws as a white outline, but only where nothing solid stands in front of
-// it. Backface culling alone cannot do this - it removes surfaces turned
-// away from the camera, not surfaces facing it from behind something else,
-// and ship models are not convex (a fin is a deliberately double-sided
-// plate, so one of its two faces survives any cull whichever side you view
-// it from). So the frame is buffered, every surface is written to the depth
-// buffer without being drawn, and the outlines are then drawn depth-tested
-// against it.
+// Outline-only rendering with hidden-line removal. Backface culling alone can't do this - ship
+// models aren't convex (a fin's double-sided plate always survives a cull) - so every surface
+// writes to the depth buffer without drawing, and outlines then draw depth-tested against it.
 public sealed class WireframeRenderer : IPolygonRenderer
 {
     private readonly FastColor _colorWhite;
@@ -34,9 +28,7 @@ public sealed class WireframeRenderer : IPolygonRenderer
     public void Submit(Vector2[] points, float[] depths, FastColor color, float z)
         => Submit(points, depths, color, z, dither: null);
 
-    // An outline has no fill to blend across either, and draws white whatever
-    // colour arrives - so the flattening here is only for the surfaces the
-    // depth pass writes, which are never drawn at all.
+    // An outline draws white whatever colour arrives, so this flattening only affects the depth-only surfaces, never drawn.
     public void Submit(Vector2[] points, float[] depths, FastColor[] colours, float z, IColourQuantiser? quantiser)
         => Submit(points, depths, VertexColours.Flatten(colours, quantiser), z, dither: null);
 
@@ -69,11 +61,8 @@ public sealed class WireframeRenderer : IPolygonRenderer
 
     public void EndFrame()
     {
-        // Every surface occludes, even though none of them is drawn, and
-        // each is tagged so its own edges can recognise it. A 2-point detail
-        // line is not a surface: it occludes nothing, and takes the id of
-        // whatever it lies on rather than one of its own - which is the id
-        // its own submission would carry, so nothing special is needed.
+        // Every surface occludes and is tagged so its own edges recognise it. A 2-point detail
+        // line isn't a surface, so it takes its host's id rather than one of its own.
         for (int i = 0; i < _totalPolys; i++)
         {
             if (_polys[i].PointList.Length > 2)
@@ -107,11 +96,8 @@ public sealed class WireframeRenderer : IPolygonRenderer
         DrawEdge(points[^1], points[0], depths[^1], depths[0], surfaceId);
     }
 
-    // No depth bias: an edge lies exactly on the surface it bounds, and the
-    // id settles that tie by identity instead. A bias would have to be large
-    // enough to cover a near edge-on face's depth gradient, which is more
-    // than the gap between a wing and the hull behind it - so any value that
-    // kept an edge visible also let hidden ones leak through.
+    // No depth bias: the id settles the tie by identity instead. A bias large enough to cover a
+    // near edge-on face's gradient would also let genuinely hidden edges leak through.
     private void DrawEdge(Vector2 start, Vector2 end, float depthStart, float depthEnd, int surfaceId)
         => _graphics.DrawLineDepth(start, end, depthStart, depthEnd, _colorWhite, surfaceId);
 }

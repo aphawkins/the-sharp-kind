@@ -12,9 +12,7 @@ namespace EliteSharpLib.Suns;
 
 internal static class SunFactory
 {
-    // As PlanetFactory: a wireframe world overrides the sun style, which one
-    // applies is the game's decision, and what it looks like is the
-    // rendition's. Nothing here knows which renditions exist.
+    // As PlanetFactory: the game picks the sun style, the rendition draws it.
     internal static IObject Create(GameState gameState, IEliteDraw draw, IRendition rendition, RNG rng)
     {
         ArgumentNullException.ThrowIfNull(gameState);
@@ -29,8 +27,7 @@ internal static class SunFactory
                 _ => throw new EliteException(),
             };
 
-        // The flaring rim shimmers off the game's one source of entropy,
-        // handed over rather than replaced.
+        // The flaring rim uses the game's one entropy source, handed over rather than replaced.
         return new Sun(draw, rendition.CreateSunRenderer(draw, new(sunStyle, rng)));
     }
 }

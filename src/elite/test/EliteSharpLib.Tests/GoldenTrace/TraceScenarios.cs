@@ -19,10 +19,8 @@ internal static class TraceScenarios
     // Elite's own choice of seed matters only in that it never changes.
     private const int Seed = 20260826;
 
-    // The title screen and the ship parade. Covers Intro1Controller's
-    // Z -= 100 per tick, Intro2Controller's _showTime >= 140 turnaround and
-    // its per-tick Z step, and - because the parade ship is spun by
-    // AddNewShip's rotx/rotz - Space.SpinUniverseObject and RotateXFirst.
+    // The title screen and ship parade. Covers Intro1/Intro2Controller's per-tick Z step and the
+    // parade ship's rotation via Space.SpinUniverseObject and RotateXFirst.
     internal static TraceScenario IntroParade { get; } = new(
         "intro-parade",
         Seed,
@@ -35,11 +33,8 @@ internal static class TraceScenarios
         // things whose drawing order matters most on this screen.
         [20, 150]);
 
-    // Docked, then launched, then flown. Covers BreakPattern's 20 rings (the
-    // launch animation), Space.LaunchPlayer, the station and planet moving
-    // past under MoveUniverseObject/ApplyShipVelocity, the front starfield's
-    // per-tick delta, and the player's roll/pitch ramp - which
-    // PilotController steps twice a tick.
+    // Docked, launched, then flown. Covers BreakPattern's 20 rings, Space.LaunchPlayer, universe
+    // motion under MoveUniverseObject/ApplyShipVelocity, and the roll/pitch ramp PilotController steps twice a tick.
     internal static TraceScenario LaunchAndFly { get; } = new(
         "launch-and-fly",
         Seed,
@@ -64,12 +59,8 @@ internal static class TraceScenarios
         // planet in it, then again mid-roll - the frame at its busiest.
         [10, 60, 150]);
 
-    // The same launch, then left alone long enough for MCount to wrap. That
-    // is what this one is for: MCount counts 255 down to 0, so only a run
-    // this long reaches the shield regen (& 7), the energy-low and altitude
-    // check (& 31 == 10), the cabin temperature (& 31 == 20) and the
-    // random encounter (== 0) - and, once an encounter arrives, Combat's
-    // one-in-eight tactics pacing.
+    // The same launch, left alone long enough for MCount (255 down to 0) to reach shield regen,
+    // energy-low/altitude/cabin-temp checks and a random encounter, plus Combat's tactics pacing.
     internal static TraceScenario LongFlight { get; } = new(
         "long-flight",
         Seed,
@@ -105,33 +96,20 @@ internal static class TraceScenarios
         // While the beam is drawn, and after it has stopped.
         [40, 120]);
 
-    // Launched, turned around onto the encounter behind, then shot. This is
-    // the one scenario that reaches the explosion cloud, and the cloud
-    // matters more than its share of the game because EliteDraw owns it:
-    // DrawObject seeds ExpDelta at 18 and DrawExplosion advances it by four
-    // every drawn frame, until past 251 it sets Remove.
+    // Launched, turned onto the encounter behind, then shot - the one scenario reaching the
+    // explosion cloud (DrawObject seeds ExpDelta at 18, DrawExplosion advances it by four per frame past 251, then Remove).
     //
-    // The kill is aimed only in the sense that the turn is: at this seed a
-    // Shuttle arrives behind the ship and stays there, so the script pitches
-    // for 230 ticks to bring it round to dead ahead and then holds the beam
-    // on it. It dies on tick 376 at z~1900, the cloud is drawn from 377 to
-    // 435, and the slot empties on 437. Aiming this way is what the earlier
-    // fire-and-wait script could not do: the wreck has to be *in front* for
-    // the frame check to see anything, because DrawExplosion returns on
-    // Location.Z <= 0, and a ship that flies into a held beam is already
-    // going past by the time it dies.
+    // At this seed a Shuttle arrives behind and stays there, so the script pitches 230 ticks to
+    // bring it dead ahead and holds the beam. It dies at tick 376, cloud draws 377-435. The wreck
+    // must be in front for DrawExplosion (which returns on Location.Z <= 0) to see it - a ship
+    // flying into a held beam is already past by the time it dies, which a fire-and-wait script couldn't aim for.
     //
-    // The turn duration is a property of the seed, so a change to how much
-    // RNG the game draws will move the encounter and the trigger tick with
-    // it. That is a real divergence worth seeing, not a flaw in the
-    // scenario - but the trace no longer showing an explosion at all means
-    // the scenario has stopped covering what it is for, and it should be
-    // re-aimed rather than left green.
+    // The turn duration is a property of the seed: a change to how much RNG the game draws moves
+    // the trigger tick. That's a real divergence, but a trace with no explosion means the scenario
+    // has stopped covering what it's for and should be re-aimed, not left green.
     //
-    // Nothing scripts a kill more directly because nothing can: the escape
-    // capsule and the energy bomb are the two deterministic explosions in
-    // the game and both belong to Commander Max, whom TraceRecorder
-    // deliberately turns off.
+    // Nothing scripts a kill more directly: the escape capsule and energy bomb are the only other
+    // deterministic explosions, and both belong to Commander Max, whom TraceRecorder turns off.
     internal static TraceScenario Explosion { get; } = new(
         "explosion",
         Seed,

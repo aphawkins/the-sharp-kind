@@ -23,9 +23,7 @@ public class FontRasteriserSetTests
         Assert.Equal(new(20, 20), set.Measure("A", "Small"));
     }
 
-    // A rendition declaring no font of the chosen kind draws with its own
-    // sheets rather than failing: what the commander picked being absent is a
-    // reason to fall back, not a reason to stop.
+    // A missing declared kind draws with the rendition's own sheets rather than failing: it's a reason to fall back, not to stop.
     [Fact]
     public void FallsBackToTheSheetsForAKindTheRenditionLacks()
     {

@@ -55,8 +55,7 @@ internal sealed class OptionsView16Bit : BaseView16Bit, IView<OptionsModel>
         _options.Draw();
     }
 
-    // The rows are rebuilt only when the count changes: it never does in
-    // practice, but the model owns the list, so the view does not assume it.
+    // Rebuilt only when the count changes; the model owns the list, not the view.
     private void FillOptions(OptionsModel model)
     {
         if (_options.Children.Count != model.Options.Count)

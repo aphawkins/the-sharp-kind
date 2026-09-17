@@ -17,17 +17,13 @@ using SharpKind.UI;
 
 namespace EliteSharpLib.Views;
 
-// The "engine" half of the config file: the settings that are not about Elite
-// in particular. The game's own are on their own screen - see
-// SettingsController.
+// The non-Elite settings; the game's own are on SettingsController.
 internal sealed class EngineSettingsController : SettingsListController
 {
-    // The original's 2*atan(0.5), rounded for display. Selecting it clears
-    // the setting rather than storing 53, so the projection stays exact.
+    // The original's 2*atan(0.5), rounded for display; selecting it clears the setting so the projection stays exact.
     private const int ClassicFieldOfView = 53;
 
-    // What an unset ActiveController is shown as. Not a device name, so it
-    // can never collide with one a driver reports.
+    // Not a device name, so it can never collide with one a driver reports.
     private const string KeyboardOnly = "Keyboard only";
 
     internal EngineSettingsController(
@@ -83,9 +79,7 @@ internal sealed class EngineSettingsController : SettingsListController
                     {
                         config.Engine.Graphics.FillMode = value;
 
-                        // The planet and sun styles only apply in a solid
-                        // world, so both have to be rebuilt when that flips
-                        // either way.
+                        // Planet and sun styles only apply in a solid world, so rebuild both when this flips.
                         space.RefreshPlanetStyle();
                         space.RefreshSunStyle();
                     }),
@@ -98,10 +92,7 @@ internal sealed class EngineSettingsController : SettingsListController
                     value => config.Engine.Graphics.DepthSort = value),
                 Save),
 
-            // Both shown whether or not the rendition in use shades - the same
-            // way Depth Sort is shown in a wireframe world. A setting that
-            // reads back what it was set to is honest; hiding the row would
-            // leave the commander wondering where it went.
+            // Shown even when the rendition doesn't shade; hiding a set row would be dishonest.
             new SavedSetting(
                 new EnumSetting<ShadingModelKind>(
                     "Shading:",
@@ -121,11 +112,7 @@ internal sealed class EngineSettingsController : SettingsListController
                     value => config.Engine.Graphics.Quantisation = value),
                 Save),
 
-            // No asterisk: every kind the rendition declares was loaded at
-            // launch, so the switch shows on the next frame drawn. A kind
-            // this rendition has no font for leaves its own sheets in use -
-            // the row still reads back what was chosen, the same way Shading
-            // does in a rendition that does not shade.
+            // No asterisk: every kind was loaded at launch, so the switch shows next frame.
             new SavedSetting(
                 new EnumSetting<FontKind>(
                     "Font:",
@@ -152,8 +139,7 @@ internal sealed class EngineSettingsController : SettingsListController
                         config.Engine.Sound.Music = value;
                         audio.MusicOn = value;
 
-                        // Silence whatever is already playing rather than
-                        // leaving it running until the next screen change.
+                        // Silence what's already playing rather than leaving it running until the next screen change.
                         if (!value)
                         {
                             audio.StopMusic();
@@ -173,10 +159,7 @@ internal sealed class EngineSettingsController : SettingsListController
                     }),
                 Save),
 
-            // Both of these are read before the game is built - the backend
-            // picks the abstraction, the rendition the render resolution and
-            // asset set - so they are saved now and taken up on the next
-            // launch.
+            // Both read before the game is built, so they're saved now and taken up on next launch.
             new SavedSetting(
                 new EnumSetting<Backend>(
                     "Backend *:",
@@ -185,14 +168,8 @@ internal sealed class EngineSettingsController : SettingsListController
                     value => config.Engine.Backend = value),
                 Save),
 
-            // How far the rendered pixels are magnified into the window. The
-            // scales offered are the selected rendition's - a canvas that is
-            // already 640 wide has less room to grow than one that is 320 -
-            // and read live off the Rendition row below rather than off
-            // renditions.Chosen, since switching that row does not take
-            // effect (and so does not reload) until the game restarts, and
-            // this row would otherwise keep offering the scales of whichever
-            // rendition is still running.
+            // Scales read live off the Rendition row below, not renditions.Chosen, since a Rendition
+            // change doesn't take effect until restart and this row would otherwise offer stale scales.
             new SavedSetting(
                 new NumberSetting(
                     "Window Scale *:",
@@ -202,23 +179,8 @@ internal sealed class EngineSettingsController : SettingsListController
                     value => config.Engine.WindowScale = value),
                 Save),
 
-            // How much of the universe the viewport shows. Widening it pulls
-            // the projection's focal length in, so more fits on screen and
-            // everything in it is smaller - it is the one setting here that
-            // changes what is in front of the ship rather than how it is
-            // drawn.
-            //
-            // No asterisk: Focus is read off the config every time it is
-            // used, so the next frame is already at the new angle.
-            //
-            // 53 is the original's own projection - a focal length of one
-            // screen height, 2*atan(0.5) = 53.13 degrees - and selecting it
-            // stores nothing, so the classic view stays exact rather than
-            // being the rounded angle put back through the arithmetic.
-            //
-            // Shown as bare degrees: the bitmap fonts are indexed from space
-            // and carry no degree sign, so a suffix would be a glyph off the
-            // end of the sheet.
+            // 53 is the original's own projection (2*atan(0.5) = 53.13deg); selects null so the
+            // classic view stays exact. Bare degrees: the bitmap fonts carry no degree glyph.
             new SavedSetting(
                 new NumberSetting(
                     "Field of View:",
@@ -228,11 +190,7 @@ internal sealed class EngineSettingsController : SettingsListController
                     value => config.Engine.FieldOfView = value == ClassicFieldOfView ? null : value),
                 Save),
 
-            // Which attached stick flies the ship. The list is read live,
-            // because a commander can plug one in while this screen is up,
-            // and it always offers "Keyboard only" first - which is not a
-            // device but the absence of one, and is what an empty setting
-            // means. The keyboard itself is always live either way.
+            // List read live, since a commander can plug a stick in while this screen is up.
             new SavedSetting(
                 new ChoiceSetting(
                     "Controller:",
@@ -244,10 +202,7 @@ internal sealed class EngineSettingsController : SettingsListController
                         = string.Equals(value, KeyboardOnly, StringComparison.Ordinal) ? string.Empty : value),
                 Save),
 
-            // The renditions offered are the ones installed, so a commander
-            // cannot select one that is not there. They are shown by the name
-            // each calls itself: the game cannot prettify a name it has never
-            // seen. With one installed the row simply stays put.
+            // Offers only installed renditions, by the name each calls itself.
             new SavedSetting(
                 new ChoiceSetting(
                     "Rendition *:",

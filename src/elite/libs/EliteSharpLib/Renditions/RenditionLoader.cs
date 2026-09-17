@@ -61,16 +61,11 @@ internal static class RenditionLoader
 
         if (Directory.Exists(renditionsFolder))
         {
-            // A rendition is a folder, not a loose file: it brings its own
-            // artwork, palette, fonts and ship models alongside its code, and
-            // they would collide in one directory - both of the shipped ones
-            // have a palette.json and a hud.bmp. Loose DLLs are still read
-            // so a code-only rendition needs no folder of its own.
+            // A rendition is a folder, not a loose file: its artwork, palette, fonts and models would collide with another rendition's in one directory.
+            // Loose DLLs are still read, so a code-only rendition needs no folder of its own.
             foreach (string file in Directory.EnumerateFiles(renditionsFolder, "*.dll", SearchOption.AllDirectories))
             {
-                // One unreadable file is one rendition the commander cannot play,
-                // which is only fatal if it was the one they asked for - so
-                // the decision is left to the search below.
+                // One unreadable file is one rendition the commander cannot play; fatal only if it was the one they asked for, decided below.
                 try
                 {
                     assemblies.Add(AssemblyLoadContext.Default.LoadFromAssemblyPath(Path.GetFullPath(file)));
@@ -99,13 +94,10 @@ internal static class RenditionLoader
             ?? throw new InvalidOperationException(
                 $"Nothing in '{renditionsFolder}' is called '{name}', so there is nothing to draw the game with.");
 
-        // Where it came from, so the game can find the artwork it brought
-        // with it. A rendition loaded from a loose DLL has the Renditions
-        // folder itself, which is the right answer for one shipping no assets.
+        // Where it came from, so the game can find its artwork. A loose-DLL rendition gets the Renditions folder itself, the right answer for one shipping no assets.
         string folder = Path.GetDirectoryName(chosen.GetType().Assembly.Location) ?? renditionsFolder;
 
-        // The settings screen offers the commander what is installed, so the
-        // ones that were not chosen are worth keeping too.
+        // The settings screen offers the commander what is installed, so the ones not chosen are worth keeping too.
         return new(chosen, folder, [.. renditions.OrderBy(r => r.Name, StringComparer.Ordinal)]);
     }
 

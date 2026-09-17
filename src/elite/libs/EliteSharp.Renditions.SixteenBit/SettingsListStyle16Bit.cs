@@ -29,8 +29,7 @@ internal static class SettingsListStyle16Bit
     private const int ArrowGap = 10;
     private const int BackRowWidth = 260;
 
-    // The Back row's distance up from the bottom of the viewport, and the
-    // footer's below it.
+    // Back row's distance up from the viewport bottom, footer's distance below it.
     private const int BackRowOffset = 80;
     private const int FooterGap = 40;
 
@@ -38,8 +37,7 @@ internal static class SettingsListStyle16Bit
     {
         ArgumentNullException.ThrowIfNull(surface);
 
-        // A settings row is never greyed out, so there is no disabled look
-        // here beyond the normal one.
+        // A settings row is never greyed out, so there is no disabled look here.
         ControlColors text = ControlColors.TextOnly(surface.Palette["White"]);
         ControlColors selected = new(surface.Palette["LightRed"], surface.Palette["White"]);
 

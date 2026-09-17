@@ -12,12 +12,7 @@ using SharpKind.Graphics.Rendering;
 
 namespace EliteSharpLib;
 
-// What draws: the polygon renderer the config selects, the draw surface the
-// game holds, and the ship factory that hands them out. Split out of
-// EliteServiceCollectionExtensions once EliteDraw's ScreenLayout - the
-// screen size, now that IGraphics no longer carries it - pushed that class
-// over CA1506's class-coupling limit; the metric is per class, so an extra
-// static class is what resolves it.
+// Split out of EliteServiceCollectionExtensions once EliteDraw's ScreenLayout pushed that class over CA1506's class-coupling limit.
 internal static class EliteRenderingServiceCollectionExtensions
 {
     internal static void AddEliteRendering(this IServiceCollection services)

@@ -10,10 +10,7 @@ using Xunit;
 
 namespace StuntCarRacerSharpLib.Tests.Screens;
 
-// The preview screen reads its keys every tick. It used to read them only on
-// the ticks the physics ran - one in four - so a press landing on any of the
-// other three was silently dropped, and a brief tap that worked on every other
-// screen did nothing here.
+// Regression: keys used to be read only on physics ticks (one in four), so a brief tap that worked on every other screen did nothing here.
 public class TrackPreviewScreenTests
 {
     [Fact]

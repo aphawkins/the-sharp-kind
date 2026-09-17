@@ -26,11 +26,8 @@ public static class SDLGuard
     public static int Execute(Func<int> sdlMethod, [CallerArgumentExpression(nameof(sdlMethod))] string? callerArgument = null)
         => Execute(sdlMethod, zeroIndicatesError: false, callerArgument);
 
-    // Most SDL/SDL_mixer int-returning functions signal failure with a
-    // negative result. A handful (e.g. Mix_RegisterEffect, Mix_UnregisterEffect,
-    // Mix_QuerySpec) instead use the inverted convention of zero-means-error,
-    // nonzero-means-success; use this overload with zeroIndicatesError: true
-    // for those.
+    // Most SDL/SDL_mixer int functions signal failure with a negative result. A handful (e.g.
+    // Mix_RegisterEffect) use zero-means-error instead; use zeroIndicatesError: true for those.
     public static int Execute(
         Func<int> sdlMethod,
         bool zeroIndicatesError,
@@ -51,10 +48,7 @@ public static class SDLGuard
         return result;
     }
 
-    // SDL3 and SDL3_mixer functions have moved to a single unambiguous
-    // convention for bool-returning calls: true = success, false = failure
-    // (unlike the two legacy int conventions handled above), so this
-    // overload needs no zeroIndicatesError equivalent.
+    // SDL3/SDL3_mixer bool-returning calls use one unambiguous convention (true = success), so this overload needs no zeroIndicatesError equivalent.
     public static bool Execute(Func<bool> sdlMethod, [CallerArgumentExpression(nameof(sdlMethod))] string? callerArgument = null)
     {
         Debug.Assert(sdlMethod != null, "sdlMethod should not be null");

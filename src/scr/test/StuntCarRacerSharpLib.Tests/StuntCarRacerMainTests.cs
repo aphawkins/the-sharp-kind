@@ -406,10 +406,7 @@ public class StuntCarRacerMainTests
         FakeKeyboard keyboard = (FakeKeyboard)abstraction.Keyboard;
         StartRace(game, abstraction);
 
-        // The player's car is only in the scene once the race has stepped its
-        // physics at least once, so this waits a full FrameGap rather than
-        // drawing the very first tick. It used to get those ticks for nothing,
-        // out of the four StartRace spent holding S down at the preview.
+        // The car is only in the scene once physics has stepped at least once, so this waits a full FrameGap rather than the very first tick.
         RunTicks(game, 4);
 
         game.Draw();
@@ -433,10 +430,7 @@ public class StuntCarRacerMainTests
     {
         FakeKeyboard keyboard = (FakeKeyboard)abstraction.Keyboard;
 
-        // menu -> preview -> race. The preview used to need S held across four
-        // ticks until a physics tick happened to read it; it reads the keys
-        // every tick now, so one press does on that screen what it does on
-        // every other.
+        // menu -> preview -> race. The preview now reads keys every tick, so one press does here what it does on every other screen.
         PressKey(game, keyboard, ConsoleKey.S);
         PressKey(game, keyboard, ConsoleKey.S);
     }

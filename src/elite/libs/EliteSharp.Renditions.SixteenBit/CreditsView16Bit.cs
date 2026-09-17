@@ -83,8 +83,7 @@ internal sealed class CreditsView16Bit : BaseView16Bit, IView<CreditsModel>
         _back.Draw();
     }
 
-    // The rows are rebuilt only when the count changes: it never does in
-    // practice, but the model owns the list, so the view does not assume it.
+    // Rebuilt only when the count changes; the model owns the list, not the view.
     private void FillCredits(CreditsModel model)
     {
         if (_credits.Children.Count != model.Credits.Count)

@@ -9,15 +9,9 @@ using StuntCarRacerSharpLib.Tracks;
 
 namespace StuntCarRacerSharpLib.Rendering;
 
-// The in-game cockpit overlay, ported from the ptitSeb/stuntcarremake
-// DrawCockpit: the wheel-well/dashboard frame, front wheel sprites that
-// bounce with the suspension and spin with road speed, the engine (with a
-// boost flame animation), the damage crack image revealed progressively by
-// damage, smash holes, the speed bar, and the lap/boost/opponent-distance
-// read-outs. All sprites come from the single Atlas image (converted
-// one-time from the original's Bitmap/atlas.png); layout is in the
-// original's 640x480 standard-resolution coordinate space, scaled to the
-// screen. The Super League ("2"-suffixed) atlas variants are not used yet.
+// The in-game cockpit overlay, ported from ptitSeb/stuntcarremake's DrawCockpit. All sprites come
+// from the single Atlas image; layout is in the original's 640x480 space, scaled to the screen.
+// The Super League ("2"-suffixed) atlas variants are not used yet.
 internal sealed class HudRenderer
 {
     private const string Atlas = "Atlas";
@@ -125,11 +119,7 @@ internal sealed class HudRenderer
         return string.Create(CultureInfo.InvariantCulture, $"{minutes}:{seconds:D2}.{centiseconds:D2}");
     }
 
-    // A crane lowers/raises the car by two chains through the view window
-    // while OnChains is set (the original's draw.chains); no sprite art for
-    // this survives in either reference port's atlas, so it is drawn
-    // procedurally: two vertical chains that sway together, following the
-    // car's chain swing angle.
+    // No sprite art for this survives in either reference port's atlas, so it's drawn procedurally.
     private void DrawChains(float scaleX, float scaleY, int chainSwingAngle)
     {
         const float MaxSwayPixels = 26f;
@@ -149,9 +139,7 @@ internal sealed class HudRenderer
         DrawChain(rightX, top, rightX, bottom, LinkWidth * scaleX, LinkHeight * scaleY, LinkGap * scaleY);
     }
 
-    // Draws one chain as a series of alternating light/dark links from
-    // (x0, y0) down to (x1, y1), so it reads as a textured chain rather
-    // than a plain dashed line.
+    // Alternating light/dark links so it reads as a textured chain rather than a plain dashed line.
     private void DrawChain(float x0, float y0, float x1, float y1, float linkWidth, float linkHeight, float linkGap)
     {
         FastColor darkLink = FastColor.FromUInt32(0xFF4A4A4A);
@@ -208,10 +196,7 @@ internal sealed class HudRenderer
         DrawSprite(scaleX, scaleY, 0, SideDestHeight, BaseWidth, BottomDestHeight, s_cockpitBottom);
     }
 
-    // The damage crack image is revealed progressively (not stretched): the
-    // sampled source width grows with damage at a constant 2x scale, so it
-    // looks like more of the crack appearing rather than the art warping.
-    // Smash holes appear side by side once damage passes the smash threshold.
+    // Revealed progressively, not stretched: sampled source width grows with damage at constant scale.
     private void DrawDamage(float scaleX, float scaleY, int newDamage, int smashHoles)
     {
         int dam = Math.Clamp(newDamage, 0, CrackingWidth);
@@ -228,9 +213,7 @@ internal sealed class HudRenderer
         }
     }
 
-    // The dashboard speed bar: yellow up to 240 display-speed units, then
-    // orange for the wrapped remainder above that (the original's
-    // COCKPIT_SPEEDBAR_MAX wrap, not a clamp).
+    // Yellow to 240 display-speed units, orange for the wrapped remainder (original's wrap, not a clamp).
     private void DrawSpeedBar(float scaleX, float scaleY, int displaySpeed)
     {
         int length = displaySpeed > SpeedBarMax ? displaySpeed - SpeedBarMax : displaySpeed;
@@ -245,9 +228,7 @@ internal sealed class HudRenderer
         _graphics.DrawRectangleFilled(position, width * scaleX, SpeedBarDestHeight * scaleY, colour);
     }
 
-    // "L <lap>" / "B <boost>" and the signed opponent distance, printed in
-    // black onto the dashboard's read-out panels (print.lap.boost.text
-    // and friends, at the original's screen positions).
+    // "L <lap>" / "B <boost>" and signed opponent distance, printed at the original's screen positions.
     private void DrawReadouts(float scaleX, float scaleY, int lapNumber, int boostReserve, int opponentDistance)
     {
         const string font = StuntCarRacerMain.SmallFont;
@@ -264,10 +245,7 @@ internal sealed class HudRenderer
         _graphics.DrawTextLeft(new(84 * scaleX, (BaseHeight - 25f) * scaleY), sign + distance, font, black);
     }
 
-    // Current and best lap time, mirroring the lap number, boost and
-    // distance read-outs on the right of the dashboard. This placement is
-    // not verified against the original's exact layout; see the lap-times
-    // backlog item for the caveats around this port.
+    // Placement not verified against the original's exact layout; see the lap-times backlog item.
     private void DrawLapTimes(float scaleX, float scaleY, int currentLapTicks, int? bestLapTicks)
     {
         const string font = StuntCarRacerMain.SmallFont;

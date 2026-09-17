@@ -13,9 +13,7 @@ using SharpKind.Graphics;
 
 namespace EliteSharpLib.Tests.Suns;
 
-// What each style draws, taken off a real rendition the way the game takes
-// it. The renderer is handed screen terms directly, so there is no projection
-// in the way of what these say.
+// The renderer is handed screen terms directly, so there's no projection in the way of what these say.
 public sealed class SunRendererTests
 {
     private const float Radius = 100;

@@ -91,9 +91,7 @@ public class PilotControllerTests
     [Fact]
     public void TheLaserBoltStaysVisibleForTheSameLengthOfTime()
     {
-        // The bolt is drawn for two of the game's ticks. Counted in updates
-        // instead it was two updates, which at sixty frames a second is a
-        // 33ms flicker where it should be about 150ms.
+        // The bolt draws for two of the game's ticks, not two updates - counted as updates it flickered at 33ms instead of ~150ms.
         PilotController controller = CreateController(
             PilotDirection.Front, out _, out _, out GameState state);
 
@@ -115,10 +113,7 @@ public class PilotControllerTests
         Assert.False(controller.BuildModel().IsFiring);
     }
 
-    // An analog stick is a position, not a key: the ship turns at the rate
-    // the stick is pushed to, straight away, with none of the ramp a held
-    // key climbs through. Roll is negated because the stick's X is positive
-    // to the right and the roll rate is not.
+    // An analog stick is a position, not a key: the ship turns at the rate it's pushed to, with no ramp.
     [Theory]
     [InlineData(1f, -31f)]
     [InlineData(-1f, 31f)]
@@ -406,9 +401,7 @@ public class PilotControllerTests
             gameState, pilot, ship, stars, space, combat, direction, draw, ShippedControls(keyboard, gamepad), keyboard);
     }
 
-    // Kept out of CreateController for the same reason CreateStars is: the
-    // controller and its fakes are several more types than that method's
-    // coupling budget has room for.
+    // Kept out of CreateController: several more types than that method's coupling budget has room for.
     private static PilotController NewController(
         GameState gameState,
         Pilot pilot,
@@ -433,10 +426,8 @@ public class PilotControllerTests
             draw,
             new FakePilotView());
 
-    // Kept out of CreateController for the same reason CreateStars is: the
-    // map and its bindings are two more types than that method's coupling
-    // budget has room for. The shipped bindings, so the tests exercise what
-    // a commander actually gets.
+    // Kept out of CreateController for the same reason: two more types than the coupling budget allows.
+    // Uses the shipped bindings, so the tests exercise what a commander actually gets.
     private static EliteControlMap ShippedControls(FakeKeyboard keyboard, FakeGamepad gamepad)
         => new(EliteControlDefaults.Create(), keyboard, gamepad);
 
@@ -446,9 +437,7 @@ public class PilotControllerTests
     private static Stars CreateStars(GameState gameState, FakeEliteDraw draw, PlayerShip ship)
         => new(gameState, draw, ship, s_rendition.CreateStarfieldRenderer(draw));
 
-    // An axis only counts as analog once it has reported a position between
-    // its extremes; this is that proof, and it is what the tests above need
-    // before the stick's position means anything.
+    // An axis only counts as analog once it has reported a position between its extremes.
     private static void MakeAnalog(FakeGamepad gamepad, GamepadAxis axis)
         => gamepad.AxisMoved(axis, 0.3f);
 

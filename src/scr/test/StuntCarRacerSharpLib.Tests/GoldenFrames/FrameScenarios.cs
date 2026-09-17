@@ -18,19 +18,14 @@ internal static class FrameScenarios
     // Only that it never changes.
     private const int Seed = 20260915;
 
-    // The track menu, before anything is pressed. Text and chrome on their
-    // own, with no world behind them - the one screen that would still look
-    // right if the world layers drew nothing at all, which is why it earns a
-    // baseline of its own rather than being assumed covered by the race.
+    // The one screen that would still look right if the world layers drew nothing, hence its own baseline rather than being assumed covered by the race.
     internal static FrameScenario TrackMenu { get; } = new(
         "track-menu",
         Seed,
         [],
         [2, 10]);
 
-    // The track preview: the circuit drawn from outside, turning. This is
-    // the screen that draws world polygons with no cockpit over them, so it
-    // is where a backdrop painted over the world would show most plainly.
+    // The screen that draws world polygons with no cockpit over them, so a backdrop painted over the world would show most plainly.
     internal static FrameScenario TrackPreview { get; } = new(
         "track-preview",
         Seed,
@@ -42,10 +37,7 @@ internal static class FrameScenarios
         // moved the circuit a long way round.
         [5, 60, 140]);
 
-    // A race: the car on the track, the opponent alongside, the cockpit and
-    // the instruments over them. The accelerator is held rather than tapped
-    // so the frames are of a car actually moving - a stationary car would
-    // leave the physics and the opponent out of the check entirely.
+    // Accelerator held, not tapped, so the frames show a car actually moving; a stationary car would leave the physics out of the check.
     internal static FrameScenario Race { get; } = new(
         "race",
         Seed,

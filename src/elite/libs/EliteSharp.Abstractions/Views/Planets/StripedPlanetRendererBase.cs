@@ -24,8 +24,7 @@ public abstract class StripedPlanetRendererBase(IViewSurface surface) : IPlanetR
 
     public void Draw(PlanetView planet)
     {
-        // Mapped on the first draw rather than in the constructor: the
-        // subclass's stripes do not exist until it has finished constructing.
+        // Deferred to first draw: the subclass's stripes don't exist until construction finishes.
         if (!_mapped)
         {
             MapStripes();

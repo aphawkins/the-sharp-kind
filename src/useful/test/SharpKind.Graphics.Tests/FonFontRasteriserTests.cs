@@ -71,9 +71,7 @@ public class FonFontRasteriserTests
         Assert.Equal(new(0, 2), rasteriser.Measure("   ", "TestFont"));
     }
 
-    // A character the strike never covered leaves a gap rather than a
-    // substitute glyph - and the gap has to be the same width whether the
-    // text is measured or drawn, or the two disagree about the layout.
+    // A gap's width must be the same whether text is measured or drawn, or the two disagree about layout.
     [Fact]
     public void LeavesAGapForACharacterTheStrikeDoesNotCover()
     {

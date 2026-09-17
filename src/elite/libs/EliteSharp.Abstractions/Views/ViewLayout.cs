@@ -42,11 +42,8 @@ namespace EliteSharp.Abstractions.Views;
 public sealed record ViewLayout(float ScreenWidth, float ScreenHeight, float ConsoleHeight, float DesignScale)
     : ScreenLayout(ScreenWidth, ScreenHeight)
 {
-    // Left/Top/Right/Bottom are inclusive pixel bounds - Right and Bottom are
-    // the last pixel that is still inside - while Width/Height are the extents
-    // one past them, which is what a clip region and a rectangle want.
-    // The viewport starts at the screen's own origin - that is the whole
-    // point of it - so these are fixed rather than derived.
+    // Right/Bottom are inclusive; Width/Height are one past them, as a clip region wants.
+    // The viewport starts at the screen's own origin, so these are fixed rather than derived.
     public float ViewportLeft { get; }
 
     public float ViewportTop { get; }

@@ -32,10 +32,7 @@ public class FastBitmap : IDisposable
         Dispose(disposing: false);
     }
 
-    // Pinned lazily: most bitmaps (cached text glyphs, intermediates) never
-    // cross into native code, so pinning only the handful that actually
-    // call this avoids fragmenting the GC heap with permanently pinned
-    // short-lived arrays.
+    // Pinned lazily: most bitmaps never cross into native code, so only pinning ones that do avoids fragmenting the GC heap with permanently pinned short-lived arrays.
     public nint BitmapHandle
     {
         get

@@ -27,9 +27,7 @@ internal sealed class Universe
         ClearUniverse();
     }
 
-    // Whichever station this system has, rather than the two the game used
-    // to name: a station is a ship with the flag, and it is the one thing that
-    // shares the StationOrSun slot with the sun.
+    // A station is any ship flagged Station; it shares the StationOrSun slot with the sun.
     internal bool IsStationPresent
         => StationOrSun?.Flags.HasFlag(ShipProperties.Station) == true;
 
@@ -151,9 +149,7 @@ internal sealed class Universe
 
     internal int ShipCount(string shipId) => _shipCount.GetValueOrDefault(shipId);
 
-    // The planet and the sun are not ships and are not counted; nothing asks
-    // how many of either there are, and the original did not count them out of
-    // the universe when they left either.
+    // The planet and sun are not ships and are not counted, matching the original.
     private void Count(IObject obj, int delta)
     {
         if (obj.Id is not ObjectIds.None and not ObjectIds.Planet and not ObjectIds.Sun)

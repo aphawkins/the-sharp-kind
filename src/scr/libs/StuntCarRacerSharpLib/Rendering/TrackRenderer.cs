@@ -9,22 +9,15 @@ using StuntCarRacerSharpLib.Tracks;
 
 namespace StuntCarRacerSharpLib.Rendering;
 
-// Draws the track as flat-shaded polygons: one road surface and two side
-// surfaces per segment (as the original CreateUpdatePieceInVBMode1), depth
-// tested per pixel as the original's Direct3D z-buffer (the remake drew the
-// track with D3DRS_ZENABLE on, in arbitrary order). Road segments near the
-// player are textured with the road-line strips.
+// Depth tested per pixel to match the original's D3DRS_ZENABLE z-buffer, so draw order is arbitrary.
 public sealed class TrackRenderer
 {
     private const int MaxPolygonPoints = 5; // quad plus one clip point
 
-    // Road segments this far around the player draw with road lines (the
-    // original TEXTURED_SEGMENTS_AROUND_PLAYER).
+    // Road segments this far from the player draw road lines (original TEXTURED_SEGMENTS_AROUND_PLAYER).
     private const int TexturedSegmentsAroundPlayer = 11;
 
-    // The road quad's texture coordinates: u = 0 on the left edge, 1 on the
-    // right, matching the original StorePieceTriangle (tv was always 0).
-    // Order pairs with the road quad below (left, next left, next right, right).
+    // u = 0 left edge, 1 right edge (tv always 0), matching original StorePieceTriangle; order matches the road quad below.
     private static readonly Vector2[] s_roadTextureCoords =
         [new(0, 0), new(0, 0), new(1, 0), new(1, 0)];
 
@@ -63,12 +56,7 @@ public sealed class TrackRenderer
     public void Draw(SceneCamera camera, IEnumerable<WorldPolygon>? extraPolygons)
         => Draw(camera, extraPolygons, -1, 0);
 
-    // Draws the track plus optional extra world polygons (e.g. the opponent),
-    // all depth-tested per pixel so draw order does not matter, except that
-    // a segment's road draws after its side walls so the road wins the
-    // shared edges (the original drew sides first with a LESSEQUAL z test).
-    // Road segments near the player's position draw their road lines
-    // (playerPiece -1 disables the road lines entirely).
+    // Road draws after side walls so it wins shared edges (original used a LESSEQUAL z test); playerPiece -1 disables road lines.
     public void Draw(SceneCamera camera, IEnumerable<WorldPolygon>? extraPolygons, int playerPiece, int playerSegment)
     {
         _scene.SetView(camera, _screen.ScreenWidth, _screen.ScreenHeight);
@@ -100,8 +88,7 @@ public sealed class TrackRenderer
             {
                 int offset = segment * 4;
 
-                // left side (top left, bottom left, next bottom left, next
-                // top left - the original triangles 0,2,6 and 0,6,4)
+                // left side: top left, bottom left, next bottom left, next top left (original triangles 0,2,6 and 0,6,4)
                 FastColor sideColour = _palette.Colour(piece.SidesColour);
                 world[0] = PieceVertex(piece, pieceX, pieceY, pieceZ, offset);
                 world[1] = PieceVertex(piece, pieceX, pieceY, pieceZ, offset + 2);
@@ -109,16 +96,14 @@ public sealed class TrackRenderer
                 world[3] = PieceVertex(piece, pieceX, pieceY, pieceZ, offset + 4);
                 DrawWorldPolygon(world, sideColour, null, default);
 
-                // right side (next top right, next bottom right, bottom
-                // right, top right - the original triangles 5,7,3 and 5,3,1)
+                // right side: next top right, next bottom right, bottom right, top right (original triangles 5,7,3 and 5,3,1)
                 world[0] = PieceVertex(piece, pieceX, pieceY, pieceZ, offset + 5);
                 world[1] = PieceVertex(piece, pieceX, pieceY, pieceZ, offset + 7);
                 world[2] = PieceVertex(piece, pieceX, pieceY, pieceZ, offset + 3);
                 world[3] = PieceVertex(piece, pieceX, pieceY, pieceZ, offset + 1);
                 DrawWorldPolygon(world, sideColour, null, default);
 
-                // road surface (top left, next top left, next top right, top
-                // right - the original triangles 0,4,5 and 0,5,1)
+                // road surface: top left, next top left, next top right, top right (original triangles 0,4,5 and 0,5,1)
                 byte roadColour = piece.RoadColours[segment];
                 if (pieceIndex == _track.StartLinePiece && segment == piece.NumSegments - 1)
                 {
@@ -148,16 +133,14 @@ public sealed class TrackRenderer
         }
     }
 
-    // A piece vertex in track units (as the original GetPieceVertex:
-    // y coordinates are divided by 4 for display).
+    // y divided by 4 for display, as original GetPieceVertex.
     private static Coord3D PieceVertex(TrackPiece piece, int pieceX, int pieceY, int pieceZ, int offset)
     {
         Coord3D coord = piece.Coords[offset];
         return new(coord.X + pieceX, (coord.Y / 4) + pieceY, coord.Z + pieceZ);
     }
 
-    // Whether a road segment is close enough to the player (with wraparound)
-    // to draw its road lines.
+    // Wraps around the track when measuring distance to the player.
     private bool IsRoadLined(int globalSegment, int playerGlobalSegment)
     {
         if (playerGlobalSegment < 0)
@@ -170,11 +153,7 @@ public sealed class TrackRenderer
         return distance <= TexturedSegmentsAroundPlayer;
     }
 
-    // Transforms, clips and projects a world polygon and draws it depth
-    // tested, optionally textured (textureCoords pairs with world). The
-    // polygon is clipped one triangle at a time: clipping the whole outline
-    // of a twisted quad that straddles the near plane can produce a
-    // self-intersecting polygon, whereas a clipped triangle is always convex.
+    // Clipped one triangle at a time: clipping a twisted quad's outline directly can self-intersect, but a triangle is always convex.
     private void DrawWorldPolygon(
         in ReadOnlySpan<Coord3D> world,
         in FastColor colour,
@@ -217,9 +196,7 @@ public sealed class TrackRenderer
                 continue; // fully behind the near plane
             }
 
-            // emit the clipped result as triangles as well, so rounding on
-            // a long thin clipped quad can never present the fan fill with
-            // a concave outline
+            // emitted as triangles too, so rounding on a long thin quad can't produce a concave fan fill
             for (int j = 1; j < count - 1; j++)
             {
                 Vector2[] points =

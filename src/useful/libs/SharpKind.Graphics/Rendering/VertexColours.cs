@@ -78,8 +78,6 @@ public static class VertexColours
     private static byte Channel(byte from, byte to, float t)
         => (byte)MathF.Round(from + ((to - from) * t), MidpointRounding.AwayFromZero);
 
-    // The same rounding, on a sum of channels that are all non-negative -
-    // so the mean of black and white is the midpoint Lerp would give at 0.5,
-    // rather than one less through truncation.
+    // Same rounding, so the mean of black and white is the midpoint Lerp gives at 0.5, not one less through truncation.
     private static byte Average(int total, int count) => (byte)((total + (count / 2)) / count);
 }

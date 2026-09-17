@@ -4,12 +4,9 @@ using System.Numerics;
 
 namespace SharpKind.Graphics;
 
-// Perspective projection of a camera-space point onto the screen: the centre
-// of the viewport plus focus * x / z, with y negated because camera space has
-// y up and the screen has y down. Both games write exactly this form, so the
-// focal length and the viewport centre are the whole of what a projection is.
-// Anything scaled by the focal length but not projected - Elite's world radii,
-// say - stays with the game that needs it.
+// Screen = viewport centre + focus * x / z, y negated since camera space has y up and the screen has y down.
+// Both games use exactly this form; anything scaled by focal length but not projected (e.g. Elite's world
+// radii) stays with the game that needs it.
 public readonly record struct PerspectiveProjector(float Focus, Vector2 Centre)
 {
     // z must be positive: points at or behind the camera plane project to

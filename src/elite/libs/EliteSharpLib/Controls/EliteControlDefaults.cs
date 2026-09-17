@@ -16,8 +16,7 @@ internal static class EliteControlDefaults
 {
     private const string SideWinderDevice = "Microsoft SideWinder Precision 2 Joystick";
 
-    // The Competition Pro Extra reports its controller chip's part number
-    // rather than anything a player would recognise.
+    // The Competition Pro Extra reports its controller chip's part number, not its own name.
     private const string CompetitionProDevice = "STK-7024X";
 
     internal static ControlBindings Create()
@@ -71,9 +70,8 @@ internal static class EliteControlDefaults
         [EliteAction.Options] = [nameof(ConsoleKey.F11)],
     };
 
-    // Galactic hyperspace is on no stick: it needs a modifier, and a
-    // commander carries perhaps two in a game. Nor is the escape capsule -
-    // a button brushed by accident would end the run.
+    // Galactic hyperspace needs a modifier, so it's off-stick; so is the escape
+    // capsule, since a button brushed by accident would end the run.
     private static ControllerBindings SideWinder()
     {
         ControllerBindings stick = new() { Device = SideWinderDevice };
@@ -99,8 +97,7 @@ internal static class EliteControlDefaults
         return stick;
     }
 
-    // Four buttons and nothing else - no hat, no lever, no triggers - so
-    // two go on speed and targeting a missile stays on the keyboard.
+    // Four buttons and nothing else, so two go on speed and missile targeting stays on the keyboard.
     private static ControllerBindings CompetitionPro()
     {
         ControllerBindings stick = new() { Device = CompetitionProDevice };
@@ -116,8 +113,7 @@ internal static class EliteControlDefaults
         return stick;
     }
 
-    // Anything unrecognised, and the Xbox pad it is written for. Both face
-    // buttons are spent on speed, so the lasers go on the triggers.
+    // Both face buttons are spent on speed, so the lasers go on the triggers.
     private static ControllerBindings AnyPad()
     {
         ControllerBindings pad = new() { Device = ControlBindings.AnyDevice };

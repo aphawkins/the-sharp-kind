@@ -10,9 +10,7 @@ namespace SharpKind.Graphics.Tests;
 
 public class SoftwareGraphicsTests
 {
-    // Without the guard a null set is taken, every non-text draw works, and
-    // the first line of text throws where the renderer is rather than where
-    // the set should have come from.
+    // Without the guard, a null set only throws on the first line of text, at the renderer, not the source.
     [Fact]
     public void RefusesToBeBuiltWithoutAnyWayToRasteriseText()
     {
@@ -238,10 +236,7 @@ public class SoftwareGraphicsTests
         }
     }
 
-    // FillDepth occludes without drawing, and an edge tagged with the same
-    // surface id draws over it however the depths compare - which is what
-    // lets a wireframe outline survive the very face it bounds while a
-    // genuinely hidden edge does not.
+    // An edge tagged with the same surface id as a FillDepth fill draws over it regardless of depth comparison.
     [Fact]
     public void FillDepthOccludesEverythingButItsOwnSurface()
     {
@@ -258,9 +253,7 @@ public class SoftwareGraphicsTests
         graphics.DrawLineDepth(new(0, 3), new(4, 3), 20f, 20f, BaseColors.White, surfaceId: 7);
         graphics.ScreenUpdate();
 
-        // Assert: the surface drew nothing itself; the line behind it
-        // belonging to no surface is hidden; so is one belonging to a
-        // different surface; only the one belonging to that surface draws.
+        // Assert: only the line belonging to the same surface draws; a surfaceless or differently-surfaced line stays hidden.
         static void DoAssert(FastBitmap bmp)
         {
             Assert.Equal(BaseColors.Black, bmp.GetPixel(2, 0));
@@ -270,9 +263,7 @@ public class SoftwareGraphicsTests
         }
     }
 
-    // A detail line lying on a face turned away from the camera must be
-    // hidden by the nearer surface, not drawn straight through it - the
-    // whole reason a line needs a depth test at all.
+    // A detail line on a face turned away from the camera must be hidden by the nearer surface, not drawn through it.
     [Fact]
     public void DrawLineDepthIsHiddenByNearerGeometry()
     {
@@ -358,9 +349,7 @@ public class SoftwareGraphicsTests
         void DoAssert(FastBitmap bmp) => Assert.Equal(BaseColors.White, bmp.GetPixel((int)x, (int)y));
     }
 
-    // A translucent draw mixes with what is already on the screen rather
-    // than replacing it, so a half-alpha white over black lands grey and a
-    // fully transparent draw leaves the screen alone.
+    // A translucent draw mixes with what's already there: half-alpha white over black lands grey; fully transparent is a no-op.
     [Fact]
     public void DrawPixelBlendsATranslucentColourWithTheScreen()
     {
@@ -864,9 +853,7 @@ public class SoftwareGraphicsTests
         using SoftwareGraphics graphics = SoftwareGraphics.Create(640, 64, (_) => { }, moqAssetLocator.Object);
         const int capacity = 256;
 
-        // Act - draw more distinct strings than the cache can hold, then
-        // redraw the very first one (the least-recently-used entry, so it
-        // should have been evicted by now).
+        // Act: draw more distinct strings than the cache holds, then redraw the first (now the LRU entry).
         for (int i = 0; i < capacity + 10; i++)
         {
             graphics.DrawTextLeft(new(0, 0), $"Text{i}", "TestFont", BaseColors.White);
@@ -926,9 +913,7 @@ public class SoftwareGraphicsTests
         return moqAssetLocator;
     }
 
-    // The committed 16-bit small sheet: 18x17 cells - the widest glyph plus
-    // its marker column, the glyph height plus its marker row - 16 columns
-    // filling the sheet exactly, and magenta-delimited variable widths.
+    // The committed 16-bit small sheet: 18x17 cells, 16 columns filling it exactly, magenta-delimited variable widths.
     private static BitmapFontAsset SixteenBitFont(string path) => new(
         path,
         new BitmapFontEntry

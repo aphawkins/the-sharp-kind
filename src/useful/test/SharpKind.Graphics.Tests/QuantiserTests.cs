@@ -143,9 +143,7 @@ public class QuantiserTests
         Assert.True(dither.IsPositionDependent);
     }
 
-    // A dither's answer repeats every Period pixels on both axes, which is
-    // what lets a flat fill resolve sixteen cells once instead of asking per
-    // pixel. Without this the per-face table would be a silent bet.
+    // A dither's answer repeats every Period pixels on both axes, letting a flat fill resolve sixteen cells once instead of per pixel.
     [Fact]
     public void ADithersAnswerRepeatsEveryPeriodPixels()
     {

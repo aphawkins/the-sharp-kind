@@ -2,9 +2,7 @@
 
 namespace SharpKind.Graphics;
 
-// Writes the 32bpp BGRA bottom-up BMP format BitmapReader reads back: a
-// standard BITMAPV5HEADER (masks + "Win " colour space) so the file also
-// opens in ordinary image viewers.
+// Writes the 32bpp BGRA bottom-up BMP format BitmapReader reads back, as a standard BITMAPV5HEADER (masks + "Win " colour space) so it also opens in ordinary image viewers.
 public static class BitmapWriter
 {
     private const int FileHeaderSize = 14;

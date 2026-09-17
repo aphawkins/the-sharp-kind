@@ -122,9 +122,7 @@ internal sealed class CommanderStatusController : IScreenController
 
         foreach (IObject obj in _universe.GetAllObjects())
         {
-            // A missile, or anybody crewed who is not the station: the original
-            // said this as a band of the ship numbering, "a missile or above a
-            // Rock Splinter but below the Dodec".
+            // Matches the original: a missile, or above a Rock Splinter but below the Dodec.
             if (obj.Id == ObjectIds.Missile
                 || (obj.Traits.HasFlag(ShipTraits.Crewed) && !obj.Flags.HasFlag(ShipProperties.Station)))
             {

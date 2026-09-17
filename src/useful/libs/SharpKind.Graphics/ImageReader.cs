@@ -2,15 +2,8 @@
 
 namespace SharpKind.Graphics;
 
-// Single entry point for loading image assets. The format is taken from the
-// file's own magic bytes rather than its extension, so a mislabelled asset
-// still loads.
-//
-// TGA is tried last because it is the only one of the three with nothing to
-// recognise it by: the format has no signature at the start, and the version 2
-// footer that would identify it is absent from the version 1 files this reads.
-// What IsTga can offer is a header that could be one, so it is asked only once
-// the formats that can answer for certain have said no.
+// Single entry point for loading image assets. Format is taken from the file's magic bytes, not its extension, so a mislabelled asset still loads.
+// TGA is tried last: it has no signature, so IsTga can only say the header could be one.
 public static class ImageReader
 {
     public static FastBitmap Read(string path)

@@ -9,20 +9,13 @@ using static SDL.SDL3_mixer;
 
 namespace SharpKind.SDL;
 
-// Hardware-accelerated counterpart to SoftwareSound: decode, mixing, pitch
-// and pan are all done by SDL3_mixer's own MIX_Track API rather than in
-// managed code. Unlike its SDL2_mixer predecessor, SDL3_mixer exposes
-// per-track pitch (MIX_SetTrackFrequencyRatio) and panning
-// (MIX_SetTrackStereo) natively, so there's no need for the old
-// resample-via-effect-callback trick - every one-shot voice in the pool
-// below can carry its own pitch, matching SoftwareSound's capabilities.
+// Hardware-accelerated counterpart to SoftwareSound: decode/mix/pitch/pan are all done by
+// SDL3_mixer's MIX_Track API. Unlike SDL2_mixer, SDL3_mixer exposes per-track pitch and panning
+// natively, so no resample-via-effect-callback trick is needed.
 //
-// .mid music is the one asset SDL3_mixer's bundled decoder can't open on its
-// own: its Timidity-derived backend expects a GUS patch set on disk (via
-// timidity.cfg), which this project doesn't ship. So .mid tracks are instead
-// predecoded with the same MeltySynth + bundled SoundFont2 path SoftwareSound
-// uses, and handed to the mixer as raw PCM (MIX_LoadRawAudio); everything
-// else (SFX, tracks, pitch, gain) still goes through SDL3_mixer natively.
+// .mid music is the one asset SDL3_mixer's bundled decoder can't open (its Timidity backend needs
+// a GUS patch set this project doesn't ship), so .mid tracks are predecoded with the same
+// MeltySynth + SoundFont2 path SoftwareSound uses and handed to the mixer as raw PCM.
 public sealed unsafe class SDLSound : ISound, IDisposable
 {
     // Matches SoftwareSound's fixed pool of 16 concurrent one-shot voices; a
@@ -35,12 +28,7 @@ public sealed unsafe class SDLSound : ISound, IDisposable
     private const int SampleRate = 44100;
     private const int Channels = 2;
 
-    // Safety cap on how long a single .mid track is allowed to decode to
-    // memory (including release tails). This applies to music tracks too
-    // (predecoded once at startup, so a generous cap costs nothing), and
-    // only guards against a pathological source never going silent - it
-    // must stay well above any real track's length, or looping music gets
-    // audibly truncated and restarts mid-track instead of at the real end.
+    // Guards only against a pathological source never going silent; must stay well above any real track's length or looping music truncates audibly.
     private const int MaxDecodeSeconds = 300;
 
     private readonly Dictionary<string, nint> _music;

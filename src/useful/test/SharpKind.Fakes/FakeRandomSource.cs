@@ -2,10 +2,7 @@
 
 namespace SharpKind.Fakes;
 
-// Configurable fake of IRandomSource: every member returns a fixed,
-// test-set value instead of drawing from a PRNG, so a test can force an
-// exact branch (e.g. "the 1-in-256 roll succeeds") without hunting for a
-// seed that happens to produce it.
+// Every member returns a fixed, test-set value, so a test can force an exact branch without hunting for a seed that produces it.
 public sealed class FakeRandomSource : IRandomSource
 {
     public int NextIntValue { get; set; }

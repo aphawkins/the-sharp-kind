@@ -24,11 +24,8 @@ public class FrameRateIndependenceTests(FrameRateRuns runs) : IClassFixture<Fram
     [Fact]
     public void TheHousekeepingTakesTheSameStepsInTheSameTime()
     {
-        // Within one step. The count is driven by elapsed time and the clock
-        // keeps its unspent remainder, so 300 updates at 13.5Hz and 1333 at
-        // 60Hz are the same 22 seconds and buy the same 276-odd steps; the
-        // one that can differ is whichever the truncation of 1333 leaves
-        // half-finished.
+        // Within one step: the clock keeps its unspent remainder, so different update counts over
+        // the same elapsed time buy the same steps, apart from whichever truncation leaves half-finished.
         int slow = runs.SlowFlight.Harness.Game.State.MCount;
         int fast = runs.FastFlight.Harness.Game.State.MCount;
 
@@ -47,11 +44,8 @@ public class FrameRateIndependenceTests(FrameRateRuns runs) : IClassFixture<Fram
     [Fact]
     public void TheShipHasTravelledTheSameDistance()
     {
-        // Not to the bit. The slow run takes one long step where the fast one
-        // takes four and a bit short ones, and the rotation the port uses is
-        // a first-order approximation, so the two diverge slightly. What
-        // matters is that they diverge by a fraction of a percent rather than
-        // by the four-times factor the conversion exists to remove.
+        // Not to the bit: a first-order approximation diverges slightly between one long step and
+        // four short ones. What matters is a fraction of a percent, not the fourfold factor this fixes.
         float slowDistance = DistanceToPlanet(runs.SlowFlight);
         float fastDistance = DistanceToPlanet(runs.FastFlight);
 
@@ -59,11 +53,8 @@ public class FrameRateIndependenceTests(FrameRateRuns runs) : IClassFixture<Fram
         Assert.Equal(slowDistance, fastDistance, slowDistance * 0.02f);
     }
 
-    // The strongest claim of the lot, and only true since the starfield
-    // stopped drawing from the game's random stream. Encounters are rolled on
-    // the housekeeping clock, so the same seconds roll the same dice - but
-    // only if nothing else has been drawing from the stream once per update in
-    // between. The starfield was, and this is what says it no longer is.
+    // Only true since the starfield stopped drawing from the game's random stream - it used to,
+    // which broke this, since something else drawing from the stream per update shifts the dice.
     [Fact]
     public void BothRatesMeetTheSameShips()
         => Assert.Equal(ShipTypes(runs.SlowFlight), ShipTypes(runs.FastFlight));
@@ -71,11 +62,7 @@ public class FrameRateIndependenceTests(FrameRateRuns runs) : IClassFixture<Fram
     [Fact]
     public void TheThrottleRampsAtTheSameSpeed()
     {
-        // Sampled part way up the ramp, on purpose. The tests above compare
-        // the end of a long flight, where both runs have been at maximum
-        // speed for most of it and a throttle that winds up four times too
-        // fast is invisible. This one reads the speed as the run goes past
-        // the middle of the ramp, which is where that bug lived.
+        // Sampled part way up the ramp on purpose: a throttle winding up four times too fast is invisible at the end of a long flight.
         float slowSpeed = runs.SlowFlight.Speeds[0];
 
         Assert.InRange(slowSpeed, 13f, runs.SlowFlight.Harness.Resolve<PlayerShip>().MaxSpeed - 1);
@@ -85,14 +72,8 @@ public class FrameRateIndependenceTests(FrameRateRuns runs) : IClassFixture<Fram
     [Fact]
     public void TheDockingComputerWindsTheThrottleDownAtTheSameSpeed()
     {
-        // The docking computer's own throttle, which the player's key never
-        // touches: the autopilot nudges the speed a step an update, so it
-        // needed the same scaling as everything else. It is engaged at full
-        // speed pointing away from the station, so the first thing it does is
-        // wind the throttle down - and this reads part way down, for the same
-        // reason as the test above. The ramp saturates at both ends, and a
-        // sample taken at rest cannot tell a correct rate from a fourfold
-        // one; that is what sank the first attempt at this test.
+        // The autopilot's own throttle, engaged pointing away at full speed so it winds down first.
+        // Sampled part way: a saturated rest sample can't distinguish the correct rate from a fourfold one.
         float slowSpeed = runs.SlowDocking.Speeds[0];
 
         Assert.InRange(slowSpeed, 5f, 21f);
@@ -102,11 +83,7 @@ public class FrameRateIndependenceTests(FrameRateRuns runs) : IClassFixture<Fram
     [Fact]
     public void TheDockingComputerWindsTheThrottleUpAtTheSameSpeed()
     {
-        // The other half of the same method. Once the computer has turned the
-        // ship around it accelerates towards the station, and this reads the
-        // speed while it is still doing so: the wind-down test above passes
-        // with the accelerating branch left unscaled, so the approach has to
-        // be caught mid-ramp to cover it.
+        // The other half: once turned around, the ship accelerates towards the station, caught mid-ramp to cover that branch.
         float slowSpeed = runs.SlowDocking.Speeds[1];
 
         Assert.InRange(slowSpeed, 2f, 21f);

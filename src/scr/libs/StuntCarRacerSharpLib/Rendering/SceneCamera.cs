@@ -7,10 +7,8 @@ using StuntCarRacerSharpLib.Tracks;
 
 namespace StuntCarRacerSharpLib.Rendering;
 
-// Viewpoint for drawing the world, following the original CalcGameViewpoint.
-// Positions are in 'track units' - the fixed-point world with PRECISION
-// removed, matching the units used by the original GetPieceVertex
-// (x/z = physics position >> 14; y = piece coord y / 4, positive upwards).
+// Follows the original CalcGameViewpoint. Positions are in 'track units' - the fixed-point world
+// with PRECISION removed, matching the original GetPieceVertex.
 public sealed class SceneCamera
 {
     // Cockpit viewpoint height above the car position (original HEIGHT_ABOVE_ROAD).
@@ -35,10 +33,7 @@ public sealed class SceneCamera
 
     public int ZAngle { get; private set; }
 
-    // Position the camera in the driver's seat (original inside view). The
-    // y value is limited so the view never dips below or too close to the
-    // road surface (the original ran LimitViewpointY between the car
-    // physics and CalcGameViewpoint every frame).
+    // Original inside view. y is limited so the view never dips below or too close to the road surface.
     public void FollowCar(CarPhysics car)
     {
         ArgumentNullException.ThrowIfNull(car);
@@ -52,13 +47,8 @@ public sealed class SceneCamera
         ZAngle = car.PlayerZAngle;
     }
 
-    // Position the camera behind and above the car, looking the way it
-    // points (the original CalcGameViewpoint's bOutsideView branch). The
-    // offset is the reference's - 0xc0 up, 0x300 back, rotated by the car's
-    // own orientation - so the camera rolls and pitches with the car rather
-    // than hanging level behind it. Unlike the cockpit view there is no
-    // LimitViewpointY here: the reference does not limit the outside
-    // viewpoint either, and from behind the car the road cannot tear.
+    // Original bOutsideView branch. Offset (0xc0 up, 0x300 back) is rotated by the car's own
+    // orientation, so the camera rolls and pitches with it. No LimitViewpointY here, matching the reference.
     public void ChaseCar(CarPhysics car)
     {
         ArgumentNullException.ThrowIfNull(car);
@@ -74,9 +64,7 @@ public sealed class SceneCamera
         ZAngle = car.PlayerZAngle;
     }
 
-    // Position the camera at a viewpoint looking at a target (original
-    // LockViewpointToTarget). Positions are in the original's render scale:
-    // x/z in physics units, y negative upwards.
+    // Original LockViewpointToTarget. Positions in the original's render scale: x/z in physics units, y negative upwards.
     public void LookAt(long viewX, long viewY, long viewZ, long targetX, long targetY, long targetZ)
     {
         X = (int)(viewX >> Track.LogPrecision);

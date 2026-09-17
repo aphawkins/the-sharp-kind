@@ -12,9 +12,7 @@ namespace EliteSharpLib.Config;
 // The root of elite.sharp: shared engine settings plus Elite's own.
 internal sealed class EliteConfig : ConfigSettings<EliteConfigSettings>
 {
-    // The shared engine default is 16-bit, chosen for no reason particular to
-    // this game; Elite's own commander-facing default is the 8-bit tier,
-    // which is also the rendition whose own DefaultWindowScale (4) then
+    // Elite's own default is the 8-bit tier, whose DefaultWindowScale (4) then
     // applies to a commander who has never chosen a scale either.
     public EliteConfig()
     {
@@ -24,8 +22,7 @@ internal sealed class EliteConfig : ConfigSettings<EliteConfigSettings>
 
     public override bool Repair()
     {
-        // The base repairs the engine half and the version; this adds Elite's
-        // own. Deliberately not short-circuiting: every setting is checked.
+        // Deliberately not short-circuiting: every setting is checked.
         bool repaired = base.Repair();
 
         if (!Enum.IsDefined(Game.PlanetStyle))

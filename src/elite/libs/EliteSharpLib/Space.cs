@@ -146,9 +146,7 @@ internal sealed class Space
     {
         foreach (IObject obj in _universe.GetAllObjects())
         {
-            // Anything with enough mass to hold the jump up. The original
-            // said it as everything above the planet and the sun bar six
-            // named pieces of junk; the table says it as a flag.
+            // Anything with enough mass to hold the jump up; the table says it as a flag.
             if (obj.Traits.HasFlag(ShipTraits.MassLocks))
             {
                 _gameState.InfoMessage("Mass Locked");
@@ -432,13 +430,8 @@ internal sealed class Space
     {
         _toDraw.Clear();
 
-        // Asked once, at the top, and remembered for the compose pass. The
-        // screen can change part way through a tick - docking and hyperspace
-        // both do it - and the frame being built belongs to the screen the
-        // tick started on. Asked again at compose time it would answer for
-        // the new screen and blank the whole view for a frame; asked per
-        // object mid-loop, as it used to be, it drew the ones before the
-        // change and dropped the ones after.
+        // Asked once and remembered for the compose pass: the screen can change part way through a
+        // tick (docking, hyperspace), and the frame built belongs to the screen the tick started on.
         _universeVisible = _gameState.ShowsUniverse;
         int i = -1;
 
@@ -473,33 +466,22 @@ internal sealed class Space
 
     private static int RotateByteLeft(int x) => ((x << 1) | (x >> 7)) & 255;
 
-    // A spin winds down by one unit a tick unless it is pegged at the limit,
-    // where the original held it steady - a ship rolling flat out keeps
-    // rolling. The test used to be an exact match against 127, which only
-    // works while the rate arrives in whole units; at a fraction of a tick a
-    // spin can sit just inside the peg and never equal it, so the comparison
-    // is against the magnitude instead. Clamped at zero for the same reason
-    // LevelOut is: a part-tick step could otherwise cross it.
+    // Winds down by one unit a tick unless pegged at the limit. Tests against magnitude rather than
+    // an exact match, since a fraction-of-a-tick spin can sit just inside the peg and never equal it.
     private static float DecayTowardsZero(float spin, float ticks)
         => MathF.Abs(spin) >= MaxSpin
             ? spin
             : spin < 0 ? MathF.Min(spin + ticks, 0) : MathF.Max(spin - ticks, 0);
 
-    // A tick's worth of the original's small-angle rotation: a turn of about
-    // 1/19 of a radian with a 1/512 correction pulling the basis back towards
-    // unit length. Both are scaled by ticks, which keeps it a first-order
-    // approximation - which is what it already was - while making the turn
-    // rate a speed rather than a step.
+    // Original's small-angle rotation: ~1/19 radian turn with a 1/512 correction pulling the basis
+    // back towards unit length. Scaled by ticks to make the turn rate a speed rather than a step.
     private static (Vector4 A, Vector4 B) RotateXFirst(Vector4 a, Vector4 b, float direction, float ticks)
     {
         Vector4 fx = a;
         Vector4 ux = b;
 
-        // Divided first and scaled second, which is not the same thing as
-        // scaling the divisor: a nineteenth is not exactly representable, so
-        // multiplying by ticks/19 moves the result a fraction even when ticks
-        // is one. Done this way a whole tick reproduces the original's
-        // arithmetic to the bit, and the scaling only bites when it should.
+        // Divided first, scaled second - not the same as scaling the divisor, since a nineteenth
+        // is not exactly representable. This way a whole tick reproduces the original arithmetic to the bit.
         Vector4 shrinkX = fx / 512 * ticks;
         Vector4 shrinkU = ux / 512 * ticks;
         Vector4 turnX = fx / 19 * ticks;
@@ -1033,10 +1015,8 @@ internal sealed class Space
     /// </summary>
     private void MoveUniverseObject(IObject obj, float ticks)
     {
-        // The player does not move; the universe moves past. So the roll and
-        // the pitch shear every object's position and orientation, and the
-        // speed slides the whole lot towards the camera - three more rates
-        // that were once per tick and are now per second.
+        // The player does not move; the universe moves past. Roll and pitch shear every object's
+        // position and orientation, and speed slides the whole lot towards the camera.
         float alpha = _ship.Roll / 256 * ticks;
         float beta = _ship.Pitch / 256 * ticks;
         float gamma = _ship.Yaw / 256 * ticks;
@@ -1054,9 +1034,7 @@ internal sealed class Space
         position.Y = k2 - (position.Z * beta);
         position.X += alpha * position.Y;
 
-        // Yaw is the third shear, about Y. It is not the original's - Elite
-        // rolls and pitches only - so it stays zero unless the commander has
-        // switched it on.
+        // Yaw is the third shear, about Y - not the original's, which rolls and pitches only.
         position.X -= gamma * position.Z;
         position.Z += gamma * position.X;
 
@@ -1064,9 +1042,7 @@ internal sealed class Space
 
         obj.Location = position;
 
-        // Original MV45: the sun returns here, before rotating its own
-        // orientation vectors or applying its spin - "we don't need to
-        // rotate the sun around its origin."
+        // Original MV45: the sun returns here, before rotating its own orientation or spin.
         if (obj.Id == ObjectIds.Sun)
         {
             return;

@@ -7,24 +7,13 @@ using SharpKind.Graphics;
 
 namespace SharpKind.GoldenFrames;
 
-// What one composed frame looks like, in a form small enough to commit and
-// legible enough to review.
-//
-// Two parts, because one alone is not enough. The hash covers every pixel,
-// so nothing changes without the check noticing. The thumbnail is a coarse
-// brightness grid that shows *where* it changed - a planet that moved, a HUD
-// that vanished, a starfield painted over the ships - which a hash cannot,
-// and which matters because the repo has no image diff and no PNG writer to
-// build one from.
+// A form small enough to commit and legible enough to review. The hash catches any pixel change; the thumbnail shows where, since the repo has no image diff.
 public sealed record FrameSignature(int Tick, string Hash, IReadOnlyList<string> Thumbnail)
 {
-    // 32x32 cells over the frame. Enough to place the planet disc, the
-    // viewport border and the HUD band; small enough that a whole scenario's
-    // frames stay a few kilobytes.
+    // Enough to place the planet disc, viewport border and HUD band; small enough to keep frames at a few kilobytes.
     private const int Cells = 32;
 
-    // Darkest to brightest. '.' rather than ' ' for empty space so trailing
-    // cells survive a trim and the rows stay aligned in a diff.
+    // '.' rather than ' ' for empty space so trailing cells survive a trim and rows stay aligned in a diff.
     private const string Ramp = ".:-=+*#%@";
 
     public static FrameSignature Capture(int tick, FastBitmap frame)
@@ -39,9 +28,7 @@ public sealed record FrameSignature(int Tick, string Hash, IReadOnlyList<string>
 
     private static string HashOf(FastBitmap frame)
     {
-        // Fed row by row rather than as one buffer: FastBitmap exposes
-        // pixels only through GetPixel, and the frame is small enough that
-        // the copy costs nothing worth avoiding.
+        // Fed row by row: FastBitmap exposes pixels only through GetPixel.
         byte[] row = new byte[frame.Width * 4];
         using IncrementalHash hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
 
@@ -82,9 +69,7 @@ public sealed record FrameSignature(int Tick, string Hash, IReadOnlyList<string>
         return rows;
     }
 
-    // The mean brightness of one cell, mapped onto the ramp. Cell bounds are
-    // computed from the frame size so a rendition of another resolution
-    // still produces a 32x32 grid that compares against the same baseline.
+    // Cell bounds are computed from the frame size, so any resolution produces a 32x32 grid comparable against the same baseline.
     private static int BrightnessOf(FastBitmap frame, int cellX, int cellY)
     {
         int left = cellX * frame.Width / Cells;
@@ -100,8 +85,7 @@ public sealed record FrameSignature(int Tick, string Hash, IReadOnlyList<string>
             {
                 FastColor pixel = frame.GetPixel(x, y);
 
-                // Rec. 601 luma, integer weights: the ramp has nine steps, so
-                // nothing finer would show.
+                // Rec. 601 luma, integer weights; the ramp has nine steps so nothing finer would show.
                 total += ((299 * pixel.R) + (587 * pixel.G) + (114 * pixel.B)) / 1000;
                 count++;
             }
@@ -112,11 +96,7 @@ public sealed record FrameSignature(int Tick, string Hash, IReadOnlyList<string>
             return 0;
         }
 
-        // Square-rooted rather than linear. Both games draw thin bright lines
-        // on black, so a cell holding a break-pattern arc, a dozen stars or a
-        // length of track edge has a mean of about eight out of 255 and would
-        // round to "empty" on a linear ramp - which is exactly the content a
-        // reader needs to see.
+        // Square-rooted rather than linear: both games draw thin bright lines on black, which a linear ramp would round to "empty".
         float mean = total / (count * 255f);
         return (int)((MathF.Sqrt(mean) * (Ramp.Length - 1)) + 0.5f);
     }

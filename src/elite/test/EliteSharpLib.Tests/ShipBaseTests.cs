@@ -17,8 +17,7 @@ public class ShipBaseTests
     [Fact]
     public void DrawTransformsModelPointsUsingRotmatBasisVectors()
     {
-        // Arrange: a non-orthonormal Rotmat with distinct values, so every basis vector's
-        // contribution to the result is independently observable.
+        // Non-orthonormal Rotmat with distinct values, so every basis vector's contribution is independently observable.
         Matrix4x4 rotmat = new(
             1.0f,
             0.2f,
@@ -45,9 +44,7 @@ public class ShipBaseTests
         Point modelPointA = new() { Coords = pointA, FaceNormals = [] };
         Point modelPointB = new() { Coords = pointB, FaceNormals = [] };
 
-        // A 2-point "face" lying on no other face's plane has no normal to cull
-        // against, so it always passes the visibility check in DrawModelFaces,
-        // keeping this test independent of it.
+        // A rootless 2-point face has no normal to cull against, keeping this test independent of visibility.
         Face face = new() { Color = default, Points = [modelPointA, modelPointB], PointIndices = [0, 1] };
 
         FakeEliteDraw draw = new();
@@ -67,9 +64,7 @@ public class ShipBaseTests
         // Act
         ship.Draw();
 
-        // Assert: Rotmat[0..2] are the object's basis vectors, so a model-local point should be
-        // transformed into world space as p.X*Rotmat[0] + p.Y*Rotmat[1] + p.Z*Rotmat[2] + Location,
-        // regardless of how Rotmat happens to be stored internally as a Matrix4x4.
+        // Assert: p.X*Rotmat[0] + p.Y*Rotmat[1] + p.Z*Rotmat[2] + Location, regardless of Matrix4x4 storage.
         Vector2 expectedA = ProjectUsingRotmatBasis(pointA, rotmat, location, draw);
         Vector2 expectedB = ProjectUsingRotmatBasis(pointB, rotmat, location, draw);
 
@@ -83,10 +78,7 @@ public class ShipBaseTests
     [Fact]
     public void DrawLasersProjectsAlongFiringDirectionAndClipsToViewBoundary()
     {
-        // Arrange: a laser mount offset up-and-left of the ship's nose, on a ship
-        // sitting to the right of centre, so the bolt's real trajectory exits
-        // through the top of the view rather than the fixed screen-edge X /
-        // fully-random Y the previous (buggy) implementation always produced.
+        // A mount offset up-and-left of the nose, on a ship right of centre, so the trajectory exits through the top.
         Vector4 location = new(500, 0, 1000, 0);
         Vector4 mountCoords = new(10, 20, 50, 0);
         Point mountPoint = new() { Coords = mountCoords, FaceNormals = [] };
@@ -110,9 +102,7 @@ public class ShipBaseTests
         // Act
         ship.Draw();
 
-        // Assert: replicate the production projection to get the expected mount
-        // and (far-distance) aim points, then the point where that ray leaves the
-        // view rectangle (FakeEliteDraw: Left=0, Right=511, Top=0, Bottom=511).
+        // Assert: replicate the production projection, then find where that ray leaves the view rectangle.
         Vector2 expectedMount = Project(mountCoords, location, draw);
         Vector2 expectedAim = Project(mountCoords * 1_000_000f, location, draw);
         Vector2 direction = expectedAim - expectedMount;
@@ -127,9 +117,7 @@ public class ShipBaseTests
         AssertVector2AlmostEqual(expectedMount, points[0]);
         AssertVector2AlmostEqual(expectedEnd, points[1]);
 
-        // The old code always picked X = 0 or 511 (whichever screen edge is
-        // opposite the ship) regardless of geometry; here the ray actually exits
-        // through the top edge, so X lands well away from either edge.
+        // Pins the fix: X lands well away from either screen edge, not clamped to one.
         Assert.True(MathF.Abs(expectedEnd.X) > 1f);
         Assert.True(MathF.Abs(expectedEnd.X - 511) > 1f);
     }
@@ -137,10 +125,7 @@ public class ShipBaseTests
     [Fact]
     public void DrawSubmitsTheCameraDepthOfEachPointOfATiltedFace()
     {
-        // Arrange: a triangle steeply angled to the camera, so its three
-        // points sit at three clearly different depths. Submitting one flat
-        // depth for all three - as the renderer used to - interpolates a
-        // constant across the face and defeats the per-pixel depth test.
+        // A triangle steeply angled to the camera so its three points sit at three clearly different depths.
         Vector4 location = new(0, 0, 1000, 0);
         Vector4 pointA = new(-100, -100, 0, 0);
         Vector4 pointB = new(100, -100, 300, 0);
@@ -168,10 +153,7 @@ public class ShipBaseTests
     [Fact]
     public void DrawBiasesADecalNearerThanTheFaceItSitsOn()
     {
-        // Arrange: a small triangle exactly in the plane of a larger one, as
-        // a cockpit window sits in the plane of the hull. Per-vertex depth
-        // makes the two tie pixel for pixel, so the decal needs a nudge
-        // towards the camera to render over its base face.
+        // A small triangle exactly in the plane of a larger one, as a cockpit window sits in the hull's plane.
         Vector4 location = new(0, 0, 1000, 0);
         Vector4[] points =
         [
@@ -201,17 +183,13 @@ public class ShipBaseTests
         Assert.Equal([1000f, 1000f, 1000f], draw.DrawnPolygons[0].Depths);
         Assert.All(draw.DrawnPolygons[1].Depths, d => Assert.InRange(d, 990f, 999.9f));
 
-        // The decal keeps its base face's whole-face key, so the painter's
-        // strategy still ties and draws it later.
+        // The decal keeps its base face's whole-face key so the painter's strategy still ties.
         Assert.Equal(draw.DrawnPolygons[0].Z, draw.DrawnPolygons[1].Z);
     }
 
     [Theory]
 
-    // Far off each side, far above and below, and beyond the far plane. At
-    // depth 1000 the viewport's half-width is 500 camera units and its
-    // half-height is a little under 375, so a 100-unit ship at 2000 out is
-    // nowhere near it.
+    // Far off each side, far above/below, and beyond the far plane - well outside the frustum at depth 1000.
     [InlineData(2000, 0, 1000)]
     [InlineData(-2000, 0, 1000)]
     [InlineData(0, 2000, 1000)]
@@ -241,10 +219,7 @@ public class ShipBaseTests
     [Fact]
     public void DrawKeepsAShipOnlyPartlyOnScreen()
     {
-        // Arrange: the ship's origin sits just outside the right edge - 500
-        // camera units at depth 1000 - so only its bounding sphere reaches
-        // back into view. A cull on the origin alone would clip the hull off
-        // the edge of the screen.
+        // The origin sits just outside the right edge, so only the bounding sphere reaches back into view.
         FakeEliteDraw draw = new();
         FakeShip ship = new(draw)
         {
@@ -265,13 +240,8 @@ public class ShipBaseTests
     [Fact]
     public void DrawKeepsAFrontFacingFaceThatStraddlesTheCameraPlane()
     {
-        // Arrange: a triangle with one point behind the camera plane and two
-        // well in front of it. The projection clamps the behind point's depth
-        // to 1, which puts it on screen at the view centre instead of off
-        // behind the viewer - so a winding test run on the projected outline
-        // decides on meaningless coordinates and culls this face, even though
-        // most of it is in front of the camera and facing it. Culling in
-        // camera space, before the clamp can touch anything, keeps it.
+        // One point behind the camera plane, two well in front - pins the camera-space cull against a
+        // winding test on the clamped projection, which would land the behind point at view centre and cull it.
         Vector4 pointA = new(0, 0, -100, 0);
         Vector4 pointB = new(100, 0, 100, 0);
         Vector4 pointC = new(0, 100, 100, 0);
@@ -287,8 +257,7 @@ public class ShipBaseTests
         // Act
         ship.Draw();
 
-        // Assert: drawn, and clipped to the near plane rather than including
-        // the behind-camera point.
+        // Assert: drawn, and clipped to the near plane rather than including the behind-camera point.
         (Vector2[] points, float[] depths, FastColor _, float _) = Assert.Single(draw.DrawnPolygons);
         Assert.Equal(4, points.Length);
         Assert.All(depths, d => Assert.True(d > 0));
@@ -297,10 +266,7 @@ public class ShipBaseTests
     [Fact]
     public void DrawCullsADetailLineLyingOnABackFacingFace()
     {
-        // Arrange: a back-facing triangle with a 2-point detail line in its
-        // plane, as hull detail sits on a hull face. The line has no winding
-        // of its own, so it used to pass every frame whichever way it faced,
-        // leaving a stray stub poking off the far side of the silhouette.
+        // A back-facing triangle with a 2-point detail line in its plane, as hull detail sits on a hull face.
         Vector4 location = new(0, 0, 1000, 0);
         Vector4[] points =
         [
@@ -326,9 +292,7 @@ public class ShipBaseTests
         Assert.Empty(draw.DrawnPolygons);
     }
 
-    // A detail line lying on no other face's plane has no root to inherit a
-    // normal from. The model still records which faces each vertex belongs
-    // to, so the faces the line runs along are those its two ends share.
+    // A rootless detail line's visibility follows the faces its two ends share.
     [Theory]
     [InlineData(0, 0, 1, false)]
     [InlineData(0, 0, -1, true)]
@@ -366,9 +330,7 @@ public class ShipBaseTests
         Assert.Equal(expectDrawn, draw.DrawnPolygons.Count == 1);
     }
 
-    // The bolt springs from a mount on the hull, so it is only visible when
-    // that part of the hull is. It bypasses the face loop entirely, so
-    // nothing else culls it.
+    // The bolt bypasses the face loop entirely, so nothing else culls a mount facing away.
     [Theory]
     [InlineData(0, 0, 1, false)]
     [InlineData(0, 0, -1, true)]
@@ -405,10 +367,8 @@ public class ShipBaseTests
         Assert.Equal(expectDrawn, draw.DrawnPolygons.Count == 1);
     }
 
-    // A hull face's corners take the average of the hull faces meeting there.
-    // The decal sitting in that face's plane is not one of them: its normal is
-    // that same plane's, so averaging it in would weight the plane twice and
-    // pull the corner back towards flat.
+    // A decal in a hull face's plane must be excluded from that face's corner averaging - it would
+    // weight the same plane twice.
     [Fact]
     public void CornerNormalsExcludeADecalFromTheAveraging()
     {
@@ -433,8 +393,7 @@ public class ShipBaseTests
         // Act
         ship.Draw();
 
-        // Assert: the hull face keeps its own normal at every corner, and the
-        // decal has no direction of its own to smooth.
+        // Assert: hull keeps its own normal at every corner; the decal has none to smooth.
         Assert.All(ship.CornerNormals[0], n => AssertVector3AlmostEqual(new(0, 0, -1), n));
         Assert.All(ship.CornerNormals[1], n => Assert.Equal(Vector3.Zero, n));
     }
@@ -442,8 +401,7 @@ public class ShipBaseTests
     [Fact]
     public void CornerNormalsSmoothTwoHullFacesMeetingAtAShallowAngle()
     {
-        // Arrange: two triangles sharing the edge 0-1, the second tilted 30
-        // degrees about it - well inside the crease threshold.
+        // Two triangles sharing edge 0-1, the second tilted 30 degrees - well inside the crease threshold.
         Vector4[] points =
         [
             new(-10, 0, 0, 0),
@@ -462,8 +420,7 @@ public class ShipBaseTests
         // Act
         ship.Draw();
 
-        // Assert: the shared corners land halfway between the two faces, and
-        // the corner each face has to itself keeps that face's own normal.
+        // Assert: shared corners land halfway between the two faces; each face's own corner keeps its own normal.
         Vector3 halfway = Vector3.Normalize(new(0, MathF.Sin(MathF.PI / 12), MathF.Cos(MathF.PI / 12)));
 
         AssertVector3AlmostEqual(halfway, ship.CornerNormals[0][0]);
@@ -475,9 +432,7 @@ public class ShipBaseTests
     [Fact]
     public void DrawShadesEachCornerWhenTheDrawBlendsAcrossAFace()
     {
-        // Arrange: two triangles sharing the edge 0-1, tilted 30 degrees
-        // apart, so the shared corners smooth and the outer ones do not - and
-        // a face therefore has corners of genuinely different colours.
+        // Two triangles sharing edge 0-1, tilted 30 degrees apart, so shared corners smooth and outer ones don't.
         Vector4[] points =
         [
             new(-10, 0, 0, 0),
@@ -486,9 +441,7 @@ public class ShipBaseTests
             new(0, 10 * MathF.Cos(MathF.PI / 6), -10 * MathF.Sin(MathF.PI / 6), 0),
         ];
 
-        // Wound so both faces survive the backface cull, and painted: black
-        // has no brightness for a light to vary, so every corner of a black
-        // face shades alike however it turns.
+        // Black has no brightness for a light to vary, so every corner shades alike however it turns.
         ThreeDModel model = BuildModel(points, [[0, 2, 1], [0, 3, 1]]);
         foreach (Face modelFace in model.Faces)
         {
@@ -512,17 +465,12 @@ public class ShipBaseTests
 
         Assert.Equal(facePoints.Length, cornerColors.Length);
 
-        // The first face's corner order is points 0, 2, 1: the middle one is
-        // its own, turned straight into the light, and the two either side
-        // are shared with the tilted face, so they smooth away from the light
-        // and come out darker - and identically so.
+        // Corner order 0, 2, 1: the middle corner is turned straight into the light; the shared corners smooth away from it.
         Assert.True(cornerColors[1].R > cornerColors[0].R);
         Assert.Equal(cornerColors[0], cornerColors[2]);
     }
 
-    // A decal lies in the plane of the hull face beneath it and was left out
-    // of the smoothing, so it has no corners of its own to shade and fills
-    // flat - keeping the depth bias that settles it against that face.
+    // A decal left out of smoothing fills flat, keeping the depth bias that settles it against its face.
     [Fact]
     public void DrawKeepsADecalFlatWhileBlendingTheFaceBeneathIt()
     {
@@ -553,10 +501,7 @@ public class ShipBaseTests
         Assert.All(decalDepths, d => Assert.InRange(d, 990f, 999.9f));
     }
 
-    // A hull with a decal on it and a detail line across it. Close up the
-    // ship shows all three; far enough away that the whole hull is only a
-    // few pixels across, the decal and the line have no room to read as
-    // shapes, so only the hull is drawn.
+    // Close up the hull, decal and line all draw; far enough away that the hull spans only a few pixels, just the hull draws.
     [Theory]
     [InlineData(1000, 3)]
     [InlineData(10000, 1)]
@@ -581,8 +526,7 @@ public class ShipBaseTests
             Rotmat = Matrix4x4.Identity,
             Location = new(0, 0, depth, 0),
 
-            // Wound so the hull and its decal survive the backface cull; the
-            // line takes the plane it lies in from them.
+            // The line takes the plane it lies in from the hull and decal.
             Model = BuildModel(points, [[0, 2, 1], [3, 5, 4], [6, 7]]),
         };
 

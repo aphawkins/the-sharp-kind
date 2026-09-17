@@ -54,10 +54,7 @@ public class RateIndependentMotionTests
     [Fact]
     public void LevellingOutStopsAtCentreRatherThanCrossingIt()
     {
-        // The reason the decay is clamped. A whole tick could never overshoot,
-        // because roll arrives in whole units; a third of a tick can, and a
-        // ship that leveled out by jittering either side of centre would be
-        // the frame rate showing through.
+        // A whole tick could never overshoot since roll arrives in whole units; a third of a tick can, hence the clamp.
         PlayerShip ship = NewShip(out GameState state);
         ship.Roll = 0.2f;
         ship.IsRolling = false;

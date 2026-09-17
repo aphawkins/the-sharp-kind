@@ -98,25 +98,14 @@ internal sealed class Trade
         {
             Good good = stock.Good;
 
-            // Start with the base price
             float price = good.BasePrice;
-
-            // Add in a random amount
             price += (MarketRandomiser & good.Mask) / 10f;
-
-            // Adjust for planet economy
             price += _gameState.CurrentPlanetData.Economy * good.EconomyAdjust / 10f;
 
-            // Start with the base quantity
             int quant = good.BaseQuantity;
-
-            // Add in a random amount
             quant += MarketRandomiser & good.Mask;
-
-            // Adjust for planet economy
             quant -= _gameState.CurrentPlanetData.Economy * good.EconomyAdjust;
 
-            // Quantities range from 0..63
             quant = Math.Clamp(quant, 0, 63);
 
             stock.CurrentPrice = price * 4;

@@ -12,9 +12,7 @@ internal struct PolygonData
 
     internal Vector2[] PointList { get; set; }
 
-    // Camera-space depth per point, parallel to PointList, for the
-    // z-buffered fill. PainterRenderer leaves this field unused, as
-    // ZBufferRenderer leaves Next and Z unused.
+    // Camera-space depth per point, for the z-buffered fill. PainterRenderer leaves this unused, as ZBufferRenderer leaves Next and Z unused.
     internal float[] Depths { get; set; }
 
     internal float Z { get; set; }

@@ -6,18 +6,11 @@ using System.Globalization;
 
 namespace EliteSharpLib.Tests.GoldenTrace;
 
-// Compares a fresh recording against a baseline and describes the first
-// divergence, rather than dumping two thousand lines at the reader.
+// Describes the first divergence rather than dumping two thousand lines at the reader.
 //
-// The tolerance is the whole point of this class existing instead of a
-// string comparison. Items 1 and 2 of the frame-rate rework leave the
-// numbers bit-identical and compare at zero; from item 3 onward the ported
-// integer constants become per-second rates and the arithmetic stops
-// matching exactly, so those sessions raise the tolerance rather than
-// rewrite the baselines. Discrete fields - the screen, the docked and
-// game-over flags, a ship's type and its flags - never get a tolerance:
-// those either match or the run took a different path, and a different path
-// is a regression however small the numbers are.
+// The tolerance exists because the frame-rate rework's later items turn ported integer constants
+// into per-second rates, whose arithmetic stops matching exactly. Discrete fields (screen, docked
+// flag, ship type/flags) never get a tolerance - those either match or a different path is a regression.
 internal static class TraceComparer
 {
     internal static string? FindFirstDifference(

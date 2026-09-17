@@ -20,18 +20,8 @@ using SharpKind.Input;
 
 namespace EliteSharpLib;
 
-// The screen registrations: each screen's view comes off the tier's rendition,
-// and the controller is what goes into the screen map. Kept in its own class,
-// separate from EliteServiceCollectionExtensions, because the combined
-// registrations tripped CA1506's class-coupling limit - the same reason they
-// are split across the methods below, and the reason the sequence and flight
-// screens live in EliteSplitAnimatedScreensServiceCollectionExtensions rather
-// than here.
-//
-// There is no tier branch left here. Which views these are was decided when
-// the rendition was loaded, so this file no longer knows there is more than one
-// tier - which is what adding a third tier should cost: an assembly, and
-// nothing here.
+// Split from EliteServiceCollectionExtensions, and split further below, to stay under CA1506's class-coupling limit.
+// No tier branch here: view selection happens when the rendition loads.
 internal static class EliteSplitScreensServiceCollectionExtensions
 {
     internal static void AddSplitScreens(this IServiceCollection services)
@@ -82,9 +72,7 @@ internal static class EliteSplitScreensServiceCollectionExtensions
             sp.GetRequiredService<ILoggerFactory>().CreateLogger<Intro1Controller>()));
     }
 
-    // The screens that just report status: commander status, inventory and
-    // planet data. Split from AddSplitConsoleScreens once their 8-bit views
-    // pushed it over CA1506's per-method limit.
+    // Split from AddSplitConsoleScreens: their 8-bit views pushed it over CA1506's per-method limit.
     private static void AddSplitStatusScreens(this IServiceCollection services)
     {
         services.AddSingleton(sp => sp.GetRequiredService<RenditionRegistry>().View<CommanderStatusModel>());
@@ -96,8 +84,7 @@ internal static class EliteSplitScreensServiceCollectionExtensions
             sp.GetRequiredService<Universe>(),
             sp.GetRequiredService<IView<CommanderStatusModel>>()));
 
-        // The inventory has no view of its own either: the rendition supplies a
-        // style and the game builds the list, as it does for the market.
+        // The inventory has no view of its own: rendition supplies the style, the game builds the list.
         services.AddSingleton(sp => new InventoryController(
             sp.GetRequiredService<PlayerShip>(),
             sp.GetRequiredService<Trade>(),
@@ -115,9 +102,7 @@ internal static class EliteSplitScreensServiceCollectionExtensions
             sp.GetRequiredService<IView<PlanetDataModel>>()));
     }
 
-    // The menu screens: options, the market, equip-ship and the two settings
-    // lists. All share the selection-cursor shape, and the settings pair
-    // additionally share one SettingsListStyle registration.
+    // The settings pair share one SettingsListStyle registration.
     private static void AddSplitMenuScreens(this IServiceCollection services)
     {
         services.AddSingleton(sp => sp.GetRequiredService<RenditionRegistry>().View<OptionsModel>());
@@ -132,9 +117,7 @@ internal static class EliteSplitScreensServiceCollectionExtensions
             sp.GetRequiredService<IKeyboard>(),
             sp.GetRequiredService<IView<CreditsModel>>()));
 
-        // The market has no view of its own: the rendition supplies a style and
-        // the game builds the list, so this takes the surface and the style
-        // where the other screens take a view.
+        // The market has no view of its own: rendition supplies the style, the game builds the list.
         services.AddSingleton(sp => new MarketController(
             sp.GetRequiredService<GameState>(),
             sp.GetRequiredService<IKeyboard>(),
@@ -153,8 +136,7 @@ internal static class EliteSplitScreensServiceCollectionExtensions
             sp.GetRequiredService<ScannerController>(),
             sp.GetRequiredService<IView<EquipmentModel>>()));
 
-        // The settings screens have no view: the game owns their controls and
-        // the rendition contributes only the style they are drawn in.
+        // The settings screens have no view: the rendition contributes only the style.
         services.AddSingleton(sp => sp.GetRequiredService<RenditionRegistry>().SettingsListStyle);
         services.AddSingleton(sp => new SettingsController(
             sp.GetRequiredService<GameState>(),

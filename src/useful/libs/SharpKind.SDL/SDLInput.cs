@@ -9,9 +9,7 @@ namespace SharpKind.SDL;
 
 public sealed unsafe class SDLInput(ILogger? logger) : IInput, IDisposable
 {
-    // The two device classes are kept apart because they are opened and
-    // closed by different SDL calls. A device with a gamepad mapping appears
-    // in both event streams, so it is only ever opened as a gamepad.
+    // Kept apart because they're opened/closed by different SDL calls. A mapped device appears in both event streams, so it's only ever opened as a gamepad.
     private readonly Dictionary<SDL_JoystickID, nint> _gamepads = [];
     private readonly Dictionary<SDL_JoystickID, nint> _joysticks = [];
 
@@ -86,9 +84,7 @@ public sealed unsafe class SDLInput(ILogger? logger) : IInput, IDisposable
         _isDisposed = true;
     }
 
-    // Internal so the press/release edges can be tested: this is the one
-    // piece of hat handling with state behind it, and a direction left down
-    // is the failure it exists to prevent.
+    // Internal so press/release edges can be tested: a direction left down is the failure this exists to prevent.
     internal static void HatDirectionChanged(
         int deviceId, byte was, byte now, uint direction, GamepadButton button, IGamepadSink gamepad)
     {
@@ -109,9 +105,7 @@ public sealed unsafe class SDLInput(ILogger? logger) : IInput, IDisposable
         }
     }
 
-    // SDL reports stick axes over the full signed 16-bit range and triggers
-    // over the positive half, so both normalise the same way. A digital HID
-    // stick sits at the ends of that range, which lands on exactly -1/0/+1.
+    // Axes and triggers normalise the same way; a digital HID stick sits at the range ends, exactly -1/0/+1.
     private static float Normalise(short value) => Math.Clamp(value / 32767f, -1f, 1f);
 
     private static GamepadButton ConvertGamepadButton(SDL_GamepadButton button) => button switch
@@ -142,9 +136,7 @@ public sealed unsafe class SDLInput(ILogger? logger) : IInput, IDisposable
         _ => null,
     };
 
-    // A device with no gamepad mapping numbers its buttons and axes and says
-    // nothing about what they are, so index order is the only mapping there
-    // is: the Competition Pro fire buttons come out as A, B, X, Y.
+    // An unmapped device numbers its buttons/axes with no names, so index order is the only mapping there is.
     private static GamepadButton ConvertJoystickButton(byte index) => index switch
     {
         0 => GamepadButton.A,
@@ -169,10 +161,7 @@ public sealed unsafe class SDLInput(ILogger? logger) : IInput, IDisposable
 
     private static bool PollEvent(out SDL_Event sdlEvent)
     {
-        // SDL3's bool result signals whether an event was returned, not
-        // failure - the end of the queue is instead detected via the
-        // SDL_EVENT_POLL_SENTINEL check in the caller's loop condition, so
-        // there is no error case to guard here.
+        // SDL3's bool result signals whether an event was returned, not failure; no error case to guard here.
         sdlEvent = default;
 
         fixed (SDL_Event* eventPtr = &sdlEvent)
@@ -203,9 +192,7 @@ public sealed unsafe class SDLInput(ILogger? logger) : IInput, IDisposable
         }
     }
 
-    // The hat as a pair of -1/0/+1 readings, for the log only: it is what
-    // makes a hat event legible next to the axis events around it. The game
-    // sees the hat as buttons, which is what HatDirectionChanged sends.
+    // For the log only, so a hat event reads next to the axis events around it. The game sees the hat as buttons.
     private static (float X, float Y) HatDirection(byte hat)
     {
         float x = 0f;
@@ -335,10 +322,7 @@ public sealed unsafe class SDLInput(ILogger? logger) : IInput, IDisposable
             SDLInputLogMessages.HatEvent(logger, value, x, y, id);
         }
 
-        // A hat event carries the whole hat, so each direction is compared
-        // with what it was: SDL sends no separate release, and a direction
-        // left down would never come back up. The diagonals fall out of this
-        // for free - two directions are simply down at once.
+        // Each direction is compared with what it was, since SDL sends no separate release event.
         byte was = _hats.TryGetValue(sdlEvent.jhat.which, out byte previous) ? previous : (byte)0;
         _hats[sdlEvent.jhat.which] = value;
         int hatDevice = (int)sdlEvent.jhat.which;

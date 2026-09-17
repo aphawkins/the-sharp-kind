@@ -9,10 +9,8 @@ using SharpKind.Graphics.Fakes;
 
 namespace EliteSharpLib.Tests.Views;
 
-// The lollipops: a blip with a stick joining it to the scanner plane. The
-// drawing floors a rectangle's position and its height separately, so a
-// stick sized by its own fractional length can come up a row short of the
-// blip - which reads as a lollipop broken off its stick.
+// The lollipops: a blip with a stick joining it to the scanner plane. Flooring position and
+// height separately can leave a fractional-length stick a row short of the blip.
 public sealed class ScannerViewTests
 {
     [Theory]
@@ -44,9 +42,7 @@ public sealed class ScannerViewTests
             $"Stick rows {stickTop}-{stickBottom} do not meet blip rows {blipTop}-{blipBottom}.");
     }
 
-    // The 16-bit speed bar shares a slot shape with the roll and pitch
-    // indicators below it: same height, same offset into its slot. A shorter
-    // bar sits in the slot with a gap the art does not have.
+    // Shares a slot shape with the roll/pitch indicators: same height, same offset. A shorter bar leaves a gap the art doesn't have.
     [Fact]
     public void SpeedBarMatchesTheIndicatorSlot()
     {

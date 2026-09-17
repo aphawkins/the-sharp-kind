@@ -16,10 +16,7 @@ namespace EliteSharpLib.Renditions;
 /// </summary>
 internal sealed class RenditionRegistry
 {
-    // Every screen with a controller of its own, the HUD among them - it is
-    // drawn from a model by a controller like any other. The mission briefing
-    // is not here because the rendition hands it over separately: it is the one
-    // screen that answers back, with where its tier puts the posing ship.
+    // Every screen with a controller of its own, the HUD included. Mission briefing is excluded: the rendition hands it over separately.
     private static readonly Type[] s_requiredModels =
     [
         typeof(CommanderStatusModel),

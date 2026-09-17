@@ -52,11 +52,7 @@ internal sealed class TrackPreviewScreen : IGameScreen, ILayerDrawer
 
     public void Update()
     {
-        // Read the keys every tick, before the physics gate rather than after
-        // it. IsPressed is a one-shot read and the physics only runs every
-        // FrameGap ticks, so a press landing on one of the three ticks in four
-        // when the physics is idle used to be dropped: a brief tap on this
-        // screen did nothing, while the same tap worked on every other screen.
+        // Read before the physics gate: IsPressed is one-shot, and physics only runs every FrameGap ticks, so a press could otherwise land on an idle tick and be missed.
         if (_keyboard.IsPressed(ConsoleKey.S) || _gamepad.IsPressed(GamepadButton.A))
         {
             _screens.Set(GameMode.GameInProgress);
@@ -93,9 +89,7 @@ internal sealed class TrackPreviewScreen : IGameScreen, ILayerDrawer
 
     public void Draw() => _layers.Draw();
 
-    // The layer-2 content: what this screen draws over the world.
-    // Explicitly implemented so it cannot be mistaken for Draw()
-    // above, which draws the whole frame.
+    // Explicit so it can't be mistaken for Draw() above, which draws the whole frame not just the preview overlay.
     void ILayerDrawer.Draw()
     {
         FastColor yellow = _palette.Colour(Track.ScrBaseColour + 3);

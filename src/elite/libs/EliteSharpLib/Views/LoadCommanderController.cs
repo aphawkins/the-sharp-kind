@@ -73,10 +73,7 @@ internal sealed class LoadCommanderController : IScreenController
     {
     }
 
-    // Exposed for tests: the typed name and why the last attempt failed. The
-    // reason comes from the save file rather than being a fixed string here:
-    // "Bad Fuel" is something a commander can act on, where "error loading
-    // commander" left them unable to tell a one-field mistake from a file that
-    // was never a save at all.
+    // Exposed for tests: the typed name and why the last attempt failed. The reason comes from
+    // the save file, e.g. "Bad Fuel", so a commander can act on it rather than a generic error.
     internal LoadCommanderModel BuildModel() => new(_name, _isLoaded ? string.Empty : _save.LastLoadError);
 }

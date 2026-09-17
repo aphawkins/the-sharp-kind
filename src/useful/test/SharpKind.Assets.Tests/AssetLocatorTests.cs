@@ -275,9 +275,7 @@ public class AssetLocatorTests
         }
     }
 
-    // A misspelled section would otherwise read as declaring nothing, and the
-    // set would fail much later with an asset it could not find. It says so
-    // when the manifest is read instead.
+    // A misspelled section reads as declaring nothing otherwise, failing much later with an asset not found.
     [Fact]
     public void RefusesAManifestSectionItDoesNotKnow()
     {

@@ -14,58 +14,36 @@ namespace EliteSharpLib.Ships;
 
 internal class ShipBase : IShip
 {
-    // Large enough that Location's contribution to the projected point is
-    // negligible, so the result approximates the on-screen vanishing point of
-    // the local direction (Model.Points[lasv].Coords) rather than a specific
-    // 3D position along it.
+    // Large enough that Location's contribution is negligible, so the result approximates the
+    // on-screen vanishing point of the local direction rather than a specific 3D position.
     private const float FarAimDistance = 1_000_000f;
     private const int LaserAimSpread = 24;
 
-    // Camera-space depth the ship's faces are clipped against. Ship sizes run
-    // to hundreds of units, so this sits effectively on the camera plane -
-    // it exists to keep the perspective divide out of the sign flip, not to
-    // cull anything a player would otherwise see.
+    // Effectively the camera plane; keeps the perspective divide out of the sign flip.
     private const float NearPlane = 1f;
 
     // Ship faces are small polygons; anything larger falls back to the heap.
     private const int StackFacePoints = 16;
 
-    // The frustum's far plane. Space removes a ship once it is further out
-    // than this (Space.cs), so the plane records the range the game already
-    // has rather than imposing a new one - a frustum has six planes and this
-    // is the sixth, not a new decision about what the player can see.
+    // The frustum's far plane, matching the range Space.cs already removes a ship at.
     private const float FarPlane = 57344f;
 
-    // Decal faces (cockpit windows, engine plates) lie exactly in the plane
-    // of the hull face they sit on, so per-vertex depth makes them tie with
-    // it pixel for pixel - and the rasteriser interpolates inverse depth
-    // along a scanline from floored pixel positions, so the tie comes out
-    // inexact and the hull speckles through. Pulling the decal nearer by a
-    // fraction of its depth settles it; relative rather than absolute so it
-    // holds at any range. 0.1% was measured too small to cover the
-    // interpolation error on a near edge-on decal, 1% covers it and stays
-    // far inside the front-to-back spread of a single ship, so a decal
-    // can't punch through a face genuinely in front of it.
+    // Pulls a decal nearer than the hull face it sits on, so per-vertex depth doesn't tie
+    // exactly and speckle through under interpolation. 1% covers the interpolation error
+    // without punching through a face genuinely in front.
     private const float DecalDepthBias = 0.99f;
 
-    // The screen radius, in pixels, below which a ship stops showing the
-    // panels and lines painted on its hull. A decal spans roughly a fifth of
-    // the hull, so at this radius it covers about six pixels - the point
-    // where it stops reading as a shape and starts speckling the face it
-    // sits on. Derived from the projected size rather than a fixed range,
-    // so a large ship keeps its detail further out than a small one, and a
-    // wider rendition keeps it as long as the player can still see it.
+    // Screen radius below which hull panels/lines stop drawing - about six pixels of a decal,
+    // where it stops reading as a shape. Derived from projected size, not a fixed range.
     private const float DetailScreenRadius = 16f;
 
     private readonly IEliteDraw _draw;
     private readonly IRandomSource _rng;
 
-    // What the model's shape implies. Derived whenever the model is set, so
-    // the two always agree.
+    // Derived whenever the model is set, so the two always agree.
     private ModelGeometry _geometry = ModelGeometry.For(ModelReader.None);
 
-    // Reused across frames so drawing a ship doesn't allocate; grown to the
-    // model's point count on first use.
+    // Reused across frames so drawing a ship doesn't allocate; grown to the model's point count on first use.
     private Vector4[] _pointList = [];
     private Vector3[] _cameraList = [];
 
@@ -165,8 +143,6 @@ internal class ShipBase : IShip
     /// </summary>
     public virtual void Draw()
     {
-        // Nothing of this ship can be on screen, so none of it is worth
-        // transforming: the whole model, its faces and its laser go together.
         if (!IsWithinView())
         {
             return;
@@ -180,24 +156,14 @@ internal class ShipBase : IShip
 
         Vector4[] pointList = _pointList;
 
-        // Transform model points
         TransformModelPoints(Rotmat, pointList);
-
-        // Draw faces
         DrawModelFaces(pointList);
-
-        // Draw firing lasers if needed
         DrawLasers(pointList);
     }
 
-    // The ship as a bounding sphere at its own origin, against the frustum the
-    // viewport sees. The radius comes from the model rather than the
-    // hand-authored Size - Size is the collision radius squared (see Combat)
-    // and need not agree with the geometry, and a cull that rejects a ship the
-    // model would have drawn is a hole in the hull. Rotating a model about its
-    // origin cannot move it outside the sphere, so the one test covers every
-    // orientation. Conservative, so a ship with any part on screen always
-    // draws.
+    // Bounding sphere from the model's geometry, not the hand-authored Size (Combat's collision
+    // radius squared, which need not agree with it). Conservative: a ship with any part on
+    // screen always draws.
     private bool IsWithinView()
     {
         ViewFrustum frustum = ViewFrustum.FromViewport(
@@ -212,9 +178,7 @@ internal class ShipBase : IShip
         return frustum.Intersects(new(Location.X, Location.Y, Location.Z), _geometry.BoundingRadius);
     }
 
-    // The model placed in camera space, then projected. The placing is the
-    // step every renderer of a model starts with, so the library does it; the
-    // projection that follows is this game's own.
+    // Placing is common to any renderer of a model, so the library does it; the projection is this game's own.
     private void TransformModelPoints(Matrix4x4 transform, Vector4[] pointList)
     {
         MeshTransform.TransformPoints(
@@ -233,10 +197,7 @@ internal class ShipBase : IShip
     private Vector4 ProjectPoint(Vector4 localCoords, Matrix4x4 transform)
         => ProjectPoint(Vector4.Transform(localCoords, transform) + Location);
 
-    // Points behind the near plane still have to yield something for the
-    // laser aim, so those keep the original's depth clamp; the faces
-    // themselves are culled in camera space and clipped properly before
-    // drawing, so the clamp no longer feeds any visibility decision.
+    // Keeps the original's depth clamp for laser aim; faces themselves are culled and clipped properly instead.
     private Vector4 ProjectPoint(Vector4 cameraCoords)
     {
         Vector4 vec = cameraCoords;
@@ -290,24 +251,16 @@ internal class ShipBase : IShip
         }
     }
 
-    // How large the whole ship draws, against the size below which its
-    // detail is no longer worth drawing. The bounding sphere is the same
-    // radius the view cull uses, projected at the ship's own depth; a ship
-    // around or behind the camera plane fills the view, so it keeps its
-    // detail.
+    // Bounding sphere projected at the ship's own depth; a ship around or behind the camera plane keeps its detail.
     private bool ShowsDetail()
         => _draw.Projector.Focus * _geometry.BoundingRadius / MathF.Max(Location.Z, NearPlane)
             >= DetailScreenRadius;
 
-    // Detail is what the hull carries rather than what makes it: a 2-point
-    // line, and a decal face lying in an earlier face's plane. Both root to
-    // a face other than themselves, except an unrooted line, which lies on
-    // no plane at all but is still a line.
+    // A 2-point line or a decal face lying in an earlier face's plane; both root to a face other than themselves.
     private bool IsDetail(int faceIndex)
         => Model.Faces[faceIndex].Points.Count < 3 || _geometry.FaceRoots[faceIndex] != faceIndex;
 
-    // One face as a single colour: the model's own, as this rendition's
-    // lighting leaves it.
+    // One face as a single colour: the model's own, as this rendition's lighting leaves it.
     private void DrawFlatFace(
         int faceIndex,
         Vector3 cameraNormal,
@@ -355,26 +308,16 @@ internal class ShipBase : IShip
         }
     }
 
-    // A face blends across itself only when the draw shades per corner and
-    // the face has corners of its own to shade. A decal or detail line was
-    // left out of the smoothing, so its corner normals are zero: it lies in
-    // one plane on top of another and fills flat, which is what it should do
-    // and what the depth bias in the flat path below assumes.
+    // A decal or detail line has zero corner normals (left out of smoothing) and fills flat.
     private bool ShadesCorners(int faceIndex)
         => _draw.ShadesPerVertex
             && CornerNormals[faceIndex].Count >= 3
             && CornerNormals[faceIndex][0] != Vector3.Zero;
 
-    // Backface cull in camera space, against the face's own model-space
-    // normal rotated into view. Doing it here rather than on the projected
-    // outline keeps the decision off the near-plane depth clamp, which
-    // produces meaningless X/Y for a face straddling the camera plane -
-    // and no later clip can undo a cull already taken.
-    // cameraNormal is the rotated normal the cull already had to compute, handed
-    // back so lighting need not repeat the transform. It is Vector3.Zero for a
-    // face with no normal of its own - a detail line, culled below against the
-    // faces it lies on - which has no single direction to light and so takes
-    // the model's flat colour.
+    // Backface cull in camera space, not on the projected outline, to keep it off the near-plane
+    // depth clamp which produces meaningless X/Y for a face straddling the camera plane.
+    // cameraNormal is handed back so lighting need not repeat the rotation; it is Vector3.Zero
+    // for a normal-less detail line, which takes the model's flat colour instead.
     private bool IsFacingCamera(int faceIndex, out Vector3 cameraNormal)
     {
         Face face = Model.Faces[faceIndex];
@@ -391,9 +334,7 @@ internal class ShipBase : IShip
         return Vector3.Dot(cameraNormal, surfacePoint) <= 0;
     }
 
-    // A model-space normal in view. Lighting wants the rotated vector itself
-    // and not just which side of the camera it falls, so the rotation is its
-    // own step.
+    // Lighting wants the rotated vector itself, not just which side of the camera it falls.
     private Vector3 RotateToCamera(Vector3 normal)
     {
         Vector4 rotated = Vector4.Transform(new Vector4(normal, 0), Rotmat);
@@ -405,18 +346,11 @@ internal class ShipBase : IShip
     private bool FacesCamera(Vector3 normal, Vector3 surfacePoint)
         => Vector3.Dot(RotateToCamera(normal), surfacePoint) <= 0;
 
-    // A detail line lying on no other face's plane has no normal of its own,
-    // so it cannot be culled the way a face is. The model still records, per
-    // vertex, the normals of the faces that vertex belongs to; the faces the
-    // line runs along are those shared by every one of its ends, and the line
-    // is visible when any of them is - which is how the original decided a
-    // line's visibility. A line sharing none (a model carrying no such data)
-    // has nothing to cull against and draws, as before.
+    // A rootless detail line has no normal of its own, so it's visible when any face shared by
+    // all its vertices is - matching the original's rule. A line sharing none draws unculled.
     private bool AnySharedVertexNormalFacesCamera(Face face, Vector3 surfacePoint)
     {
-        // Identity, not equality: the reader hands every vertex on a face the
-        // same pooled FaceNormal instance, and two distinct faces can carry
-        // numerically equal normals.
+        // Identity, not equality: two distinct faces can carry numerically equal normals.
         static bool SharesNormal(Point point, FaceNormal normal)
         {
             foreach (FaceNormal candidate in point.FaceNormals)
@@ -476,10 +410,8 @@ internal class ShipBase : IShip
         return !any;
     }
 
-    // The face's screen outline, clipped to the near plane, with the
-    // camera-space depth of each of its points; null when the face lies
-    // entirely behind the near plane. depthBias scales those depths, to
-    // settle a decal against the face it sits on.
+    // Screen outline clipped to the near plane, with per-point camera-space depth; null if
+    // entirely behind it. depthBias scales those depths to settle a decal against its face.
     private Vector2[]? BuildFacePolygon(
         int faceIndex,
         Vector4[] pointList,
@@ -491,11 +423,7 @@ internal class ShipBase : IShip
         Face face = Model.Faces[faceIndex];
         int numPoints = face.Points.Count;
 
-        // A 2-point detail line is not a polygon - the cyclic clipper would
-        // walk its single edge twice - so it keeps the clamped projection,
-        // whose Z is the camera depth except for points behind the camera.
-        // It takes the same bias as a decal: a detail line lies on a hull
-        // face just as a decal panel does.
+        // Not a polygon - the cyclic clipper would walk its single edge twice - so keep the clamped projection.
         if (numPoints < 3)
         {
             Vector2[] line = new Vector2[numPoints];
@@ -530,10 +458,8 @@ internal class ShipBase : IShip
         return polygon;
     }
 
-    // As BuildFacePolygon, shading each corner and carrying the colours
-    // through the clip so a corner the clipper invents gets the colour the
-    // face had where the near plane cut it. No depth bias: only a face that
-    // roots to itself gets here, and nothing sits in its plane to tie with.
+    // As BuildFacePolygon, carrying corner colours through the clip. No depth bias: only a
+    // self-rooted face gets here, and nothing sits in its plane to tie with.
     private Vector2[]? BuildShadedFacePolygon(
         int faceIndex,
         in Span<Vector3> cameraPoints,
@@ -581,9 +507,7 @@ internal class ShipBase : IShip
         return polygon;
     }
 
-    // The whole-face depth key: the mean Z of the face's transformed
-    // points. Decals and detail lines use their root face's key so they
-    // tie exactly with the surface they sit on and draw over it.
+    // Decals and detail lines use their root face's key so they tie exactly with the surface they sit on.
     private float FaceMeanZ(int faceIndex, Vector4[] pointList)
     {
         Face face = Model.Faces[faceIndex];
@@ -605,29 +529,20 @@ internal class ShipBase : IShip
 
         int lasv = LaserFront;
 
-        // The bolt springs from a mount on the hull, so it is only visible
-        // when that part of the hull is. Without this the laser bypasses the
-        // face cull entirely and a ship firing away from us draws its bolt
-        // straight through its own hull - which the depth test hides in
-        // z-buffered mode but wireframe, having no depth buffer at all,
-        // cannot.
+        // Without this a ship firing away from us draws its bolt through its own hull -
+        // hidden by the depth test in z-buffered mode, but wireframe has no depth buffer.
         if (!IsPointFacingCamera(lasv))
         {
             return;
         }
 
-        // A Viper's beam is the colour a Viper is on the scanner: both come
-        // from the rendition's one definition of what a police ship looks like.
+        // A Viper's beam is the colour a Viper is on the scanner: both come from one rendition definition.
         FastColor color = _draw.Ships.For(Id == ObjectIds.Viper ? ShipClass.Police : ShipClass.Default);
 
         Vector2 mount = new(pointList[lasv].X, pointList[lasv].Y);
 
-        // Aim along the ship's real firing direction - the vector from its local
-        // origin through the laser mount (the nose) - projected a long way out so
-        // it approximates where that direction vanishes on screen, plus a small
-        // random spread so repeated shots aren't visually identical. The previous
-        // code picked a screen-edge X by which side the ship was on and a Y
-        // uniformly random over the whole view, ignoring the ship's firing angle.
+        // Aim along the ship's real firing direction, projected a long way out to approximate
+        // where it vanishes on screen, plus a small random spread so shots aren't identical.
         Vector4 aimPoint = ProjectPoint(Model.Points[lasv].Coords * FarAimDistance, Rotmat);
         float aimX = aimPoint.X + _rng.Random(-LaserAimSpread, LaserAimSpread);
         float aimY = aimPoint.Y + _rng.Random(-LaserAimSpread, LaserAimSpread);
@@ -635,11 +550,8 @@ internal class ShipBase : IShip
 
         Vector2 endPoint = ProjectToViewBoundary(mount, direction);
 
-        // The bolt emerges from the mount on the hull surface, and its far
-        // end is a screen-space boundary point with no camera-space depth of
-        // its own, so the whole line tests at the mount's depth - biased
-        // nearer, like a decal, so the hull it springs from cannot swallow
-        // it. Anything genuinely in front of the firing ship still hides it.
+        // The far end has no camera-space depth, so the whole line tests at the mount's depth,
+        // biased nearer like a decal so the hull it springs from cannot swallow it.
         float mountZ = pointList[lasv].Z * DecalDepthBias;
         _draw.DrawPolygonFilled([mount, endPoint], [mountZ, mountZ], color, mountZ);
     }

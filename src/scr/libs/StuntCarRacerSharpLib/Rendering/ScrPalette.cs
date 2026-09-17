@@ -9,19 +9,13 @@ using SharpKind.Assets.Palettes;
 
 namespace StuntCarRacerSharpLib.Rendering;
 
-// The 42-entry Stunt Car Racer palette from the original StuntCarRacer.cpp,
-// loaded from palette.json (see PaletteReader) and addressed positionally,
-// matching the original's SCR_BASE_COLOUR-relative indexing. Indices 10-17
-// are car colours 1, 18-25 are car colours 2 and 26 onwards are the track
-// colours (Track.ScrBaseColour is 26).
+// The 42-entry palette, addressed positionally matching the original's SCR_BASE_COLOUR-relative
+// indexing. Indices 10-17 are car colours 1, 18-25 are car colours 2, 26 onwards are track colours.
 public sealed class ScrPalette
 {
     private readonly IPaletteCollection _palette;
 
-    // The palette is a tier-specific asset, so it comes from the locator the
-    // composition root built for the configured tier - the class no longer
-    // creates one of its own (and with it, re-reads the manifest) per
-    // construction.
+    // Comes from the locator the composition root built for the configured tier, not created (and the manifest re-read) per construction.
     public ScrPalette(IAssetLocator assetLocator)
         : this(PaletteReader.Read((assetLocator ?? throw new ArgumentNullException(nameof(assetLocator))).PalettePath))
     {

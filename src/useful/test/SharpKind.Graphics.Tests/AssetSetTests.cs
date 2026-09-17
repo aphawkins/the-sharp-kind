@@ -11,9 +11,7 @@ namespace SharpKind.Graphics.Tests;
 
 public class AssetSetTests
 {
-    // What the two renditions the games ship with declare about themselves.
-    // The game no longer holds these as facts about a fixed set of tiers - a
-    // rendition declares its own, and these stand in for two that would.
+    // Stand-ins for what a rendition declares about itself, since these are no longer fixed game-side facts.
     private static AssetColourLimits EightBit => new()
     {
         MaxColours = 16,
@@ -115,10 +113,7 @@ public class AssetSetTests
     [Fact]
     public void AllowsTheSameSetUnderTheRoomierSixteenBitCap()
     {
-        // Arrange: 17 colours, which break the 8-bit cap but are fine here, so
-        // the failure above is the cap doing its job rather than the loader
-        // rejecting the file. They sit on the 16-bit grid, because that tier
-        // enforces channel depth as well as the cap.
+        // 17 colours break the 8-bit cap but are fine here, confirming the failure above is the cap, not the loader.
         using TempImageFile image = TempImageFile.From(Bmp(OnGrid(17)));
 
         // Act
@@ -132,9 +127,7 @@ public class AssetSetTests
     [Fact]
     public void ThrowsWhenAnEightBitBitmapUsesAColourThePaletteDoesNotName()
     {
-        // Arrange: 8-bit hardware was indexed-colour, so a pixel that is not a
-        // palette entry is a colour the machine could not have shown - well
-        // inside the 16-colour cap, so only the palette rule can catch it.
+        // 8-bit was indexed-colour: a non-palette pixel is a colour the machine could not show, well inside the 16-colour cap.
         using TempImageFile palette = Palette(("Red", 0xFFFF0000));
         using TempImageFile image = TempImageFile.From(Bmp(0xFFFF0000, 0xFF00FF00));
         IAssetLocator locator = Locator(EightBit, palette, ("Image", image));
@@ -182,10 +175,7 @@ public class AssetSetTests
     [Fact]
     public void ReportsButAllowsColoursOutsideTheSixteenBitPalette()
     {
-        // Arrange: 16-bit hardware is direct-colour, so its palette is only a
-        // set of names the geometry draws with - bitmaps are free of it. The
-        // same set that fails on 8-bit has to load here, and the breakdown is
-        // still recorded so it can be logged.
+        // 16-bit is direct-colour: the palette is only names the geometry draws with, bitmaps are free of it.
         using TempImageFile palette = Palette(("Red", 0xFFFF0000));
         using TempImageFile image = TempImageFile.From(Bmp(0xFFFF0000, 0xFF00FF00));
 
@@ -260,9 +250,7 @@ public class AssetSetTests
     [Fact]
     public void ChecksTheNamedPaletteAgainstTheGridAsWellAsTheBitmaps()
     {
-        // Arrange: the geometry draws with palette names, so a colour the tier
-        // cannot show reaches the screen whether it arrives as a pixel or a
-        // name. The bitmap here is clean, so only the palette can be at fault.
+        // The bitmap is clean here, so only the palette can be at fault.
         using TempImageFile palette = Palette(("Grey", 0xFF808080));
         using TempImageFile image = TempImageFile.From(Bmp(0xFF112233, 0xFF112233));
         IAssetLocator locator = Locator(SixteenBit, palette, ("Image", image));
@@ -329,9 +317,7 @@ public class AssetSetTests
         }
     }
 
-    // A .fon carries no colours of its own - a strike is one bit per pixel,
-    // coloured when it is drawn - so it has nothing to spend from the budget
-    // however tight the rendition's is.
+    // A .fon carries no colours of its own - a strike is one bit per pixel, coloured when drawn.
     [Fact]
     public void CountsNoColoursForAFon()
     {
@@ -354,9 +340,7 @@ public class AssetSetTests
         }
     }
 
-    // Missing files are reported together, and a .fon has to be among them -
-    // otherwise filling in a rendition's set means finding out about its font
-    // only once everything else is in place.
+    // Missing files are reported together, and a .fon must be among them.
     [Fact]
     public void ReportsAMissingFonWithTheRest()
     {

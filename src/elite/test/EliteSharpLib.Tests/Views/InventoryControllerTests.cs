@@ -15,9 +15,7 @@ using SharpKind.UI;
 
 namespace EliteSharpLib.Tests.Views;
 
-// The inventory lists only what is aboard, so its rows come and go as cargo is
-// traded. It scrolls but shows no cursor: nothing on this screen can be chosen,
-// and a hold can carry more sorts of thing than the tier has rows for.
+// The inventory's rows come and go as cargo is traded. It scrolls but shows no cursor: nothing here can be chosen.
 public class InventoryControllerTests
 {
     [Fact]
@@ -56,8 +54,7 @@ public class InventoryControllerTests
         Assert.Equal(0, controller.CarriedRowCount);
     }
 
-    // A hold with more sorts of thing in it than the tier has rows for used to
-    // draw off the bottom of the screen and into the HUD.
+    // Pins that a hold with more sorts of thing than the tier has rows for scrolls rather than overflows.
     [Fact]
     public void AFullHoldScrollsRatherThanRunningOffTheScreen()
     {
@@ -82,8 +79,7 @@ public class InventoryControllerTests
         Assert.Equal(2, controller.FirstVisibleRow);
     }
 
-    // The reason the list is replaced rather than cleared and refilled: a trade
-    // must not send the commander back to the top of a scrolled list.
+    // A trade must not send the commander back to the top of a scrolled list.
     [Fact]
     public void ATradeKeepsTheScrollPosition()
     {
@@ -112,8 +108,7 @@ public class InventoryControllerTests
         Assert.Equal(scrolled, controller.FirstVisibleRow);
     }
 
-    // Nothing here can be chosen, so no row is ever drawn highlighted - the
-    // cursor exists only to move the window.
+    // No row is ever drawn highlighted; the cursor exists only to move the window.
     [Fact]
     public void NoRowIsDrawnWithACursorBlock()
     {

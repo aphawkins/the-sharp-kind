@@ -13,10 +13,7 @@ using SharpKind.Fakes.Input;
 
 namespace EliteSharpLib.Tests.Controls;
 
-// The file has to appear on disk, filled in, the first time the game runs -
-// there is nothing to edit otherwise, and an empty one is every control
-// dead. ConfigFile does not repair a file that was never there, which is
-// why the registration writes the defaults rather than binding over them.
+// ConfigFile does not repair a file that was never there, so registration writes the defaults on first run.
 public sealed class ControlsFileTests : IDisposable
 {
     private const string FileName = "elite.controls.sharp";
@@ -42,8 +39,7 @@ public sealed class ControlsFileTests : IDisposable
         Assert.Equal(3, bindings.Controllers.Count);
     }
 
-    // What lands on disk has to be something a commander can read and
-    // change, so the action names are in it and so are the keys.
+    // What lands on disk must be readable and editable: action names and keys both.
     [Fact]
     public void TheWrittenFileNamesItsActionsAndKeys()
     {
@@ -68,8 +64,7 @@ public sealed class ControlsFileTests : IDisposable
         Assert.Contains(ControlBindings.AnyDevice, written, StringComparison.Ordinal);
     }
 
-    // One key is a bare value and several are an array: most actions have
-    // one, and a one-item array is noise in a file meant to be hand-edited.
+    // A one-item array is noise in a file meant to be hand-edited.
     [Fact]
     public void OneKeyIsWrittenBareAndSeveralAsAnArray()
     {
@@ -82,9 +77,7 @@ public sealed class ControlsFileTests : IDisposable
         Assert.Equal(JsonValueKind.Array, ValueFor(keyboard, nameof(EliteAction.PitchUp)).ValueKind);
     }
 
-    // The form the file is written in has to be the form it can be read in.
-    // The configuration binder drops a bare value silently unless the type
-    // can convert from one, so this is what proves the round trip.
+    // The binder drops a bare value silently unless the type can convert from one.
     [Fact]
     public void TheBareFormReadsBackAgain()
     {
@@ -118,8 +111,7 @@ public sealed class ControlsFileTests : IDisposable
         Assert.Equal(ConfigSchema.CurrentVersion, bindings.Version);
     }
 
-    // A version from a later build is stamped back rather than obeyed:
-    // there is nothing to migrate to, and the original is kept alongside.
+    // A version from a later build is stamped back rather than obeyed; nothing to migrate to.
     [Fact]
     public void AVersionFromTheFutureIsStampedBack()
     {
@@ -129,8 +121,7 @@ public sealed class ControlsFileTests : IDisposable
         Assert.Equal(ConfigSchema.CurrentVersion, Resolve().Version);
     }
 
-    // A hand-edit has to survive the next run, or the file would be
-    // pointless: what goes back is what was just read.
+    // A hand-edit must survive the next run, or the file is pointless.
     [Fact]
     public void AHandEditSurvivesTheNextRun()
     {
@@ -142,8 +133,7 @@ public sealed class ControlsFileTests : IDisposable
         Assert.True(Bound(reread, EliteAction.FireLaser, ConsoleKey.Z));
     }
 
-    // A commander typing by hand will not match the file's casing and
-    // should not have to.
+    // A commander typing by hand will not match the file's casing and should not have to.
     [Fact]
     public void AHandEditNeedNotMatchTheCasing()
     {
@@ -157,8 +147,7 @@ public sealed class ControlsFileTests : IDisposable
         Assert.True(Bound(reread, EliteAction.FireLaser, ConsoleKey.Z));
     }
 
-    // A binding the game cannot honour costs that line, and the original is
-    // left alongside as .bad rather than quietly discarded.
+    // A binding the game cannot honour costs that line; the original is kept as .bad.
     [Fact]
     public void ABadBindingIsDroppedAndTheOriginalKept()
     {
@@ -171,8 +160,7 @@ public sealed class ControlsFileTests : IDisposable
         Assert.True(File.Exists(Path.Combine(_directory, FileName) + ".bad"));
     }
 
-    // Removing a binding unbinds that control: the file is the answer, not
-    // a patch over something in the code.
+    // Removing a binding unbinds that control: the file is the answer, not a patch over the code.
     [Fact]
     public void RemovingABindingUnbindsTheControl()
     {
@@ -184,9 +172,7 @@ public sealed class ControlsFileTests : IDisposable
         Assert.False(Bound(reread, EliteAction.Ecm, ConsoleKey.E));
     }
 
-    // Dictionary keys keep the casing they were written with, so a lookup
-    // by name has to ignore case the way the game does. The value is a bare
-    // string for one key and an array for several.
+    // Dictionary keys keep their written casing, so lookup by name must ignore case.
     private static string? FirstKeyFor(in JsonElement keyboard, string action)
     {
         JsonElement value = ValueFor(keyboard, action);
@@ -207,8 +193,7 @@ public sealed class ControlsFileTests : IDisposable
         throw new InvalidOperationException($"No binding written for '{action}'.");
     }
 
-    // Asked through a EliteControlMap rather than off the dictionary, because
-    // that is how the game asks and it is what actually has to work.
+    // Asked through EliteControlMap rather than off the dictionary: that is how the game asks.
     private static bool Bound(ControlBindings bindings, EliteAction action, ConsoleKey key)
     {
         FakeKeyboard keyboard = new();

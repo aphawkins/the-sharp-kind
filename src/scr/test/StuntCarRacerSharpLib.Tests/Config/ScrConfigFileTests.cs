@@ -46,9 +46,7 @@ public class ScrConfigFileTests
     [Fact]
     public void ReadConfigWithAMistypedValueReturnsDefaultsInsteadOfThrowing()
     {
-        // Arrange: a hand-edited/corrupt file where a bool field holds a
-        // non-boolean string - Microsoft.Extensions.Configuration.Binder
-        // wraps this as InvalidOperationException, not FormatException.
+        // A hand-edited/corrupt file with a non-boolean string in a bool field; the binder wraps this as InvalidOperationException.
         string directory = CreateTempDirectory();
         Directory.CreateDirectory(directory);
         File.WriteAllText(
@@ -85,9 +83,7 @@ public class ScrConfigFileTests
         Assert.False(config.Engine.Sound.Music);
     }
 
-    // A file written before renditions existed says "tier", and spells it
-    // with a digit. Repair carries the choice over to the new setting rather
-    // than letting it fall back to the default, which would lose it.
+    // A pre-renditions file says "tier"; Repair carries the choice over rather than falling back to the default, which would lose it.
     [Fact]
     public void ReadConfigUpgradesTheOldTierSetting()
     {

@@ -158,9 +158,7 @@ public class AudioControllerTests
         Assert.Equal(0, sound.PlayMusicCount);
     }
 
-    // StopMusic is unconditional: turning music off in the settings screen
-    // sets MusicOn false and then calls it to silence what is already playing,
-    // so it cannot depend on MusicOn still being true.
+    // StopMusic is unconditional: it must still silence playback once MusicOn has already been turned off.
     [Fact]
     public void StopMusicStopsEvenWhenMusicIsOff()
     {
@@ -194,13 +192,7 @@ public class AudioControllerTests
     [Fact]
     public void AFractionOfATickAgesASampleByThatFraction()
     {
-        // Four quarter-ticks make a tick, so a two-tick sample is still
-        // running after seven of them and lapses on the eighth.
-        //
-        // The no-argument overload - the one Stunt Car Racer calls, which
-        // must keep counting lifetimes in whole updates - is covered by
-        // PlayEffectReplaysOnceTheCooldownHasElapsed above; that it still
-        // passes unchanged is what says SCR's pacing was left alone.
+        // Four quarter-ticks make a tick: a two-tick sample is still running after seven and lapses on the eighth.
         FakeSound sound = new();
         AudioController audio = new(sound, new Dictionary<string, SfxSample> { { "Smash", new(2) } }, new());
 

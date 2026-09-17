@@ -13,16 +13,9 @@ namespace EliteSharpLib;
 
 internal sealed class Stars
 {
-    // How far past the view's own edge a star is carried before it is
-    // recycled. It has to be past it: both recycle paths put a star back at
-    // exactly StarHalfHeight, so an edge of exactly that would satisfy the
-    // test again on the very next frame and recycle it forever.
-    //
-    // The original wrote these as 110 and 116, which are 1.10 and 1.16 times
-    // the 8-bit tier's 100-unit half-height. Kept as ratios rather than
-    // numbers because star space is sized by the focal length: a wider field
-    // of view stretches the view further across it, and a fixed 110 then
-    // falls *inside* the view and recycles stars a commander can still see.
+    // Must be past the view's edge, not at it: both recycle paths put a star back at exactly
+    // StarHalfHeight, so an edge of exactly that would recycle it forever. Kept as ratios (1.10x,
+    // 1.16x the 8-bit half-height) rather than fixed numbers, since star space scales with focal length.
     private const float RearRecycleMargin = 1.10f;
     private const float SideRecycleMargin = 1.16f;
 
@@ -31,16 +24,9 @@ internal sealed class Stars
     private readonly PlayerShip _ship;
     private readonly IStarfieldRenderer _renderer;
 
-    // The starfield's own entropy, off the draw surface rather than the
-    // game's stream.
-    //
-    // Where a recycled star reappears decides nothing: the stars are
-    // scenery, and no part of the game asks where they are. But taking those
-    // numbers from the game's stream meant the game's *other* rolls depended
-    // on how many updates had gone by, because a star is recycled when it
-    // leaves the view and that is counted per update. The same twenty
-    // seconds at two rates could then meet different ships. This is the
-    // coupling RenderRandom removed from the drawing, one layer in.
+    // Off the draw surface, not the game's stream: taking these numbers from the game's stream
+    // made other rolls depend on update count, so the same twenty seconds at two rates could meet
+    // different ships. This is the coupling RenderRandom removed from the drawing.
     private readonly IRandomSource _rng;
 
     // What this frame is showing, refilled by each starfield pass and handed
@@ -65,11 +51,8 @@ internal sealed class Stars
     // length rather than a separate field, so the two can never desync.
     private int Count => _stars.Length;
 
-    // Star coordinates are held in the original's 256-wide space, centred on
-    // the view, so they map to the screen by the same factor as the projected
-    // planet and sun radii. The star-space half-extents below are the screen's
-    // own half-extents divided back through it, which keeps the starfield
-    // filling exactly the view at any tier.
+    // Star coordinates are in the original's 256-wide space, mapping to the screen by the same
+    // factor as projected planet/sun radii, so the starfield exactly fills the view at any tier.
     private float StarScale => _draw.Focus / 256;
 
     private float StarHalfWidth => _draw.Layout.ViewportCentre.X / StarScale;
@@ -159,9 +142,7 @@ internal sealed class Stars
 
             if (WarpStars)
             {
-                // The forward streak is not checked against the view: it
-                // runs from wherever the star was to wherever it now is, and
-                // the renderer clips what falls outside.
+                // Not checked against the view: the renderer clips whatever streak falls outside.
                 _marks.Add(new(star, ToScreen(xx, yy), true, zz));
             }
 
@@ -308,9 +289,7 @@ internal sealed class Stars
         WarpStars = false;
     }
 
-    // Draws star i in its current screen location (a bright pixel that grows
-    // as it approaches the camera), then returns that screen position so the
-    // caller can draw a motion streak from it once the star has moved.
+    // Returns the screen position so the caller can draw a motion streak from it once the star has moved.
     private Vector2 PlotStar(int i)
     {
         Vector2 star = new()

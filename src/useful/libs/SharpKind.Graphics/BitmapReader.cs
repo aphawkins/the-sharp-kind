@@ -4,10 +4,7 @@ using System.Buffers.Binary;
 
 namespace SharpKind.Graphics;
 
-// Decodes uncompressed Windows BMPs: 1/4/8bpp palettised, 24bpp BGR and
-// 32bpp BGRA, bottom-up or top-down. 32bpp is always read as BGRA rather
-// than honouring BI_BITFIELDS masks - every file the games ship uses the
-// standard mask layout, which is what BitmapWriter emits.
+// Decodes uncompressed Windows BMPs: 1/4/8bpp palettised, 24bpp BGR, 32bpp BGRA, bottom-up or top-down. 32bpp is always read as BGRA (ignoring BI_BITFIELDS masks), matching what BitmapWriter emits.
 public static class BitmapReader
 {
     private const int FileHeaderSize = 14;
@@ -57,8 +54,7 @@ public static class BitmapReader
             throw new SharpKindException("BMP pixel data extends past the end of the file.");
         }
 
-        // A negative height means the file stores rows top-down; the usual
-        // positive height means bottom-up, so the rows need flipping.
+        // Negative height means rows are stored top-down; positive (the usual) means bottom-up, so rows need flipping.
         bool topDown = signedHeight < 0;
         uint[] pixels = new uint[width * height];
 

@@ -5,11 +5,8 @@ using SharpKind.Graphics.Rendering;
 
 namespace SharpKind.Graphics;
 
-// Sutherland-Hodgman clipping of a camera-space polygon against the near
-// plane. Both games need it: geometry crossing the camera plane projects to
-// garbage otherwise, since the perspective divide flips sign through z = 0.
-// The plane distance is a parameter because the two games work in different
-// camera units.
+// Sutherland-Hodgman clipping of a camera-space polygon against the near plane - geometry crossing z = 0
+// projects to garbage otherwise. Plane distance is a parameter since the two games use different camera units.
 public static class NearPlaneClip
 {
     // Returns the number of resulting points written to the output span,
@@ -21,10 +18,7 @@ public static class NearPlaneClip
         return Clip(input, textureCoords, nearPlane, output, clippedTextureCoords);
     }
 
-    // As above, interpolating a colour per point through the clip (colours
-    // pairs with input, outputColours with output). A Gouraud face is shaded
-    // at its own corners, so a corner the clipper invents has to be given the
-    // colour the face had where the near plane cut it.
+    // As above, interpolating a colour per point (colours pairs with input, outputColours with output) - an invented corner gets the colour the face had where the near plane cut it.
     public static int Clip(
         in ReadOnlySpan<Vector3> input,
         in ReadOnlySpan<FastColor> colours,

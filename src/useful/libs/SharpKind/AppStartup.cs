@@ -55,14 +55,9 @@ public static class AppStartup
     {
         ArgumentNullException.ThrowIfNull(ex);
 
-        // The exception's own message is included because it is usually the only part that says
-        // what actually failed - which rendition was not installed, which asset was missing -
-        // and a player who cannot see the log has nothing else to go on.
         string cause = ex is DllNotFoundException
 
-            // The SDL3 native libraries ship inside the ppy.SDL3*-CS NuGet packages, so there's
-            // no separate runtime package to install - a DllNotFoundException here more likely
-            // means an unsupported platform/architecture.
+            // SDL3 natives ship inside the ppy.SDL3*-CS NuGet packages, so this means an unsupported platform/architecture.
             ? "A required native library could not be loaded."
                 + Environment.NewLine
                 + "This usually means the current platform/architecture isn't supported."

@@ -52,9 +52,7 @@ internal sealed class ShortRangeChartView8Bit : BaseView8Bit, IView<ShortRangeCh
         Graphics.DrawLine(new(centre.X, centre.Y - crossSize), new(centre.X, centre.Y + crossSize), _colorWhite);
         Graphics.DrawLine(new(centre.X - crossSize, centre.Y), new(centre.X + crossSize, centre.Y), _colorWhite);
 
-        // The packing places these against galaxy coordinates, which land
-        // anywhere; the blobs they label keep their exact positions, but the
-        // text snaps to the grid like every other 8-bit string.
+        // Labels snap to the grid like every other 8-bit string; the blobs they name keep their exact positions.
         foreach ((Vector2 position, string name) in model.Labels)
         {
             Graphics.DrawTextLeft(SnapToGrid(position), name, nameof(FontType.Small), _colorWhite);

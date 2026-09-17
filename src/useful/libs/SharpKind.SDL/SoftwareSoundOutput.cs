@@ -8,14 +8,10 @@ using static SDL.SDL3;
 
 namespace SharpKind.SDL;
 
-// Thin SDL3 raw-audio-device output shim for SoftwareSound: mirrors how
-// SoftwareAbstraction.SoftwareScreenUpdate just blits an already-rendered
-// FastBitmap through SDL for graphics - all the real decode/mix work already
-// happened in SoftwareSound.Render, so this class only owns the raw
-// SDL_AudioStream/device pair and pulls from SoftwareSound whenever SDL's
-// own callback (invoked on SDL's own audio thread) says it wants more data.
-// Deliberately built on SDL3's core SDL_OpenAudioDeviceStream rather than
-// SDL3_mixer, which is unused by this (the live) path.
+// Thin SDL3 raw-audio-device shim for SoftwareSound, mirroring how SoftwareScreenUpdate just
+// blits an already-rendered FastBitmap: decode/mix already happened in SoftwareSound.Render, so
+// this only owns the SDL_AudioStream/device pair and pulls data on SDL's callback. Built on
+// SDL3's core SDL_OpenAudioDeviceStream, not SDL3_mixer, which this (live) path doesn't use.
 public sealed unsafe class SoftwareSoundOutput : IDisposable
 {
     private readonly SoftwareSound _sound;
@@ -32,9 +28,7 @@ public sealed unsafe class SoftwareSoundOutput : IDisposable
 
         SDLGuard.Execute(() => SDL_Init(SDL_InitFlags.SDL_INIT_AUDIO));
 
-        // A stable handle so the [UnmanagedCallersOnly] fill callback below
-        // (which must be a static method, not an instance delegate) can find
-        // its way back to this instance via userdata.
+        // A stable handle so the static [UnmanagedCallersOnly] fill callback can find its way back via userdata.
         _selfHandle = GCHandle.Alloc(this);
 
         _stream = SDLGuard.Execute(() => OpenDeviceStream(
@@ -60,12 +54,8 @@ public sealed unsafe class SoftwareSoundOutput : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    // Called by SDL on its own audio thread whenever it wants more data;
-    // additionalAmount is the number of bytes needed right now. Kept as a
-    // thin pull-from-SoftwareSound-hand-to-SDL shim: no locking (Render is
-    // documented safe to call from any thread) and no allocation on the
-    // steady-state path (the scratch buffer only grows, and only if SDL
-    // ever asks for a bigger chunk than it has before).
+    // Called on SDL's own audio thread. No locking (Render is documented safe from any thread) and
+    // no allocation on the steady-state path (the scratch buffer only grows).
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     private static void FillCallback(nint userData, SDL_AudioStream* stream, int additionalAmount, int totalAmount)
     {
@@ -75,10 +65,7 @@ public sealed unsafe class SoftwareSoundOutput : IDisposable
         }
     }
 
-    // SDL_AudioSpec is built locally from primitive components (rather than
-    // taking a struct/pointer parameter) to keep this call safe to invoke
-    // from inside an SDLGuard.Execute lambda, matching the pattern already
-    // established by SDLSound's CreateMixerDevice.
+    // Built locally from primitive components, not a struct/pointer parameter, to stay safe inside an SDLGuard.Execute lambda.
     private static nint OpenDeviceStream(SDL_AudioFormat format, int channels, int freq, in nint userData)
     {
         SDL_AudioSpec spec = default;
@@ -92,9 +79,7 @@ public sealed unsafe class SoftwareSoundOutput : IDisposable
     // fill callback above actually starts being invoked.
     private static bool ResumeStreamDevice(in nint stream) => SDL_ResumeAudioStreamDevice((SDL_AudioStream*)stream);
 
-    // Destroying the stream returned by SDL_OpenAudioDeviceStream also
-    // closes the audio device it implicitly opened, so there is no separate
-    // device handle to close here.
+    // Destroying the stream also closes the audio device it implicitly opened; no separate handle to close.
     private static void DestroyStream(in nint stream) => SDL_DestroyAudioStream((SDL_AudioStream*)stream);
 
     private void Fill(SDL_AudioStream* stream, int additionalAmount)

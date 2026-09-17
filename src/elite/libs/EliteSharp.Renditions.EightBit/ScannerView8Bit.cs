@@ -58,8 +58,7 @@ internal sealed class ScannerView8Bit : ScannerViewBase
 
     protected override float SpeedHeight => 4;
 
-    // Left-aligned with the speed and energy dials: the indicators centre on
-    // half a dial's width in, which used to be baked in as a fixed 32.
+    // Left-aligned with the speed and energy dials: the indicators centre on half a dial's width in.
     protected override Vector2 RollPosition => new(270, 10);
 
     protected override Vector2 PitchPosition => new(270, 18);

@@ -77,15 +77,11 @@ internal sealed class Gallery
     {
         _graphics = graphics;
 
-        // Measured, then held to what the canvas can actually show: the window
-        // was sized from an estimate of the font's height, and an estimate a
-        // pixel short would otherwise push the last rows off the bottom.
+        // Held to what the canvas can actually show, since the window was sized from an estimate of the font's height.
         float lineHeight = MathF.Max(Cell, graphics.MeasureText(MeasuringText, Font).Y);
         _pitch = MathF.Min(lineHeight, screen.ScreenHeight / LayoutRows);
 
-        // A proportional font has no grid to sit on, so nothing snaps to one:
-        // a line taller than the cell is how this tells the two apart, which
-        // is the same distinction the 8-bit and 16-bit tiers draw.
+        // A proportional font has no grid to sit on; a line taller than the cell is how this tells the two apart.
         _snap = _pitch > Cell ? 0 : Cell;
 
         // Every state is given a look, so that every state is visible: the
@@ -105,9 +101,7 @@ internal sealed class Gallery
         _centred = new(graphics, _style) { ChildAlignment = TextAlignment.Centre };
         _clock = new(graphics, _style) { ChildAlignment = TextAlignment.Centre };
 
-        // The demonstration rows are spaced a blank row apart so each one's
-        // outline reads as its own box. The combo rows are not: a settings
-        // list is a list, and that is how one looks.
+        // Demonstration rows are spaced a blank row apart so each reads as its own box; combo rows are not, since a settings list is a list.
         _alignment.Spacing = 2 * _pitch;
         _states.Spacing = 2 * _pitch;
         _centred.Spacing = 2 * _pitch;
@@ -216,9 +210,7 @@ internal sealed class Gallery
         DrawHeading(y, "Esc to quit", s_white);
     }
 
-    // The section headings are chrome rather than controls - each wants its own
-    // colour, which a shared style does not give it - so they are drawn
-    // straight onto the surface. Returns the next free row.
+    // Section headings are chrome, not controls: each wants its own colour, so they draw straight onto the surface.
     private float DrawHeading(float y, string text, in FastColor colour)
     {
         float width = _graphics.MeasureText(text, Font).X;

@@ -13,18 +13,15 @@ using SharpKind.Graphics;
 
 namespace EliteSharpLib.Tests.Planets;
 
-// What each style draws, taken off a real rendition the way the game takes
-// it. The renderer is handed screen terms directly here rather than through a
-// planet, so a radius is a radius and the tests below say what they mean.
+// What each style draws, taken off a real rendition. The renderer is handed screen terms
+// directly here rather than through a planet, so a radius is a radius.
 public sealed class PlanetRendererTests
 {
     // Comfortably above the radius the outlined style stops drawing detail
     // at, which is 6 of the original's units.
     private const float Radius = 100;
 
-    // A real palette rather than the fake one, which answers every name with
-    // the same colour - that would make a generated surface of land and sea
-    // come out uniform, and two different planets indistinguishable.
+    // A real palette: the fake answers every name with the same colour, which would make land and sea come out uniform.
     private static readonly Palette s_palette = new(new Dictionary<string, FastColor>(StringComparer.Ordinal)
     {
         ["White"] = new(0xFFFFFFFFu),
@@ -125,9 +122,7 @@ public sealed class PlanetRendererTests
             Times.Never);
     }
 
-    // The threshold is in the original's units, so it is scaled by UnitScale
-    // rather than being a pixel count - which is what lets a rendition draw at
-    // any resolution and still stop detailing at the same apparent size.
+    // Scaled by UnitScale, not a pixel count, so a rendition can draw at any resolution and still stop detailing at the same size.
     [Fact]
     public void WireframeDrawsNoDetailBelowTheDetailRadius()
     {
@@ -160,9 +155,7 @@ public sealed class PlanetRendererTests
         graphics.Verify(x => x.DrawPixel(It.IsAny<Vector2>(), It.IsAny<FastColor>()));
     }
 
-    // The same system has to look the same every visit. The seed belongs to
-    // the game, so this is really a test that the renderer takes what it is
-    // given rather than rolling its own.
+    // Really a test that the renderer takes the seed it's given rather than rolling its own.
     [Fact]
     public void FractalIsTheSameEveryTimeForOneSeed()
         => Assert.Equal(FractalPixels(seed: 12345), FractalPixels(seed: 12345));

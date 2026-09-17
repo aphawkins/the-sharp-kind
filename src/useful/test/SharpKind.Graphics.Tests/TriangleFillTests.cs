@@ -12,9 +12,7 @@ public class TriangleFillTests
     [Fact]
     public void SteepEdgeCrossingScanlineDoesNotSpike()
     {
-        // A triangle with an edge spanning a tiny fractional y range across
-        // an integer scanline used to produce a huge interpolation slope and
-        // paint a horizontal spike across the screen.
+        // A tiny fractional-y edge across an integer scanline used to produce a huge interpolation slope and paint a horizontal spike.
         Mock<IAssetLocator> assets = new();
         SetupEmptyAssets(assets);
         using SoftwareGraphics graphics = SoftwareGraphics.Create(100, 100, DoAssert, assets.Object);
@@ -105,9 +103,7 @@ public class TriangleFillTests
         }
     }
 
-    // The fill resolves a dither's sixteen answers once for the face instead
-    // of asking per pixel, so every pixel must still hold exactly what the
-    // quantiser would have returned for it.
+    // Resolves a dither's sixteen answers once for the face; every pixel must still hold exactly what the quantiser would have returned.
     [Fact]
     public void DitheredFillMatchesAskingTheQuantiserPerPixel()
     {

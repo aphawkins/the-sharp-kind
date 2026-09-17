@@ -30,10 +30,7 @@ public class ClassicGoodsTests
         Assert.Equal(expected, Goods.Select(good => good.Id));
     }
 
-    // The loot draw used to be (StockType)Random(1, 9). Random's upper bound is
-    // exclusive, so that was eight goods and not nine - Food through Computers,
-    // by the enum's own numbering. Nothing counts them out now, so this is what
-    // holds the canister to the same eight.
+    // Pins the canister loot to the classic first eight goods, Food through Computers.
     [Fact]
     public void ACanisterHoldsTheFirstEightGoods()
     {
@@ -69,18 +66,14 @@ public class ClassicGoodsTests
             contraband);
     }
 
-    // Gold and platinum are kilograms and gem-stones are grams, so a hold full
-    // of tonnes still has room for them. This used to be a string comparison
-    // against the unit suffix.
+    // Gold and platinum are kilograms and gem-stones are grams, so a hold full of tonnes still has room for them.
     [Fact]
     public void OnlyTheMetalsAndTheGemStonesStayOutOfTheHold()
         => Assert.Equal(
             ["Gold", "Platinum", "GemStones"],
             Goods.Where(good => !good.FillsHold).Select(good => good.Id));
 
-    // Commander Max's hold was a list of thirteen goods kept beside the table.
-    // It is derived now - everything a station sells that is not contraband -
-    // and this is the list it used to be.
+    // Pins Commander Max's hold: everything a station sells that is not contraband.
     [Fact]
     public void CommanderMaxCarriesEverythingLegalAndBuyable()
     {
@@ -101,8 +94,7 @@ public class ClassicGoodsTests
     public void CommanderJamesonCarriesNothing()
         => Assert.DoesNotContain(CommanderFactory.Jameson(Goods).Cargo, item => item.Value != 0);
 
-    // The starting station's shelf was a second table beside the goods; it is
-    // the goods' own OpeningStationStock now. A spot check either end of it.
+    // Spot check of the classic starting shelf, via each good's OpeningStationStock.
     [Fact]
     public void TheStartingStationOpensWithTheClassicShelf()
     {

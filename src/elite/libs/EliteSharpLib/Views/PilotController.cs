@@ -31,9 +31,7 @@ internal sealed class PilotController : IScreenController
     private readonly GameState _gameState;
     private readonly EliteControlMap _controls;
 
-    // Only for the Ctrl that turns hyperspace galactic. A modifier is not
-    // an action and has no place in the bindings file: it decorates another
-    // control rather than being one.
+    // Only for the Ctrl that turns hyperspace galactic; a modifier has no place in the bindings file.
     private readonly IKeyboard _keyboard;
     private readonly Pilot _pilot;
     private readonly PlayerShip _ship;
@@ -44,11 +42,8 @@ internal sealed class PilotController : IScreenController
     private readonly IEliteDraw _draw;
     private readonly IView<PilotModel> _view;
 
-    // The stick's one-shot commands. The gamepad reports these as holds
-    // rather than presses, because one profile puts fire-missile on a
-    // trigger and a trigger is an axis with no press to consume, so the
-    // edge is made here for all of them rather than half here and half in
-    // the device.
+    // The stick's one-shot commands. Gamepads report these as holds, since a trigger is an
+    // axis with no press to consume, so the edge is made here rather than split with the device.
     private readonly Edge _fireMissile = new();
     private readonly Edge _targetMissile = new();
     private readonly Edge _untargetMissile = new();
@@ -57,9 +52,7 @@ internal sealed class PilotController : IScreenController
     private readonly Edge _dockingComputer = new();
     private readonly Edge _hyperspace = new();
 
-    // How much longer the laser bolt is drawn for, in the game's own ticks
-    // rather than in updates - or the beam would be a flicker a third as
-    // long at sixty frames a second as at thirteen and a half.
+    // In the game's own ticks, not updates, or the beam would flicker differently at different frame rates.
     private float _drawLaserTicks;
 
     internal PilotController(
@@ -90,13 +83,8 @@ internal sealed class PilotController : IScreenController
 
     public void Draw() => _view.Draw(BuildModel());
 
-    // Continuous flight controls (pitch/roll/speed/fire) are polled every
-    // frame and need IsHeld's non-consuming "is the key currently down"
-    // state, not IsPressed's one-shot consumption - otherwise a held key
-    // would go unresponsive as soon as a second key was also held (SDL/
-    // Windows key-repeat only re-fires for the most recently pressed key).
-    // One-shot commands below (docking, hyperspace, missiles, pause, etc.)
-    // correctly keep using IsPressed.
+    // Continuous controls need IsHeld, not IsPressed: SDL/Windows key-repeat only re-fires
+    // for the most recently pressed key, so a held key would go unresponsive under a second one.
     public void HandleInput()
     {
         HandleFlightControls();
@@ -132,8 +120,7 @@ internal sealed class PilotController : IScreenController
         }
     }
 
-    // Exposed for tests: the view name, the hyperspace status text and
-    // this direction's laser state.
+    // Exposed for tests: the view name, the hyperspace status text and this direction's laser state.
     internal PilotModel BuildModel()
     {
         string hyperspaceStatus = _space.HyperGalactic
@@ -149,10 +136,7 @@ internal sealed class PilotController : IScreenController
             _ => throw new UnreachableException(),
         };
 
-        // The beams meet a pixel or two off centre, rolled fresh every frame -
-        // that shimmer is the original's. The roll happens here because the
-        // game owns the one source of entropy; a view that rolled its own
-        // would not be reproducible.
+        // The beams' off-centre shimmer is the original's; rolled here so it uses the game's one entropy source.
         Vector2 laserAim = new(_draw.Jitter.Random(0, 2), _draw.Jitter.Random(0, 2));
 
         return new(
@@ -164,28 +148,13 @@ internal sealed class PilotController : IScreenController
             _gameState.Config.Engine.Graphics.FillMode == FillMode.Wireframe);
     }
 
-    // Every flight control is one question now - is this action wanted -
-    // and the map answers for the keyboard and whichever stick is being
-    // flown alike. Yaw is off unless the commander switched it on, so the
-    // check is here rather than in the ship: with yaw off nothing reads
-    // these controls at all.
+    // Yaw is off unless the commander switched it on; with it off nothing reads these controls at all.
     private bool WantsYawLeft() => DebugYaw.IsEnabled && _controls.IsHeld(EliteAction.YawLeft);
 
     private bool WantsYawRight() => DebugYaw.IsEnabled && _controls.IsHeld(EliteAction.YawRight);
 
-    // The rising edge of the stick's missile controls, or the keyboard's
-    // one-shot. Read once per update, because reading is what advances the
-    // remembered state.
-    // The stick is read before the key, not after: || would short-circuit
-    // past the edge on any update the key was pressed, and the stick's
-    // state would go unrecorded.
-    // A one-shot command, from a binding that may be a key, a button or a
-    // trigger. The map's own WasPressed covers the first two; a trigger is
-    // an axis with no press to consume, so its edge is made here.
-    //
-    // Both halves are read every update, and neither short-circuits the
-    // other: WasPressed consumes, and the Edge only sees a rising edge if
-    // it is shown every update's state.
+    // The stick's edge is read before the key: || short-circuiting past it would leave the
+    // stick's state unrecorded. Both halves must be read every update regardless of the result.
     private bool WasPressed(EliteAction action, Edge edge)
     {
         bool held = edge.Pressed(_controls.IsHeld(action));
@@ -219,10 +188,7 @@ internal sealed class PilotController : IScreenController
         HandleSpeedControls();
     }
 
-    // A throttle lever is a position, so it sets the speed outright rather
-    // than nudging it: where the lever is set is how fast the ship goes.
-    // Only the SideWinder has one; every other device keeps the buttons,
-    // and so does the keyboard.
+    // A throttle lever sets speed outright rather than nudging it. Only the SideWinder has one.
     private void HandleSpeedControls()
     {
         if (_gameState.IsDocked)
@@ -249,24 +215,11 @@ internal sealed class PilotController : IScreenController
         }
     }
 
-    // An analog stick is not a key held down, so it does not go through the
-    // ramp: where it is pushed to *is* the rate of turn, reached at once and
-    // dropped at once when the stick comes back. That is how a flight stick
-    // behaves, and it is only possible for a device that can report a
-    // position - a digital stick has none to give, so it keeps the ramp,
-    // which is the whole of its feel.
-    //
-    // The control is taken on the strength of the axis being analog, not of
-    // it being pushed: a centred stick is commanding a rate of zero, and it
-    // has to be able to say so. Leaving it to the deflection instead put the
-    // centre back in the hands of LevelOut, which is the damping this is
-    // here to get rid of - the ship would snap into the turn and then sag
-    // out of it over two seconds.
-    //
-    // The keyboard still wins where it is being used, so a stick plugged in
-    // and left alone cannot pin a control at zero and lock the keys out.
-    // Returns whether the axis took the control, in which case the caller
-    // leaves the key path alone rather than applying the stick twice.
+    // An analog stick skips the ramp entirely: where it's pushed to is the rate of turn, reached
+    // and dropped at once. Taken on the axis being analog, not on being pushed, so a centred
+    // stick can command zero rather than leaving that to LevelOut's damping. Keyboard still wins
+    // when it's in use, so an idle stick can't pin a control at zero and lock the keys out.
+    // Returns whether the axis took the control, so the caller skips the key path.
     private bool ApplyAxis(EliteAxis axis, float maxRate, bool keysActive, Action<float> setRate)
     {
         if (keysActive || !_controls.IsAnalog(axis))
@@ -278,10 +231,7 @@ internal sealed class PilotController : IScreenController
         return true;
     }
 
-    // The keyboard halves of the flight controls, apart from the stick's,
-    // so an analog axis can tell whether the pilot is using the keys
-    // instead. Key-only on purpose: a pushed stick also holds its direction
-    // action, and asking about that would have the stick suppress itself.
+    // Key-only on purpose: a pushed stick also holds its direction action, which would suppress itself if asked.
     private bool RollKeysHeld()
         => _controls.IsKeyHeld(EliteAction.RollLeft) || _controls.IsKeyHeld(EliteAction.RollRight);
 
@@ -291,9 +241,7 @@ internal sealed class PilotController : IScreenController
     private bool YawKeysHeld()
         => _controls.IsKeyHeld(EliteAction.YawLeft) || _controls.IsKeyHeld(EliteAction.YawRight);
 
-    // Pitch up and down, the stick's own sense: SDL's Y is positive
-    // downwards and so is the ship's pitch, so the deflection carries
-    // straight across without a sign flip.
+    // SDL's Y is positive downwards, and so is the ship's pitch, so the deflection carries straight across.
     private void HandlePitchControls()
     {
         if (ApplyAxis(EliteAxis.Pitch, _ship.MaxPitch, PitchKeysHeld(), rate => _ship.Pitch = rate))
@@ -337,9 +285,7 @@ internal sealed class PilotController : IScreenController
     // levels the ship out instead.
     private void HandleRollControls()
     {
-        // Negated here rather than in the file: a stick pushed right is
-        // positive where a roll to the right is a negative rate, and that
-        // is a fact about Elite, not about the stick.
+        // Negated here, not in the file: right-roll being a negative rate is a fact about Elite, not the stick.
         if (ApplyAxis(EliteAxis.Roll, -_ship.MaxRoll, RollKeysHeld(), rate => _ship.Roll = rate))
         {
             _ship.IsRolling = true;
@@ -433,9 +379,7 @@ internal sealed class PilotController : IScreenController
 
         if (WantsHyperspace() && (!_gameState.IsDocked))
         {
-            // Held, not pressed: Ctrl only picks which hyperspace this is, and
-            // consuming it would take it from any other Ctrl combination read
-            // later in the same tick.
+            // Held, not pressed: consuming Ctrl would take it from any other Ctrl combination read later this tick.
             if (_keyboard.IsHeld(ConsoleModifiers.Control))
             {
                 _space.StartGalacticHyperspace();
@@ -467,9 +411,7 @@ internal sealed class PilotController : IScreenController
         }
     }
 
-    // One button for what the keyboard spends two keys on: the stick has
-    // one to spare, and which half is meant is never in doubt - if the
-    // autopilot is flying, the only thing left to want is it to stop.
+    // One button for what the keyboard spends two keys on: if the autopilot is flying, stopping it is the only ask.
     private void HandleDockingComputerButton()
     {
         if (!_dockingComputer.Pressed(_controls.IsHeld(EliteAction.DockingComputerToggle)))

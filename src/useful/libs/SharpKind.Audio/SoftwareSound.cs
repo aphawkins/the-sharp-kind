@@ -9,21 +9,13 @@ using SharpKind.Assets;
 
 namespace SharpKind.Audio;
 
-// Pure-managed equivalent of SDLSound: owns decode, mixing, resampling and
-// pitch-shift entirely in C# (MeltySynth for .mid, NVorbis for .ogg) and
-// exposes only a pull-based Render method, mirroring how SoftwareGraphics
-// rasterizes without touching SDL. A separate, thin SDL output shim is
-// expected to call Render from an audio callback.
+// Pure-managed equivalent of SDLSound: decode, mixing, resampling and pitch-shift in C# (MeltySynth .mid, NVorbis .ogg), exposing a pull-based Render for a thin SDL output shim to call.
 public sealed class SoftwareSound : ISound, IDisposable
 {
-    // Matches SDLSound's fixed pool of 16 concurrent one-shot voices; a
-    // one-shot is dropped (not queued or errored) when every voice in the
-    // pool is still playing.
+    // Matches SDLSound's fixed pool of 16 concurrent one-shot voices; dropped (not queued) when the pool is full.
     private const int OneShotVoiceCount = 16;
 
-    // Safety cap on how long a single SFX/loop source is allowed to decode
-    // to memory (including MIDI release tails); real assets are short clips,
-    // this only guards against a pathological source never going silent.
+    // Safety cap on decode length (incl. MIDI release tails), guarding only against a pathological source never going silent.
     private const int MaxDecodeSeconds = 30;
 
     private readonly Lock _gate = new();
@@ -49,9 +41,7 @@ public sealed class SoftwareSound : ISound, IDisposable
         _musicPaths = assetLocator.MusicPaths;
         _soundFontPaths = assetLocator.SoundFontPaths;
 
-        // Sound effects (and the pitch-shiftable loop, which reuses this
-        // same cache) are fully decoded up front, matching SDLSound's
-        // predecode: true behaviour for SFX.
+        // SFX (and the pitch-shiftable loop, reusing this cache) are decoded fully up front, matching SDLSound's predecode: true.
         _sfxSamples = assetLocator.SfxPaths.ToDictionary(x => x.Key, x => DecodeFully(x.Value));
 
         _oneShotVoices = new OneShotVoice[OneShotVoiceCount];
@@ -61,9 +51,7 @@ public sealed class SoftwareSound : ISound, IDisposable
         }
     }
 
-    // A source of streamed (not predecoded) interleaved stereo float32
-    // audio for the currently playing music track, common to both the
-    // MeltySynth (.mid) and NVorbis (.ogg) backends.
+    // Streamed (not predecoded) interleaved stereo float32 audio for the current music track, shared by both backends.
     private interface IMusicStream : IDisposable
     {
         public void Render(Span<float> buffer);
@@ -83,13 +71,8 @@ public sealed class SoftwareSound : ISound, IDisposable
 
     public void Play(string musicType, bool repeat)
     {
-        // Building the stream involves blocking file I/O - and, for a .mid
-        // track's first-ever Play(), potentially loading an entire
-        // SoundFont2 file - so it must happen outside _gate. Render() (on
-        // SDL's own audio thread) needs the same lock, and holding it for
-        // the duration of that I/O would risk an audible glitch/underrun.
-        // Only the swap of the active stream reference is done under the
-        // lock, so Render() never observes torn state.
+        // Building the stream involves blocking I/O (and, first Play() of a .mid, loading a SoundFont2), so it
+        // happens outside _gate to avoid glitching Render() on the audio thread. Only the reference swap is locked.
         IMusicStream newMusic = CreateMusicStream(_musicPaths[musicType], repeat);
 
         lock (_gate)
@@ -106,8 +89,7 @@ public sealed class SoftwareSound : ISound, IDisposable
             OneShotVoice? voice = Array.Find(_oneShotVoices, v => !v.Active);
             if (voice is null)
             {
-                // Pool exhausted: drop the effect, matching SDLSound's
-                // Mix_PlayChannel(-1, ...)-style any-free-channel behaviour.
+                // Pool exhausted: drop the effect, matching SDLSound's Mix_PlayChannel(-1, ...) behaviour.
                 return;
             }
 
@@ -153,9 +135,7 @@ public sealed class SoftwareSound : ISound, IDisposable
         }
     }
 
-    // Fills buffer with the next chunk of mixed audio (interleaved stereo
-    // float32). Safe to call concurrently with the ISound control methods
-    // above; both sides serialise on the same gate.
+    // Safe to call concurrently with the ISound control methods above; both serialise on the same gate.
     public void Render(in Span<float> buffer)
     {
         lock (_gate)
@@ -166,9 +146,7 @@ public sealed class SoftwareSound : ISound, IDisposable
             RenderLoop(buffer);
             RenderOneShots(buffer);
 
-            // Multiple overlapping sources can sum past +/-1; clamp here so
-            // whatever consumes this buffer always receives well-formed
-            // float32 PCM, the same way a hardware mixer would clip.
+            // Overlapping sources can sum past +/-1; clamp so output is always well-formed PCM, as a hardware mixer would clip.
             for (int i = 0; i < buffer.Length; i++)
             {
                 buffer[i] = Math.Clamp(buffer[i], -1f, 1f);
@@ -192,10 +170,7 @@ public sealed class SoftwareSound : ISound, IDisposable
     {
         using VorbisReader reader = new(path);
 
-        // SoftwareSound has no generic sample-rate/channel converter for
-        // .ogg; real assets are authored at the mixer's own format (as
-        // SDL3_mixer's decoder used to guarantee via its own resampler), so
-        // this is asserted rather than handled.
+        // No generic sample-rate/channel converter for .ogg; assets must already match the mixer's format.
         Debug.Assert(reader.Channels == Channels, "SoftwareSound assumes .ogg assets are already encoded at the mixer's channel count.");
         Debug.Assert(reader.SampleRate == SampleRate, "SoftwareSound assumes .ogg assets are already encoded at the mixer's sample rate.");
 
@@ -210,11 +185,7 @@ public sealed class SoftwareSound : ISound, IDisposable
         return [.. samples];
     }
 
-    // Manual RIFF/WAVE chunk walk rather than assuming a fixed 44-byte
-    // header, since some WAV files carry extra chunks (e.g. LIST/INFO)
-    // before 'data'. Only the two format tags real assets are authored in
-    // are supported (1 = PCM 16-bit, 3 = IEEE float 32-bit); anything else
-    // throws rather than silently misdecoding.
+    // Manual RIFF/WAVE chunk walk (not fixed 44-byte header) since some files carry extra chunks (e.g. LIST/INFO) before 'data'. Only PCM16 (tag 1) and float32 (tag 3) are supported.
     private static float[] DecodeWavFully(string path)
     {
         ReadOnlySpan<byte> span = File.ReadAllBytes(path);
@@ -265,9 +236,7 @@ public sealed class SoftwareSound : ISound, IDisposable
             throw new SharpKindException($"'{path}' has no 'data' chunk.");
         }
 
-        // SoftwareSound has no generic sample-rate/channel converter for
-        // .wav; real assets are authored at the mixer's own format, so this
-        // is asserted rather than handled - matching the .ogg path above.
+        // No generic sample-rate/channel converter for .wav; assets must already match the mixer's format.
         Debug.Assert(channels == Channels, "SoftwareSound assumes .wav assets are already encoded at the mixer's channel count.");
         Debug.Assert(sampleRate == SampleRate, "SoftwareSound assumes .wav assets are already encoded at the mixer's sample rate.");
 
@@ -439,7 +408,6 @@ public sealed class SoftwareSound : ISound, IDisposable
         {
             if (disposing)
             {
-                // dispose managed state (managed objects)
                 _music?.Dispose();
                 _music = null;
             }
@@ -448,8 +416,7 @@ public sealed class SoftwareSound : ISound, IDisposable
         }
     }
 
-    // Reused, mutable slot in the fixed one-shot voice pool; avoids
-    // allocating per Play() call.
+    // Reused, mutable slot in the fixed one-shot voice pool; avoids allocating per Play() call.
     private sealed class OneShotVoice
     {
         public float[] Samples { get; set; } = [];
@@ -465,10 +432,7 @@ public sealed class SoftwareSound : ISound, IDisposable
         public bool Active { get; set; }
     }
 
-    // Streams a .mid track via MeltySynth's own sequencer, which already
-    // handles looping (via the loop flag passed to Play) and simply goes
-    // silent once a non-looping track's messages and release tails are
-    // exhausted.
+    // MeltySynth's own sequencer handles looping (via the loop flag) and goes silent once a non-looping track's tails are exhausted.
     private sealed class MidiMusicStream : IMusicStream
     {
         private readonly MidiFileSequencer _sequencer;
@@ -487,14 +451,10 @@ public sealed class SoftwareSound : ISound, IDisposable
         }
     }
 
-    // Streams a .ogg track via NVorbis; unlike MeltySynth's sequencer,
-    // NVorbis has no built-in looping, so reaching the end of the stream is
-    // handled by seeking back to the start when repeat is requested.
+    // NVorbis has no built-in looping, so end-of-stream seeks back to the start when repeat is requested.
     private sealed class OggMusicStream : IMusicStream
     {
-        // Bounds how many times a single Render call will seek back to the
-        // start looking for more samples, guarding against an infinite loop
-        // on a degenerate (e.g. zero-length) source.
+        // Bounds seek-back retries per Render call, guarding against an infinite loop on a degenerate (e.g. zero-length) source.
         private const int MaxSeekRetries = 4;
 
         private readonly VorbisReader _reader;

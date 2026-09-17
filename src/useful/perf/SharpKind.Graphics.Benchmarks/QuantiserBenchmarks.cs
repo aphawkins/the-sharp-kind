@@ -5,11 +5,7 @@ using SharpKind.Graphics.Rendering;
 
 namespace SharpKind.Graphics.Benchmarks;
 
-// The quantiser on its own, away from the rasteriser: one full screen's worth
-// of Quantise calls (512x512), walked in the same x/y order a fill walks so
-// the dither's threshold lookup behaves as it does in a real frame. The
-// docking profile puts this at 13-24 ns a pixel, an order above every other
-// per-pixel cost, and these split that figure into where it is spent.
+// The quantiser alone, walked in fill order so the dither's threshold lookup behaves as in a real frame; the docking profile puts this at 13-24 ns/pixel.
 [JsonExporterAttribute.FullCompressed]
 public class QuantiserBenchmarks
 {

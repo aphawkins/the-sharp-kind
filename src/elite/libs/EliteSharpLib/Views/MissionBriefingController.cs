@@ -68,8 +68,7 @@ internal sealed class MissionBriefingController : IScreenController
         _logger = logger ?? NullLogger<MissionBriefingController>.Instance;
     }
 
-    // Exposed for tests: what the screen is showing, which is the whole of what
-    // the view is given.
+    // Exposed for tests: the whole of what the view is given.
     internal MissionBriefingModel Briefing { get; private set; } = MissionBriefingModel.Nothing;
 
     public void Draw() => _view.Draw(Briefing);
@@ -112,8 +111,7 @@ internal sealed class MissionBriefingController : IScreenController
 
             _missions.Apply(mission, step);
 
-            // A move with nothing to say is not a screen. Nothing does that
-            // here today, but a mission is free to.
+            // A move with nothing to say is not a screen.
             if (step.Briefing is not { } briefing)
             {
                 continue;

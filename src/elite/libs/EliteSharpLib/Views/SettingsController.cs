@@ -35,9 +35,7 @@ internal sealed class SettingsController : SettingsListController
     {
     }
 
-    // Each setting names what it stores, how it is shown and what has to
-    // happen when it changes - all in one place, where it used to be split
-    // across an array, an index-to-value switch and a value-to-effect switch.
+    // Each setting names what it stores, how it's shown and what happens when it changes, all in one place.
     private static IReadOnlyList<ISetting> BuildSettings(
         GameState gameState,
         Space space,
@@ -50,10 +48,7 @@ internal sealed class SettingsController : SettingsListController
         EliteConfig config = gameState.Config;
         void Save() => configWriter.WriteConfig(config);
 
-        // Planet Style is PlanetType, not the rendition's PlanetStyle:
-        // whether the world is drawn solid at all is the engine's Graphic
-        // Style, so this row picks only what a solid planet looks like and
-        // has no wireframe of its own.
+        // Planet Style is PlanetType, not the rendition's PlanetStyle: whether the world draws solid is the engine's Graphic Style.
         return
         [
             new SavedSetting(

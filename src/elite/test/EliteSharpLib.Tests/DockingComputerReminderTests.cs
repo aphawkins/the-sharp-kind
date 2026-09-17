@@ -38,16 +38,13 @@ public class DockingComputerReminderTests
         harness.Resolve<Pilot>().EngageAutoPilot();
         Assert.True(harness.Game.State.MCount is >= 0 and <= 255);
 
-        // 256 counts is one full turn of the counter, which passes a multiple
-        // of 128 exactly twice.
+        // 256 counts is one full turn of the counter; passes a multiple of 128 exactly twice.
         int reminders = CountReminders(harness, 256);
 
         Assert.Equal(2, reminders);
     }
 
-    // Steps the game and counts how many times the reminder is raised fresh,
-    // rather than how many ticks it stays on screen: InfoMessage resets the
-    // dwell counter to 37, so a rising edge is a new message.
+    // Counts fresh reminders, not ticks on screen: InfoMessage resets the dwell counter to 37, so a rising edge is a new message.
     private static int CountReminders(HeadlessGameHarness harness, int ticks)
     {
         const string Reminder = "Docking Computers On";

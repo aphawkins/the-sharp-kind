@@ -8,10 +8,7 @@ using StuntCarRacerSharpLib.Tracks;
 
 namespace StuntCarRacerSharpLib.Rendering;
 
-// Resolves car.obj's five materials to track-palette colours (the
-// ColourOffset values car.obj replaces from the original CreateCarInVB).
-// Track.ScrBaseColour is currently a fixed offset, so this is safe to
-// resolve once, at CarMesh construction time.
+// Track.ScrBaseColour is currently a fixed offset, so this is safe to resolve once, at CarMesh construction time.
 internal static class CarPalette
 {
     private const int WheelOffset = 0;

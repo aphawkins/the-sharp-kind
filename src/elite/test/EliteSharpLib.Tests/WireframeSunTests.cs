@@ -21,9 +21,7 @@ public class WireframeSunTests
 {
     private const int ScreenSize = 512;
 
-    // The sun sits dead ahead, so it projects to the centre of the view at
-    // the radius the filled suns use: 6291456 / distance, in the original's
-    // 256-wide space, scaled by Focus / 256.
+    // Projects to the centre of the view at the radius the filled suns use: 6291456 / distance, scaled by Focus / 256.
     private const float Distance = 123456;
 
     private const float ExpectedRadius = 6291456f / Distance * (ScreenSize / 256f);

@@ -235,7 +235,6 @@ internal sealed class Pilot
         }
     }
 
-    // Translate the phantom ship's acceleration into the player's speed.
     private void ApplyAutoDockSpeed(ShipBase ship)
     {
         _ship.Speed = ship.Velocity > 22 ? 22 : ship.Velocity;
@@ -259,7 +258,6 @@ internal sealed class Pilot
         }
     }
 
-    // Translate the phantom ship's pitch into the player's pitch.
     private void ApplyAutoDockPitch(ShipBase ship)
     {
         if ((int)ship.RotX == 0)
@@ -288,7 +286,6 @@ internal sealed class Pilot
         }
     }
 
-    // Translate the phantom ship's roll into the player's roll.
     private void ApplyAutoDockRoll(ShipBase ship)
     {
         if ((int)ship.RotZ == 127)

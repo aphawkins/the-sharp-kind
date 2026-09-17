@@ -4,17 +4,10 @@ using System.Numerics;
 
 namespace SharpKind.Graphics.Rendering;
 
-// Per-pixel depth test via Graphics.DrawPolygonFilledDepth: solid
-// polygons only, wireframe is a separate WireframeRenderer selected
-// instead of this by the caller. The per-pixel test decides occlusion on
-// its own, so polygons are drawn in submission order and the flat z sort
-// key is ignored - unlike PainterRenderer, which is nothing but that
-// order. Exactly coplanar surfaces (decals on a hull face) still resolve
-// by submission order, because the depth test lets the later draw win a
-// tie; the caller is responsible for biasing them if interpolation across
-// differently shaped triangles makes the tie inexact. 2-point detail lines
-// are depth-tested too, so a line lying on a face turned away from the
-// camera is hidden by the hull rather than drawn straight through it.
+// The per-pixel test decides occlusion on its own, so polygons draw in submission order and the
+// flat z sort key is ignored - unlike PainterRenderer, which is nothing but that order. Coplanar
+// surfaces still resolve by submission order since the depth test lets the later draw win a tie;
+// the caller biases them if interpolation across differently shaped triangles makes the tie inexact.
 public sealed class ZBufferRenderer(IGraphics graphics) : IPolygonRenderer
 {
     private readonly IGraphics _graphics = graphics;

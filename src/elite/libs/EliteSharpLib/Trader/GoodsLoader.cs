@@ -55,9 +55,7 @@ internal static class GoodsLoader
         {
             foreach (string file in Directory.EnumerateFiles(folder, "*.dll"))
             {
-                // One unreadable file is not fatal on its own - the search
-                // below decides, once it knows whether a readable set was
-                // found regardless.
+                // One unreadable file is not fatal on its own; the search below decides.
                 try
                 {
                     assemblies.Add(AssemblyLoadContext.Default.LoadFromAssemblyPath(Path.GetFullPath(file)));

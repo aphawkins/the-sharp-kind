@@ -4,8 +4,7 @@
 
 namespace StuntCarRacerSharpLib.Tracks;
 
-// Loads the original Amiga track data (804 byte .bin files) and converts it
-// into world-space track pieces, following the original Track.cpp conversion.
+// Loads the original Amiga track data (804 byte .bin files) and converts it into world-space track pieces, as Track.cpp does.
 public sealed class Track
 {
     // All Amiga track data is made 2 times bigger for use by PC StuntCarRacerSharp.
@@ -36,8 +35,7 @@ public sealed class Track
 
     private const int MaxYCoordsPerPiece = MaxSegments + 1;
 
-    // Flags for each of the near sections. If bit 7 is set then the
-    // car cannot be lowered onto this section.
+    // Flags for each near section; if bit 7 is set the car cannot be lowered onto it.
     private static readonly byte[] s_sectionsCarCanBePutOn =
     [
         0x00, 0x80, 0x20, 0xc0, 0x00, 0x73, 0x80, 0xc0,
@@ -241,7 +239,6 @@ public sealed class Track
         _ => (coord.X, coord.Z), // 0 degrees
     };
 
-    // Store piece x,z using the (rotated) template.
     private static void StorePieceXZ(
         TrackPiece trackPiece,
         (int X, int Z)[] pieceXZ,
@@ -274,7 +271,6 @@ public sealed class Track
         }
     }
 
-    // Store piece y using IDs and overall shifts.
     private static void StorePieceY(
         TrackPiece trackPiece,
         int[] leftY,
@@ -302,16 +298,13 @@ public sealed class Track
             int y1 = trackPiece.Coords[i * 4].Y - trackPiece.Coords[(i + 1) * 4].Y;
             int y2 = trackPiece.Coords[(i * 4) + 1].Y - trackPiece.Coords[((i + 1) * 4) + 1].Y;
 
-            // Get maximum of the two (but keep sign).
             int y = Math.Abs(y1) > Math.Abs(y2) ? y1 : y2;
 
             trackPiece.RoadColours[i] = Math.Abs(y) >= 640 * PcFactor ? (byte)ScrBaseColour : roadColour;
         }
     }
 
-    // Ensure pieces join up perfectly by copying start coordinates of each
-    // piece to the end coordinates of the previous piece, adjusting for the
-    // difference in cube positions.
+    // Copies each piece's start coordinates to the previous piece's end coordinates, adjusted for cube position, so pieces join exactly.
     private static void JoinPieces(TrackPiece[] pieces, int numPieces)
     {
         for (int piece = 0; piece < numPieces; piece++)

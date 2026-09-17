@@ -175,11 +175,7 @@ public class CarPhysicsTests
         Assert.True(car.DisplaySpeed > 0);
     }
 
-    // Regression test for the ptitSeb remake's CalculateDisplaySpeed change:
-    // the dead zone was raised from "PlayerZSpeed < 0" to "< 0x1100" (the
-    // first few speed values aren't shown), and the result rescaled by
-    // 200/128 so the cockpit's speed bar (full at 240 display units) can
-    // actually reach full width during normal driving.
+    // Regression: dead zone raised to "< 0x1100" and rescaled by 200/128 so the speed bar can reach full width.
     [Fact]
     public void DisplaySpeedStaysZeroBelowTheDeadZoneThenRescales()
     {
@@ -226,9 +222,7 @@ public class CarPhysicsTests
         CarPhysics car = new(track);
         car.StartRace();
 
-        // Drive forward; the car should progress through several track pieces
-        // and be on the road most of the time (it launches off the ramp and
-        // is airborne for some frames, which is correct behaviour).
+        // Drive forward; on the road most of the time (it launches off the ramp and is briefly airborne, correctly).
         HashSet<int> piecesVisited = [];
         int framesTouching = 0;
         for (int frame = 0; frame < 300; frame++)
@@ -266,11 +260,7 @@ public class CarPhysicsTests
         Assert.True(car.BoostReserve < track.StandardBoost);
     }
 
-    // Regression test for the ptitSeb remake's control-scheme rewrite:
-    // accelerate/brake/boost are independent keys (fluffyfreak combined
-    // accelerate+boost and brake+boost into single keys). Boost alone,
-    // with neither accelerate nor brake held, must not move the car or
-    // consume the reserve.
+    // Regression: accelerate/brake/boost are independent keys. Boost alone must not move the car or consume the reserve.
     [Fact]
     public void BoostAloneWithoutAccelerateOrBrakeDoesNothing()
     {
@@ -545,9 +535,7 @@ public class CarPhysicsTests
         CarPhysics car = new(track);
         car.StartRace();
 
-        // drive over the humps, steering back towards the middle of the
-        // road; landing compression must engage the viewpoint limit on at
-        // least one frame, and only ever raise the viewpoint
+        // Drive over the humps; landing compression must engage the viewpoint limit on at least one frame.
         bool engaged = false;
         for (int frame = 0; frame < 400; frame++)
         {
@@ -628,9 +616,7 @@ public class CarPhysicsTests
         Assert.Equal(0, car.CurrentLapTicks);
         Assert.Null(car.BestLapTicks);
 
-        // drive a full lap, steering back towards the middle of the road
-        // and releasing the recovery chains if the car strays off track,
-        // as a player would (mirrors LimitViewpointYHoldsViewpointUpOverBumps).
+        // Drive a full lap as a player would, releasing the recovery chains if the car strays off track.
         for (int frame = 0; frame < 8000 && car.LapNumber < 1; frame++)
         {
             CarInput input = CarInput.AccelBoost;
@@ -665,11 +651,8 @@ public class CarPhysicsTests
     [Fact]
     public void CreakVolumeStaysWithinTheOriginalsAmigaRange()
     {
-        // AddCollisionDamage only drives the cosmetic damage average
-        // (NewDamage); CreakVolume is driven by the separate impact-derived
-        // _damageValue, so this only asserts the volume stays in range
-        // once damage exists, not that a specific hit produces a specific
-        // volume - see CreakVolumeVariesAcrossHardLandings for that.
+        // AddCollisionDamage only drives the cosmetic average; CreakVolume follows a separate
+        // impact-derived value, so this only asserts it stays in range - see CreakVolumeVariesAcrossHardLandings.
         Track track = Track.Load(TrackId.LittleRamp);
         CarPhysics car = new(track);
         car.StartRace();

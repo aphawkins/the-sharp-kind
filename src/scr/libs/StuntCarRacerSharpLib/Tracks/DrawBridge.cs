@@ -6,11 +6,8 @@ using StuntCarRacerSharpLib.Cars;
 
 namespace StuntCarRacerSharpLib.Tracks;
 
-// Animates the moving section of the Draw Bridge track (original
-// MoveDrawBridge/ResetDrawBridge in Track.cpp): pieces 51/52 and 54/55 rise
-// and fall with a triangle wave while no car is on them, and the opponent's
-// required speeds for approaching (48-50) and climbing (51-52) the bridge
-// are adjusted to match the current height.
+// Animates the moving bridge section (original MoveDrawBridge/ResetDrawBridge in Track.cpp): pieces 51/52 and 54/55 rise and fall
+// with a triangle wave while no car is on them; the opponent's speeds for approaching (48-50) and climbing (51-52) match the height.
 public sealed class DrawBridge
 {
     private const int NumYValues = 15;
@@ -59,9 +56,7 @@ public sealed class DrawBridge
             return;
         }
 
-        // the bridge doesn't move while the player or opponent are on it
-        // (pieces 51-55), or while the opponent is approaching (48-50) after
-        // a car has been on it
+        // bridge doesn't move while a car is on it (51-55), or while the opponent approaches (48-50) after a car has been on it
         bool onBridge = playerPiece is >= 51 and < 56
             || opponentPiece is >= 51 and < 56
             || (_onBridgeOffset != 0 && opponentPiece >= 48 && opponentPiece < 56);
@@ -110,9 +105,7 @@ public sealed class DrawBridge
             approachFrame = _frameCount;
         }
 
-        // opponent's required speeds for approaching the bridge
-        // (values with the top bit set cause double acceleration, to change
-        // speed more quickly)
+        // approach speeds: values with the top bit set cause double acceleration for a quicker speed change
         int index = (approachFrame & 0x1f) >> 1;
         int speed = 0xc6;
         for (int i = 0; i < 3; i++)

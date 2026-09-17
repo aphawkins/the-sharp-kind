@@ -56,10 +56,7 @@ public sealed unsafe class TrueTypeRasteriser : IFontRasteriser, IDisposable
         nint renderedPtr = SDLGuard.Execute(
             () => (nint)TTF_RenderText_Solid((TTF_Font*)_fonts[fontType], text, 0, colour));
 
-        // Solid rendering gives an 8-bit paletted surface, so the pixels are
-        // indices rather than colours. Converting resolves them through the
-        // palette - including its transparent entry - into the tightly packed
-        // ARGB8888 layout FastBitmap holds.
+        // Solid rendering gives an 8-bit paletted surface; converting resolves indices through the palette into FastBitmap's ARGB8888 layout.
         nint convertedPtr = SDLGuard.Execute(
             () => (nint)SDL_ConvertSurface((SDL_Surface*)renderedPtr, SDL_PixelFormat.SDL_PIXELFORMAT_ARGB8888));
         SDL_DestroySurface((SDL_Surface*)renderedPtr);
@@ -86,9 +83,7 @@ public sealed unsafe class TrueTypeRasteriser : IFontRasteriser, IDisposable
             return new(0, _isDisposed ? 0 : TTF_GetFontHeight((TTF_Font*)_fonts[fontType]));
         }
 
-        // Called directly rather than through SDLGuard: the out parameters are
-        // pointers, which a lambda cannot capture, so the failure check is
-        // spelled out here instead.
+        // Called directly, not through SDLGuard: the out parameters are pointers, which a lambda can't capture.
         int width;
         int height;
         if (!TTF_GetStringSize((TTF_Font*)_fonts[fontType], text, 0, &width, &height))

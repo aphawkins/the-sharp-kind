@@ -272,9 +272,7 @@ internal sealed partial class Combat
             return;
         }
 
-        // A mission's own traffic, on top of whatever the system would have
-        // had. The game rolls the odds, so a mission needs no randomness of its
-        // own and cannot spawn ships whenever it likes.
+        // The game rolls the odds, so a mission needs no randomness of its own.
         if (_missions.Ambush() is { } ambush && _rng.Random(256) < ambush.ChanceInTwoFiftySix)
         {
             CreateMissionShip(ambush.ShipName);
@@ -345,10 +343,7 @@ internal sealed partial class Combat
 
         if (obj.Id == ObjectIds.CargoCannister)
         {
-            // A canister could hold any of the eight the original numbered
-            // first, which is what the 1..9 range this replaces was really
-            // saying. One draw over the same width, so the dice land where
-            // they always did.
+            // One draw over the same width as the original's 1..9 range, so the dice land the same.
             ScoopCargo(_trade.DroppedByShips[_rng.Random(_trade.DroppedByShips.Count)], obj);
             return;
         }
@@ -407,10 +402,7 @@ internal sealed partial class Combat
         ShipTactics(ship);
     }
 
-    // A burst lasts thirty-two of the game's ticks and, if it is ours,
-    // costs a unit of energy for each of them - so both are counted in
-    // ticks rather than in updates, or a burst would last a quarter as long
-    // and cost a quarter as much at sixty frames a second.
+    // Counted in ticks, not updates, so a burst's length and cost don't shrink at 60fps.
     internal void TimeECM()
     {
         if (_ship.EcmActive <= 0)
@@ -496,8 +488,7 @@ internal sealed partial class Combat
         }
     }
 
-    // Decide what an ordinary (non-station, non-hermit, non-missile) ship does
-    // this tick, based on its current flags.
+    // Ordinary ship tactics: excludes stations, hermits and missiles, handled elsewhere.
     private void ShipTactics(IShip ship)
     {
         ShipProperties flags = ship.Flags;
@@ -525,7 +516,6 @@ internal sealed partial class Combat
             return;
         }
 
-        // If we get to here then the ship is angry so start attacking...
         AttackTactics(ship, flags);
     }
 
@@ -560,9 +550,7 @@ internal sealed partial class Combat
         }
     }
 
-    // Taking a unit aboard, naming it, and letting the thing it came out of go.
-    // The same three steps whether a canister was opened or a ship left the one
-    // thing it carries behind.
+    // Same three steps whether a canister was opened or a ship left one thing behind.
     private void ScoopCargo(StockItem stock, IShip obj)
     {
         stock.CurrentCargo++;
@@ -858,7 +846,6 @@ internal sealed partial class Combat
             return;
         }
 
-        // Pack hunters...
         Vector4 position = new()
         {
             Z = 12000,
@@ -970,9 +957,7 @@ internal sealed partial class Combat
 
     private void CreateLoneWolf()
     {
-        // A mission may send its own ship in the pirate's place - the same
-        // traffic, a different arrival. It says whether only one may be flying;
-        // the mission cannot see the universe, so the count is kept here.
+        // The mission cannot see the universe, so its uniqueness check is done here.
         IShip loneWolf = _missions.LoneWolfSubstitute() is { } substitute
             && (!substitute.Unique
                 || _universe.ShipCount(substitute.ShipName) == 0)
@@ -1057,9 +1042,7 @@ internal sealed partial class Combat
         return true;
     }
 
-    // lootId is the ship the wreckage is made of, by the id the table files
-    // it under - so what a kill leaves behind is a name the game passes on
-    // rather than a case it has to have been built with.
+    // lootId is the ship table id the wreckage is filed under, not a case built in.
     private void LaunchLoot(IShip ship, string lootId)
     {
         int count;
@@ -1141,9 +1124,8 @@ internal sealed partial class Combat
         SetMissileAcceleration(missile, direction);
     }
 
-    // Work out the vector from the missile to whatever it is chasing. Returns
-    // false when the missile has already resolved itself this tick, either by
-    // detonating or by being jammed by its target's ECM.
+    // Returns false when the missile has already resolved itself this tick
+    // (detonated or jammed by the target's ECM).
     private bool TryGetMissileHeading(IShip missile, out Vector4 vec)
     {
         if (missile.Target == null)
@@ -1163,11 +1145,8 @@ internal sealed partial class Combat
 
         vec = missile.Location - missile.Target.Location;
 
-        // Close enough is each axis within 256, not the distance within 256:
-        // a box, as both the 6502 (TACTICS part 1 tests x_hi, y_hi and z_hi in
-        // turn) and The New Kind have it. The distance test this used to do
-        // inscribes a sphere in that box and throws away everything in the
-        // corners - a missile that had arrived flew on through.
+        // Close enough is each axis within 256 (a box), not distance within 256 (a
+        // sphere), matching the 6502's x_hi/y_hi/z_hi tests and The New Kind.
         if (MathF.Abs(vec.X) < 256 && MathF.Abs(vec.Y) < 256 && MathF.Abs(vec.Z) < 256)
         {
             missile.Flags |= ShipProperties.Dead;
@@ -1193,11 +1172,8 @@ internal sealed partial class Combat
         return true;
     }
 
-    // A missile is the one thing that thinks on every update rather than one
-    // count in eight - the original steers them continuously - so what it
-    // asks for has to be scaled. Left as a whole step it would gain speed at
-    // the update rate: four and a half times too fast at sixty frames a
-    // second, and far harder to outrun than the game was tuned for.
+    // Missiles think every update, not one count in eight, so acceleration is scaled
+    // by ticks or they'd gain speed 4.5x too fast at 60fps.
     private void SetMissileAcceleration(IShip missile, float direction)
     {
         const float cnt2 = 0.223f;

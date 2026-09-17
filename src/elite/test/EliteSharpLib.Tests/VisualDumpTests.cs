@@ -15,10 +15,8 @@ using SharpKind.Graphics.Rendering;
 
 namespace EliteSharpLib.Tests;
 
-// Renders ships through the real software rasterizer and saves BMP files
-// for visual inspection (found under EliteFrames in the temp dir).
-// The overlap/interpenetration scenes exercise the hidden-surface handling
-// that the painter's algorithm gets wrong per face.
+// Renders ships and saves BMP files for visual inspection (under EliteFrames in the temp dir).
+// Overlap/interpenetration scenes exercise the hidden-surface handling the painter's algorithm gets wrong per face.
 [Trait("Level", "Integration")]
 public class VisualDumpTests
 {
@@ -105,10 +103,8 @@ public class VisualDumpTests
         RenderAndSave("frame_interpenetrate.bmp", cobra, krait);
     }
 
-    // The missile is the sharpest test of hidden-line removal: its four fins
-    // are double-sided plates (two coplanar triangles wound opposite ways),
-    // so one of each pair survives any backface cull whichever side it is
-    // viewed from, and only occlusion can hide the pair behind the body.
+    // The sharpest test of hidden-line removal: the missile's four double-sided fin plates always
+    // survive a backface cull, so only occlusion can hide the pair behind the body.
     [Fact]
     public void DumpWireframeMissileFrames()
     {
@@ -170,12 +166,8 @@ public class VisualDumpTests
         }
     }
 
-    // A convex decal-free model rendered alone occludes nothing of itself,
-    // so both strategies must produce the same silhouette. They are not
-    // pixel-identical inside it: the z-buffer owns a shared edge by depth,
-    // so the nearer face wins the seam even when drawn first, where the
-    // painter's later face simply paints over it. That is a thin
-    // face-boundary effect, hence the small allowance below.
+    // Both strategies must produce the same silhouette, but not pixel-identical inside it: the
+    // z-buffer's depth-owned seam differs from the painter's later-face-wins, a thin edge effect.
     [Fact]
     public void PainterAndZBufferAgreeOnSilhouetteForNonDecalGeometry()
     {

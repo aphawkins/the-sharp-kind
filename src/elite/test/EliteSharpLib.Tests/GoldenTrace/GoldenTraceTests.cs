@@ -27,10 +27,7 @@ namespace EliteSharpLib.Tests.GoldenTrace;
 /// </remarks>
 [Trait("Level", "Integration")]
 
-// Serialised against the other classes that read or write ELITE_DEBUG_YAW.
-// EnvironmentVariableScope puts a variable back, but it cannot stop another
-// class reading it in the meantime: an environment variable belongs to the
-// process, and xUnit runs test classes in parallel.
+// Serialised against other classes reading/writing ELITE_DEBUG_YAW: it belongs to the process, and xUnit runs test classes in parallel.
 [Collection("EnvironmentVariables")]
 public class GoldenTraceTests
 {
@@ -69,12 +66,8 @@ public class GoldenTraceTests
                     + $"then clear {TraceBaselines.RegenerateEnvVar}.");
         }
 
-        // Compared as stored, not as recorded: the file keeps four decimals,
-        // which for a coordinate in the thousands is finer than a float's own
-        // resolution, so reading one back does not land on the exact bits that
-        // were written. Putting both sides through the file makes zero
-        // tolerance mean "identical to the precision the baseline holds",
-        // which is the strongest claim the format can support.
+        // Compared as stored, not recorded: the file's four decimals are finer than a float's own
+        // resolution, so putting both sides through it makes zero tolerance mean the strongest claim the format supports.
         IReadOnlyList<TraceSample> actual = TraceFile.Read(text);
 
         string baselinePath = TraceBaselines.OutputPath(scenario.Name);
@@ -111,10 +104,7 @@ public class GoldenTraceTests
         Assert.Equal(first, second);
     }
 
-    // Reading a baseline and writing it straight back has to produce the same
-    // file. That is what lets the comparison run through the file rather than
-    // against the raw recording: if the round trip drifted, a baseline would
-    // record one thing and compare as another.
+    // A round-trip that drifted would let a baseline record one thing and compare as another.
     [Fact]
     public void WritingAndReadingATraceRoundTrips()
     {

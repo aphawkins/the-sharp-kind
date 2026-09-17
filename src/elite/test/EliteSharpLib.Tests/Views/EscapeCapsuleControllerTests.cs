@@ -18,9 +18,7 @@ using SharpKind.Fakes.Input;
 
 namespace EliteSharpLib.Tests.Views;
 
-// When the escape capsule's alert lapses, with no renderer involved - the
-// counter is the controller's, so both tiers stop showing the alert on the
-// same tick without either view owning a timer.
+// The alert counter belongs to the controller, so both tiers stop showing it on the same tick.
 public class EscapeCapsuleControllerTests
 {
     [Fact]
@@ -58,10 +56,7 @@ public class EscapeCapsuleControllerTests
     [Fact]
     public void TheAbandonedShipStillBlowsUpWhenTheRateIsNotAWholeTick()
     {
-        // The reason the explosion is a crossing rather than an equality. At
-        // a third of a tick the count steps from just under forty to just
-        // over, never landing on it, and a test for equality would leave the
-        // ship the capsule was launched from to fly on intact.
+        // At a third of a tick the count steps from just under forty to just over, never landing on it.
         EscapeCapsuleController controller = CreateController(out GameState state, out Universe universe);
         controller.Reset();
 
@@ -79,8 +74,7 @@ public class EscapeCapsuleControllerTests
         EscapeCapsuleController controller = CreateController(out GameState state, out _);
         controller.Reset();
 
-        // Half a tick at a time, so ninety ticks take a hundred and eighty
-        // updates - the same stretch of game time either way.
+        // Half a tick at a time: ninety ticks take a hundred and eighty updates.
         state.Clock.BeginUpdate(1f / GameClock.StepsPerSecond / 2f);
         Tick(controller, 2 * 89);
         Assert.True(controller.BuildModel().IsAlertVisible);
@@ -97,8 +91,7 @@ public class EscapeCapsuleControllerTests
         }
     }
 
-    // The sequence times itself in ticks, so a test that wants to run it at
-    // some other rate needs the clock those ticks come from.
+    // The sequence times itself in ticks; a test at a different rate needs the clock those ticks come from.
     private static EscapeCapsuleController CreateController(out GameState gameState, out Universe universe)
         => Build(out gameState, out universe);
 

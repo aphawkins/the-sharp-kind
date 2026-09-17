@@ -20,10 +20,8 @@ namespace StuntCarRacerSharpLib;
 
 public sealed class StuntCarRacerMain : IGame, IGameApp
 {
-    // The original remake ticks OnFrameMove at 50Hz: input and the engine
-    // sound run at the full tick rate, while the car physics only steps
-    // every FrameGap ticks (DEFAULT_FRAME_GAP = 4, i.e. 12.5Hz; the Amiga
-    // original used MIN.FRAMES = 6).
+    // Original remake ticks OnFrameMove at 50Hz: input and engine sound run at the full rate, physics steps every FrameGap ticks
+    // (DEFAULT_FRAME_GAP = 4, i.e. 12.5Hz; the Amiga original used MIN.FRAMES = 6).
     internal const int TickRate = 50;
 
     internal const string SmallFont = "Small";
@@ -57,9 +55,7 @@ public sealed class StuntCarRacerMain : IGame, IGameApp
     {
     }
 
-    // The locator arrives alongside the abstraction rather than inside it: it
-    // carries the configured system tier, and the assets the game loads - the
-    // palette today - have to come from that tier's set.
+    // Locator arrives alongside the abstraction, not inside it: it carries the configured system tier, and assets (the palette today) must come from that tier's set.
     private StuntCarRacerMain(
         IAbstraction abstraction,
         IAssetLocator assetLocator,
@@ -80,13 +76,9 @@ public sealed class StuntCarRacerMain : IGame, IGameApp
         Sound = abstraction.Sound;
         Palette = new(assetLocator);
 
-        // Effect cooldowns in physics frames (12.5Hz), sized to the sample
-        // lengths so a repeated trigger doesn't stack in the mixer. OffRoad
-        // and Wreck share a cooldown as they shared a buffer in the
-        // original. Pan (and HitCar's fixed volume) mirror DSSetMode
-        // (`StuntCarRacer.cpp:166-230`): engine and Smash on the left,
-        // everything else on the right; Grounded/Creak/OffRoad/Wreck's
-        // volume/pitch are set per-play instead (see CarPhysics).
+        // Effect cooldowns in physics frames (12.5Hz), sized to sample lengths so a repeated trigger doesn't stack in the mixer.
+        // OffRoad/Wreck share a cooldown and buffer as in the original. Pan (and HitCar's fixed volume) mirror DSSetMode
+        // (StuntCarRacer.cpp:166-230): engine/Smash on the left, everything else on the right.
         SfxSample offRoadOrWreck = new(10, pan: 1f);
         AudioController audio = new(
             Sound,
@@ -113,8 +105,7 @@ public sealed class StuntCarRacerMain : IGame, IGameApp
 
     public bool IsRunning { get; private set; } = true;
 
-    // The game mode state machine: TrackMenu -> TrackPreview ->
-    // GameInProgress -> GameOver.
+    // The game mode state machine: TrackMenu -> TrackPreview -> GameInProgress -> GameOver.
     internal ScreenManager<GameMode, IGameScreen> Screens { get; }
 
     internal IKeyboard Keyboard { get; }
@@ -158,10 +149,7 @@ public sealed class StuntCarRacerMain : IGame, IGameApp
             _sceneryKeyDown = false;
         }
 
-        // F5/F6/F7 are the remake's dev aids (`StuntCarRacer.cpp:1706-1716`):
-        // F5 toggles the stats overlay, F6 and F7 freeze the player's and the
-        // opponent's physics independently. Toggles rather than the race
-        // pause's two keys, as the reference has them.
+        // F5/F6/F7 are the remake's dev aids (StuntCarRacer.cpp:1706-1716): toggles rather than the race pause's two keys, as the reference has them.
         if (Keyboard.IsPressed(ConsoleKey.F5))
         {
             Race.ShowStats = !Race.ShowStats;
@@ -177,9 +165,7 @@ public sealed class StuntCarRacerMain : IGame, IGameApp
             Race.OpponentPaused = !Race.OpponentPaused;
         }
 
-        // F9/F10 tune the physics frame gap live, as the original did:
-        // F9 steps the physics more often (never below every tick), F10
-        // less often. Unbounded upwards, as the reference is.
+        // F9/F10 tune the physics frame gap live, as the original did; F9 never drops below every tick, F10 is unbounded upwards.
         if (Keyboard.IsPressed(ConsoleKey.F9) && Race.FrameGap > 1)
         {
             Race.FrameGap--;

@@ -9,10 +9,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace EliteSharpLib.Tests;
 
-// The classic goods set, handed straight to a registry rather than found on
-// disk. The game only ever loads it off disk; these tests are about what the
-// goods do, and about the many things that need a Trade and do not care which
-// economy it holds.
+// Handed straight to a registry rather than found on disk, for tests about what the goods do rather than the loading path.
 internal static class TestGoods
 {
     internal static GoodsRegistry Registry()

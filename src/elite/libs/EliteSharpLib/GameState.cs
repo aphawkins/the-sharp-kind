@@ -37,8 +37,7 @@ internal sealed class GameState
     /// </summary>
     internal const float LaserTempOverheated = 242 * LaserTempStep;
 
-    // The options menu and every screen reached from it. None of these is
-    // somewhere the options can return to: they are all inside it.
+    // None of these can be the options' return screen: they are all inside it.
     private static readonly Screen[] s_optionsFamily =
     [
         Screen.Options,

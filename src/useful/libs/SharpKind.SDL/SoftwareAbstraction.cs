@@ -18,16 +18,10 @@ public sealed unsafe class SoftwareAbstraction : IAbstraction, IDisposable
     private readonly SDLWindow _window;
     private readonly SoftwareSoundOutput _soundOutput;
 
-    // One streaming texture reused for every presented frame: the software
-    // renderer hands over the same CPU framebuffer each tick, so creating a
-    // surface and a texture per present was a synchronous GPU allocation and
-    // upload on every frame. SDL_UpdateTexture re-uploads the pixels into
-    // this one instead.
+    // Reused every present, avoiding a synchronous GPU allocation and upload per frame; SDL_UpdateTexture re-uploads pixels into this one instead.
     private readonly nint _frameTexture;
 
-    // Held only so it is let go of with everything else. The renderer owns it
-    // too and disposes it as well, which is harmless - disposing a set twice
-    // does nothing the second time.
+    // Held only to be let go of with everything else; the renderer also owns and disposes it, harmlessly (twice is a no-op).
     private readonly FontRasteriserSet _fontRasterisers;
 
     private bool _isDisposed;

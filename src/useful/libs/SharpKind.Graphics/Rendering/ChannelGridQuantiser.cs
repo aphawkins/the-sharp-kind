@@ -12,9 +12,7 @@ public sealed class ChannelGridQuantiser(int channelBits) : IColourQuantiser
     // Zero means "every level there is", so nothing needs snapping.
     private readonly int _top = channelBits >= 8 ? 0 : (1 << channelBits) - 1;
 
-    // There are only 256 channel values, so the whole answer is a table. It
-    // costs a divide and a rounding call to build an entry and an index to
-    // read one, and this is asked three times a pixel.
+    // Only 256 channel values, so the whole answer is a table: asked three times a pixel, a divide would be costly.
     private readonly byte[] _levels = BuildLevels(channelBits);
 
     public int Period => 1;

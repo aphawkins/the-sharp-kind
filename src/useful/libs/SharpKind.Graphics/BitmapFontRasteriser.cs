@@ -25,9 +25,7 @@ public sealed class BitmapFontRasteriser : IFontRasteriser
 
         BitmapFont font = _fonts[fontType];
 
-        // Sized for the worst case - every glyph as wide as its cell - then
-        // cut down to what the glyphs actually took, since a proportional
-        // sheet's widths are only known once they have been walked.
+        // Sized for the worst case (every glyph as wide as its cell), then cut down once actual widths are known for proportional sheets.
         using FastBitmap temp = new(text.Length * font.CellWidth, font.CellHeight);
         int totalWidth = 0;
 
@@ -41,10 +39,7 @@ public sealed class BitmapFontRasteriser : IFontRasteriser
         return temp.Resize(totalWidth, font.CellHeight);
     }
 
-    // Measured from the font sheet rather than by generating the bitmap: the
-    // backends' text caches are keyed on colour, so measuring through them
-    // would fill the cache with an entry per colour a caller happens to
-    // measure in.
+    // Measured from the sheet directly - going via the backends' colour-keyed text cache would fill it with an entry per colour ever measured in.
     public Vector2 Measure(string text, string fontType)
     {
         ArgumentNullException.ThrowIfNull(text);
@@ -67,15 +62,11 @@ public sealed class BitmapFontRasteriser : IFontRasteriser
         return new(width, font.CellHeight);
     }
 
-    // A character the sheet has no cell for leaves a gap the width of a space
-    // rather than a substitute glyph, as the .fon rasteriser does: the sheet
-    // says what it holds, and the line stays readable.
+    // A character with no cell leaves a space-width gap rather than a substitute glyph (unlike the .fon rasteriser), keeping the line readable.
     private static int MissingWidth(BitmapFont font)
         => font.IsProportional ? ProportionalGlyphWidth(font, ' ') : font.CellWidth;
 
-    // Ink takes the requested text colour, the sheet's background becomes
-    // transparent, and anything else is copied through - which is what lets a
-    // proportional glyph carry more than one colour.
+    // Ink takes the requested colour, background becomes transparent, everything else copies through - letting a glyph carry more than one colour.
     private static FastColor Recolour(BitmapFont font, int x, int y, in FastColor color)
     {
         FastColor pixelColor = font.Image.GetPixel(x, y);
@@ -102,9 +93,7 @@ public sealed class BitmapFontRasteriser : IFontRasteriser
         return font.CellWidth;
     }
 
-    // The width half of AppendProportionalGlyph, reading the sheet directly:
-    // Recolour leaves magenta alone, so the markers are in the same places
-    // whatever colour the text would be drawn in.
+    // Width half of AppendProportionalGlyph; Recolour leaves magenta alone so markers stay put regardless of text colour.
     private static int ProportionalGlyphWidth(BitmapFont font, char letter)
     {
         (int originX, int originY) = font.CellOrigin(letter);

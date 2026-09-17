@@ -19,10 +19,7 @@ namespace EliteSharpLib.Tests;
 /// throttle test and the docking pair serves both halves of the autopilot's,
 /// leaving four runs in total.
 /// </remarks>
-// Public, and CA1515 waived, for the same reason as SoftwareSoundTests'
-// AudioAssetFixture: xunit's IClassFixture<T> constructs T itself, xunit's own
-// analyzer requires a public test class, and a public class cannot name an
-// internal type in its interface list (CS0051).
+// Public, and CA1515 waived: xunit's IClassFixture<T> requires a public test class, which can't name an internal type (CS0051).
 #pragma warning disable CA1515
 public sealed class FrameRateRuns : IDisposable
 {
@@ -38,10 +35,7 @@ public sealed class FrameRateRuns : IDisposable
     // ship is at full speed and well clear of the station.
     private const int EngageUpdates = 80;
 
-    // The updates the two halves of the computer's throttle ramp are sampled
-    // at - one while it is still slowing the ship down, one after it has
-    // turned around and while it is still speeding it back up. The second is
-    // also how far the docking runs go.
+    // Sample points for the throttle ramp's two halves: slowing down, then speeding back up after the turn.
     private const int WindDownUpdates = 108;
     private const int WindUpUpdates = 175;
 
@@ -108,9 +102,7 @@ public sealed class FrameRateRuns : IDisposable
         return run;
     }
 
-    // Flies as above, then hands the ship a docking computer it did not start
-    // with and engages it. The equipment is fitted mid-run because a new
-    // commander has none, and 'N' at the start of the script makes one.
+    // Fitted mid-run, since a new commander ('N' at script start) has no docking computer.
     private static FrameRateRun Dock(float updatesPerSecond)
     {
         float scale = updatesPerSecond / GameClock.StepsPerSecond;

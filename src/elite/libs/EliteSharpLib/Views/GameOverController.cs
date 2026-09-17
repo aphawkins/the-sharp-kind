@@ -84,7 +84,6 @@ internal sealed class GameOverController : IScreenController
 
         cobraMk3.Flags |= ShipProperties.Dead;
 
-        // Cargo
         for (int i = 0; i < 5; i++)
         {
             IShip cargo = _rng.TrueOrFalse() ? _shipFactory.CreateShip("CargoCannister") : _shipFactory.CreateShip("Alloy");

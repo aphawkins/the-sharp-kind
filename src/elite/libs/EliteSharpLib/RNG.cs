@@ -20,9 +20,7 @@ internal sealed class RNG : IRandomSource
     {
     }
 
-    // Lets tests inject a FakeRandomSource to force an exact branch, without
-    // changing the RNG(Random) constructor the DI container and every game
-    // consumer already depend on.
+    // Lets tests inject a FakeRandomSource without changing the RNG(Random) constructor the DI container depends on.
     internal RNG(IRandomSource randomSource) => _randomSource = randomSource;
 
     internal RandomSeed Seed { get; set; } = new();

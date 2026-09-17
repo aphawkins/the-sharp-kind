@@ -18,9 +18,7 @@ using SharpKind.Fakes.Input;
 
 namespace EliteSharpLib.Tests;
 
-// The player's own weapons: what arms, what fires, what a shot does when it
-// lands, and what the ECM costs. All of it is the player's side of Combat,
-// which the AI tactics tests in CombatTests do not reach.
+// The player's side of Combat: arming, firing, and ECM; AI tactics live in CombatTests.
 public class CombatWeaponsTests
 {
     [Fact]
@@ -144,8 +142,7 @@ public class CombatWeaponsTests
         Assert.True(target.Flags.HasFlag(ShipProperties.Angry));
     }
 
-    // Named rather than passed as the enum: Screen is internal, and a public
-    // test method cannot take it.
+    // Named, not passed as the enum: Screen is internal, a public test method can't take it.
     [Theory]
     [InlineData("FrontView")]
     [InlineData("RearView")]
@@ -254,8 +251,7 @@ public class CombatWeaponsTests
         Assert.True(station.Flags.HasFlag(ShipProperties.Angry));
     }
 
-    // The two ships the original armours: anything short of a military laser
-    // bounces off, and a military laser does a quarter of its damage.
+    // The two ships the original armours: only a military laser gets through.
     [Theory]
     [InlineData("Constrictor")]
     [InlineData("Cougar")]
@@ -295,8 +291,7 @@ public class CombatWeaponsTests
         ship.EcmActive = 4;
         combat.ActivateECM(ours: true);
 
-        // The second press would otherwise refill the burst and let a player
-        // hold the button down for a free permanent ECM.
+        // A second press must not refill the burst and give a free permanent ECM.
         Assert.Equal(4, ship.EcmActive);
     }
 
@@ -358,10 +353,7 @@ public class CombatWeaponsTests
         Assert.False(combat.InBattle);
     }
 
-    // Dead on the crosshairs and close enough to be inside the ship's own
-    // radius, which is what IsInTarget measures against.
-    // Crewed, because that is what decides whether a ship can be provoked -
-    // the trait a real Cobra gets from its row in the table.
+    // Inside the ship's own radius, which IsInTarget measures against. Crewed, since that decides whether a ship can be provoked.
     private static FakeShip InTheCrosshairs() => new(new FakeEliteDraw())
     {
         Id = "CobraMk3",
@@ -397,9 +389,7 @@ public class CombatWeaponsTests
     {
         ScreenManager<Screen, IScreenController> views = new(new FakeKeyboard());
 
-        // Every screen registered, because SetView goes through the manager
-        // and a view with no controller behind it is not a screen it can
-        // reach. What they draw does not matter here.
+        // Every screen registered: SetView goes through the manager, which can't reach an unregistered screen.
         foreach (Screen screen in Enum.GetValues<Screen>())
         {
             views.Add(screen, new NothingScreen());

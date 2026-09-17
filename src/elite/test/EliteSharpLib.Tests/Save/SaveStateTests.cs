@@ -7,15 +7,10 @@ using EliteSharpLib.Save;
 
 namespace EliteSharpLib.Tests.Save;
 
-// The saved commander's copy constructor. It names every property one by one,
-// so a property added to the class and not added to it would be dropped
-// silently the next time a save was copied - which is the one mistake this
-// class can make.
+// Names every property one by one, so a property added to the class but not here drops silently on the next copy.
 public class SaveStateTests
 {
-    // The settable properties, which are the ones the copy constructor has to
-    // carry. The init-only collections are set up by the class itself and
-    // shared by a copy rather than assigned.
+    // The settable properties are the ones the copy constructor has to carry; init-only collections are set up by the class itself.
     private static IEnumerable<PropertyInfo> Properties
         => typeof(SaveState)
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)

@@ -21,13 +21,8 @@ internal static class TraceRecorder
     {
         ArgumentNullException.ThrowIfNull(scenario);
 
-        // A trace must record the commander the game ships with, not the one
-        // the developer's machine happens to ask for. ELITE_DEBUG_COMMANDER
-        // is read in SaveFile's constructor and swaps Jameson for a fully
-        // equipped Max - including a stronger front laser, which changes the
-        // firing cadence and so the whole laser-fire trace. Cleared here for
-        // the same reason SaveFileTests clears it, and clearing rather than
-        // setting keeps the two agreeing whichever order they run in.
+        // Must record the commander the game ships with, not whatever ELITE_DEBUG_COMMANDER asks
+        // for (SaveFile swaps Jameson for a fully-equipped Max). Cleared, not set, so it agrees with SaveFileTests whichever order they run in.
         using EnvironmentVariableScope commander =
             EnvironmentVariableScope.Set(SaveFile.DebugCommanderEnvVar, null);
         using EnvironmentVariableScope yaw = EnvironmentVariableScope.Set(DebugYaw.EnvVar, null);
@@ -55,9 +50,7 @@ internal static class TraceRecorder
         {
             slot++;
 
-            // An empty slot is still a slot: Combat.Tactics phases a ship's
-            // AI by its slot index, so the trace has to keep the numbering
-            // rather than compact the list.
+            // An empty slot is still a slot: Combat.Tactics phases a ship's AI by slot index, so the trace keeps the numbering, not a compact list.
             if (obj.Id == ObjectIds.None)
             {
                 continue;

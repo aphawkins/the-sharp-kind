@@ -137,11 +137,7 @@ internal sealed class PlanetDataController : IScreenController
 
     private string DescribePlanet(GalaxySeed planet)
     {
-        // A rumour is somebody in this station talking, so the mission is only
-        // asked about the system it can be heard in. This screen shows any
-        // system picked off the chart, and until now it asked with whichever
-        // one that was - which is why the Constrictor was rumoured to be at
-        // Reesdice whenever Reesdice was selected from anywhere in galaxy 0.
+        // A rumour is somebody in this station talking, so the mission is only asked about the system it can be heard in.
         if (_missions.DescribePlanet(_planet.FindPlanetNumber(_gameState.Cmdr.Galaxy, planet)) is { } rumour)
         {
             return rumour;

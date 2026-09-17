@@ -20,9 +20,7 @@ public class SDLKeyboardTests
         Assert.Equal(ConsoleModifiers.None, modifiers);
     }
 
-    // A modifier that only decides what another key means has to be readable
-    // without being taken away - see EliteMain's Ctrl-M mission jump, which
-    // shares its key with the missile and its Ctrl with galactic hyperspace.
+    // A modifier that only decides what another key means must be readable without being taken away.
     [Fact]
     public void IsHeldReportsAModifierWithoutConsumingIt()
     {
@@ -91,10 +89,7 @@ public class SDLKeyboardTests
         Assert.False(kb.IsPressed(ConsoleModifiers.Control));
     }
 
-    // Regression test: driving/movement-style controls poll every tick and
-    // need the key's continuous physical state, not IsPressed's one-shot
-    // consumption (which would make a held key look "let go" the very next
-    // tick unless a fresh SDL key-repeat event happened to arrive first).
+    // Regression: driving/movement controls need continuous physical state, not IsPressed's one-shot consumption.
     [Fact]
     public void IsHeldStaysTrueAcrossRepeatedPollsWhileKeyRemainsDown()
     {
@@ -112,12 +107,7 @@ public class SDLKeyboardTests
         Assert.False(kb.IsHeld(ConsoleKey.UpArrow));
     }
 
-    // Regression test: holding a second key must not affect an
-    // already-held key's IsHeld state (this is the actual "multiple keys
-    // held" bug — IsPressed's consumption combined with the OS only
-    // re-sending key-repeat events for the most recently pressed key made
-    // an earlier held key go silently unresponsive once a second key was
-    // pressed).
+    // Regression: holding a second key must not affect an already-held key's IsHeld state.
     [Fact]
     public void IsHeldTracksMultipleKeysIndependently()
     {

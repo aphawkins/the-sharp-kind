@@ -7,12 +7,7 @@ using SharpKind.Input;
 
 namespace SharpKind.Fakes.Harness;
 
-// Drives a game's Update()/Draw() directly against a real SoftwareGraphics
-// with no SDL window, applying a scripted KeyScriptEvent timeline to a
-// FakeKeyboard each tick - shared machinery behind both StuntCarRacerSharpLib and
-// EliteSharpLib's headless game harnesses. Only building each game's own
-// object graph and its state snapshot differ between them; those stay in
-// each game's own derived harness.
+// Drives a game's Update()/Draw() against a real SoftwareGraphics with no SDL window; shared machinery behind both StuntCarRacerSharpLib and EliteSharpLib's headless harnesses.
 public abstract class HeadlessGameHarnessBase<TState> : IDisposable
 {
     private FastBitmap? _lastFrame;
@@ -28,9 +23,7 @@ public abstract class HeadlessGameHarnessBase<TState> : IDisposable
 
     protected SoftwareGraphics Graphics { get; }
 
-    // Advances one tick, applying any scripted key events due at the
-    // current tick before calling the game's Update() and releasing any
-    // single-tick taps afterwards.
+    // Single-tick taps are released after Update(), not before.
     public TState Step(IReadOnlyList<KeyScriptEvent> script)
     {
         ArgumentNullException.ThrowIfNull(script);
@@ -59,9 +52,7 @@ public abstract class HeadlessGameHarnessBase<TState> : IDisposable
                     break;
 
                 case KeyScriptAction.SaveFrame:
-                    // No-op here: headless callers save frames explicitly, via this
-                    // class's own SaveFrame method. This action only matters to
-                    // KeyScriptPlayer, the real-app counterpart driven by GameHost.
+                    // No-op here: only KeyScriptPlayer (the real-app counterpart) acts on this; headless callers use SaveFrame directly.
                     break;
             }
         }
@@ -91,13 +82,10 @@ public abstract class HeadlessGameHarnessBase<TState> : IDisposable
         return state;
     }
 
-    // Renders the whole game (screens and HUD included) and saves it as a
-    // BMP.
+    // Includes screens and HUD.
     public void SaveFrame(string path) => BitmapWriter.Write(CaptureFrame(), path);
 
-    // The composed frame itself, for a caller that wants to measure it
-    // rather than look at it - a frame-check test comparing what was drawn
-    // against a committed reference, say.
+    // For a caller that measures the frame rather than looking at it, e.g. comparing against a committed reference.
     public FastBitmap CaptureFrame()
     {
         DrawGame();
@@ -110,11 +98,9 @@ public abstract class HeadlessGameHarnessBase<TState> : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    // One game tick: composes the whole frame (StuntCarRacerMain.Update) or
-    // just advances state where drawing is a separate call (EliteMain).
+    // One game tick: composes the whole frame (StuntCarRacerMain.Update) or just advances state where drawing is separate (EliteMain).
     protected abstract void UpdateGame();
 
-    // Presents/renders the frame SaveFrame will capture.
     protected abstract void DrawGame();
 
     protected virtual void Dispose(bool disposing)

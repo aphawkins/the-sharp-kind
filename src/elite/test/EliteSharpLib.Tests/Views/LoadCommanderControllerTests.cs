@@ -46,8 +46,7 @@ public class LoadCommanderControllerTests
     [Fact]
     public void LoadingAMissingCommanderShowsAnErrorAndStaysPut()
     {
-        // Typed input is always upper-case - A-Z is the only range HandleInput
-        // accepts letters from, matching the original's own restriction.
+        // Typed input is always upper-case: A-Z is the only range HandleInput accepts letters from.
         LoadCommanderController controller = CreateController(out GameState gameState, out FakeKeyboard keyboard, out _);
         controller.Reset();
 
@@ -63,8 +62,7 @@ public class LoadCommanderControllerTests
     {
         LoadCommanderController controller = CreateController(out GameState gameState, out FakeKeyboard keyboard, out SaveFile save);
 
-        // A save is only loadable if it was written from a real commander, so start
-        // from one - then clear the name the screen would otherwise prefill with.
+        // A save is only loadable if written from a real commander; clear the name it would prefill with.
         save.GetLastSave();
         save.SaveCommander("MAX");
         gameState.Cmdr.Name = string.Empty;

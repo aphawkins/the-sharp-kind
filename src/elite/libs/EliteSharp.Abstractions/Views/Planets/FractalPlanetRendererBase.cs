@@ -21,8 +21,7 @@ public abstract class FractalPlanetRendererBase(IViewSurface surface, IRandomSou
     private readonly PlanetSurface _surface = new(surface);
     private readonly IRandomSource _random = random;
 
-    // The midpoint-displacement pass works in heights, not colours; the
-    // colouring pass then maps each height onto the sphere's colour map.
+    // Heights, not colours; the colouring pass maps each onto the sphere's colour map.
     private readonly uint[,] _heights =
         new uint[PlanetSurface.LandXMax + 1, PlanetSurface.LandYMax + 1];
 
@@ -30,8 +29,7 @@ public abstract class FractalPlanetRendererBase(IViewSurface surface, IRandomSou
 
     public void Draw(PlanetView planet)
     {
-        // Generated on the first draw rather than in the constructor: the
-        // subclass cannot colour anything until it has finished constructing.
+        // Deferred to first draw: the subclass can't colour anything until construction finishes.
         if (!_mapped)
         {
             GenerateLandscape();

@@ -152,10 +152,7 @@ public class OpponentPhysicsTests
         CarPhysics player = new(track);
         OpponentPhysics opponent = new(track, player, new RandomSource(new Random(1)));
 
-        // The standard-league random mask is zero, so values are deterministic:
-        // the track base (0x48 for Little Ramp) on sections the car cannot be
-        // put on, and ten faster elsewhere. Piece 0 is a straight the car can
-        // be put on, while piece 27 uses curve template 1 which it cannot.
+        // The standard-league random mask is zero, so values are deterministic: track base on sections the car can't be put on, ten faster elsewhere.
         Assert.Equal(0x48 + 10, opponent.SpeedValue(0));
         Assert.Equal(0x48, opponent.SpeedValue(27));
     }

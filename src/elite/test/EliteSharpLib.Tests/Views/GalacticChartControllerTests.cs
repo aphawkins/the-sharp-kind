@@ -12,9 +12,7 @@ using SharpKind.Fakes.Input;
 
 namespace EliteSharpLib.Tests.Views;
 
-// The galactic chart's behaviour, exercised without a renderer: the
-// controller works in galaxy space and hands the view a model, so none of
-// this needs a draw surface.
+// The controller works in galaxy space and hands the view a model, so none of this needs a draw surface.
 public class GalacticChartControllerTests
 {
     [Fact]
@@ -34,9 +32,7 @@ public class GalacticChartControllerTests
 
         controller.Reset();
 
-        // Galaxy space is the raw (D, B) of each seed, so every star must
-        // land inside 0-255 on both axes - a screen-space leak would push
-        // these past 255.
+        // Galaxy space is the raw (D, B) of each seed: every star must land inside 0-255 on both axes.
         Assert.All(
             controller.BuildModel().Stars,
             star =>

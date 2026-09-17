@@ -28,8 +28,7 @@ public sealed class FonFontRasteriser : IFontRasteriser
 
         FonFont font = _fonts[fontType];
 
-        // As the sheet rasteriser does: sized for the widest each glyph
-        // could be, then cut down to what they took.
+        // As the sheet rasteriser does: sized for the widest each glyph could be, then cut down to what they took.
         using FastBitmap temp = new(Math.Max(text.Length * font.MaxWidth, 1), font.PixelHeight);
         int left = 0;
 
@@ -77,10 +76,7 @@ public sealed class FonFontRasteriser : IFontRasteriser
         return new(width, font.PixelHeight);
     }
 
-    // A character the strike does not cover leaves a gap rather than a
-    // substitute glyph: the font says what it holds, and inventing something
-    // for what it does not would hide that the text needs a fuller font. The
-    // gap is a space where the strike has one, so at least the line stays
-    // readable, and the widest glyph otherwise.
+    // A character the strike doesn't cover leaves a gap, not a substitute glyph - inventing one would hide that
+    // a fuller font is needed. Gap width is a space where the strike has one, else the widest glyph.
     private static int MissingWidth(FonFont font) => font.Glyph(' ')?.Width ?? font.MaxWidth;
 }

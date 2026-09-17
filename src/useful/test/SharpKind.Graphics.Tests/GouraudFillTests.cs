@@ -34,9 +34,7 @@ public class GouraudFillTests
         Assert.True(middle < far, $"expected {middle} < {far}");
     }
 
-    // Black at one corner and white at the other two: across a scanline the
-    // blend has to run left to right as well as top to bottom, which the flat
-    // fill would show as one colour throughout.
+    // Black at one corner, white at the other two: the blend must run left-right as well as top-bottom, unlike a flat fill.
     [Fact]
     public void ColourIsBlendedAcrossAScanline()
     {

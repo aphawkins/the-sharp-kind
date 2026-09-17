@@ -32,8 +32,7 @@ public class TextWrapTests
     [Fact]
     public void SplitNeverExceedsTheRowWidth()
     {
-        // The comma sits one past the row width. The scan used to start there,
-        // so it broke after the comma and drew a nine-character row.
+        // Pins the comma sitting one past the row width: must not draw a nine-character row.
         IReadOnlyList<string> lines = TextWrap.Split("aaaaaaaa,bbbb", 8);
 
         Assert.Equal(["aaaaaaaa", ",bbbb"], lines);

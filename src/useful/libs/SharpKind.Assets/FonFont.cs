@@ -26,9 +26,6 @@ public sealed class FonFont
     {
         ArgumentNullException.ThrowIfNull(glyphs);
 
-        // A strike that covers a range has a glyph for every character in it.
-        // Anything else would leave Glyph() returning a hole for a character
-        // the font said it holds.
         if (lastChar < firstChar || glyphs.Length != lastChar - firstChar + 1)
         {
             throw new SharpKindException(
@@ -45,8 +42,7 @@ public sealed class FonFont
 
     public int PixelHeight { get; }
 
-    // The widest glyph in the strike. A fixed-pitch strike's glyphs are all
-    // this wide; a proportional one's are at most.
+    // Fixed-pitch: every glyph is this wide. Proportional: at most this wide.
     public int MaxWidth { get; }
 
     public char FirstChar { get; }

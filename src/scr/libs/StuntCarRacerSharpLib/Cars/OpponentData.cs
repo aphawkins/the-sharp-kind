@@ -7,10 +7,7 @@ namespace StuntCarRacerSharpLib.Cars;
 
 internal static class OpponentData
 {
-    // Values for each track (original opp_track_speed_values): per league,
-    // the max-speed mask (8) and base (8), then the per-piece speed-value
-    // mask (8) and base (8) used by OpponentPhysics.SpeedValue.
-    // Standard league occupies the first 32 bytes, super league the next 32.
+    // Original opp_track_speed_values: standard league occupies the first 32 bytes, super league the next 32.
     internal static byte[] TrackSpeedValues { get; } =
     [
         0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,

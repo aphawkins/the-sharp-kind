@@ -104,10 +104,7 @@ public sealed class ThargoidMission : IMission, IMissionEncounters
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        // The Navy only calls once the Constrictor has been paid for. That
-        // mission's stage stays Rewarded for good, so this can be asked as
-        // often as it likes and still only fire once, because the move out of
-        // None can only happen the once.
+        // Fires only once: the Constrictor's stage settles at Rewarded for good.
         if (string.Equals(stage, None, StringComparison.Ordinal)
             && string.Equals(context.StageOf(ConstrictorMission.Id), ConstrictorMission.Rewarded, StringComparison.Ordinal)
             && context.CombatScore >= DangerousScore

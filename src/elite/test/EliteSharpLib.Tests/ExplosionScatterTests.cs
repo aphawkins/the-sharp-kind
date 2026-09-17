@@ -24,10 +24,7 @@ public class ExplosionScatterTests
         }
     }
 
-    // The cloud is written in the original's 256-wide space, so it must grow
-    // with the projection's focal length. A rendition that draws at twice the
-    // height scatters the same debris twice as far, and the cloud keeps the
-    // same size relative to the ship it came from.
+    // Written in the original's 256-wide space, so it must grow with the projection's focal length to keep the same size relative to the ship.
     [Fact]
     public void ScatterSpreadFollowsTheFocalLength()
     {

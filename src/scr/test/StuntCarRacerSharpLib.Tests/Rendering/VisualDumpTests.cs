@@ -126,9 +126,7 @@ public class VisualDumpTests
         Assert.NotNull(lastFrame);
         BitmapWriter.Write(lastFrame, Path.Combine(outDir, "frame_hud.bmp"));
 
-        // the track-preview viewpoint: high up, pitched down at the car -
-        // the camera angle that exposed the floating-track bug (the ground
-        // fill must stay attached to the track when the camera pitches)
+        // The track-preview viewpoint: the camera angle that exposed the floating-track bug.
         const long centre = (long)Track.TrackCubes * Track.CubeSize / 2;
         camera.LookAt(
             centre + ((car.X - centre) / 2),

@@ -22,9 +22,7 @@ using SharpKind.Fakes.Input;
 
 namespace EliteSharpLib.Tests.Views;
 
-// The equip-ship list's visibility and cursor, with no renderer involved:
-// collapsed laser categories never reach the model at all, rather than
-// reaching it hidden.
+// The equip-ship list's visibility and cursor: collapsed laser categories never reach the model at all.
 public class EquipmentControllerTests
 {
     private static readonly string[] s_mounts = ["Front", "Rear", "Left", "Right"];
@@ -49,8 +47,7 @@ public class EquipmentControllerTests
         gameState.CurrentPlanetData.TechLevel = 10;
         controller.Reset();
 
-        // The ten top-level rows (Fuel..Galactic Hyperdrive) precede Pulse
-        // Laser in the stock array, so ten SelectNext calls reach it.
+        // Ten top-level rows (Fuel..Galactic Hyperdrive) precede Pulse Laser in the stock array.
         for (int i = 0; i < 10; i++)
         {
             controller.SelectNext();
@@ -58,9 +55,7 @@ public class EquipmentControllerTests
 
         controller.Buy();
 
-        // Buying a category expands it into its mount choices, but ListPrices
-        // resets the cursor to row zero as a side effect - a pre-existing
-        // quirk, preserved rather than fixed here.
+        // ListPrices resets the cursor to row zero as a side effect of expanding a category.
         EquipmentModel model = controller.BuildModel();
         Assert.Contains(model.Rows, row => row.Name == "Front" && row.IsIndented);
         Assert.True(model.Rows[0].IsHighlighted);
@@ -107,8 +102,7 @@ public class EquipmentControllerTests
     [InlineData(10, true)]
     public void MilitaryLaserRequiresPlanetTechLevel10(int planetTechLevel, bool expectedVisible)
     {
-        // Arrange: original PRXS position 12 (0-based) is shown once
-        // planet tech + 3 > 12, i.e. planet tech >= 10.
+        // Original PRXS position 12 (0-based): shown once planet tech + 3 > 12, i.e. tech >= 10.
         EquipmentController controller = CreateController(out GameState gameState, out _);
         gameState.CurrentPlanetData.TechLevel = planetTechLevel;
 
@@ -123,8 +117,7 @@ public class EquipmentControllerTests
     [InlineData(11, true)]
     public void MiningLaserRequiresPlanetTechLevel11(int planetTechLevel, bool expectedVisible)
     {
-        // Arrange: original PRXS position 13 (0-based) is shown once
-        // planet tech + 3 > 13, i.e. planet tech >= 11.
+        // Original PRXS position 13 (0-based): shown once planet tech + 3 > 13, i.e. tech >= 11.
         EquipmentController controller = CreateController(out GameState gameState, out _);
         gameState.CurrentPlanetData.TechLevel = planetTechLevel;
 
@@ -162,8 +155,7 @@ public class EquipmentControllerTests
         controller.SelectPrevious();
         Assert.True(controller.BuildModel().Rows[0].IsHighlighted);
 
-        // Far more steps than the list has rows, so the last row is where it
-        // runs out rather than where the count does.
+        // Far more steps than the list has rows: it must stop at the last row.
         for (int i = 0; i < 60; i++)
         {
             controller.SelectNext();
@@ -183,8 +175,7 @@ public class EquipmentControllerTests
         trade.Credits = 20000;
         controller.Reset();
 
-        // Military Right is the last row in the stock list, so opening that
-        // category is the only way to put the cursor on it.
+        // Military Right is the last row in the stock list; opening that category puts the cursor on it.
         SelectRow(controller, "Military Laser");
         controller.Buy();
         SelectRow(controller, "Right");
@@ -226,9 +217,7 @@ public class EquipmentControllerTests
         Assert.Equal(ship.MaxFuel, ship.Fuel);
     }
 
-    // One row per branch of the buy switch, and the state each one leaves the
-    // ship in. Fuel and missiles have tests of their own below, because they
-    // are capped rather than owned.
+    // One row per branch of the buy switch. Fuel and missiles are capped rather than owned, so have tests of their own below.
     [Theory]
     [InlineData("Large Cargo Bay", 400)]
     [InlineData("E.C.M. System", 600)]
@@ -309,8 +298,7 @@ public class EquipmentControllerTests
         Assert.Equal(999, trade.Credits);
     }
 
-    // Every laser on every mount: the category is expanded, then the mount
-    // bought, and the laser must land on that mount and nowhere else.
+    // Every laser on every mount: it must land on the bought mount and nowhere else.
     [Theory]
     [InlineData("Pulse Laser", "Front", LaserType.Pulse)]
     [InlineData("Pulse Laser", "Rear", LaserType.Pulse)]
@@ -390,8 +378,7 @@ public class EquipmentControllerTests
         SelectRow(controller, "Beam Laser");
         controller.Buy();
 
-        // Only one set of mounts is ever on screen, so each mount name
-        // appears once however many categories have been opened.
+        // Only one set of mounts is ever on screen, however many categories have been opened.
         Assert.Equal(1, controller.BuildModel().Rows.Count(row => row.Name == "Front"));
     }
 
@@ -417,8 +404,7 @@ public class EquipmentControllerTests
 
         controller.Draw();
 
-        // The model holds a list, so a record comparison is by reference;
-        // compare what is in it.
+        // The model holds a list, so a record comparison is by reference; compare its contents instead.
         Assert.Equal(controller.BuildModel().Rows, view.Drawn?.Rows);
         Assert.Equal(controller.BuildModel().Cash, view.Drawn?.Cash);
     }
@@ -445,9 +431,7 @@ public class EquipmentControllerTests
         _ => throw new ArgumentOutOfRangeException(nameof(name)),
     };
 
-    // Walks the cursor down to the named row. The list is short and the
-    // cursor stops at the end, so a bounded walk either lands on it or shows
-    // it is not on screen.
+    // Walks the cursor down to the named row; a bounded walk either lands on it or shows it is not on screen.
     private static void SelectRow(EquipmentController controller, string name)
     {
         for (int i = 0; i < 40; i++)

@@ -4,9 +4,7 @@ using System.Buffers.Binary;
 
 namespace SharpKind.Fakes.Assets;
 
-// Builds a .fon in memory: a DOS stub, an NE header, a resource table, and a
-// FNT resource per strike. Only the parts FonFontReader reads are filled in -
-// enough to be a font, not enough to be an executable Windows would load.
+// Builds a .fon in memory, filling in only the parts FonFontReader reads - enough to be a font, not enough to be a loadable executable.
 public static class FonFileBuilder
 {
     // Resource offsets and lengths are stored shifted by this, so every
@@ -24,10 +22,7 @@ public static class FonFileBuilder
     {
         byte[][] resources = [.. fonts.Select(Strike)];
 
-        // The resource table: a shift count, one type block for RT_FONT, and
-        // the zero type id that ends it. The block's entries need the
-        // resources' offsets, which depend on where the table itself ends,
-        // so its length is worked out before anything is placed.
+        // Entries need the resources' offsets, which depend on where the table ends, so its length is worked out first.
         int tableLength = 2 + 8 + (12 * resources.Length) + 2;
         const int table = StubLength + HeaderLength;
         int position = Align(table + tableLength);

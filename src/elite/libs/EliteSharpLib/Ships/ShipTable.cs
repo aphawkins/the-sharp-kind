@@ -108,11 +108,8 @@ internal static class ShipTable
             : throw new EliteException($"The ship file '{path}' describes no ships.");
     }
 
-    // A variant states only what it changes: the two lone wolves are their
-    // parent with different flags, a bounty and a hold, and they borrow its
-    // mesh. Anything the entry leaves unsaid comes from the ship it is based
-    // on - which has to be one the file has already described, so a row can
-    // be resolved as it is read and a cycle cannot be written.
+    // A variant states only what it changes; anything left unsaid comes from the ship it's based
+    // on, which must already be described in the file so rows resolve as read and no cycle is possible.
     private static ShipDefinition Resolve(string path, ShipEntry entry, Dictionary<string, ShipEntry> byId)
     {
         ShipEntry? parent = null;
@@ -145,9 +142,7 @@ internal static class ShipTable
             ship.VelocityMax ?? 0);
     }
 
-    // The entry as it reads once the ship it is based on has filled in
-    // whatever it left unsaid. A field the parent does not state either stays
-    // unsaid, so Resolve still decides what an absent one means.
+    // A field the parent doesn't state either stays unsaid, so Resolve still decides what an absent one means.
     private static ShipEntry Merge(ShipEntry entry, ShipEntry? parent)
         => parent == null ? entry : entry with
         {

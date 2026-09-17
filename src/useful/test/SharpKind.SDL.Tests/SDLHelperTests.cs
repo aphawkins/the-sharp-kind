@@ -6,9 +6,7 @@ namespace SharpKind.SDL.Tests;
 
 public class SDLHelperTests
 {
-    // Every letter, digit and function key, checked against the naming rule
-    // the table follows. A case left out of the switch falls through to
-    // ConsoleKey.None, which is what these catch, one key at a time.
+    // A case left out of the switch falls through to ConsoleKey.None, which is what these catch, one key at a time.
     public static TheoryData<SDL_Keycode, ConsoleKey> Letters => Pairs('A', 'Z', c => c.ToString());
 
     public static TheoryData<SDL_Keycode, ConsoleKey> Digits => Pairs('0', '9', c => "D" + c);
@@ -27,12 +25,8 @@ public class SDLHelperTests
         }
     }
 
-    // The arrow keys carry a regression: SDLK_RIGHT was previously mapped to
-    // ConsoleKey.OemPeriod (and ConsoleKey.RightArrow was only reachable via
-    // SDLK_RIGHTBRACKET), so the physical Right Arrow key never produced
-    // ConsoleKey.RightArrow at all. Elite's views masked this because they
-    // check "OemPeriod || RightArrow", but anything checking RightArrow alone
-    // (e.g. SCR's steering) silently never saw it.
+    // Regression: SDLK_RIGHT was previously mapped to OemPeriod, so the physical Right Arrow never produced ConsoleKey.RightArrow.
+    // Elite's views masked this by checking both, but anything checking RightArrow alone (e.g. SCR's steering) silently never saw it.
     [Theory]
     [InlineData(SDL_Keycode.SDLK_LEFT, ConsoleKey.LeftArrow)]
     [InlineData(SDL_Keycode.SDLK_RIGHT, ConsoleKey.RightArrow)]

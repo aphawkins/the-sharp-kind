@@ -85,10 +85,7 @@ public class ControlTests
 
         label.Draw();
 
-        // Centring puts the text at 10 + (100 - 16) / 2 = 52, which is not on
-        // a cell boundary; it truncates to 48. Note that the label's own left
-        // edge is not on the grid either - snapping is of the final position,
-        // not of the gap in front of the text.
+        // Centring puts the text at 52, not on a cell boundary, so it truncates to 48. Snapping is of the final position, not the gap.
         Assert.Equal(new Vector2(48, 20), Assert.Single(graphics.LeftTexts).Position);
     }
 
@@ -166,10 +163,7 @@ public class ControlTests
 
         box.Draw();
 
-        // The arrows hug the value rather than sitting at fixed columns: the
-        // value starts at 70 and "Solid" measures 40, so the opening arrow
-        // ends a gap short of 70 - putting its own left edge at 52 - and the
-        // closing one starts a gap past 110.
+        // Arrows hug the value rather than sitting at fixed columns: value starts at 70, "Solid" measures 40.
         Assert.Equal(["Graphic Style:", "Solid", "<", ">"], graphics.LeftTexts.Select(t => t.Text));
         Assert.Equal(new Vector2(52, 20), graphics.LeftTexts[2].Position);
         Assert.Equal(new Vector2(120, 20), graphics.LeftTexts[3].Position);

@@ -4,9 +4,7 @@ using SharpKind.Assets;
 
 namespace SharpKind.Graphics;
 
-// The outcome of checking one rendition's asset set against the limits it
-// declared for itself. The cap applies to the union across the whole set, not
-// per image: a rendition standing in for a machine stands in for one palette.
+// Outcome of checking a rendition's asset set against the limits it declared. Cap applies to the union across the whole set, not per image - one palette per machine.
 public sealed class AssetColourBudget
 {
     internal AssetColourBudget(
@@ -29,9 +27,7 @@ public sealed class AssetColourBudget
 
     public string Rendition { get; }
 
-    // What the rendition declared about itself, which is what the checks below
-    // are run against. The game cannot know this about a rendition it was
-    // never built against.
+    // What the rendition declared about itself; the checks below run against this.
     public AssetColourLimits Limits { get; }
 
     // Distinct opaque colours across the whole set. Fully transparent pixels
@@ -44,14 +40,10 @@ public sealed class AssetColourBudget
 
     public IReadOnlyDictionary<string, int> PerAsset { get; }
 
-    // Per asset, the opaque colours it uses that the palette does not name.
-    // Populated always so it can be logged, but only enforced where the
-    // rendition said its palette is its whole colour set.
+    // Per asset, opaque colours not named by the palette. Always populated for logging; only enforced when the rendition says its palette is exhaustive.
     public IReadOnlyDictionary<string, uint[]> OutsidePalette { get; }
 
-    // Per asset - plus "Palette" for the named palette itself - the opaque
-    // colours the rendition's DAC could not have produced. Empty for one whose
-    // channels are already a full eight bits.
+    // Per asset (plus "Palette" itself), opaque colours the rendition's DAC couldn't produce. Empty when channels are already 8-bit.
     public IReadOnlyDictionary<string, uint[]> OffGrid { get; }
 
     public int Cap => Limits.MaxColours;
@@ -62,11 +54,8 @@ public sealed class AssetColourBudget
 
     public bool IsOnColourGrid => OffGrid.Count == 0;
 
-    // Whether every channel of a colour sits on one of the rendition's levels. An
-    // n-bit channel widens to eight by replication, so 4 bits gives 0x00,
-    // 0x11 ... 0xFF - the expansion that reaches a true white, unlike a plain
-    // left shift, which tops out at 0xF0. Alpha is not a channel of the DAC
-    // and is checked separately as PartialAlphaCount.
+    // An n-bit channel widens to 8 by replication (4 bits: 0x00, 0x11...0xFF, reaching true white unlike a left
+    // shift's 0xF0 ceiling). Alpha isn't a DAC channel; checked separately as PartialAlphaCount.
     public static bool IsOnGrid(uint argb, int channelBits)
     {
         if (channelBits >= 8)
@@ -91,9 +80,7 @@ public sealed class AssetColourBudget
         return true;
     }
 
-    // The rendition's level closest to an eight-bit channel value, widened back to
-    // eight bits. Snapping an asset to the grid means running every channel
-    // through this.
+    // Nearest rendition level for an 8-bit channel value, widened back to 8 bits.
     public static int NearestLevel(int channel, int topLevel)
         => (int)Math.Round((double)channel * topLevel / 255, MidpointRounding.AwayFromZero) * 255 / topLevel;
 }

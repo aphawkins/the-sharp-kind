@@ -5,10 +5,8 @@ using System.Runtime.CompilerServices;
 
 namespace SharpKind.Graphics;
 
-// Texture sampling for the two textured-triangle rasterisers in
-// SoftwareGraphics.cs: bilinear filtering plus a box-filtered mip chain, so
-// distant/foreshortened faces (SCR's road, seen nearly edge-on) sample a
-// pre-averaged level instead of aliasing against the full-resolution source.
+// Bilinear filtering plus a box-filtered mip chain, so distant/foreshortened faces (SCR's road,
+// nearly edge-on) sample a pre-averaged level instead of aliasing.
 public sealed partial class SoftwareGraphics
 {
     // Mip chains are cached per source texture (they never change once
@@ -105,10 +103,7 @@ public sealed partial class SoftwareGraphics
             (byte)((c00.B + c10.B + c01.B + c11.B) / 4));
     }
 
-    // Picks the mip level for an affine-textured triangle from the ratio of
-    // its texel-space area to its screen-space area, computed once for the
-    // whole triangle (these triangles are small, per the DrawTriangleTextured
-    // comment, so one level for all of it is adequate).
+    // From the ratio of texel-space to screen-space area, computed once for the whole triangle since these triangles are small.
     private static FastBitmap SelectMip(
         FastBitmap[] mipChain,
         Vector2 a,
@@ -129,10 +124,7 @@ public sealed partial class SoftwareGraphics
         return mipChain[LevelForTexelsPerPixel(texelArea / screenArea, mipChain.Length, areaRatio: true)];
     }
 
-    // Picks the mip level for one scanline of a perspective-correct span,
-    // from how many texels the recovered UV covers at each end of the
-    // visible run versus how many pixels it covers - see the comment on
-    // DrawSpanTexturedDepth.
+    // From texels-per-pixel at each end of the visible run; see DrawSpanTexturedDepth.
     private static FastBitmap SelectMip(
         FastBitmap[] mipChain,
         float x0,

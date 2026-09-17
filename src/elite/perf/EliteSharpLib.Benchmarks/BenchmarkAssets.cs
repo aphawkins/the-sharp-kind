@@ -7,11 +7,7 @@ using SharpKind.Assets;
 
 namespace EliteSharpLib.Benchmarks;
 
-// The game's assets and a rendition's, composed as the game composes them -
-// the same arrangement EliteSharpLib.Tests uses, for the same reason. A bare
-// FakeAssetLocator has no images, so constructing EliteDraw against it throws
-// looking up "Hud"; and what these benchmarks measure is the real
-// composition, so the real one is what they should build.
+// A bare FakeAssetLocator has no images, so constructing EliteDraw against it throws looking up "Hud"; benchmarks build the real composition instead.
 internal static class BenchmarkAssets
 {
     private const string Rendition = "16-bit";

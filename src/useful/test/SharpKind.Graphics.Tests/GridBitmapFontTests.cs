@@ -6,9 +6,7 @@ using SharpKind.Assets;
 
 namespace SharpKind.Graphics.Tests;
 
-// The monospaced sheet shape the 8-bit BBC Micro font uses: no magenta
-// markers, every glyph filling its cell, ink recoloured and the sheet's
-// black background treated as transparent.
+// The monospaced sheet shape the 8-bit BBC Micro font uses: no magenta markers, every glyph fills its cell, black background is transparent.
 public class GridBitmapFontTests
 {
     [Fact]

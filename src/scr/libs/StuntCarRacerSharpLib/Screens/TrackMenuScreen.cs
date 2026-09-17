@@ -15,21 +15,14 @@ using StuntCarRacerSharpLib.Tracks;
 
 namespace StuntCarRacerSharpLib.Screens;
 
-// The track list and orbiting camera (original HandleTrackMenu /
-// CalcTrackMenuViewpoint). Not throttled by the frame gap.
-//
-// The original's HandleTrackMenu is plain text over the 3D world (the
-// Bitmap/menu.png background art in stuntcarremake is never actually
-// loaded by that game's code). This drawn overlay is a cosmetic addition
-// beyond strict porting: menu.png's centre panel is transparent, so the
-// orbiting track view still shows through, with the track list positioned
-// inside the panel.
+// Track list and orbiting camera (original HandleTrackMenu / CalcTrackMenuViewpoint), not throttled by the frame gap.
+// The menu.png overlay is a cosmetic addition beyond strict porting: the original's menu.png art is never actually loaded, so this
+// draws it with the centre panel transparent, letting the orbiting track view show through behind the track list.
 internal sealed class TrackMenuScreen : IGameScreen, ILayerDrawer
 {
     private const string MenuImage = "Menu";
 
-    // menu.png is 320x200; its centre panel (inset from the measured
-    // transparent bounds to clear the wooden frame/logo) in that space.
+    // menu.png is 320x200; panel inset from its transparent bounds to clear the wooden frame/logo.
     private const float CanvasWidth = 320f;
     private const float PanelLeft = 38f;
     private const float PanelTop = 70f;
@@ -47,9 +40,7 @@ internal sealed class TrackMenuScreen : IGameScreen, ILayerDrawer
     private readonly ScrPalette _palette;
     private int _orbitAngle;
 
-    // The stick is a continuous reading, so one flick would otherwise step
-    // through every track it is held past. Only a change of direction moves
-    // the selection.
+    // Stick is a continuous reading, so only a change of direction moves the selection, not a held flick stepping through every track.
     private int _lastSteer;
 
     internal TrackMenuScreen(
@@ -75,10 +66,7 @@ internal sealed class TrackMenuScreen : IGameScreen, ILayerDrawer
         _layers = race.Layers(showOpponent: false, showPlayer: false, overlay: this);
     }
 
-    // The menu has no opponent and no engine: the reference clears the
-    // opponent and stops the engine sound on the way in
-    // (`StuntCarRacer.cpp:1731-1741`). Doing it here covers every route to
-    // the menu, whether from the game-over screen or mid-race on 'M'.
+    // Clears the opponent and engine sound on the way in, as the reference does (StuntCarRacer.cpp:1731-1741); covers every route into the menu.
     public void Reset()
     {
         _sound.StopLoop();
@@ -98,7 +86,6 @@ internal sealed class TrackMenuScreen : IGameScreen, ILayerDrawer
 
         _race.Camera.LookAt(viewX, viewY, viewZ, centre, 0, centre);
 
-        // track selection
         for (ConsoleKey key = ConsoleKey.D1; key <= ConsoleKey.D8; key++)
         {
             if (_keyboard.IsPressed(key) && _race.Track.Id != (TrackId)(key - ConsoleKey.D1))
@@ -117,13 +104,10 @@ internal sealed class TrackMenuScreen : IGameScreen, ILayerDrawer
 
     public void Draw() => _layers.Draw();
 
-    // The layer-2 content: what this screen draws over the world.
-    // Explicitly implemented so it cannot be mistaken for Draw()
-    // above, which draws the whole frame.
+    // Explicit so it can't be mistaken for Draw() above, which draws the whole frame not just the menu overlay.
     void ILayerDrawer.Draw()
     {
-        // menu.png's frame draws over the world; its centre panel is
-        // transparent so the orbiting track view still shows through
+        // menu.png's centre panel is transparent so the orbiting track view still shows through
         _graphics.DrawImagePart(
             MenuImage,
             Vector2.Zero,
@@ -172,8 +156,7 @@ internal sealed class TrackMenuScreen : IGameScreen, ILayerDrawer
             yellow);
     }
 
-    // Left/right steps through the track list, the pad equivalent of the
-    // number keys. The list does not wrap, so the ends are the ends.
+    // Pad equivalent of the number keys; the list does not wrap, so the ends are the ends.
     private void SelectTrackWithGamepad()
     {
         int steer = GamepadControls.Steer(_gamepad);

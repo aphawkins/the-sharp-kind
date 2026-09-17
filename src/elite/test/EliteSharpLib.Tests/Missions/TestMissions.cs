@@ -11,10 +11,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace EliteSharpLib.Tests.Missions;
 
-// The two shipped missions, handed straight to a registry rather than found on
-// disk. The game only ever loads them off disk; these tests are about what the
-// missions do, and about the many screens that need a registry and do not care
-// what is in it.
+// Handed straight to a registry rather than found on disk, for tests about what the missions do rather than the loading path.
 internal static class TestMissions
 {
     internal static MissionRegistry Registry()
