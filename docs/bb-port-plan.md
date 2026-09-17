@@ -426,8 +426,58 @@ No game logic. Put a level on screen. Three `RenderLayer`s, each with its own
 Translate: `level-renderer.s`, `level-display.s`, `graphics-copy.s`, and the
 sidebar handling in `render-screen.s`.
 
-- [ ] `SidebarModel` / `SidebarViewC64` — sidebars from `sidebars.tga`,
-      chosen by the level's `sidebar` byte.
+Amended 2026-09-17: two things this phase assumed turned out not to be so,
+and the reference settles both.
+
+*The sidebars are inside the playfield, not beside it.* `setup_level_screen`
+writes the level from the start of each screen row and stops after 32
+columns, and `draw_border` then clears column 32 as the first column past it
+— so the level is the **leftmost** 32 of the screen's 40 columns, hard
+against the left edge, and the eight columns to the right of it are not the
+level's. The sidebar decoration sits at the level's own columns 0-1 and
+30-31, over bitmap that `init_level_renderer` forces solid. What the right
+eight columns hold is still unknown and is the HUD bullet's problem.
+
+*Multicolour sheets are half screen width.* A multicolour character is four
+pixels in the sheet and eight on screen, because a multicolour pixel is two
+pixels wide. The export copies the `.tga` files across as they stand, so the
+doubling is done at draw time by the view, which passes a destination width
+of twice the source. `SpriteRenderer` draws at native size only and so is no
+use for these sheets; a view calls `DrawImagePart` itself. If a later phase
+wants the sprite engine here, the additive change is a scale on
+`SpriteRenderer.Draw`.
+
+- [x] `SidebarModel` / `SidebarView8Bit` — sidebars from `sidebars.tga`,
+      chosen by the level's `sidebar` byte. Named for the tier, not the
+      machine, as section 4 and Elite both have it.
+
+      A design is four characters, drawn as a two-by-two block and repeated
+      down both edges: twelve blocks cover rows 0-23 and the last row takes
+      the block's top half on its own. The index is tested against a
+      hundred rather than against the fifty-nine designs that exist, and the
+      41 levels past it have no design — they repeat their own header tile,
+      out of `level-tiles.tga`, into all four characters.
+
+      Brought the view seam over from Elite to do it: `IView<TModel>`,
+      `IViewSurface`, `BbViewLayout`, and `CreateSidebarView` on
+      `IBbRendition`. `BubbleBobbleSharp.Abstractions` gained the graphics
+      and asset references that costs.
+
+      `BbViewLayout` states its metrics as `init` properties rather than
+      constants, and exposes the screen's grid and the level's through
+      `CharacterGrid`, new in `SharpKind.Graphics`. Elite moved onto the
+      same type in the same change, so the two games share one
+      implementation rather than diverging — see
+      [decisions.md](decisions.md), 2026-09-17.
+
+**Verified:** the solution builds with 0 warnings and
+`BubbleBobbleSharpLib.Tests` is 33/33. Elite (726 + 39), SCR (246) and every
+engine suite pass unchanged. The view's drawing is proved against
+`RecordingGraphics`: a hundred characters an edge pair, at the four columns
+and twenty-five rows expected, from the right row of the right sheet.
+
+Still unverified against VICE, which is not installed: that the doubling and
+the block order look right on screen.
 - [ ] `PlayfieldModel` / `PlayfieldViewC64` — the 32x23 tile grid, using the
       level's `colors` byte, clipped so nothing spills into the sidebars.
 - [ ] Recolour the tile sheet at level load, from the level's `colors` byte,
@@ -533,7 +583,43 @@ Translate: `title-screen-data.s`, `credits-handler-partial.s`,
 
 ## Phase 10 — Joining the repo properly
 
-- [ ] Golden frames for all 100 levels.
+**This phase is ordered.** The resolution change below invalidates every
+golden frame, so it lands *before* the frames are taken, not after.
+
+- [ ] **320x256, with a banner across the top.** The repo's 8-bit tier is
+      320x256 — Elite's is — and Bubble Bobble should match it rather than
+      being the one game at 320x200. The C64's screen is 25 rows of 8, so
+      the level takes 200 of those lines and the remaining 56 become a
+      banner at the top: exactly 7 character rows, the mirror of Elite's
+      56-pixel console band at the bottom.
+
+      Deferred here deliberately (2026-09-17), not overlooked. It is cheap
+      while nothing encodes the geometry and dear once the VICE work does,
+      so if it slips any earlier in the schedule, take it earlier.
+
+      What it touches:
+
+      - `EightBitRendition.ScreenHeight` to 256.
+      - `PlayfieldRow` to 7 where the layout is built. It is already an
+        `init` property for this, so the playfield shift is one value.
+      - Whatever asserts screen positions by then — today that is only
+        `SidebarView8BitTests`.
+      - `BannerModel` and its view, drawing an image Andy supplies. It is
+        the one part of the frame with no counterpart in `rebb64`.
+
+      Two consequences:
+
+      - **The frame stops being the C64 screen.** Every VICE comparison
+        from here on has to crop to the 200-line band below the banner
+        rather than matching the whole frame. Phases 3 to 9 all compare
+        against VICE, so any of their verify steps still being re-run need
+        this said.
+      - **The banner cannot be verified against anything.** It is house
+        chrome, so it is outside the fidelity rule in section 1 rather than
+        an exception to it — worth a line in [decisions.md](decisions.md)
+        saying so, since the port's whole premise is that the C64 wins.
+
+- [ ] Golden frames for all 100 levels. **After** the resolution change.
 - [ ] `docs/bb-readme.md`, modelled on [elite-readme.md](elite-readme.md).
 - [ ] A Bubble Bobble section in [reference-sources.md](reference-sources.md),
       naming `rebb64` as golden and saying plainly that the port targets the

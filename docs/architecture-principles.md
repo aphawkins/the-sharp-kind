@@ -5,6 +5,7 @@
 * Prefer dotnet framework intrinsics and libraries, over third party libraries.
 * As much code as possible should be in the 'SharpKind' libraries and only game specific code should be in the game projects themselves.
 * The highest possible coding standards should be used.
+* Always choose best practice and the superior architecture when making a change, rather than the shape that happens to be there already. See [Choosing between designs](#choosing-between-designs) for what decides which is superior.
 * The code focus should be on correctness, security, maintainability, readability, and performance.
 * Code should adhere to DRY (Don't Repeat Yourself), YAGNI (You Aren't Gonna Need It), KISS (Keep It Simple, Stupid), and SOLID principles.
 * Technical debt should be prioritised over new features.
@@ -59,6 +60,16 @@ The engine is architected like a business application; these are the house rules
 * Keep producer and consumer roles on separate interfaces (interface segregation): the code that feeds input events and the code that polls key state should not share one interface.
 * An interface member that a primary implementation cannot honour (silent no-op) is a design error: implement it or remove it.
 * Prefer framework intrinsics over home-grown equivalents (`ArgumentNullException.ThrowIfNull` over a custom `Guard`), per the third-party-libraries principle above.
+
+### Choosing between designs
+
+* When a change has a better shape available, take the better shape. "It matches what is already there" is not on its own a reason to repeat a design whose cost is visible, and neither is "it is how the other game does it".
+* **Duplication is the evidence.** The same few lines in three places usually means a responsibility is in the wrong home, not that three callers were lazy. Before moving code, find who had to copy it and what stopped them reusing it — that names the right owner. The character grid moved off `BaseView8Bit` on 2026-09-17 because three static list styles could never inherit a view and had each reimplemented `Column`/`Row` over it.
+* **Prefer the design that needs less to test.** Arithmetic assertable on its own is better placed than the same arithmetic reachable only by standing up a surface, a palette and a backend.
+* **Converge, do not diverge.** Where a port and the code it was modelled on disagree about a shape, change both rather than letting them drift or copying the weaker one forward. A rule like "copy Elite, not Stunt Car Racer" exists to stop arbitrary drift; it is not a reason to propagate a shape that has already cost something.
+* **A tier or a game that lacks a concept is given none of it.** The better design is often the one that models what is actually there — the 16-bit tier has a proportional font and so holds no character grid at all, rather than an invented cell size.
+* **Supersede, do not contradict.** If the better design overturns something in [decisions.md](decisions.md), add the new entry and mark what it replaces.
+* Cost the change before taking it: how many call sites move, what proves nothing broke, and whether the golden frames or the other games could shift. A better design that cannot be verified is not better yet.
 
 ### Screens and renderers: controllers, models and per-rendition drawing
 

@@ -73,7 +73,7 @@ internal static class MarketListStyle8Bit
             ],
             RowsLeft: rowsLeft,
             FirstRowY: Row(surface, FirstRow),
-            RowHeight: BaseView8Bit.RowHeight,
+            RowHeight: EightBitGrid.RowHeight,
             RowWidth: 316,
             VisibleRows: VisibleRows,
             CashCaption: Heading(surface, "Cash:", NameColumn, CashRow, TextAlignment.Left),
@@ -87,9 +87,7 @@ internal static class MarketListStyle8Bit
     private static PlacedText Heading(IViewSurface surface, string text, int column, int row, TextAlignment alignment)
         => new(text, Column(surface, column), Row(surface, row), alignment);
 
-    private static float Column(IViewSurface surface, int column)
-        => surface.Layout.ViewportLeft + (column * BaseView8Bit.CharacterWidth);
+    private static float Column(IViewSurface surface, int column) => EightBitGrid.Of(surface).Column(column);
 
-    private static float Row(IViewSurface surface, int row)
-        => surface.Layout.ViewportTop + (row * BaseView8Bit.RowHeight);
+    private static float Row(IViewSurface surface, int row) => EightBitGrid.Of(surface).Row(row);
 }

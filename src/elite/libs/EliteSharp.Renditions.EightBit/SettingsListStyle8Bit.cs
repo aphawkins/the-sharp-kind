@@ -47,18 +47,17 @@ internal static class SettingsListStyle8Bit
         return new(
             RowStyle: new(nameof(FontType.Small), text, selected, text),
             ValueStyle: new(nameof(FontType.Small), text, text, text),
-            RowsLeft: surface.Layout.ViewportLeft + (MarginColumn * BaseView8Bit.CharacterWidth),
+            RowsLeft: EightBitGrid.Of(surface).Column(MarginColumn),
             FirstRowY: Row(surface, FirstRow),
-            RowHeight: RowHeightRows * BaseView8Bit.RowHeight,
-            RowWidth: RowWidthColumns * BaseView8Bit.CharacterWidth,
-            ValueOffsetX: (ValueColumn - MarginColumn) * BaseView8Bit.CharacterWidth,
-            ArrowGap: ArrowGapColumns * BaseView8Bit.CharacterWidth,
-            BackRowWidth: BackRowWidthColumns * BaseView8Bit.CharacterWidth,
+            RowHeight: RowHeightRows * EightBitGrid.RowHeight,
+            RowWidth: RowWidthColumns * EightBitGrid.CharacterWidth,
+            ValueOffsetX: (ValueColumn - MarginColumn) * EightBitGrid.CharacterWidth,
+            ArrowGap: ArrowGapColumns * EightBitGrid.CharacterWidth,
+            BackRowWidth: BackRowWidthColumns * EightBitGrid.CharacterWidth,
             BackRowY: Row(surface, BackRow),
             FooterY: Row(surface, FooterRow),
-            SnapToCell: BaseView8Bit.CharacterWidth);
+            SnapToCell: EightBitGrid.CharacterWidth);
     }
 
-    private static float Row(IViewSurface surface, int row)
-        => surface.Layout.ViewportTop + (row * BaseView8Bit.RowHeight);
+    private static float Row(IViewSurface surface, int row) => EightBitGrid.Of(surface).Row(row);
 }

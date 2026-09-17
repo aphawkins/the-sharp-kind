@@ -2,6 +2,7 @@
 // 'rebb64' - github.com/zaidka/rebb64.
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
+using BubbleBobbleSharp.Abstractions.Views;
 using SharpKind.Abstraction.Renditions;
 
 namespace BubbleBobbleSharp.Abstractions.Renditions;
@@ -43,4 +44,11 @@ public interface IBbRendition
     /// Gets the window scale a player who has never chosen one gets.
     /// </summary>
     public int DefaultWindowScale => 1;
+
+    /// <summary>
+    /// Creates the view that draws the decoration down both edges of the level.
+    /// </summary>
+    /// <param name="surface">Everything the view draws with.</param>
+    /// <returns>The view.</returns>
+    public IView<SidebarModel> CreateSidebarView(IViewSurface surface);
 }

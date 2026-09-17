@@ -9,6 +9,53 @@ decision may reshape items in either. Newest first. When a decision
 reshapes or unblocks backlog items, those items are updated in the backlog
 to reference the decision here rather than restating it.
 
+## Resolved (2026-09-17) — the character grid belongs to the screen, not to the base view
+
+Supersedes the third bullet of
+[2026-07-31](#resolved-2026-07-31--viewlayout-is-the-viewport-and-8-bit-text-is-on-a-grid),
+which put `Row(n)`/`Column(n)` on `BaseView8Bit`. Everything else in that
+decision stands, including the 40x25 viewport and the rule that no grid
+applies to the 16-bit tier.
+
+Where column twelve falls is a fact about the screen, not a decision the
+thing drawing on it makes. Holding the arithmetic on a base view had three
+costs, and the second one had already been paid:
+
+- **It forced inheritance for code sharing.** A type wanting grid maths had
+  to *be* a view first.
+- **So the things that are not views duplicated it.**
+  `InventoryListStyle8Bit`, `MarketListStyle8Bit` and `SettingsListStyle8Bit`
+  are static classes and could never inherit `BaseView8Bit`, so each had
+  grown its own `Column(surface, n)`/`Row(surface, n)` over
+  `BaseView8Bit.CharacterWidth`. Three copies of two lines, which is how a
+  misplaced responsibility usually announces itself.
+- **It made the arithmetic untestable on its own.** Asserting where column
+  twelve falls meant building a view, which meant a surface, which meant
+  graphics and a palette that the arithmetic never touches.
+
+**`CharacterGrid` in `SharpKind.Graphics`** now holds it: cell width, cell
+height, an origin, and `Column`/`Row`/`Cell`/`ColumnsIn`/`RowsIn`/`SnapUp`.
+It is a `readonly record struct`, so a grid per call allocates nothing.
+
+- **The 8-bit tier states its grid once**, in `EightBitGrid`, which the base
+  view and all three list styles read. `BaseView8Bit.Row`/`Column`/
+  `SnapToGrid` survive as one-line delegates, so none of the ~120 call sites
+  moved and no golden frame could.
+- **The grid is not on `ViewLayout`.** `ViewLayout` is shared by both tiers,
+  and the 16-bit tier lays out in pixels with a proportional font — giving
+  it a cell size would mean inventing one. A tier without a grid holds none.
+- **Bubble Bobble's `BbViewLayout` exposes two**, `Screen` and `Playfield`,
+  the second originating at the level's own top-left so a view names the
+  column of the level it means. Its metrics are `init` properties rather
+  than constants, since the type is handed to every rendition and a second
+  tier would have a cell size of its own.
+
+The alternative was to leave Elite as it was and let the two games diverge,
+on the "copy Elite" rule in [bb-port-plan.md](bb-port-plan.md). Rejected:
+that rule exists so the ports do not drift apart on arbitrary differences,
+and it is not a reason to copy a shape whose cost was already visible in
+three duplicated helpers. Convergence was the point, so Elite moved.
+
 ## Resolved (2026-09-15) — the dashboard moves into the docs site
 
 One GitHub Pages site cannot have two publishers, and the repository had
@@ -734,6 +781,10 @@ Consequences:
   against vector chrome, and inherits nothing from these two.
 
 ## Resolved (2026-07-31) — `ViewLayout` is the viewport, and 8-bit text is on a grid
+
+> Superseded in part by
+> [2026-09-17](#resolved-2026-09-17--the-character-grid-belongs-to-the-screen-not-to-the-base-view):
+> the grid arithmetic moved off `BaseView8Bit` onto `CharacterGrid`.
 
 `ViewLayout` described its metrics partly against the border and partly
 against the scanner, which made every position two subtractions away from

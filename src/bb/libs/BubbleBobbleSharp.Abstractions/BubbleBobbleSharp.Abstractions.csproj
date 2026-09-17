@@ -1,11 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!-- The one plugin-facing assembly: a rendition references this and nothing else, so what goes
-       in is contracts and the data they carry, never game behaviour. It gains the graphics and
-       asset references when the first view does. -->
+       in is contracts and the data they carry, never game behaviour.
+
+       The graphics and asset references are what drawing needs: a view is handed an IGraphics
+       and a palette, so they cannot be avoided once there is a view. Note what that costs -
+       IBbRendition was dependency-free on its own, and a rendition author now transitively
+       carries assemblies they may never call. -->
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\useful\libs\SharpKind.Abstraction\SharpKind.Abstraction.csproj" />
+    <ProjectReference Include="..\..\..\useful\libs\SharpKind.Assets\SharpKind.Assets.csproj" />
+    <ProjectReference Include="..\..\..\useful\libs\SharpKind.Graphics\SharpKind.Graphics.csproj" />
   </ItemGroup>
 
 </Project>

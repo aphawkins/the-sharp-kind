@@ -3,6 +3,7 @@
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
 using BubbleBobbleSharp.Abstractions.Renditions;
+using BubbleBobbleSharp.Abstractions.Views;
 using SharpKind.Abstraction.Renditions;
 
 namespace BubbleBobbleSharp.Renditions.EightBit;
@@ -15,7 +16,8 @@ public sealed class EightBitRendition : IBbRendition
 {
     public Rendition Rendition => Rendition.EightBit;
 
-    // The playfield is the middle 32 columns, with the sidebars either side.
+    // Forty columns of eight pixels. The level takes the leftmost 32 of them, with its sidebar
+    // decoration inside that rather than beside it - see BbViewLayout.
     public int ScreenWidth => 320;
 
     public int ScreenHeight => 200;
@@ -24,4 +26,6 @@ public sealed class EightBitRendition : IBbRendition
     public IReadOnlyList<int> WindowScales => [1, 2, 3, 4];
 
     public int DefaultWindowScale => 4;
+
+    public IView<SidebarModel> CreateSidebarView(IViewSurface surface) => new SidebarView8Bit(surface);
 }

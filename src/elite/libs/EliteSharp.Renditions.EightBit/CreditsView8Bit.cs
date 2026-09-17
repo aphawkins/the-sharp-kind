@@ -53,13 +53,13 @@ internal sealed class CreditsView8Bit : BaseView8Bit, IView<CreditsModel>
             new(surface.Palette["Red"], surface.Palette["White"]),
             ControlColors.TextOnly(surface.Palette["LightGray"]));
 
-        _credits = new(surface.Graphics, _style) { ChildAlignment = TextAlignment.Centre, Spacing = RowHeight };
+        _credits = new(surface.Graphics, _style) { ChildAlignment = TextAlignment.Centre, Spacing = EightBitGrid.RowHeight };
 
         _version = new(surface.Graphics, _style, new TextSetting())
         {
             Alignment = TextAlignment.Centre,
             Width = surface.Layout.ViewportWidth,
-            SnapToCell = CharacterWidth,
+            SnapToCell = EightBitGrid.CharacterWidth,
         };
 
         // Always selected: it is the only thing on this screen to do.
@@ -68,7 +68,7 @@ internal sealed class CreditsView8Bit : BaseView8Bit, IView<CreditsModel>
             Alignment = TextAlignment.Centre,
             Width = BackBarWidth,
             Height = BackBarHeight,
-            SnapToCell = CharacterWidth,
+            SnapToCell = EightBitGrid.CharacterWidth,
             State = ControlState.Selected,
         };
     }
@@ -112,7 +112,7 @@ internal sealed class CreditsView8Bit : BaseView8Bit, IView<CreditsModel>
                 {
                     Alignment = TextAlignment.Centre,
                     Width = _surface.Layout.ViewportWidth,
-                    SnapToCell = CharacterWidth,
+                    SnapToCell = EightBitGrid.CharacterWidth,
                 });
             }
         }

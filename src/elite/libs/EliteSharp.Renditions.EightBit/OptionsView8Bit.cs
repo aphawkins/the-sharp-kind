@@ -41,7 +41,11 @@ internal sealed class OptionsView8Bit : BaseView8Bit, IView<OptionsModel>
             new(surface.Palette["Red"], surface.Palette["White"]),
             ControlColors.TextOnly(surface.Palette["LightGray"]));
 
-        _options = new(surface.Graphics, _style) { ChildAlignment = TextAlignment.Centre, Spacing = RowSpacingRows * RowHeight };
+        _options = new(surface.Graphics, _style)
+        {
+            ChildAlignment = TextAlignment.Centre,
+            Spacing = RowSpacingRows * EightBitGrid.RowHeight,
+        };
     }
 
     public void Draw(OptionsModel model)
@@ -71,7 +75,7 @@ internal sealed class OptionsView8Bit : BaseView8Bit, IView<OptionsModel>
                     Alignment = TextAlignment.Centre,
                     Width = OptionBarWidth,
                     Height = OptionBarHeight,
-                    SnapToCell = CharacterWidth,
+                    SnapToCell = EightBitGrid.CharacterWidth,
                 });
             }
         }

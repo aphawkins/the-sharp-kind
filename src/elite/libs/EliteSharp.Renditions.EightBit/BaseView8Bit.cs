@@ -36,11 +36,6 @@ internal class BaseView8Bit : IBaseView
     // Low enough to stay clear of the cockpit view, five rows off the bottom.
     internal const int InfoMessageRow = 20;
 
-    // Small and Large share the same fixed 8x8 bbc-micro cell, unlike the 16-bit proportional font -
-    // the viewport is a whole 40x25 of them.
-    internal const int CharacterWidth = 8;
-    internal const int RowHeight = 8;
-
     private readonly FastColor _colorWhite;
     private readonly FastColor _colorYellow;
 
@@ -50,6 +45,7 @@ internal class BaseView8Bit : IBaseView
 
         Graphics = surface.Graphics;
         Layout = surface.Layout;
+        Grid = EightBitGrid.Of(surface);
         _colorWhite = surface.Palette["White"];
         _colorYellow = surface.Palette["Yellow"];
     }
@@ -57,6 +53,10 @@ internal class BaseView8Bit : IBaseView
     public IGraphics Graphics { get; }
 
     public ViewLayout Layout { get; }
+
+    // The tier's 8x8 cell over the viewport. The arithmetic lives on the grid rather than here: a
+    // view is a place that draws, not the owner of where the screen's columns fall.
+    internal CharacterGrid Grid { get; }
 
     // Row 0 and the outermost columns are the border's overlay pixel - most glyphs there would ink over it.
     public void DrawFps(int fps)
@@ -89,10 +89,10 @@ internal class BaseView8Bit : IBaseView
     {
         ArgumentNullException.ThrowIfNull(text);
 
-        foreach (string line in TextWrap.Split(text, (int)(width / CharacterWidth)))
+        foreach (string line in TextWrap.Split(text, Grid.ColumnsIn(width)))
         {
             Graphics.DrawTextLeft(position, line, nameof(FontType.Small), _colorWhite);
-            position.Y += RowHeight;
+            position.Y += Grid.CellHeight;
         }
     }
 
@@ -105,21 +105,19 @@ internal class BaseView8Bit : IBaseView
     /// screen origin, so a cell boundary is a multiple of the cell size with
     /// nothing to offset it against.
     /// </summary>
-    internal static Vector2 SnapToGrid(Vector2 position) => new(
-        MathF.Ceiling(position.X / CharacterWidth) * CharacterWidth,
-        MathF.Ceiling(position.Y / RowHeight) * RowHeight);
+    internal Vector2 SnapToGrid(Vector2 position) => Grid.SnapUp(position);
 
     /// <summary>
     /// Gets the y of a character row, 0 being the topmost. The viewport is 25
     /// rows tall.
     /// </summary>
-    internal float Row(int row) => Layout.ViewportTop + (row * RowHeight);
+    internal float Row(int row) => Grid.Row(row);
 
     /// <summary>
     /// Gets the x of a character column, 0 being the leftmost. The viewport is
     /// 40 columns wide.
     /// </summary>
-    internal float Column(int column) => Layout.ViewportLeft + (column * CharacterWidth);
+    internal float Column(int column) => Grid.Column(column);
 
     /// <summary>
     /// Draws the title screens' wordmark, in text rather than a bitmap: the
@@ -141,7 +139,7 @@ internal class BaseView8Bit : IBaseView
     {
         ArgumentNullException.ThrowIfNull(text);
 
-        int columns = (int)(Layout.ViewportWidth / CharacterWidth);
+        int columns = Grid.ColumnsIn(Layout.ViewportWidth);
         Graphics.DrawTextLeft(new(Column((columns - text.Length) / 2), Row(row)), text, fontType, color);
     }
 }

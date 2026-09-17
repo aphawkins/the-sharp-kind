@@ -57,17 +57,15 @@ internal static class InventoryListStyle8Bit
             CashValue: Placed(surface, string.Empty, ValueColumn, FirstRow + 1),
             RowsLeft: rowsLeft,
             FirstRowY: Row(surface, CargoFirstRow),
-            RowHeight: BaseView8Bit.RowHeight,
-            RowWidth: (BaseView8Bit.LastTextColumn - LabelColumn) * BaseView8Bit.CharacterWidth,
+            RowHeight: EightBitGrid.RowHeight,
+            RowWidth: (BaseView8Bit.LastTextColumn - LabelColumn) * EightBitGrid.CharacterWidth,
             VisibleRows: VisibleRows);
     }
 
     private static PlacedText Placed(IViewSurface surface, string text, int column, int row)
         => new(text, Column(surface, column), Row(surface, row), TextAlignment.Left);
 
-    private static float Column(IViewSurface surface, int column)
-        => surface.Layout.ViewportLeft + (column * BaseView8Bit.CharacterWidth);
+    private static float Column(IViewSurface surface, int column) => EightBitGrid.Of(surface).Column(column);
 
-    private static float Row(IViewSurface surface, int row)
-        => surface.Layout.ViewportTop + (row * BaseView8Bit.RowHeight);
+    private static float Row(IViewSurface surface, int row) => EightBitGrid.Of(surface).Row(row);
 }
