@@ -1,4 +1,4 @@
-﻿// 'Elite - The Sharp Kind' - Andy Hawkins 2023-2026.
+// 'Elite - The Sharp Kind' - Andy Hawkins 2023-2026.
 // 'Elite - The New Kind' - C.J.Pinder 1999-2001.
 // Elite (C) I.Bell & D.Braben 1984.
 
@@ -10,6 +10,7 @@ using EliteSharp.Abstractions.Views.Stars;
 using EliteSharp.Abstractions.Views.Suns;
 using EliteSharpLib.Fakes;
 using EliteSharpLib.Renditions;
+using SharpKind.Abstraction.Renditions;
 using SharpKind.UI;
 
 namespace EliteSharpLib.Tests.Views;
@@ -74,7 +75,10 @@ public class RenditionRegistryTests
     // Draws every screen except the ones it was told to leave out.
     private sealed class ShortRendition(params Type[] omitted) : IRendition
     {
-        public string Name => "Short";
+        // Modern, because it is the one of the three no shipped rendition
+        // claims - this stub is standing in for a rendition, not for either
+        // of Elite's.
+        public Rendition Rendition => Rendition.Modern;
 
         public int ScreenWidth => 320;
 

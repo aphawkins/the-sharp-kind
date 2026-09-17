@@ -16,6 +16,7 @@
        a compile error. -->
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\useful\libs\SharpKind.Abstraction\SharpKind.Abstraction.csproj" />
     <ProjectReference Include="..\..\..\useful\libs\SharpKind.Assets\SharpKind.Assets.csproj" />
     <ProjectReference Include="..\..\..\useful\libs\SharpKind.Graphics\SharpKind.Graphics.csproj" />
     <ProjectReference Include="..\..\..\useful\libs\SharpKind.UI\SharpKind.UI.csproj" />

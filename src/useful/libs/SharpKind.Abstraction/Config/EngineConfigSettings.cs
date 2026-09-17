@@ -1,6 +1,7 @@
-﻿// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
+// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
 
 using System.Text.Json.Serialization;
+using SharpKind.Abstraction.Renditions;
 
 namespace SharpKind.Abstraction.Config;
 
@@ -12,8 +13,6 @@ namespace SharpKind.Abstraction.Config;
 /// </summary>
 public sealed class EngineConfigSettings
 {
-    private const string DefaultRendition = "16-bit";
-
     // Past this the window is larger than any display the game could be
     // shown on, so it is a typo rather than an intention.
     private const int MaxWindowScale = 4;
@@ -22,14 +21,6 @@ public sealed class EngineConfigSettings
     // view out of a cockpit.
     private const int MinFieldOfView = 30;
     private const int MaxFieldOfView = 120;
-
-    private static readonly Dictionary<string, string> s_legacyRenditionNames = new(StringComparer.Ordinal)
-    {
-        ["8Bit"] = "8-bit",
-        ["16Bit"] = "16-bit",
-        ["EightBit"] = "8-bit",
-        ["SixteenBit"] = "16-bit",
-    };
 
     // Which IAbstraction runs the game: Software (default) or Hardware
     // (SDL-accelerated). It picks the mixer as well as the rasteriser, which
@@ -55,10 +46,27 @@ public sealed class EngineConfigSettings
     // Which rendition the game draws itself as: picks the asset set and,
     // with it, the render resolution and scale. The asset set covers music
     // and effects as well as the artwork, so this is not graphics-only
-    // either. Any name a rendition gives itself is valid here; whether one
-    // by that name is installed is settled when it is looked for. See
-    // docs/asset-structure.md.
-    public string Rendition { get; set; } = DefaultRendition;
+    // either.
+    //
+    // One of the three names in RenditionNames and nothing else - the set is
+    // the engine's, so a config file, a folder name and a settings screen
+    // cannot disagree about what exists. Whether the game actually ships the
+    // one named is settled when it is looked for. See docs/asset-structure.md.
+    //
+    // Held as a string rather than the enum so one unreadable value costs
+    // that value alone: an enum the binder cannot parse fails the whole bind,
+    // and the player loses every other setting in the file with it.
+    public string Rendition { get; set; } = RenditionNames.SixteenBit;
+
+    // Which rendition a repair falls back to. 16-bit unless a game says
+    // otherwise, and a game that ships no 16-bit art has to say otherwise:
+    // repairing to a rendition the game does not have would leave it unable
+    // to start, which is a worse answer than the bad value it replaced.
+    //
+    // Not serialised. It is a fact about the build, not a setting, and a
+    // player cannot usefully choose it.
+    [JsonIgnore]
+    public string FallbackRendition { get; set; } = RenditionNames.SixteenBit;
 
     // What this setting was called before renditions existed, read so a file
     // written by an older build keeps the commander's choice. The binder fills
@@ -113,7 +121,7 @@ public sealed class EngineConfigSettings
         // both - which only a hand-edit produces - keeps the new one.
         if (!string.IsNullOrWhiteSpace(Tier))
         {
-            if (string.Equals(Rendition, DefaultRendition, StringComparison.Ordinal))
+            if (string.Equals(Rendition, RenditionNames.SixteenBit, StringComparison.Ordinal))
             {
                 Rendition = Tier;
             }
@@ -122,19 +130,20 @@ public sealed class EngineConfigSettings
             repaired = true;
         }
 
-        if (s_legacyRenditionNames.TryGetValue(Rendition, out string? renamed))
-        {
-            Rendition = renamed;
-            repaired = true;
-        }
-
         // ActiveController is not checked against what is attached: it is a
         // wish about whatever may be plugged in later, and a stick that is
         // not here today may well be tomorrow. Blanking it would lose the
         // commander's choice every time they unplugged it.
-        if (string.IsNullOrWhiteSpace(Rendition))
+        //
+        // A rendition is not like that. There are three, the engine says which,
+        // and a file naming anything else is naming something that cannot
+        // exist - so a legacy spelling is folded onto the name it now goes by,
+        // and anything else goes back to the default.
+        if (!RenditionNames.IsCurrentName(Rendition))
         {
-            Rendition = DefaultRendition;
+            Rendition = RenditionNames.TryParse(Rendition, out Rendition parsed)
+                ? RenditionNames.Of(parsed)
+                : FallbackRendition;
             repaired = true;
         }
 

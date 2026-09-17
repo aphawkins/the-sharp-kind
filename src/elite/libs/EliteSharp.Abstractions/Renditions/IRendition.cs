@@ -1,4 +1,4 @@
-﻿// 'Elite - The Sharp Kind' - Andy Hawkins 2023-2026.
+// 'Elite - The Sharp Kind' - Andy Hawkins 2023-2026.
 // 'Elite - The New Kind' - C.J.Pinder 1999-2001.
 // Elite (C) I.Bell & D.Braben 1984.
 
@@ -6,6 +6,7 @@ using EliteSharp.Abstractions.Views;
 using EliteSharp.Abstractions.Views.Planets;
 using EliteSharp.Abstractions.Views.Stars;
 using EliteSharp.Abstractions.Views.Suns;
+using SharpKind.Abstraction.Renditions;
 
 namespace EliteSharp.Abstractions.Renditions;
 
@@ -24,16 +25,23 @@ namespace EliteSharp.Abstractions.Renditions;
 public interface IRendition
 {
     /// <summary>
-    /// Gets the name this rendition is known by - in the config file, and in
-    /// the folder its assets sit in. It has to stay put across releases: a
-    /// renamed rendition is one the commander's config no longer selects.
+    /// Gets which machine this rendition stands in for.
     /// <para>
-    /// It is a name rather than one of a fixed set, because the game cannot
-    /// know what renditions exist. The two it ships with stand in for 8-bit
-    /// and 16-bit machines; a third need not be a machine at all.
+    /// One of a closed set the engine defines, not a name the rendition
+    /// chooses. That is what lets a config file, a folder name and a settings
+    /// screen agree about what exists, and what makes Elite's 8-bit tier and
+    /// another game's the same answer to the same question.
     /// </para>
     /// </summary>
-    public string Name { get; }
+    public Rendition Rendition { get; }
+
+    /// <summary>
+    /// Gets the name this rendition is known by - in the config file, and in
+    /// the folder its assets sit in. Derived from
+    /// <see cref="Rendition"/> rather than declared, so the two cannot
+    /// disagree.
+    /// </summary>
+    public string Name => RenditionNames.Of(Rendition);
 
     /// <summary>
     /// Gets the width in pixels this rendition draws at. The game renders at

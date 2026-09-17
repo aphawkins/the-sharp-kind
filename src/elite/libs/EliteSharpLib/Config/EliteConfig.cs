@@ -5,6 +5,7 @@
 using EliteSharpLib.Planets;
 using EliteSharpLib.Suns;
 using SharpKind.Abstraction.Config;
+using SharpKind.Abstraction.Renditions;
 
 namespace EliteSharpLib.Config;
 
@@ -15,7 +16,11 @@ internal sealed class EliteConfig : ConfigSettings<EliteConfigSettings>
     // this game; Elite's own commander-facing default is the 8-bit tier,
     // which is also the rendition whose own DefaultWindowScale (4) then
     // applies to a commander who has never chosen a scale either.
-    public EliteConfig() => Engine.Rendition = "8-bit";
+    public EliteConfig()
+    {
+        Engine.Rendition = RenditionNames.EightBit;
+        Engine.FallbackRendition = RenditionNames.EightBit;
+    }
 
     public override bool Repair()
     {

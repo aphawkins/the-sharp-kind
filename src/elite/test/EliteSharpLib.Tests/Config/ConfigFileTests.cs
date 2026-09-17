@@ -5,6 +5,7 @@
 using EliteSharpLib.Config;
 using EliteSharpLib.Suns;
 using SharpKind.Abstraction.Config;
+using SharpKind.Abstraction.Renditions;
 using SharpKind.Config;
 using SharpKind.Graphics;
 
@@ -149,19 +150,37 @@ public class ConfigFileTests
     }
 
     [Fact]
-    public void ReadConfigKeepsARenditionNameItDoesNotRecognise()
+    public void ReadConfigRepairsARenditionNameThatIsNotOneOfTheThree()
     {
-        // A name the game has never heard of is not a mistake to repair: the
-        // whole point of renditions being named rather than enumerated is
-        // that the game cannot know what exists. Whether one by that name is
-        // installed is settled when it is looked for, and that failure names
-        // it - repairing to the default here would quietly ignore what the
-        // commander asked for.
+        // Renditions were once named rather than enumerated, on the grounds
+        // that the game cannot know what exists, and a name like this one was
+        // kept for the loader to fail on by name. They are a closed set now -
+        // 8-bit, 16-bit and Modern, defined by the engine - so a file naming
+        // anything else names something that cannot exist, and it is repaired
+        // like any other unusable value.
+        //
+        // It repairs to Elite's own fallback, the 8-bit tier, rather than to
+        // the engine's 16-bit: a repair that named a rendition the game does
+        // not ship would leave it unable to start.
+        //
+        // The rest of the file survives, which is the part that has not
+        // changed: one bad value costs that value alone.
         EliteConfig config = ReadWritten(
             /*lang=json,strict*/ "{\"engine\": {\"rendition\": \"Psychedelic\"}, \"game\": {\"sunStyle\": \"Solid\"}}");
 
-        Assert.Equal("Psychedelic", config.Engine.Rendition);
+        Assert.Equal(RenditionNames.EightBit, config.Engine.Rendition);
         Assert.Equal(SunType.Solid, config.Game.SunStyle);
+    }
+
+    [Fact]
+    public void ReadConfigKeepsTheModernRendition()
+    {
+        // The third of the three. No game draws it yet, but the engine names
+        // it, so a file may hold it.
+        EliteConfig config = ReadWritten(
+            /*lang=json,strict*/ "{\"engine\": {\"rendition\": \"Modern\"}}");
+
+        Assert.Equal(RenditionNames.Modern, config.Engine.Rendition);
     }
 
     // The limit of repairing in place: a value the binder cannot even parse
@@ -255,13 +274,16 @@ public class ConfigFileTests
 
     // The old key only wins where the new one was never written, so a file
     // holding both - which only a hand-edit produces - keeps the new one.
+    // Modern is the new value here because it is a rendition neither the
+    // default nor the legacy tier names, so only the new key can have put it
+    // there.
     [Fact]
     public void RepairKeepsTheRenditionWhenBothAreSet()
     {
-        EngineConfigSettings engine = new() { Rendition = "Psychedelic", Tier = "8Bit" };
+        EngineConfigSettings engine = new() { Rendition = RenditionNames.Modern, Tier = "8Bit" };
 
         Assert.True(engine.Repair());
-        Assert.Equal("Psychedelic", engine.Rendition);
+        Assert.Equal(RenditionNames.Modern, engine.Rendition);
     }
 
     private static EliteConfig ReadWritten(string json)

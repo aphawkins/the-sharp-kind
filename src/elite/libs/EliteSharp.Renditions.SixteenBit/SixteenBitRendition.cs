@@ -1,4 +1,4 @@
-﻿// 'Elite - The Sharp Kind' - Andy Hawkins 2023-2026.
+// 'Elite - The Sharp Kind' - Andy Hawkins 2023-2026.
 // 'Elite - The New Kind' - C.J.Pinder 1999-2001.
 // Elite (C) I.Bell & D.Braben 1984.
 
@@ -7,6 +7,7 @@ using EliteSharp.Abstractions.Views;
 using EliteSharp.Abstractions.Views.Planets;
 using EliteSharp.Abstractions.Views.Stars;
 using EliteSharp.Abstractions.Views.Suns;
+using SharpKind.Abstraction.Renditions;
 
 namespace EliteSharp.Renditions.SixteenBit;
 
@@ -17,7 +18,7 @@ namespace EliteSharp.Renditions.SixteenBit;
 /// </summary>
 public sealed class SixteenBitRendition : IRendition
 {
-    public string Name => "16-bit";
+    public Rendition Rendition => Rendition.SixteenBit;
 
     // Widened from 512 to 640 on 2026-07-30 alongside a 640-wide scanner. The
     // height is unchanged, so the vertical field of view is too.
