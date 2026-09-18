@@ -9,6 +9,51 @@ decision may reshape items in either. Newest first. When a decision
 reshapes or unblocks backlog items, those items are updated in the backlog
 to reference the decision here rather than restating it.
 
+## Resolved (2026-09-18) — a rendition is an aesthetic tier, not a machine
+
+**8-bit means the look and feel of an 8-bit game.** Sixteen colours, a low
+screen resolution, synthesised sound, limited graphics. It does **not** mean
+fidelity to the particular machine a game happened to be ported from.
+
+This makes explicit for sound what
+[2026-08-01](#resolved-2026-08-01--the-16-bit-tier-is-a-12-bit-4096-colour-machine)
+already settled for colour. That decision called the 16-bit tier "a 12-bit,
+4096-colour machine" and spoke of "the 16-bit **machines** it stands in for" -
+plural, a class of hardware rather than one model. The same reading applies to
+every tier and to every kind of asset in it.
+
+**The line this draws:**
+
+- **The golden source governs behaviour.** What the game *does* - the movement
+  maths, the collision rules, the state machines - is settled by the reference
+  in [reference-sources.md](reference-sources.md) and the port plans, and that
+  does not move.
+- **The rendition governs presentation.** How it looks and sounds is the
+  tier's to choose, within the tier's constraints.
+
+**So the sound chip is a free choice.** A rendition may use whichever 8-bit
+synthesis sounds right and costs least, regardless of which machine the game
+came from:
+
+- SID synthesis on Elite's 8-bit tier is legitimate, even though Elite's
+  golden source is the BBC Micro disc version.
+- SN76489 synthesis on Bubble Bobble's 8-bit tier is legitimate, even though
+  its golden source is the C64 conversion.
+- One chip may serve both games' 8-bit tiers. That is an argument for doing
+  one well rather than two adequately.
+
+**This corrects a framing introduced in the backlog on the same day.** The
+first draft of "Audio per rendition" in
+[backlog-roadmap.md](backlog-roadmap.md) argued that each game's 8-bit tier
+had to use its own source machine's chip - SN76489 for Elite because the BBC
+is its golden source, SID for Bubble Bobble because the C64 is - and treated
+that as a fidelity requirement. It is not one. That item has been updated.
+
+A consequence worth stating, because it removes an apparent blocker: **BBC
+Elite having no music of its own does not mean the 8-bit tier must be
+silent.** What the BBC did is not the constraint; what an 8-bit machine sounds
+like is. Music on that tier is a presentation choice like any other.
+
 ## Resolved (2026-09-17) — the character grid belongs to the screen, not to the base view
 
 Supersedes the third bullet of

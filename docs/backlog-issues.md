@@ -34,6 +34,47 @@ there before starting an item that mentions a decision.
 
 ## Must
 
+- [ ] **[LARGE]** [EliteSharpLib] Docking break-pattern rings are the wrong
+      shape and don't reach the sides. Reported by the maintainer,
+      2026-09-18: while docking, the rings should expand to fill the
+      viewport — reaching left and right as well as top and bottom — but
+      currently only reach the top/bottom edges. They should also not be
+      circles: octagons (8 sides) on the 8-bit rendition, hexadecagons (16
+      sides) on the 16-bit rendition, and circles only on a Modern
+      rendition.
+      **Extent bug.** [BreakPattern.cs:27-28](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/libs/EliteSharpLib/BreakPattern.cs)
+      sizes `RingStep` from `MathF.Min(ViewportCentre.X, ViewportCentre.Y)`,
+      capping the largest ring's radius at the viewport's shorter half-extent
+      — on a wide/landscape viewport that is the vertical half-extent, so
+      the rings meet the top/bottom edges and stop well short of the left
+      and right ones. Its own comment
+      ("meets the near edges rather than running off the far ones") records
+      this as deliberate, but it contradicts the actual intent: the rings
+      should reach the *farthest* edges (i.e. grow from `Max`, or size X and
+      Y independently as an ellipse), not stop at the nearest.
+      **Shape bug.** `Draw()` always calls
+      `_draw.Graphics.DrawCircle(...)` — there is no per-rendition break
+      pattern today; `BreakPattern` lives in the shared `EliteSharpLib` and
+      is used unchanged by `DockingView`
+      ([DockingView.cs:42](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/libs/EliteSharpLib/Views/DockingView.cs))
+      regardless of rendition. Fixing the shape needs either a
+      rendition-specific ring drawer (mirroring how `GalacticChartView8Bit`
+      / `16Bit` already draw their own circles) or a shared
+      `DrawRegularPolygon(centre, radius, sides, colour)` primitive plumbed
+      through `IEliteDraw`/`EliteDraw`
+      ([IEliteDraw.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/libs/EliteSharpLib/Graphics/IEliteDraw.cs),
+      [EliteDraw.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/libs/EliteSharpLib/Graphics/EliteDraw.cs))
+      that `BreakPattern` calls with 8, 16, or a circle depending on the
+      active rendition. No "Modern" rendition project exists yet (only
+      `EliteSharp.Renditions.EightBit` and `.SixteenBit`) — until one does,
+      the circle case is just "whatever `BreakPattern` already does", so
+      this item is really two: (1) fix the extent so the rings fill the
+      viewport to its farthest edges on every rendition, and (2) give
+      8-bit and 16-bit their own polygon ring shape instead of a circle.
+      Split those into separate sessions; do the extent fix first since
+      it's a small, self-contained change with an obvious regression test,
+      and the shape change can follow once a polygon primitive exists.
+
 ## Should
 
 - [ ] [EliteSharpLib] The universe is not fully reset when the commander dies

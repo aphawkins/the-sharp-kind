@@ -286,6 +286,131 @@ rectangle. The three below are then independent of each other.
       *pixel* positions rather than scaled ones, so they would all have to
       move when the screen does. Survey that before splitting.
 
+### Audio per rendition
+
+Raised by the maintainer on 2026-09-18, after noticing that Elite's 8-bit tier
+sounds wrong: it plays MIDI, which belongs to the 16-bit tier. **Could have,
+low priority.**
+
+**Audio is not a rendition concern at all today, and that is the root of it.**
+The two rendition manifests declare only `Fonts`
+([8-bit](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/libs/EliteSharp.Renditions.EightBit/Assets/AssetManifest.json)).
+`Sfx`, `Music` and `SoundFonts` live in the game's shared manifest
+([EliteSharpLib/Assets/AssetManifest.json](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/libs/EliteSharpLib/Assets/AssetManifest.json)),
+so every tier gets identical audio whatever art it draws. Even with recorded
+assets and no synthesis, that split is wrong.
+
+**The shape the maintainer wants:** one audio format per tier, matching the
+visual tiers.
+
+| Tier | Audio |
+|---|---|
+| 8-bit | chip synthesis |
+| 16-bit | MIDI, as now |
+| Modern | WAV, OGG, whatever suits |
+
+**Why MIDI reads as 16-bit.** A General MIDI soundfont plays *sampled*
+instruments - a recorded piano, a recorded string section. That is an
+Amiga/SNES aesthetic. An 8-bit machine had no samples and no instruments. It
+had three or four oscillators wired to a speaker. What makes a thing sound
+8-bit is the timbre and the limits: square and pulse waves, an LFSR for every
+percussive sound, coarse integer pitch dividers that put high notes audibly
+out of tune, volume in sixteen stepped levels, no chords (arpeggios instead,
+because three voices cannot hold a chord *and* a bassline), and envelopes done
+in software at frame rate so they click.
+
+**Which chip is a free choice** - see
+[decisions.md](decisions.md), 2026-09-18. A rendition is an aesthetic tier,
+not a machine, so the 8-bit tier is not obliged to use the chip from whichever
+machine each game was ported from. SID on Elite's 8-bit tier is legitimate;
+SN76489 on Bubble Bobble's is legitimate; one chip may serve both. That is an
+argument for doing one well rather than two adequately.
+
+The two candidates, so the cost is on the table:
+
+- **SN76489** (BBC Micro, Master System). Three square-wave tone channels, one
+  noise channel, 4-bit attenuation each, 10-bit dividers. Small - of the order
+  of 150-200 lines. **But the chip alone is not enough if you want BBC Elite's
+  own effects:** the game does not touch the chip, it calls the OS, so the
+  `SOUND`/`ENVELOPE` layer comes too - channel queueing, flush control, pitch
+  in quarter-semitones, duration in twentieths of a second, and a 14-parameter
+  envelope model. Comparable in size to the chip.
+- **SID 6581** (C64). A different proposition: saw, triangle, variable-width
+  pulse and noise, ring modulation, hard sync, ADSR with nonlinear rates, and
+  a resonant multimode filter nobody models exactly. Recognisable-but-inexact
+  is 400-600 lines; accurate is a project in itself.
+
+**Bass is the constraint that bites on the SN76489.** Its 10-bit divider on a
+4 MHz clock floors the lowest note at about 4,000,000 / (32 x 1023) = 122 Hz,
+roughly B2. Anything written for the SID leans below that. The usual
+workaround is to octave-shift the bass or use periodic noise as a buzzy bass
+voice, which means the bottom end gets re-arranged rather than converted.
+
+**Watch out: naive square waves alias badly at 44.1kHz** and sound broken
+rather than retro. Either band-limit the waveform discontinuities (PolyBLEP),
+or run the chip at its own clock and decimate through a low-pass. The second
+is what accurate emulators do, it is easier to reason about, and it gives the
+authentic grit for free.
+
+**Insertion point.**
+[SoftwareSound.Render](https://github.com/aphawkins/the-sharp-kind/blob/main/src/useful/libs/SharpKind.Audio/SoftwareSound.cs)
+is already a pull-based mixer, so a synth voice can be mixed alongside the
+decoded ones.
+[ISound](https://github.com/aphawkins/the-sharp-kind/blob/main/src/useful/libs/SharpKind.Audio/ISound.cs)
+should not change - the games call `Play`/`PlayLoop`/`StopMusic` and should
+not learn which tier is sounding.
+
+- [ ] [SharpKind.Audio, EliteSharp.Renditions.*] Move `Sfx`, `Music` and
+      `SoundFonts` out of the shared manifest and into each rendition's, the
+      way `Fonts` already is. This is the item that stands alone and is worth
+      doing whatever happens to the rest: it is a straight copy of the
+      existing assets into the two tiers, and it makes every later item a
+      change to one tier rather than to the game.
+- [ ] [SharpKind.Audio] **[LARGE]** A synth voice in the mixer, and a way for
+      a rendition to declare one instead of a sample set. Survey first -
+      `AssetLocator` exposes `SfxPaths`/`MusicPaths`/`SoundFontPaths` as path
+      dictionaries, and a synthesised effect has no path.
+- [ ] [SharpKind.Audio] **[LARGE]** One chip, chosen deliberately, and the
+      effect set authored for it. **VGM** is worth a look for the data: it is
+      the standard register-log format for these chips, a player is small, it
+      covers music and effects in one format, and being a byte-level log it is
+      the same kind of source-of-truth this repo already prefers for graphics.
+      The alternative is a small declarative JSON effect format in the style
+      of the existing manifests.
+- [ ] [BubbleBobbleSharp] **If the chip chosen is a SID, this reopens a
+      decision** - do not take it silently. Phase 8 of
+      [bb-port-plan.md](bb-port-plan.md) says *do not* port `sound.s` because
+      it is a SID player, and to record a `.wav` per effect from VICE instead.
+      With a SID in the engine that inverts: port the player, drive it from
+      the same trigger IDs, ship no recorded audio at all, and get every tune
+      exactly. Much bigger, much better. Decide it deliberately.
+
+**Elite's 8-bit effects are already data, if the SN76489 is the chip chosen.**
+Checked in the golden source on 2026-09-18. The whole effect set is the table
+at `.SFX` in `elite-source-flight.asm` - **ten entries of four bytes** - plus
+four envelopes the loader installs through `OSWORD 8`. The four bytes are the
+BASIC `SOUND` parameters, and Moxon's commentary documents the encoding. So
+there is nothing to record and nothing to author: this is an extraction job of
+the same shape as `tools/bb/export-csharp-assets.py`.
+
+Two things fall out of having looked:
+
+- **BBC Elite has no music at all.** No tune data, no player. `MusicType`'s
+  `EliteTheme` and `BlueDanube` come from
+  [Elite: The New Kind](https://github.com/fesh0r/newkind), as the header of
+  [MusicType.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/elite/libs/EliteSharpLib/Audio/MusicType.cs)
+  says - a 1999 PC remake, not an 8-bit machine. This is not a blocker: the
+  2026-09-18 decision settles that the tier is an aesthetic, so it may have
+  music the BBC never had. It does mean any 8-bit music is *authored*, not
+  extracted. The Blue Danube is Strauss II, 1866, so the composition is public
+  domain and an original three-channel arrangement owes nothing to any port.
+- **The effect sets do not line up.** `SoundEffect` has fourteen entries; the
+  BBC table has ten sounds, and `Crash`, `Dock` and `Gameover` have no BBC
+  equivalent. The original already reuses one sound across two events, so
+  mapping fourteen onto ten has precedent in the source itself - but it does
+  mean `SoundEffect` and `MusicType` cannot stay shared game-level enums once
+  the tiers differ. Settle where they live before writing the synth.
+
 ### Input
 
 Nothing open. Two items closed on 2026-09-13: the SideWinder mapping (the

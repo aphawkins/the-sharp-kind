@@ -1765,6 +1765,12 @@ the real game, and six EXTEND letters award a life.
 
 Do **not** port `rebb64/src/sound.s`. It is a SID player.
 
+**That decision is under review** - see "Audio per rendition" in
+[backlog-roadmap.md](backlog-roadmap.md). If a SID emulator arrives for the
+8-bit renditions, porting the player becomes the better option rather than the
+forbidden one: same trigger IDs, every tune exact, and no recorded audio to
+ship. Check there before starting this phase.
+
 - [ ] List every trigger ID in `rebb64/src/sid-wrapper.s`.
 - [ ] `make sid`, then record one `.wav` per effect and per tune from VICE
       or sidplay.
