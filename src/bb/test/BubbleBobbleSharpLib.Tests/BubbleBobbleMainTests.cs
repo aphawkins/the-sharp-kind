@@ -61,6 +61,47 @@ public sealed class BubbleBobbleMainTests
         Assert.Equal(1, game.CurrentLevel);
     }
 
+    // There is no progression until Phase 7, so N is the only way to see a level past the first.
+    [Fact]
+    public void NStepsToTheNextLevel()
+    {
+        FakeAbstraction abstraction = new();
+        BubbleBobbleMain game = Game(abstraction);
+        ((FakeKeyboard)abstraction.Keyboard).KeyDown(ConsoleKey.N, ConsoleModifiers.None);
+
+        game.Update();
+
+        Assert.Equal(2, game.CurrentLevel);
+    }
+
+    // The hundredth level's neighbour is the first, because there is no level 101 to ask for.
+    [Fact]
+    public void NWrapsFromTheLastLevelToTheFirst()
+    {
+        FakeAbstraction abstraction = new();
+        BubbleBobbleMain game = Game(abstraction);
+        game.ShowLevel(LevelStore.Count);
+        ((FakeKeyboard)abstraction.Keyboard).KeyDown(ConsoleKey.N, ConsoleModifiers.None);
+
+        game.Update();
+
+        Assert.Equal(1, game.CurrentLevel);
+    }
+
+    // The step is one level per press, not one per tick the key is held down.
+    [Fact]
+    public void HoldingNStepsOneLevelOnly()
+    {
+        FakeAbstraction abstraction = new();
+        BubbleBobbleMain game = Game(abstraction);
+        ((FakeKeyboard)abstraction.Keyboard).KeyDown(ConsoleKey.N, ConsoleModifiers.None);
+
+        game.Update();
+        game.Update();
+
+        Assert.Equal(2, game.CurrentLevel);
+    }
+
     // Three bands: the level trimmed to the 28 columns the decoration leaves, the decoration over
     // the whole 32, and the HUD in the eight columns past them. All three are the full height of
     // the screen.

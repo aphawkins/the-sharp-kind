@@ -22,8 +22,8 @@ namespace BubbleBobbleSharpLib;
 
 /// <summary>
 /// The game, as the host and the composition root see it. It puts a level on
-/// the screen and closes on Escape; see docs/bb-port-plan.md for what comes
-/// next.
+/// the screen, steps to the next one on N, and closes on Escape; see
+/// docs/bb-port-plan.md for what comes next.
 /// </summary>
 public sealed class BubbleBobbleMain : IGame, IGameApp
 {
@@ -36,6 +36,12 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
 
     // $0956, game-loop.s: both players start a game with three lives.
     private const int StartingLives = 3;
+
+    // Steps to the next level, for looking at levels there is no way yet to reach: nothing advances
+    // a level until Phase 7 translates the progression, and a hundred levels are of no use if only
+    // the first can be seen. It goes when the front end arrives. F12 is the host's frame dump, so
+    // the two together photograph any level asked for.
+    private const ConsoleKey NextLevelKey = ConsoleKey.N;
 
     private readonly IAbstraction _abstraction;
     private readonly LevelStore _levels;
@@ -135,6 +141,13 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         if (Keyboard.IsPressed(ConsoleKey.Escape))
         {
             IsRunning = false;
+        }
+
+        // Wraps, because the hundredth level's neighbour has to be something and the first is the
+        // only level this game can name without a progression to ask.
+        if (Keyboard.IsPressed(NextLevelKey))
+        {
+            ShowLevel(CurrentLevel == LevelStore.Count ? FirstLevel : CurrentLevel + 1);
         }
     }
 

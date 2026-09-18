@@ -716,7 +716,30 @@ counts settle the rest. Rows 5, 12 and 20 hold 30 pixels each, which is one
 `0` glyph — six drawn digits would be 180, so the blanking is real. Rows 7
 and 14 hold 96, which is three markers at the 32 pixels cell `$1D` carries.
 
-- [ ] A debug key that steps to the next level.
+- [x] A debug key that steps to the next level. `N`, read in
+      `BubbleBobbleMain.Update` with the keyboard's one-shot `IsPressed`, so a
+      held key steps one level rather than fifty a second. It wraps at 100
+      back to 1, because the hundredth level's neighbour has to be something
+      and the first is the only level this port can name without the
+      progression Phase 7 translates.
+
+      Ungated, unlike Elite's `ELITE_DEBUG_YAW`. That switch hides a departure
+      from the original from a player in normal play; there is no player and
+      no normal play here, only a hundred levels and one way to look at them.
+      The key goes when the front end arrives.
+
+**Verified:** the solution builds with 0 warnings and
+`BubbleBobbleSharpLib.Tests` is 88/88. Elite (726 + 39), SCR (246) and every
+engine suite pass unchanged. The step, the wrap and the one-level-per-press
+are proved against the fake keyboard.
+
+Proved in the real app too, through `GAME_KEY_SCRIPT` and
+`GAME_FRAME_DUMP_DIR`: a script that taps `N` 29 times, then 70 more, then
+once more, and dumps a frame at each stop, exits 0 and leaves four frames.
+Levels 1, 30 and 100 are three different pictures, and the frame after the
+wrap is byte-identical to the opening one - so the key moves the screen, and
+moves it back to where it started.
+
 - [x] Confirm the fourteen unverified palette entries against VICE. Settled
       2026-09-17 without VICE, and settled the other way: the fourteen were
       not merely unverified but wrong. Andy supplied Pepto's own values and
