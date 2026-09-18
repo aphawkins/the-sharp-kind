@@ -758,11 +758,38 @@ Translate: `joystick-input.s`, `player-movement.s`, `player-state.s`,
 `player-animation.s`, `platform-collision.s`, and the sprite-choosing part
 of `player-sprites.s`.
 
-- [ ] `PlayerTable`, holding the per-player bytes from `master.s`.
+- [x] `PlayerTable`, holding the per-player bytes from `master.s`. One array
+      per field, two entries long, indexed by player - the section 6.4 shape,
+      not one object per player. Five fields, because five is what `master.s`
+      names as a player's own: state (`$B2`), X (`$BA`), Y (`$C2`), the bubble
+      timer (`$5D`/`$5E`) and lives (`$045A`/`$045B`, from
+      `game-variables.s`). The rest of what a player moves on lives in the
+      `$85xx`-`$88xx` arrays, which are eighteen entries long and shared with
+      every other entity, so they belong to Phase 6's `EntityTable` rather
+      than here. Each field is added as the routine that reads it arrives.
+
+      State, X and Y are zero-page arrays the 6502 indexes exactly as this
+      class does. The bubble timer and lives are not arrays there at all -
+      each is a pair of separately named bytes - but they are indexed here
+      too, because the caller is holding a player number and a pair of named
+      fields would make every caller branch on it.
 - [ ] `Input.Read()` producing the same bit layout the 6502 joystick routine
       does. Keep the bit layout — the movement code reads it directly.
 - [ ] Walk, jump, fall, land, face left and right, animate.
 - [ ] `PlayerModel` and its view.
+
+**Verified so far:** the solution builds with 0 warnings and
+`BubbleBobbleSharpLib.Tests` is 91/91. The table's width, its zeroed start and
+the independence of the two players' bytes are proved against the table
+itself.
+
+**Watch out:** `rebb64/docs/TECHNICAL.md` and `rebb64/src/` disagree about the
+entity arrays. The doc's table calls `$8840` the horizontal velocity and
+`$87A0` a platform climbing counter, but `player-movement.s` at `$26BF` adds
+`$87A0,x` to X and uses `$8840,x` as an index into an animation table, and
+`$8868,x` is the byte it adds to Y. Section 1 settles which wins - the golden
+source is `src/`, and the doc is a summary of it. Name from the code when the
+next item reaches these.
 
 **Verify:** headless harness. Hold right for 40 ticks from a known start on
 level 1; the player's X byte matches VICE at the same tick. And: the player
@@ -939,6 +966,11 @@ Do not tune the constant.
 
 ## 8. Notes for the implementer
 
+- Say what the item is before starting it. A few sentences to Andy: what
+  the item covers, which `.s` routines it translates, and what will exist
+  when it is done. A box's own wording is a reminder to whoever wrote it,
+  not a briefing, so it is worth restating in plain terms before any code
+  is written.
 - One phase at a time. Commit at the end of a phase, not during.
 - Do not commit automatically. Andy commits.
 - UK spelling everywhere, including in code comments.
