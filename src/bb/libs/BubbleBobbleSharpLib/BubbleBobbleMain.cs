@@ -7,6 +7,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using BubbleBobbleSharp.Abstractions.Renditions;
 using BubbleBobbleSharp.Abstractions.Views;
+using BubbleBobbleSharpLib.Bubbles;
 using BubbleBobbleSharpLib.Graphics;
 using BubbleBobbleSharpLib.Levels;
 using BubbleBobbleSharpLib.Players;
@@ -74,8 +75,14 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     // off that is the whole of Phase 4.
     private readonly PlayerTable _playerTable = new();
     private readonly EntityTable _entities = new();
+
+    // The eighteen slots a bubble goes into. Nothing reads them back yet - what travels, expires
+    // and pops is the rest of Phase 5 - but the blow fills them, so they are held from here.
+    private readonly ObjectTable _objects = new();
+
     private readonly Input _input;
     private readonly PlayerFrame _frame;
+    private readonly BubbleBlow _blow;
     private readonly LayerRunner _layers;
 
     // What the HUD shows. $0969 clears both scores and the high score when a game starts, and
@@ -127,22 +134,10 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         AudioOptions = audioOptions;
         _levels = levels;
 
-        // $1CBD down to $267A, built once. Each of these is one routine out of the reference and they
-        // are wired in the order the reference calls them, innermost first: the steer is reached from
-        // the drift's tail and the fall's, the descent from the landing, the landing from the jump.
         _input = new Input(Keyboard, Gamepad);
 
-        PlayerSteer steer = new(_playerTable, _entities);
-        PlayerDrift drift = new(_playerTable, _entities, steer);
-        PlayerDescent descent = new(_playerTable, _entities);
-        PlayerLanding landing = new(_playerTable, _entities, descent);
-
-        _frame = new PlayerFrame(
-            _playerTable,
-            _entities,
-            new PlayerMovement(_playerTable, _entities),
-            new PlayerJump(_playerTable, _entities, drift, landing),
-            new PlayerFall(_playerTable, _entities, steer));
+        _blow = new BubbleBlow(_playerTable, _entities, _objects);
+        _frame = BuildFrame(_playerTable, _entities, _blow);
 
         BbViewSurface surface = new(Graphics, Layout, assetLocator);
         _playfieldView = rendition.CreatePlayfieldView(surface);
@@ -201,6 +196,9 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
             ShowLevel(CurrentLevel == LevelStore.Count ? FirstLevel : CurrentLevel + 1);
         }
 
+        // $0A28, which the game loop runs before the entity update rather than after it.
+        _blow.Tick();
+
         // $1CBD: both ports read once, then every live slot walked. One tick is one frame, so this
         // runs at the rate the raster interrupt called it at.
         _frame.Step(_input.Read(), _solids);
@@ -232,8 +230,34 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     // way the player faces, what colour they are, and the three counters a level start puts back to
     // $FF. The rest of both routines - the music, the invincibility timer, the lives - belongs to
     // the phases that read those bytes, and is not translated here.
+    // $1CBD down to $267A, built once. Each of these is one routine out of the reference and they
+    // are wired in the order the reference calls them, innermost first: the steer is reached from
+    // the drift's tail and the fall's, the descent from the landing, the landing from the jump.
+    //
+    // A method of its own rather than eight lines of the constructor, because the constructor is at
+    // the class coupling limit and every routine Phase 5 adds would push it over.
+    private static PlayerFrame BuildFrame(PlayerTable players, EntityTable entities, BubbleBlow blow)
+    {
+        PlayerSteer steer = new(players, entities, blow);
+        PlayerDrift drift = new(players, entities, steer);
+        PlayerDescent descent = new(players, entities);
+        PlayerLanding landing = new(players, entities, descent);
+
+        return new PlayerFrame(
+            players,
+            entities,
+            new PlayerMovement(players, entities, blow),
+            new PlayerJump(players, entities, drift, landing),
+            new PlayerFall(players, entities, steer),
+            blow);
+    }
+
     private void StartPlayers()
     {
+        // $0620 and $062B. Every one of the eighteen slots goes back to free, so bubbles blown on
+        // the last level are not still there on this one.
+        _objects.Reset();
+
         for (int player = 0; player < PlayerTable.Capacity; player++)
         {
             bool playing = player < PlayingPlayers;

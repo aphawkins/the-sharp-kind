@@ -2,6 +2,7 @@
 // 'rebb64' - github.com/zaidka/rebb64.
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
+using BubbleBobbleSharpLib.Bubbles;
 using BubbleBobbleSharpLib.Levels;
 
 namespace BubbleBobbleSharpLib.Players;
@@ -40,14 +41,17 @@ internal sealed class PlayerSteer
 
     private readonly PlayerTable _players;
     private readonly EntityTable _entities;
+    private readonly BubbleBlow _blow;
 
-    internal PlayerSteer(PlayerTable players, EntityTable entities)
+    internal PlayerSteer(PlayerTable players, EntityTable entities, BubbleBlow blow)
     {
         ArgumentNullException.ThrowIfNull(players);
         ArgumentNullException.ThrowIfNull(entities);
+        ArgumentNullException.ThrowIfNull(blow);
 
         _players = players;
         _entities = entities;
+        _blow = blow;
     }
 
     // $25F1. Left is asked first and wins outright: if it is pushed, the right half is never
@@ -60,7 +64,13 @@ internal sealed class PlayerSteer
         // player this frame, and the drift may have moved them again.
         PlayerCell cell = PlayerCell.Of(_players.X[player], _players.Y[player]);
 
-        // $25F5's fire arm reaches $22E8, the bubble release. Phase 5, not translated.
+        // $25F5. The fire arm, and a jsr here rather than a jmp - a player blows and then carries on
+        // steering in the same frame.
+        if ((port & Input.Fire) == 0)
+        {
+            _blow.Blow(player);
+        }
+
         byte frame = _entities.Frame[player];
 
         if ((port & Input.Left) == 0)

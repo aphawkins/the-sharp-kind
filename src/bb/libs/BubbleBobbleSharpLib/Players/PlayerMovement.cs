@@ -2,6 +2,7 @@
 // 'rebb64' - github.com/zaidka/rebb64.
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
+using BubbleBobbleSharpLib.Bubbles;
 using BubbleBobbleSharpLib.Levels;
 
 namespace BubbleBobbleSharpLib.Players;
@@ -53,14 +54,17 @@ internal sealed class PlayerMovement
 
     private readonly PlayerTable _players;
     private readonly EntityTable _entities;
+    private readonly BubbleBlow _blow;
 
-    internal PlayerMovement(PlayerTable players, EntityTable entities)
+    internal PlayerMovement(PlayerTable players, EntityTable entities, BubbleBlow blow)
     {
         ArgumentNullException.ThrowIfNull(players);
         ArgumentNullException.ThrowIfNull(entities);
+        ArgumentNullException.ThrowIfNull(blow);
 
         _players = players;
         _entities = entities;
+        _blow = blow;
     }
 
     // $220C. The port byte is shifted a bit at a time and each direction handled as it falls out, so
@@ -93,7 +97,12 @@ internal sealed class PlayerMovement
             Move(player, cell, map, RightStep);
         }
 
-        // $2223's fire arm leaves for $22E8, the bubble release, which is Phase 5.
+        // $2223. The fire arm, and the last bit the byte carries. A jmp rather than a jsr, which
+        // costs nothing here - there is nothing after it either way.
+        if ((port & Input.Fire) == 0)
+        {
+            _blow.Blow(player);
+        }
     }
 
     // Whether the player already faces this way. $2277 asks it as a run of cmp and beq, and $22CF as

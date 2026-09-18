@@ -173,7 +173,7 @@ public sealed class PlayerFallTests
         // What $05F5 leaves it at. The steer will not turn a player whose bubble timer is positive.
         entities.BubbleTimer[0] = 0xFF;
 
-        return (players, entities, new(players, entities, new(players, entities)));
+        return (players, entities, new(players, entities, new(players, entities, TestBlow.Of(players, entities))));
     }
 
     private static SolidMap Open() => SolidMap.Build(Level());

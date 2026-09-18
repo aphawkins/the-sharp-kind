@@ -1111,12 +1111,13 @@ of `player-sprites.s`.
       Otherwise the stick: anything pushed reaches `$220C`, and nothing pushed
       leaves a standing player breathing on a period of seven (`$21EB`).
 
-      Three pieces of `$2162` are deliberately absent, each named in the class
+      Three pieces of `$2162` were deliberately absent, each named in the class
       rather than skipped silently: `$2165`'s call to `$2301`, which a player
       out of a bubble never reaches; the scan over the eighteen entity slots
       at `$2171` that catches an enemy while up is held, which with no enemies
       in play finds nothing and falls through to exactly where the arm that
-      skips it goes; and what happens to a captured player. Only state 1 is
+      skips it goes; and what happens to a captured player. **Phase 5 has since
+      wired `$2165`**, so two remain. Only state 1 is
       dispatched - the jump table at `$1E3A` has an entry per state and the
       rest are dying, captured, freed and the level-99 special. Only the two
       player slots are driven, though `$1CBD`'s loop covers eight.
@@ -1456,15 +1457,232 @@ never falls through a `#` tile on any of the 100 levels.
 
 ## Phase 5 — Bubbles
 
-Translate: `bubbles-sprites.s`, `bubble-handler.s`, `entity-bubble-handler.s`.
+**The file list this section carried was wrong on all three counts,** and it
+cost a reading to find out. `entity-bubble-handler.s` does not exist in the
+checkout. `bubble-handler.s` is not the bubble - it is what happens when one
+pops: sound, item collection and the power-up flags. And `update_bubbles` in
+`bubbles-sprites.s` is the blowing animation drawn in *characters* behind the
+player, which is a screen effect rather than a rule.
 
-- [ ] Fire, travel, expire, pop on contact.
-- [ ] Drift on the level's `bubbleCurrent`.
-- [ ] Wrap-around openings from `wrapOpenings`.
+Blowing a bubble is in `entity-interaction.s`, beside the whole of Phase 4.
 
-**Verify:** a bubble fired on level 1 reaches the same tile as in VICE after
-30 ticks, and one left alone expires after exactly the number of ticks the
-`.s` file counts.
+**What this phase covers, after the move below:** blowing a bubble, and the
+mover the whole entity table shares. Where a bubble then goes is Phase 6's,
+because the code that takes it there is the enemy AI.
+
+- [x] **Fire.** `$22E8` and `$2301`, as `Bubbles/BubbleBlow.cs`, with the
+      eighteen-slot table it fills as `Bubbles/ObjectTable.cs`.
+
+      Pressing fire does not make a bubble, which is the thing worth knowing
+      about this routine. `$22E8` only starts a clock - `$06` into the bubble
+      timer, and the facing latched into `$ACCB` - and `$2301`, called from
+      `$2165` at the top of every later frame, runs that clock down through
+      `$ACC4`. The bubble is made on the one frame the timer reads `$04`, three
+      frames after the button, and the seventh frame puts the player's sprite
+      back. A player who dies in between never makes one.
+
+      `ObjectTable` is the *second* of the game's two tables of moving things,
+      and the distinction is load-bearing. `EntityTable` is the eight slots at
+      `$85xx` to `$88xx` - the players and the enemies that walk like them.
+      This is the eighteen slots `$CA` indexes: bubbles, items, and enemies once
+      they are inside one. `$2321` searches it from seventeen downwards and
+      takes the first slot whose type byte is negative; `$0620` sets all
+      eighteen to `$FF` as a level starts. It is named for the bubble because
+      the bubble is the only thing that fills it so far, and Phase 6 will want
+      a wider name.
+
+      **`$2165` is now wired,** which closes the first of the three gaps
+      `PlayerFrame` was carrying. Two remain.
+
+      **The reload is `$A824`, and `game-loop.s` calls it an invincibility
+      timer.** It is the sixth comment in the reference to point the wrong way.
+      `$2385` sets it to eight as the bubble leaves - measured from the bubble
+      rather than from the button, so a player holding fire is on a fourteen
+      frame cycle - and `$0A28` counts it down one a frame. Nothing else reads
+      those two bytes, so the decrement is translated in `BubbleBlow.Tick`
+      rather than waiting for a game loop.
+
+      **Three arms of `$2301` are deliberately absent,** each gated by a byte
+      that a level start leaves in the state that skips it, and each named in
+      the class: `$23B8`'s special bubble on `$A783` (Phase 7), `$23D7`'s
+      sound on `$65` (Phase 8), and `$23DE`'s flag rewrite on `$37C7`
+      (Phase 7).
+
+      **`$1EEE` is settled: it is enemy code, and it cannot reach `$2301`.**
+
+      The worry was that `$1EEE` writes `$64` to `$8818`, and `$2301` indexes
+      `$ACC4` - seven entries - with that same byte. Four things settle it, and
+      the last two are the ones that make it more than a plausible story.
+
+      * **Different states.** `$1EEE` sits inside `$1E9F`, which the jump table
+        at `$1E3A` reaches for state 9. `$2301` is reached only from `$2162`,
+        which is state 1's handler. One slot cannot be both.
+      * **The cooldown pair belongs to the enemies.** `$1E9F` reads `$8890` and
+        `$8818`, and the routine that sets them up is `D_1A6F` - in which
+        *every* store is the base-plus-two form: `$b4` for `$b2`, `$881A` for
+        `$8818`, `$8892` for `$8890`, and five more. It addresses slots 2 and
+        up and never touches the two player slots.
+      * **`$1EB5` guards the write anyway.** State 9 refuses to run at all
+        unless `$8818` is already negative, so it can never land on a blow that
+        is part way through.
+      * **Watched, with a control.** Sixty seconds of level 1 - firing,
+        walking and jumping - with an exec checkpoint on `$2301` conditioned on
+        `Y > 6`: never fired. `$1EEE` itself, with no condition: never
+        executed. The control, the same checkpoint conditioned on `Y < 7`,
+        fired at once and read `$8818` as `$06`, so the address, the condition
+        and the play script all work. A checkpoint that never fires proves
+        nothing without one that does - this file has paid for that lesson
+        already.
+
+      What remains is not a risk in the port today: nothing here drives a slot
+      past 1, or a state other than 1, so `$1EEE` has no translation and no
+      caller. If a later phase ever puts a player slot into state 9, the port
+      throws rather than reading past the array, so it fails loudly.
+
+- [x] **The shared mover**, `$0E23`, as `Bubbles/EntityMover.cs`.
+
+      It is here rather than in Phase 6 only because the bubble is the first
+      thing to need it. Two pixels in one of four directions plus the cell
+      bookkeeping, and the whole entity table shares it.
+
+      **Found with VICE, not by reading.** A store watchpoint on slot 17's Y
+      traps twice a frame while a bubble rises, at `$0E30` and `$0E33`, which
+      are the two `dec D_AA1E,x` of the up arm. That is how a mover buried in
+      the middle of the enemy AI was found at all.
+
+      Three things in it would be got wrong by a careful reading:
+
+      * **Right is two pixels, not one.** `$0E52`'s `cmp #$01` falls through
+        with the carry set, so `$0E56`'s `adc #$01` adds two. That is what
+        makes it the mirror of the left arm's `sbc #$02`.
+      * **Down steps its row one sub-position later than up steps its.** Up
+        steps the row when the sub-position reaches zero; down steps it when
+        the sub-position reaches two, one step after the wrap at eight rather
+        than on it. A mover written as a mirror puts every falling thing a row
+        out for one step in eight.
+      * `$0E6F`'s `bne` falls through into the down arm if a column wraps to
+        zero. A column is 0 to 31, so it is unreachable, and it is not
+        reproduced.
+
+      **The eight-pixel shot is a different mover.** A bubble opens by
+      travelling eight pixels a frame, and that is the dispatcher at `$0F98`,
+      not this. This is the slow half - the rise, and the drift at the top.
+
+**Travel, expiry, popping, the `bubbleCurrent` drift and the `wrapOpenings`
+have moved to Phase 6,** and the reason is the third time this section's
+premise has turned out wrong.
+
+A bubble is not driven by any bubble routine. It is driven by
+`enemy_ai_update` at `$0CF2`, the main loop over all eighteen slots, by way of
+`$0F48`, `$0F61` and `$0F91`, and it needs `$105B` (bubble collision) and
+`$7BFE` (platform check) with it. That is roughly 350 of `enemy-ai.s`'s 626
+lines, and every enemy runs the same code. Translating it under a Phase 5
+heading would be writing Phase 6 while pretending otherwise, so the items are
+where the code is.
+
+What that leaves in Phase 5 is what is above: blowing a bubble, and the mover
+the whole table shares. Both are done.
+
+**Verified so far:** the solution builds with 0 warnings and
+`BubbleBobbleSharpLib.Tests` is 271/271, up from the 223 Phase 4 left. The blow
+took it to 256 and the mover added the rest.
+
+The blow has twenty cases of its own. The six frames are asserted frame by
+frame in both facings, because the table is read at the timer's own value and
+an index one out gives a sequence that is still plausible. The bubble is proved
+to appear on the third frame and not the second, and once per blow however many
+frames are left. Its position is worked by hand off the reference: a player at
+`$44`/`$55` puts a bubble at column six, row eight, and facing right shifts it
+one column and eight pixels on. Facing left does not, and that asymmetry has a
+test of its own - the sprite's origin is already where the mouth is, and a
+mirrored translation would smooth it away. Both halves of `$2399` are proved
+apart: airborne and low in the cell blows into the row below, and airborne
+alone or low alone does not. The two failure paths are proved to fail the way
+the 6502 fails - a player above the top of the playfield leaves four bytes
+written in a slot that is still free, and a full table costs the player nothing,
+so they can try again next frame.
+
+The routing has six cases. Fire on the ground reaches `$22E8` through `$220C`'s
+last arm; fire and right together do both, because `$220C` takes all its arms in
+one pass; up and fire together do *not*, because `$220F` is a jmp and the fire
+arm is never reached. The steer's own arm at `$25F5` is a jsr and is proved
+separately. And the chain end to end: one press, then nothing but the driver,
+and a bubble in the table three frames later - the case that fails if `$2301` is
+never called back.
+
+One existing expectation was superseded, and the reason is worth keeping.
+`DoesNotAnimateAPlayerInABubble` used to set `$8818` to `$10` by hand. No
+routine in Phase 4 or 5 can put that value in that byte for a player in state 1
+- `$22EE` writes `$06` and nothing else writes it at all - and now that `$2165`
+reads the same byte, an invented value would be an invented frame of animation
+with it. The test blows instead, and it now proves something sharper: the
+breathing is suppressed for the whole blow and resumes on the very frame the
+blow ends, because `$21F3` reads the byte after `$2301` has already taken it
+back to `$FF`.
+
+**Now proved against VICE, and it matches exactly.** A one-player game on
+level 1, the player standing where `$04BB` puts them at `$2C`/`$DD` facing
+right, fire tapped once, and the machine stepped a frame at a time with the
+eighteen-slot arrays read at every step:
+
+```
+  n   $8818 $8520 $A824   slot 17
+  29    06    00    00           <- the button. A clock starts, nothing else
+  30    05    08    00
+  31    04    08    00
+  32    03    09    07    34,DD  <- the bubble
+  33    02    09    07    3C,DD
+  34    01    08    06    44,DD
+  35    00    08    05    44,DD
+  36    FF    00    05    4C,DD  <- the sprite goes back, the timer to its idle
+```
+
+Every claim in this item is in those eight rows. The button only starts a
+clock. The sprite runs `$08 $08 $09 $09 $08 $08` and then back to `$00`, which
+is `$ACC4` value for value and is the array `RunsTheSixFramesAndPutsTheSpriteBack`
+already asserted. The bubble is made on the frame the timer reads `$04` and on
+no other. It lands at `$34`, which is the player's own `$2C` plus the eight
+pixels a right-facing blow adds - the asymmetry that has a test of its own. Its
+Y is the player's `$DD` untouched, because a standing player gets no row bump.
+And it goes in slot 17, which is where a downward search from seventeen lands.
+
+The reload reads `$07` rather than the `$08` `$A77B` holds, and that is the
+translation being right rather than wrong: `$2385` sets eight during the entity
+pass, and `$0A28` has already taken one off by the time the next frame's
+checkpoint is reached.
+
+**The type byte does not stay `$16`.** `$2352` writes it, but by the top of the
+next frame the entity state machine has moved it on - the capture reads `$00`,
+then `$02` at frame 37 and `$04` at frame 42. So `$16` is a value the spawn
+passes through, and no later test may assert that it persists.
+
+The same run also caught the bubble's whole life, which is golden data for the
+travel. That has moved to Phase 6 with the items it belongs to.
+
+**Watch out, three ways, and each cost a run.** VICE's binary monitor halts the
+emulator on *every* command, so a memory read stops the machine and it stays
+stopped until an explicit exit - nothing may be read while the game needs to
+run. Responses must be matched to the request that asked for them, or a read
+returns an earlier read's answer and ninety identical frames come back in no
+time at all. And **the frame anchor must not be `$E498`**: `wait_one_frame` is
+a spin loop, the program counter is already sitting in it, so an exec
+checkpoint there re-triggers at once and the machine never advances an
+instruction. `$1CBD`, the top of the entity pass, is the right anchor - it runs
+once a game frame, and `$08` advances by two across each one, which is the
+double-buffer wait making the game 25fps against the 50Hz interrupt.
+
+**The mover is verified against the game.** The whole of one bubble's rise -
+seventy-two steps, `$DD` down to `$4D`, every distinct Y the capture read - is
+asserted step for step in `EntityMoverTests`, along with X staying at `$74`
+throughout. A mover that moved one pixel, or two on alternate calls, passes a
+test of the first step and fails on the second. The other three arms are worked
+by hand from the reference, because a bubble on level 1 only ever rises and
+nothing observed uses them yet. 271/271, 0 warnings.
+
+**Verify:** done, and both halves are above. Fire on level 1 puts a bubble in
+slot 17 at `$34`/`$DD` three frames after the button, which is what the game
+does byte for byte; and the mover reproduces the whole of one captured rise,
+seventy-two steps of it. Where the bubble goes next is Phase 6's verify step.
 
 ## Phase 6 — Enemies
 
@@ -1475,14 +1693,57 @@ Translate: `entity-system.s`, `entity-state-tables.s`, `enemy-ai.s`,
 The largest phase. One enemy type at a time. `entity-system.s` is 1,447
 lines and goes first, because everything else indexes into it.
 
+**The bubble's own movement is in here, not in Phase 5.** A bubble is driven by
+`enemy_ai_update` at `$0CF2` like everything else in the eighteen slots, so
+travel, expiry and popping were moved here once that was found. Phase 5 keeps
+what is genuinely the bubble's own: blowing one, and the shared mover at
+`$0E23` that the bubble happened to need first.
+
 - [ ] `entity-system.s` and the state tables.
 - [ ] `AddBbRandom`, with the RNG at `LE9EA`.
+- [ ] **The AI loop itself**, `$0CF2`, and the movement dispatcher it reaches
+      by way of `$0F48`, `$0F61` and `$0F91`, with `$105B` (bubble collision)
+      and `$7BFE` (platform check). Roughly 350 of `enemy-ai.s`'s 626 lines.
+      `$0E23` is already done - see Phase 5.
+
+      **The type byte is an animation index, not a kind of thing.** `$0F91`
+      reads `$ACB6` indexed by the AI state counter `$A9B2`, which `$0F61`
+      counts down. The table is `$10 $04 $04 $02 $02 $02 $00`, so a counter
+      walking down from six gives `$00 $02 $02 $02 $04 $04 $10` - and `$00`,
+      then `$02`, then `$04` is exactly the order the bubble capture read.
+      Reading and watching agree, which is rare enough in this file to record.
+
+- [ ] **A bubble's travel, expiry and popping**, which is the first thing the
+      loop above will be able to drive. Golden data is already captured: one
+      bubble on level 1, born at frame 32 and gone at frame 227.
+
+      | Frames | What it does |
+      |---|---|
+      | 32-44 | shoots right, X `$34` to `$74`, eight pixels a move, two moves then a pause |
+      | 45-151 | rises, Y `$DD` to `$4D`, two pixels a move, same two-then-pause cadence |
+      | 153-157 | drifts right, X `$74` to `$7C`, two pixels a move |
+      | 157-195 | parked at `$7C`/`$47`, under the ceiling |
+      | 195-215 | type alternating `$04` and `$48` - the wobble |
+      | 219-226 | type `$3A $3C $3E $40 $38 $36` - the pop |
+
+      The rise is `$0E23` and is done. The eight-pixel shot is a *different*
+      mover, in the dispatcher at `$0F98`, and the cadence - two moves then a
+      pause, in both phases - belongs to whatever drives the mover rather than
+      to the mover itself. That cadence is unexplained and is the first thing
+      to settle here.
+
+- [ ] Bubble drift on the level's `bubbleCurrent`.
+- [ ] Wrap-around openings from `wrapOpenings`. The vertical half is done in
+      `$0E23`: a row off either end comes back at the other and the thing
+      becomes type `$38`.
 - [ ] Each enemy type, one at a time.
 - [ ] Baron Von Blubba (`baron_von_blubba` in `special-enemies.s`).
 - [ ] The anger state that speeds enemies up.
 
 **Verify:** each type spawned on an empty test level matches a recorded byte
-trace from VICE over 200 ticks. A golden frame per enemy type.
+trace from VICE over 200 ticks. A golden frame per enemy type. And the bubble:
+it reaches the same tile as in VICE after 30 ticks, and one left alone expires
+after exactly the number of ticks the capture counts.
 
 ## Phase 7 — Items, scoring and progression
 

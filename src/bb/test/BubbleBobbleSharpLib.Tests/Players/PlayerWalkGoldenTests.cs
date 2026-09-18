@@ -55,7 +55,7 @@ public sealed class PlayerWalkGoldenTests
     {
         PlayerTable players = new();
         EntityTable entities = new();
-        PlayerMovement movement = new(players, entities);
+        PlayerMovement movement = new(players, entities, TestBlow.Of(players, entities));
         SolidMap map = SolidMap.Build(s_levels.Level(1));
 
         players.X[0] = StartX;
@@ -102,7 +102,7 @@ public sealed class PlayerWalkGoldenTests
     {
         PlayerTable players = new();
         EntityTable entities = new();
-        PlayerMovement movement = new(players, entities);
+        PlayerMovement movement = new(players, entities, TestBlow.Of(players, entities));
 
         players.X[0] = startX;
         players.Y[0] = y;

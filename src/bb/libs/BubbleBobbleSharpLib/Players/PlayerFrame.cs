@@ -2,6 +2,7 @@
 // 'rebb64' - github.com/zaidka/rebb64.
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
+using BubbleBobbleSharpLib.Bubbles;
 using BubbleBobbleSharpLib.Levels;
 
 namespace BubbleBobbleSharpLib.Players;
@@ -22,10 +23,8 @@ namespace BubbleBobbleSharpLib.Players;
 // **Only the two player slots are driven.** $1CBD's loop covers eight, but slots 2 to 7 are enemies
 // and their handlers are Phase 6's.
 //
-// Three pieces of $2162 are deliberately absent, each because it belongs to a later phase:
+// Two pieces of $2162 are deliberately absent, each because it belongs to a later phase:
 //
-//   * $2165's call to $2301, the bubble animation, which only runs while the bubble timer is
-//     positive. A player out of a bubble never reaches it.
 //   * $2171 to $21BA, the scan over the eighteen entity slots that catches an enemy while the
 //     player pushes up. With no enemies in play the scan finds nothing and falls through to $21BD,
 //     which is exactly where the arm that skips it goes, so leaving it out changes no outcome yet.
@@ -55,25 +54,29 @@ internal sealed class PlayerFrame
     private readonly PlayerMovement _movement;
     private readonly PlayerJump _jump;
     private readonly PlayerFall _fall;
+    private readonly BubbleBlow _blow;
 
     internal PlayerFrame(
         PlayerTable players,
         EntityTable entities,
         PlayerMovement movement,
         PlayerJump jump,
-        PlayerFall fall)
+        PlayerFall fall,
+        BubbleBlow blow)
     {
         ArgumentNullException.ThrowIfNull(players);
         ArgumentNullException.ThrowIfNull(entities);
         ArgumentNullException.ThrowIfNull(movement);
         ArgumentNullException.ThrowIfNull(jump);
         ArgumentNullException.ThrowIfNull(fall);
+        ArgumentNullException.ThrowIfNull(blow);
 
         _players = players;
         _entities = entities;
         _movement = movement;
         _jump = jump;
         _fall = fall;
+        _blow = blow;
     }
 
     // $1CBD's loop, over the slots this phase owns. The ports were read before it - Input.Read fills
@@ -116,6 +119,16 @@ internal sealed class PlayerFrame
     // only then, what is the stick doing.
     private void Playing(int player, byte port, in PlayerCell cell, SolidMap map)
     {
+        // $2162. Before any of the movement, the blow: a bubble timer that is not negative means a
+        // blow is part way through, and $2301 runs one frame of it. The timer as it is now is what
+        // $2301 branches on, so it is read before the call rather than inside it.
+        byte blowTimer = _entities.BubbleTimer[player];
+
+        if ((blowTimer & 0x80) == 0)
+        {
+            _blow.Step(player, blowTimer, cell);
+        }
+
         // $21BD. The rise counter parked at $FF is the idle a player on the ground sits at, and
         // anything else means an arc is running, so the jump owns the frame.
         if ((_entities.RiseCounter[player] & 0x80) == 0)

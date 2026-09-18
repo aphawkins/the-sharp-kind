@@ -56,7 +56,7 @@ public sealed class PlayerSteerGoldenTests
     {
         PlayerTable players = new();
         EntityTable entities = new();
-        PlayerSteer steer = new(players, entities);
+        PlayerSteer steer = new(players, entities, TestBlow.Of(players, entities));
         PlayerDrift drift = new(players, entities, steer);
         PlayerDescent descent = new(players, entities);
         PlayerLanding landing = new(players, entities, descent);

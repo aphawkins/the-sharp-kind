@@ -2,6 +2,7 @@
 // 'rebb64' - github.com/zaidka/rebb64.
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
+using BubbleBobbleSharpLib.Bubbles;
 using BubbleBobbleSharpLib.Levels;
 using BubbleBobbleSharpLib.Players;
 using Xunit;
@@ -31,6 +32,8 @@ public sealed class PlayerFrameTests
     private const byte Right = Input.Idle & ~Input.Right;
 
     private const byte Up = Input.Idle & ~Input.Up;
+
+    private const byte Fire = Input.Idle & ~Input.Fire;
 
     // $1CDB. A zero state byte is an empty slot, and the loop never calls $1E6C for it. Player two
     // is in exactly that state for the whole of a one-player game.
@@ -166,20 +169,34 @@ public sealed class PlayerFrameTests
         Assert.Equal(0x00, entities.AnimationTimer[0]);
     }
 
-    // $21F3's own test. In a bubble the stick reaches the movers even when it is idle, so the idle
-    // animation never runs - which is what tells the two apart.
+    // $21F3's own test. A bubble timer that is not negative sends the idle arm to the movers instead
+    // of to the breathing animation, so the counter at $21F5 never moves.
+    //
+    // The timer is set by blowing rather than by hand. It used to be set to $10 here, which is a
+    // value the game cannot put in that byte for a player in state 1: $22EE writes $06 and nothing
+    // else in Phase 4 or 5 writes it at all. Now that $2165 reads the same byte, an invented value
+    // would be an invented frame of animation with it.
     [Fact]
-    public void DoesNotAnimateAPlayerInABubble()
+    public void DoesNotAnimateAPlayerWhileTheyBlow()
     {
         (_, EntityTable entities, PlayerFrame frame) = Standing();
-        entities.BubbleTimer[0] = 0x10;
         SolidMap floor = Floor();
 
-        for (int tick = 0; tick < 7; tick++)
+        frame.Step(0, Fire, floor);
+
+        for (int tick = 0; tick < 6; tick++)
         {
             frame.Step(0, Input.Idle, floor);
         }
 
+        Assert.Equal(0x00, entities.AnimationTimer[0]);
+        Assert.Equal(0x08, entities.Frame[0]);
+
+        // And it starts again the moment the blow ends, on that same frame: $21F3 reads the byte
+        // after $2301 has already taken it back to $FF.
+        frame.Step(0, Input.Idle, floor);
+
+        Assert.Equal(0x01, entities.AnimationTimer[0]);
         Assert.Equal(0x00, entities.Frame[0]);
     }
 
@@ -228,15 +245,17 @@ public sealed class PlayerFrameTests
         entities.GroundState[0] = 0xFF;
         entities.BubbleTimer[0] = 0xFF;
 
-        PlayerSteer steer = new(players, entities);
+        BubbleBlow blow = TestBlow.Of(players, entities);
+        PlayerSteer steer = new(players, entities, blow);
         PlayerDescent descent = new(players, entities);
 
         PlayerFrame frame = new(
             players,
             entities,
-            new PlayerMovement(players, entities),
+            new PlayerMovement(players, entities, blow),
             new PlayerJump(players, entities, new PlayerDrift(players, entities, steer), new PlayerLanding(players, entities, descent)),
-            new PlayerFall(players, entities, steer));
+            new PlayerFall(players, entities, steer),
+            blow);
 
         return (players, entities, frame);
     }
