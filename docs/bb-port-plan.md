@@ -65,13 +65,102 @@ being written. So:
       derived assets in this repo.** Andy's call, made deliberately and with
       the position understood. Revisit it before any release that is
       distributed more widely than the repo itself.
-- [ ] **Toolchain.** .NET 10 SDK, Python 3, and `cc65`. .NET 10 and Python 3
-      are present; `cc65` is not installed yet.
-- [ ] **VICE.** Installed. It is the reference runner for visual comparison.
-      Not installed yet, which is what blocks every VICE verify step below.
-- [ ] **Baseline.** `make verify` passes in `rebb64/build/`. It checks the
+- [x] **Toolchain.** .NET 10 SDK, Python 3, and `cc65`. All present.
+      `cc65` is the V2.19 win32 snapshot, unpacked to `%USERPROFILE%/cc65`
+      and not on `PATH`, so a build prepends `%USERPROFILE%/cc65/bin` to it.
+      `make` comes from winget's `ezwinports.make` and is on `PATH`.
+- [x] **VICE.** Installed, 3.10 GTK3 win64, from winget. It is not on `PATH`
+      either; `x64sc.exe` is under
+      `%LOCALAPPDATA%/Microsoft/WinGet/Packages/VICE-Team.VICE.GTK3_*/GTK3VICE-3.10-win64/bin`.
+
+      It does not have to be driven by hand. `-remotemonitor` puts the text
+      monitor on a TCP socket, and everything the verify steps below want is
+      scriptable over it: `ll` loads `rebb64.lbl` so that traps report rebb64's
+      own routine names, `l` loads a PRG, `break exec`/`break store` set
+      breakpoints and watchpoints, `cond <n> if <expr>` narrows them by
+      register or memory value, `m`/`d` read memory, and `screenshot "<f>" 2`
+      writes a PNG. The monitor answers while the emulator is running, but it
+      resumes free when the connection drops, so one experiment is one
+      connection.
+
+      **Use `-binarymonitor`, not `-remotemonitor`.** The binary monitor's
+      checkpoints work and report hits properly: a `CHECKPOINT` message with a
+      hit count, then `STOPPED` carrying the program counter. That is the
+      whole investigation tool, and the text monitor never produced a single
+      trap in a day of trying.
+
+      The program counter in `STOPPED` is the instruction **after** the one
+      that stored, which is confirmed twice over - once against a store worked
+      out by hand from `player-state.s`, once against `L22C2`, whose address
+      its own label gives away.
+
+      An earlier draft of this document stated flatly that checkpoints never
+      fire over the text monitor. **That was not proved.** The control behind
+      it set a breakpoint on `$A605` and waited at the title screen, but
+      `$A605` is `game-init.s`'s wait loop and the title screen runs the one at
+      `$4565` in `game-init-early.s`, so the address never executed and the
+      control proved nothing. The same flaw sank two other controls. Only a
+      breakpoint on `$E498`, which is `wait_one_frame` and where the program
+      counter provably sits, settled it - and that was on the binary monitor.
+      Whether the text monitor would pass the same control is still untested.
+      Pick a control address you have watched the program counter sit in.
+
+      An earlier draft of this document described getting a credit in by
+      hunting for the title's wait loop, breaking on the port read at `$A605`
+      and setting `PC` to its `rts` at `$A624`. **That recipe is withdrawn.**
+      The breakpoint never fired; forcing `PC` while the CPU sat in
+      `wait_one_frame` popped the stack and happened to land somewhere that
+      advanced the game. It worked once, by accident, and not by the mechanism
+      claimed. Use real input instead, which does work.
+
+      **Input.** VICE's keyset joystick is the way in. There are no
+      command-line options for the mappings, only for the device, so the
+      mappings go in `%APPDATA%/vice/vice.ini` under `[C64SC]`: `JoyDevice2=2`
+      picks keyset 1 for port 2, which is player 1 here, `KeySetEnable=1`, and
+      `KeySet1North`/`South`/`West`/`East`/`Fire` take GDK keyvals, which for
+      ordinary letters are simply their ASCII codes - 119, 115, 97, 100 and 32
+      give W, S, A, D and space. Set `SaveResourcesOnExit=0` as well or VICE
+      overwrites the file when it closes.
+
+      The keys themselves go in with `SendInput`, as separate key-down and
+      key-up events after `SetForegroundWindow`, because a direction has to be
+      *held*: anything that sends a keystroke as one event cannot hold a stick
+      down for forty ticks. Verified at the hardware rather than by eye -
+      `$DC00` reads `$7F` idle and `$77` while D is held, which is bit 3, which
+      is right.
+
+      **The front end, driven for real:** autostart the PRG, wait for the
+      title, send space, wait, send `1`. That is a one-player game on level 1,
+      with `$B2` = `$01`, `$BA` = `$2C`, `$C2` = `$DD` and three lives in both
+      of `$045A` and `$045B`.
+
+      **Watch out:** the text monitor is flaky across connections. A fresh
+      connection after a previous one closed sometimes returns nothing at all,
+      and the emulator resumes free when a connection drops. Keep one
+      connection for a whole experiment, including whatever you want to read
+      *after* a trap fires. The binary monitor has an explicit stop and is
+      probably the fix if this keeps costing runs.
+- [x] **Baseline.** `make verify` passes in `rebb64/build/`. It checks the
       assembled output against the SHA256 of the original PRG, and it is
       what makes every later fidelity claim mean anything.
+
+      **Passed 2026-09-18.** `rebb64-raw.prg`, 64,509 bytes, hash matches. The
+      build also drops `rebb64.lbl`, which is what makes the monitor's traps
+      readable.
+- [x] **A runnable PRG.** `make verify` proves the image; it does not produce
+      one that starts. `make release` does, and it needs `tscrunch`. The
+      TSCrunch checkout at `C:/code/github/tonysavon/TSCrunch` ships a built
+      `bin/windows_amd64/tscrunch.exe`, so the Makefile's own variable is
+      enough: `make release TSCRUNCH=<that path>`. It writes `rebb64.prg`,
+      44,673 bytes, self-starting at `$0801`, and `x64sc -autostart` runs it.
+
+      **Correction.** An earlier draft of this item claimed the game hung at
+      `$E496` on `lda $08 / cmp $08 / beq`, and blamed the missing `tscrunch`
+      stage. That was wrong on both counts. `$E496` is `wait_one_frame`: the
+      ordinary wait for the interrupt to tick `$08`, which is where the game
+      sits for most of every frame, so any sample of the program counter is
+      likely to land in it. The crunched PRG reaches the same loop and is
+      perfectly healthy. Sample the screen, not the program counter.
 
 ## 4. Shape
 
@@ -764,7 +853,7 @@ of `player-sprites.s`.
       names as a player's own: state (`$B2`), X (`$BA`), Y (`$C2`), the bubble
       timer (`$5D`/`$5E`) and lives (`$045A`/`$045B`, from
       `game-variables.s`). The rest of what a player moves on lives in the
-      `$85xx`-`$88xx` arrays, which are eighteen entries long and shared with
+      `$85xx`-`$88xx` arrays, which are eight entries long and shared with
       every other entity, so they belong to Phase 6's `EntityTable` rather
       than here. Each field is added as the routine that reads it arrives.
 
@@ -796,16 +885,222 @@ of `player-sprites.s`.
       `ControlBindings` file yet, and section 5 still expects one; it wants a
       per-player device as well, which is a change to `ControlMap` rather
       than to this.
-- [ ] Walk, jump, fall, land, face left and right, animate.
+- [ ] Walk, jump, fall, land, face left and right, animate. **All six are in
+      and proved against VICE.** What is left is the trigger, which is now
+      found but not translated - see below. The arc runs correctly the moment
+      something sets the rise counter.
+  - [x] `SolidMap`, the level's own collision map. `$8500` keeps it as forty
+        bytes a row, thirty-two of level and eight of something else, and every
+        collision test in the game is an indexed read off a pointer into it.
+        The port keeps the bit grid instead: `init_level_renderer` builds that
+        map out of the very level bitmap the renderer draws, so addressing it
+        the C64's way would be the same truth written twice. `Playfield` now
+        reads its tiles out of this rather than building its own copy.
+
+        Off the map reads solid, which is the map's arrangement rather than a
+        guard: `$8488`, `$84B0` and `$84D8` are three forty-byte rows of `$80`
+        above it, and a thing near the top of the playfield probes them.
+  - [x] `EntityTable`, the arrays a player shares with everything else that
+        moves. Eight slots, because `$1CBD` starts its loop at seven and counts
+        down, and slots 0 and 1 are the two players - which is why a routine
+        holding a player number indexes these with it. Three fields so far:
+        `$8520` the sprite frame, `$8610` the animation timer and `$8818` the
+        bubble timer, each added because a routine translated below reads it.
+
+        These are not a table in the 6502 at all. They are the eight-byte tails
+        of the same forty-byte rows whose other thirty-two bytes are the level
+        tiles, which is why every one of them is forty apart. `SolidMap` is the
+        other half of that region.
+  - [x] `PlayerMovement` - `$220C` and the two movers, `$226B` and `$22C3`,
+        with the tail at `L22BB` they share. The walk, which way a player
+        faces, and the walk cycle.
+
+        The shape is worth stating because it is not one routine per
+        direction. Each mover writes its own delta into `$04`, picks its own
+        probe offset, and decides from the current frame whether the player
+        already faces that way; then both fall into one piece of code that
+        checks a wall and adds the delta. So a player facing the wrong way
+        turns on the first push and walks on the next, and the turn is refused
+        outright while `$8818` says they are in a bubble.
+
+        Two arms of the dispatch are left for later. Up reaches `$222B` with a
+        `jmp` rather than a `jsr`, so it is translated only as far as
+        suppressing the walk - which is real behaviour, not a shortcut: a
+        player pushing up does not also walk. Fire leaves for `$22E8`, which is
+        Phase 5. And `$22B4` reads `$63,x` and calls `$7C21` when it is set;
+        that routine is Phase 6's and the byte is clear for a walking player,
+        so the call is not translated. All three are gaps, named here so they
+        are not mistaken for finished work.
+  - [x] `PlayerJump` - `$23EA`, the rise, the fall and the landing, with the
+        two counters they run on added to `EntityTable`: `$87A0` counting the
+        rise down and `$87C8` counting the fall up.
+
+        One table gives a jump its shape. `$ACCD` holds sixteen deltas and both
+        halves of the arc read it, the rise with its counter running down and
+        the fall with its counter running up, which is what makes a jump slow
+        as it tops out and gather speed coming back. Each reads the counter
+        *before* it moves it, because the reference does `dec` or `inc` and
+        then `tay`, and `tay` carries what the accumulator was already holding
+        rather than what was just written to memory. Getting that one step
+        wrong would put the whole arc a frame out.
+
+        Landing is two stores in one frame: `$243A` puts the player where the
+        arc says, then `$247E` snaps them to the row grid. Both were caught.
+
+        Three gaps, named. `$23FC` and `$243A` leave for `$2483`, a
+        flag-driven horizontal mover that is not the walk and is not
+        translated. `$2480` and the end of the fall leave for `$2519`, which
+        is `PlayerLanding`. And nothing here decides to jump - see above.
+  - [x] The jump trigger, `$222B`, as `PlayerMovement.Launch` - the up arm of
+        the dispatch, which until now only suppressed the walk. It sets the
+        rise counter to `$0F` and latches the two drift flags, and the sprite
+        gains bit 1 unless the frame is already `$08` or above. `$2268`
+        increments `$B1`, one byte rather than one per player, which nothing
+        translated reads; not translated.
+  - [x] `PlayerDrift`, `$2483`, the flag-driven mover both halves of the arc
+        jump to. One pixel a frame rather than the walk's two, and an animation
+        period of two rather than four.
+
+        Its wall test is not the shape anyone would write from scratch and is
+        translated as the reference has it: the player moves when the cell
+        ahead is open, **and also** when both it and the one past it are solid.
+        Only a solid cell with an open one behind it stops them.
+
+        **This does not finish airborne movement.** A second mover at `$263D`
+        also moves X, off the live joystick byte, and is not translated - see
+        the correction below. `PlayerJump` calls the drift where the reference
+        jumps to `$2483` and `$248D`, so the wiring is right; the missing piece
+        is a routine, not a connection.
+  - [x] `PlayerSteer`, `$25F1` - the stick read again while a player is off the
+        ground, and what makes a jump steerable. Reached only from the drift's
+        animation tail, so it runs on every second airborne frame.
+
+        Its two halves are the walk's movers rewritten rather than reused: same
+        turn-before-you-move, same probe offsets, but a pixel a step instead of
+        two, an edge test that only catches an exact arrival on `$24` or `$F4`,
+        and a different set of frames each half will move on. One asymmetry is
+        easy to miss and is translated as written - the height shortcut past the
+        wall check is only on the split-probe path, so a player sitting on a row
+        boundary gets the wall check wherever they are.
+  - [x] `PlayerLanding`, `$2519` - the end of an arc, however it ends. Both
+        exits reach it: the landing at `$2480` and the fall running out of
+        table at `$2423`. It puts both arc counters back to `$FF`, squares X up
+        to an even column, and checks the ground one last time.
+
+        The X alignment is the part nothing else hints at, and it is why a
+        landing tidies the player on both axes - `$247E` puts Y on the row grid
+        and this puts X on a column. Which way it rounds follows which way they
+        face, so they are squared up in the direction they were travelling.
+
+        `$2530` rounds down and then falls through into the rounding up when
+        what it stored was zero. Zero rounded up is zero again, so the
+        fall-through changes nothing and is not reproduced; the comment in the
+        class says so. The level-91 exception is translated with its off-by-one
+        made explicit: the reference compares `SUBFLG`, which counts from zero,
+        so `$5B` is the ninety-second level and not the ninety-first its
+        comment claims. `$2578`'s jump to `$EB3F`, which sets up the restarted
+        fall, is not translated.
+  - [x] `PlayerDescent`, `$EB48` - falling at a flat two pixels a frame until
+        something is underneath, which is the plain descent rather than the
+        jump's arc. It wraps exactly `$F5` back to `$15`, looks for ground only
+        on a row boundary, and on finding it does `dec $87F0,x`, which is what
+        the rest of the port reads as standing on something.
+
+        **The self-modifying code is not reproduced.** `$EB34`, `$EB3F` and
+        `$EBB8` write different continuations into `$EB94` and `$EBB5` and then
+        fall into this one body, so what they choose between is where to go
+        afterwards. Phase 4 arrives through `$EB3F`, whose continuation is
+        `$EB0F` by both exits. `$EB0F` is the generic entity animation and
+        wants `$8778` and `$8750`, which nothing here reads yet, so the class
+        stops where the continuation begins and Phase 6 picks it up.
+
+        **This one has no golden trace**, and it is the only piece of Phase 4
+        that does not. Every trap on `$EB3F` in VICE was an entity slot; the
+        route a player takes to it, from `$2575`, is read rather than watched.
+        Its tests are worked from the reference, which is the weaker evidence
+        this port has. See the note below on what it would take to settle.
+  - [x] `PlayerCell`, which is `$E9B8` and nothing else: a position byte pair
+        to a row, a column and the two fine offsets `$23` and `$24`. The 6502
+        leaves the answer as a pointer in `$11`/`$12` so that every later test
+        is one indexed read - `$51`, `$28`, `$79` - and `PlayerCell.Solid`
+        takes one of those offsets and does the index register's arithmetic, so
+        the probe constants stay the ones the reference is written in.
+
+        Two biases come out of the pointer rather than the position: the row
+        table at `$AC03` starts three forty-byte rows below the map, and the
+        column has a `dec` against it. Both are folded in, so a probe is the
+        offset the reference names and nothing else.
 - [ ] `PlayerModel` and its view.
 
 **Verified so far:** the solution builds with 0 warnings and
-`BubbleBobbleSharpLib.Tests` is 120/120. The table's width, its zeroed start
+`BubbleBobbleSharpLib.Tests` is 168/168. The table's width, its zeroed start
 and the independence of the two players' bytes are proved against the table
 itself. The port byte is proved a bit at a time - each direction clearing only
 its own bit, from either the keys or the pad, an idle port reading `$FF`, a
 held key staying held across two reads, and one player's stick never reaching
-the other's port.
+the other's port. The map is proved against every one of the hundred levels -
+its bitmap on the rows below the ceiling, the leftmost two columns walled
+whatever the level drew, the ceiling and floor openings exactly four cells
+wide, and nothing off the map reading open. `$E9B8` is proved case by case,
+worked by hand off the reference: the leftmost landed position, the rightmost
+respawn one, the fine offsets, the byte wrap above the playfield, and each
+probe offset reaching the one cell it names and no other.
+
+The walk is proved against the game itself, which is what the verify step below
+asks for. VICE ran the PRG `make verify` calls byte-identical to the original,
+a one-player game on level 1, a store checkpoint on `$BA` and D held; every time
+the game wrote the player's X, the checkpoint wrote down `$BA` and `$8520`.
+Replaying the same start through the port reproduces both sequences exactly -
+twenty-four stores, X climbing `$2E` to `$5C` two at a time, and the walk cycle
+turning over on every fourth, which makes the first run of a frame three long
+and the rest four. The branches either side of that are proved on their own as
+well: the turn before the walk, a wall stopping the step, a wall on the far side
+not stopping it, the two ways past the wall check, up suppressing the walk, and
+a player in a bubble refusing to turn. And the second half of the verify step,
+over all hundred levels and both directions: a player never walks out of a cell
+into a solid one.
+
+The jump is proved the same way, and the capture is worth keeping: with the
+program counter and both counters read beside every `$C2`, one arc separates
+into fifteen stores at `$23FE`, four at `$243C` and one at `$2480`, with
+`$87A0` running `$0F` down to `$00` and `$87C8` running `$01` up to `$04`.
+Replaying that start through the port reproduces the whole of it - `$D9` down
+to `$B2`, the turn, `$B2 $B3 $B4`, and the landing putting the player on `$B5`,
+which is `$B6` snapped to the grid. The counters are asserted step by step as
+well, so an arc that came out right by luck rather than by indexing would
+still fail.
+
+The landing frame is proved on its own, from the one frame of a capture that
+lands: a player mid-fall at X `$53`, Y `$B4` with the fall counter on `$03`
+comes out at Y `$B5`, X `$54`, both counters back to `$FF` and `$87F0` still
+negative, which is the game's own reading of that frame byte for byte.
+
+Translating `$EB3F` turned up a fidelity error in `$2519` that the tests had not
+caught. `PlayerLanding` was working its own cell out, after squaring X up.
+Nothing between `$2450`'s call to `$E9B8` and the probes at `$2541` calls it
+again, so those probes read the player a pixel earlier, and across a squaring-up
+that can be a different column. The cell is now passed in - from `$2450` on the
+landing path, and from the top of the frame on the one where a fall runs out of
+table. It changed no test, which is the point: the outcome happened to agree on
+the frames that were captured, and the code was still wrong.
+
+One expectation was superseded on the way. The counters test used to assert a
+fall counter of four on the landing frame, which is what the capture reads at
+`$2480` - one instruction before `$2519` resets it. With `$2519` translated the
+frame ends with the reset instead, and the test now asserts that and says why.
+
+A steered jump - W and D held together - is proved the same way, and it is the
+case that caught the drift being only half the story. Seventeen frames of X and
+Y both match: X climbing two pixels then one, over and over, while the arc runs
+underneath it. A translation with only the drift in it gives a steady pixel a
+frame and fails immediately.
+
+The capture samples at the arc's own store, before the frame's horizontal work,
+so the X it reads belongs to the previous frame; the test pairs them back up
+rather than pretending otherwise. It also stops one frame short of the landing,
+because at the time the single pixel X moved across that frame had nothing
+translated to account for it. It does now: `$2519` squares X up to an even
+column, and a test of that frame on its own is in the jump's golden set.
 
 **Watch out:** `rebb64/docs/TECHNICAL.md` and `rebb64/src/` disagree about the
 entity arrays. The doc's table calls `$8840` the horizontal velocity and
@@ -814,6 +1109,213 @@ entity arrays. The doc's table calls `$8840` the horizontal velocity and
 `$8868,x` is the byte it adds to Y. Section 1 settles which wins - the golden
 source is `src/`, and the doc is a summary of it. Name from the code when the
 next item reaches these.
+
+**Watch out:** which routine walks a player is not settled, and the movement
+item stops there. `D_1E6C` dispatches on the player's state byte `$B2`, and a
+live player is state 1, whose handler is `D_2162` in `entity-interaction.s`.
+State 1 is now observed rather than inferred, and in play rather than at the
+select screen: on level 1 with a one-player game running, `$B2` reads `$01`,
+`$BA` `$2C` and `$C2` `$DD` - and `$DD` is exactly what `check_player_state`
+writes to `ZP_C2,x` when it respawns a player, which is a second source
+agreeing.
+
+The player also demonstrably walks: holding D takes `$BA` from `$2C` up to
+`$F4`, which is exactly the right-hand clamp `$2836` writes. So the verify step
+below is reachable - the input, the hold and the byte to compare all work.
+
+**The routine is found.** A store checkpoint on `$BA`, with D held, traps 300
+times at `$22C2` - against three hits on the respawn placement in
+`check_player_state` and one on its game-over path. `$22C2` is `L22C2` in
+`entity-interaction.s`, so the store is the `sta FA,x` at `$22C0`, the last
+instruction of the tail beginning at `L22BB`:
+
+```
+L22BB:  lda FA,x ; clc ; adc ZP_04 ; sta FA,x
+L22C2:  rts
+```
+
+That tail is **shared**. `D_226B` sets `ZP_04` to `$FE` and `D_22C3` sets it to
+`$02`, and both fall into it, so one store moves a player two pixels either
+way. The input dispatch at `D_220C` picks between them by shifting the port
+byte: bit 2 for `D_226B`, bit 3 for `D_22C3`, which makes `D_226B` left and
+`D_22C3` right.
+
+So the path is the one the static trace found first and then talked itself out
+of: `D_2162` to `D_220C` to `D_226B`/`D_22C3`. It was dismissed as bubble code
+on the strength of the comments, which call these "move left in bubble" and
+"move right in bubble". They are the player's ordinary walking movers. That is
+the third comment in this file to point the wrong way, after `D_ED12`/`D_ED18`
+and the `$8480` arrays, and it is the clearest argument yet for section 1's
+rule that the code is the golden source and the prose around it is not.
+
+This also settles the four candidates the other way round, on positive evidence
+rather than silence: `$2146` and `$2107` in `D_20D7`, and `D_ED12`/`D_ED18`,
+are not the player's walk. They belong to the entity movers.
+
+**The vertical half is found**, by the same method and with the same result:
+the routines are where the reference's comments say something else entirely.
+A store checkpoint on `$C2` separates cleanly into three, none of which fires
+while the player stands still.
+
+| Trapped at | Store at | What it is |
+|---|---|---|
+| `$23FE` | `$23FC`, `L23FC` | the rise |
+| `$243C` | `$243A`, `L243A` | the fall |
+| `$2480` | `$247E`, `L2474` | the landing |
+
+All three are inside the routine at `$23EA` that the disassembly heads "bubble
+ascent (captured enemy rising)". It is the player's jump. That is the fourth
+comment in `entity-interaction.s` to point the wrong way, after the two walk
+movers.
+
+The rise subtracts `D_ACCD` indexed by `$87A0` counting down, the fall adds the
+same table indexed by `$87C8` counting up, and the landing snaps `$C2` to the
+eight-pixel grid with the `sbc #$2D / and #$F8 / adc #$2D` that the other
+landing checks use. `D_ACCD` is `$00 $01 $01 $02 $02 $02 $03 $03 $03 $03 $03
+$04 $04 $04 $04 $04`, and the disassembly calls it the "fall speed table",
+which is half right: both halves of the arc read it.
+
+The captured arc proves the indexing without any reading at all. Sixteen steps
+of rise came back as four four four four four, three three three three three,
+two two two, one one, zero - which is `D_ACCD` walked from its end to its
+start, value for value.
+
+Two loose ends. One trap landed at `$E496`, which is `wait_one_frame` and has
+no business storing `$C2`; it happened once in forty and is unexplained, so
+watch for it rather than assume it was noise. And `$2480` continues to `$2519`,
+which has not been looked at.
+
+**The jump trigger is `D_222B`**, and for once the static reading had it right
+- but it does more than set a counter, which the reading had not noticed.
+
+A store checkpoint on `$87A0` is unambiguous. Nothing writes it while a player
+stands still except `$04CE`, the respawn clear putting `$FF` there. With up
+held, `$2230` fires three times in a run and writes `$0F` every time, which is
+the `sta D_87A0,x` at `$222D`. Three traps, three jumps. It is reached from
+`$220C`'s up arm by `jmp`, which is exactly the arm `PlayerMovement.Step`
+currently returns on.
+
+What else `$222B` does matters for the translation:
+
+- It latches the horizontal direction into `$8840` and `$8868`, one flag each.
+  Left is latched when the port's bit 2 is clear *and* the frame is `$04` to
+  `$07`; right when bit 3 is clear *and* the frame is below `$04`. So the
+  *drift* is decided once, at take-off, from the stick **and** from which way
+  the player was already facing.
+- It sets bit 1 of the sprite, unless the frame is already `$08` or above.
+- It increments `$B1`. The reference calls that the bubble count; given how
+  much else in this file is misnamed, treat that as unverified.
+
+On the ground the stick drives `$226B` and `$22C3` directly. In the air `$222B`
+turns the stick into two flags and `$2483` moves the player from those.
+
+**Correction.** An earlier draft of this section said that settled it - that in
+the air the stick is not read again. That is wrong, and a capture of a jump with
+right held shows it plainly. X advances from two places on alternate frames:
+`$24FA`, which is `$2483`'s `inc FA,x` at `$24F8`, and `$267B`, which is the
+`inc FA,x` at `$2679`. So airborne movement is the drift **plus** a stick-driven
+mover, which is why holding right through a jump covers ground faster than
+either alone would - two pixels then one, over and over.
+
+The second mover is not independent, which took a second look to see. Its entry
+is `$25F1`, and the only thing that reaches `$25F1` is the `jmp` at `$2515`, at
+the end of the drift's own animation tail. So a player steers on exactly the
+frames the drift animates - every second one, and only while the sprite is below
+`$08`. The routine `$263D` is the right-hand half of it and `$25FE` the left.
+
+Two other things fell out of the same capture. `$251E` writes `$FF` to `$87A0`,
+so `$2519`, the routine a landing leaves for, is at least in part the reset that
+puts the counter back to idle. And `$23EF` is the rise's own `dec` at `$23EC`,
+which confirms the rise addresses a second time from a different direction.
+
+**`$2519` is found, and it is the end of the arc rather than anything to do
+with bubbles.** The reference heads it "bubble reached top - check for pop".
+Both ways out of a jump lead here: the landing at `$2480`, and the fall running
+out at `$2423`. One landing, caught whole in a single trap, says what it does:
+
+```
+  PC      X   Y  frame $87A0 $87C8 $87F0
+  $2541  54  B5   00    FF    FF    FF
+```
+
+Three things at once. Both arc counters go back to `$FF`, which is the idle the
+caller at `$21BD` tests for. `$87F0` stays `$FF`, meaning the branch that
+restarts a fall did not fire, because there was a floor. And **X is aligned to
+an even column** - `$53` became `$54` - which is the pixel that went missing
+across the landing frame in the steered-jump capture and could not be accounted
+for at the time. A landing squares the player up on both axes: `$247E` snaps Y
+to the row grid and this snaps X to an even column.
+
+Which way it rounds depends on which way the player faces. Frames below `$04`
+and from `$0A` up round up, at `$2538`; frames `$04` to `$09` round down, at
+`$2530`. That is right-facing up and left-facing down - aligned in the direction
+of travel. The trap came in at `$2541`, the round-up path, from a frame of `$00`,
+which is exactly what that rule predicts.
+
+After the alignment it probes the same two rows the landing check uses. If
+nothing is underneath, it increments `$87F0` and leaves for `$EB3F` to start the
+player falling again; otherwise it returns. There is a level 91 special case on
+`$C2` equal to `$DD` which is left as read.
+
+**`$EB3F` is found: a plain descent at two pixels a frame, until something is
+underneath.** It is not a routine on its own. It is one of three entry points -
+`$EB34`, `$EB3F` and `$EBB8` - that each write a different continuation into
+self-modifying code at `$EB94` and `$EBB5`, then fall into one shared body at
+`$EB48`. The body adds two to `$C2`, wraps `$F5` round to `$15`, and on an
+eight-pixel boundary probes two rows; finding the lower one solid it does
+`dec $87F0,x`, which takes that byte back to `$FF` - on the ground. Then it
+takes whichever continuation the entry point set.
+
+Watched live it is unmistakable. Thirty traps on `$EB3F`, every one of them for
+slot `$02` or `$03`, with `$C2` for those slots climbing `$15 $17 $19 $1B` and
+on by twos, from the top of the screen downwards. That is the constant-speed
+descent the source describes, and the wrap is why they start at `$15`.
+
+**Two cautions for whoever translates it.**
+
+The self-modifying code must not be reproduced literally. What `$EB34`, `$EB3F`
+and `$EBB8` actually choose between is a continuation - the generic animation
+step at `$EB0F`, `$EE4A` reached past a `BIT`, and a bare `rts` - so in this
+port that is an argument, not a rewritten instruction.
+
+And **the player was never seen reaching it.** Every trap was an entity. The
+path Phase 4 cares about, `$2575` incrementing `$87F0` and jumping here when a
+landing finds no floor, is read from the source and not yet watched happening,
+because the player landed on a floor every time. Driving a player off a ledge
+with scripted input is the missing piece of that check. Until it is done, treat
+the player's use of this routine as inferred rather than proved.
+
+**Trying to catch a player on `$EB3F`, and failing.** Three runs, none of which
+produced it. Worth writing down, because the failures say more than another
+green test would.
+
+**A correction first.** An earlier note here said that driving a player off a
+ledge would settle it. That is the wrong manoeuvre. Walking off an edge is the
+walk's own ground check at `$1F03`, which increments `$87F0` at `$1F17` and
+leaves for `$EB34` - a different entry point into the same shared body, with a
+different continuation. `$2575` is reached only from `$2519`, so what is
+actually needed is **a jump arc that expires with no floor under it**: either a
+landing whose probes come up empty, or the fall counter reaching `$10` in
+mid-air.
+
+What the runs showed:
+
+1. Holding jump and right, the player climbs onto the platform where level 1
+   keeps its enemies, is killed on contact, and spends eleven seconds dying.
+2. `$DC00` is not a reliable witness for whether a key is held. The game writes
+   `$7F` to that port itself, so a sample can catch either the write or the
+   stick depending on where in the frame it lands. Judge input by whether the
+   player moves.
+3. With the six entity slots zeroed through the monitor so the player survives -
+   an intervention, and disclosed as one - twenty-four seconds of jumping got
+   the player to the right-hand clamp at `$F4`, bouncing between Y `$3A` and
+   `$65`, with `$87F0` never once leaving `$FF`. Every arc ended on a floor.
+
+So on level 1 the case may simply not arise: its platforms are wide and its
+drops are shorter than the arc. Settling it wants a level with a real gap under
+a jump, which means either reaching one in play or a targeted setup - and a
+targeted setup is close enough to constructing the answer that it would be
+worth little. Left open, deliberately.
 
 **Verify:** headless harness. Hold right for 40 ticks from a known start on
 level 1; the player's X byte matches VICE at the same tick. And: the player
