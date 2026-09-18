@@ -20,9 +20,13 @@ public sealed class BubbleBobbleMainTests
     // Twelve two-row blocks down each edge plus the last row's top half, both edges.
     private const int SidebarCharacters = 100;
 
-    // The sheets the two views draw from. The game repaints them in the level's colours before it
-    // draws, so the surface has to be holding them by the time a frame is composed.
-    private static readonly string[] s_sheets = ["LevelTiles", "TileEdges", "Sidebars"];
+    // One sprite, drawn last of all: a game with no front end starts the one player it can name.
+    private const int PlayerSprites = 1;
+
+    // The sheets the views draw from. The game repaints them - in the level's colours for the
+    // playfield's two, in the sprite's own colour for the players' - before it draws, so the surface
+    // has to be holding them by the time a frame is composed.
+    private static readonly string[] s_sheets = ["LevelTiles", "TileEdges", "Sidebars", "SpritesGame"];
 
     private static readonly LevelStore s_levels = LevelStore.Read(Path.Combine(
         AppContext.BaseDirectory,
@@ -102,16 +106,18 @@ public sealed class BubbleBobbleMainTests
         Assert.Equal(2, game.CurrentLevel);
     }
 
-    // Three bands: the level trimmed to the 28 columns the decoration leaves, the decoration over
-    // the whole 32, and the HUD in the eight columns past them. All three are the full height of
-    // the screen.
+    // Four bands: the level trimmed to the 28 columns the decoration leaves, the decoration over the
+    // whole 32, the players over that, and the HUD in the eight columns past them. All four are the
+    // full height of the screen. The players share the decoration's band because a sprite may be
+    // anywhere on the level, including over its outermost columns.
     [Fact]
-    public void ComposesTheLevelItsDecorationAndTheHudAsThreeLayers()
+    public void ComposesTheLevelItsDecorationThePlayersAndTheHudAsFourLayers()
     {
         RecordingGraphics graphics = Draw();
 
         Assert.Equal(
             [(new Vector2(16, 0), 224f, 200f),
+             (new Vector2(0, 0), 256f, 200f),
              (new Vector2(0, 0), 256f, 200f),
              (new Vector2(256, 0), 64f, 200f)],
             graphics.ClipRegions);
@@ -141,13 +147,17 @@ public sealed class BubbleBobbleMainTests
 
         float[] edges = [0f, 8f, 240f, 248f];
 
+        // The players are drawn after both of them, so they come off the end first.
+        (string ImageType, Vector2 Position, Vector2 Size, Vector2 SourcePosition, Vector2 SourceSize)[] characters =
+            [.. graphics.ImageParts.SkipLast(PlayerSprites)];
+
         Assert.Equal(
             edges,
-            graphics.ImageParts.TakeLast(SidebarCharacters).Select(x => x.Position.X).Distinct().Order());
+            characters.TakeLast(SidebarCharacters).Select(x => x.Position.X).Distinct().Order());
 
         // And the level itself was drawn before them, inside those edges.
         Assert.Contains(
-            graphics.ImageParts.SkipLast(SidebarCharacters),
+            characters.SkipLast(SidebarCharacters),
             x => !edges.Contains(x.Position.X));
     }
 

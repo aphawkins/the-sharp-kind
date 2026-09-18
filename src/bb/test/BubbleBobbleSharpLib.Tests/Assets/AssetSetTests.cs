@@ -69,6 +69,20 @@ public sealed class AssetSetTests
         Assert.True(opaque > 0, $"{sheet} is entirely transparent.");
     }
 
+    // The sprite sheet PlayerView8Bit indexes: rebb64 holds the game's 97 sprites in one run from
+    // $5800 and the export copies them across unchanged, so the sheet is one row of them. A C64
+    // sprite is 24 pixels by 21, and a multicolour one carries those 24 as twelve entry numbers -
+    // which is where the view's twelve comes from. A sheet that lost a sprite, or that was packed
+    // into a grid instead, would put every player on the wrong artwork rather than fail to load.
+    [Fact]
+    public void HoldsTheGamesSpritesAsOneRowOfNinetySeven()
+    {
+        FastBitmap sheet = s_assets.Images["SpritesGame"];
+
+        Assert.Equal(97 * 12, sheet.Width);
+        Assert.Equal(21, sheet.Height);
+    }
+
     [Fact]
     public void ReadsTheGamesOwnFont()
     {

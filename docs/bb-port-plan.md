@@ -1030,10 +1030,59 @@ of `player-sprites.s`.
         table at `$AC03` starts three forty-byte rows below the map, and the
         column has a `dec` against it. Both are folded in, so a probe is the
         offset the reference names and nothing else.
-- [ ] `PlayerModel` and its view.
+- [x] `PlayerModel` and its view, which is `$1805` and the sheet it points at.
+
+      `$1805` is the whole of the drawing side and it is short. For each of the
+      eight slots it writes `$BA` to the sprite's X register and `$C2` to its
+      Y, `$8548` to the sprite's colour register, and `$8520` masked to five
+      bits and added to `$8598` to the sprite pointer. There is no other
+      arithmetic between a player's bytes and the screen, which is why the
+      model carries the position bytes as they stand and the rendition applies
+      the offset.
+
+      `$8598` is `$60` for both players, and `$60` is exactly where the game's
+      own sprite data starts - `__SPRITE_PTR_BASE__` is `($5800-$4000)/64`. So
+      the pointer a player is drawn with is the masked frame and nothing else,
+      and the sheet index is the frame. `sprites-game.tga` is those 97 sprites
+      in one row, 12 pixels each in the sheet and 24 on screen, because a
+      multicolour sprite carries its 24 as twelve entry numbers.
+
+      A sprite resolves those entries differently from a character, which is
+      why `MulticolourSprites` is not `MulticolourSheet` with other arguments:
+      01 and 11 are `$D025` and `$D026`, one pair for every sprite on the
+      screen, and only 10 is the sprite's own colour. `$44E9` sets that pair to
+      1 and 2 and nothing writes it again, so what varies between one sprite
+      and the next is a single entry - and a repainted copy is held per colour
+      rather than per sprite.
+
+      The offset from a position byte to a pixel is the VIC-II's own, since
+      `$1805` applies none: on a 40-by-25 display `$18` and `$32` are the
+      coordinates that put a sprite's top-left pixel at the screen's. **That is
+      not the offset a probe uses, and the two are not meant to agree.**
+      `PlayerCell` works from `$14` and `$15`, which land four pixels in and
+      five down from the sprite's own corner - the game probing a point inside
+      the character rather than the corner of the box it is drawn in, which is
+      why the probes that reach the ground are written one and two rows below
+      it.
+
+      Two gaps, named. `$182F` stores the masked frame back to `$8520` before
+      it adds the base; nothing translated leaves a frame above `$1F` there for
+      it to trim, and a model does not write to the game's state, so the store
+      is not reproduced. And `$1822` can override a player's colour from
+      `$8570` while they flash - but for the two players `$8548` and `$8570`
+      hold the same pair, 5 and 3, so the override changes nothing and the
+      flash goes with invincibility.
+
+      **Nothing drives the players yet.** `StartPlayers` places them where
+      `$04BB` and `$05C5` do - `$C2` is `$DD`, `$BA` comes from `$A735`, the
+      frame from `$A737`, the colour from `$05C5`, and the three counters go
+      back to `$FF` - and there they stay, because the routine that walks a
+      player each frame is `$1E6C`'s state dispatch, which the note below says
+      is not settled. One player, since there is no front end to join a second
+      with.
 
 **Verified so far:** the solution builds with 0 warnings and
-`BubbleBobbleSharpLib.Tests` is 168/168. The table's width, its zeroed start
+`BubbleBobbleSharpLib.Tests` is 195/195. The table's width, its zeroed start
 and the independence of the two players' bytes are proved against the table
 itself. The port byte is proved a bit at a time - each direction clearing only
 its own bit, from either the keys or the pad, an idle port reading `$FF`, a
@@ -1101,6 +1150,27 @@ rather than pretending otherwise. It also stops one frame short of the landing,
 because at the time the single pixel X moved across that frame had nothing
 translated to account for it. It does now: `$2519` squares X up to an even
 column, and a test of that frame on its own is in the jump's golden set.
+
+The drawing side is proved on the recording surface, the way the other three
+views are: one rectangle per active player, 24 by 21 from a 12 by 21 source,
+the sprite taken from its own column of the sheet, an empty slot drawing
+nothing, player one drawn over player two, and the sheet painted with the
+sprite's own colour in entry 10 rather than entry 11. The mask is proved a byte
+at a time, `$20` and `$FF` included, since a frame that kept its sixteens would
+name no sprite at all.
+
+One test ties the drawing offsets to the game's own numbers rather than to the
+VIC-II's documentation, and it is the only one that could have caught them
+being four and five pixels out: a player placed where `$04BB` starts a life -
+`$2C`, `$DD` - comes out with the sprite's bottom edge on pixel 192, which is
+the top of row 24, the floor the level is drawn inside. Standing on the floor
+is what starting a life looks like, and `$DD` and both origins have to agree
+for it to land there.
+
+The real sheet is checked as well, beside the asset set's own tests: 97 sprites
+of 12 by 21 in one row. A sheet that lost one, or that was packed into a grid
+rather than copied across as rebb64 holds it, would put every player on the
+wrong artwork without failing to load.
 
 **Watch out:** `rebb64/docs/TECHNICAL.md` and `rebb64/src/` disagree about the
 entity arrays. The doc's table calls `$8840` the horizontal velocity and

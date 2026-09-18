@@ -32,6 +32,7 @@ internal sealed class EntityTable
     private readonly byte[] _leftFlag = new byte[Capacity];
     private readonly byte[] _rightFlag = new byte[Capacity];
     private readonly byte[] _groundState = new byte[Capacity];
+    private readonly byte[] _colour = new byte[Capacity];
 
     // $8520. Which sprite the thing is drawn with, and with it which way it faces: the movers set 0
     // to face right and 4 to face left, and bit 0 alternates to make the walk cycle.
@@ -58,6 +59,12 @@ internal sealed class EntityTable
     internal Span<byte> LeftFlag => _leftFlag;
 
     internal Span<byte> RightFlag => _rightFlag;
+
+    // $8548. The colour the thing's sprite is drawn in, and the only one of a multicolour sprite's
+    // three colours that is the sprite's own - $D025 and $D026 hold the other two for every sprite
+    // on the screen at once. $1822 reads it as it fills the VIC's colour registers, and $05C5 gives
+    // the two players theirs as a level starts.
+    internal Span<byte> Colour => _colour;
 
     // $87F0. Negative while the thing has ground under it. $1F03 tests bit 7 before it will let a
     // player walk, and both $1F17 and $2575 start a fall by incrementing it out of $FF. $05C5 sets
