@@ -773,15 +773,39 @@ of `player-sprites.s`.
       each is a pair of separately named bytes - but they are indexed here
       too, because the caller is holding a player number and a pair of named
       fields would make every caller branch on it.
-- [ ] `Input.Read()` producing the same bit layout the 6502 joystick routine
-      does. Keep the bit layout — the movement code reads it directly.
+- [x] `Input.Read()` producing the same bit layout the 6502 joystick routine
+      does. Keep the bit layout — the movement code reads it directly. A CIA
+      port reading, bit for bit: bit 0 up, 1 down, 2 left, 3 right, 4 fire,
+      and a bit reads *clear* while its direction is pushed, because each is a
+      switch to ground. Two bytes, indexed by player as `PlayerTable` is -
+      player 1 is port 2 (`$DC00`, read first at `$1CBD`) and player 2 is port
+      1 (`$DC01`). Bits 5 to 7 are left high: on the C64 they carry a keyboard
+      matrix row rather than the stick, and nothing in the reference reads
+      them off a joystick byte.
+
+      Keys for both players, and a pad for player 1 only - `IGamepad` answers
+      for one active device at a time, so a second stick is attached but
+      cannot be read alongside the first. Keys and pad drive the same five
+      bits, so holding both is one push. `IsHeld` throughout, never
+      `IsPressed`: the 6502 re-reads the ports every frame and sees a held
+      stick held.
+
+      No keyboard scheme comes from the reference - the C64 had a stick in
+      each port and no keyboard alternative at all - so the two schemes are
+      this port's own: arrows plus Space, and W/A/S/D plus Q. No
+      `ControlBindings` file yet, and section 5 still expects one; it wants a
+      per-player device as well, which is a change to `ControlMap` rather
+      than to this.
 - [ ] Walk, jump, fall, land, face left and right, animate.
 - [ ] `PlayerModel` and its view.
 
 **Verified so far:** the solution builds with 0 warnings and
-`BubbleBobbleSharpLib.Tests` is 91/91. The table's width, its zeroed start and
-the independence of the two players' bytes are proved against the table
-itself.
+`BubbleBobbleSharpLib.Tests` is 120/120. The table's width, its zeroed start
+and the independence of the two players' bytes are proved against the table
+itself. The port byte is proved a bit at a time - each direction clearing only
+its own bit, from either the keys or the pad, an idle port reading `$FF`, a
+held key staying held across two reads, and one player's stick never reaching
+the other's port.
 
 **Watch out:** `rebb64/docs/TECHNICAL.md` and `rebb64/src/` disagree about the
 entity arrays. The doc's table calls `$8840` the horizontal velocity and
