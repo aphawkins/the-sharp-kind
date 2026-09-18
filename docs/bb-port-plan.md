@@ -885,10 +885,9 @@ of `player-sprites.s`.
       `ControlBindings` file yet, and section 5 still expects one; it wants a
       per-player device as well, which is a change to `ControlMap` rather
       than to this.
-- [ ] Walk, jump, fall, land, face left and right, animate. **All six are in
-      and proved against VICE.** What is left is the trigger, which is now
-      found but not translated - see below. The arc runs correctly the moment
-      something sets the rise counter.
+- [x] Walk, jump, fall, land, face left and right, animate. All six are in and
+      proved against VICE, the trigger with them, and the driver below now
+      calls them - so a player on screen walks, jumps and lands.
   - [x] `SolidMap`, the level's own collision map. `$8500` keeps it as forty
         bytes a row, thirty-two of level and eight of something else, and every
         collision test in the game is an indexed read off a pointer into it.
@@ -1073,16 +1072,63 @@ of `player-sprites.s`.
       hold the same pair, 5 and 3, so the override changes nothing and the
       flash goes with invincibility.
 
-      **Nothing drives the players yet.** `StartPlayers` places them where
-      `$04BB` and `$05C5` do - `$C2` is `$DD`, `$BA` comes from `$A735`, the
-      frame from `$A737`, the colour from `$05C5`, and the three counters go
-      back to `$FF` - and there they stay, because the routine that walks a
-      player each frame is `$1E6C`'s state dispatch, which the note below says
-      is not settled. One player, since there is no front end to join a second
-      with.
+      `StartPlayers` places them where `$04BB` and `$05C5` do - `$C2` is `$DD`,
+      `$BA` comes from `$A735`, the frame from `$A737`, the colour from
+      `$05C5`, and the counters go back to `$FF`. One player, since there is no
+      front end to join a second with. What moves them from there is
+      `PlayerFrame`, the item below.
+
+- [x] `PlayerFall`, `$257C` - a player falling with no jump behind them, which
+      is what walking off a ledge leaves. It is a third falling routine, and
+      the near-twin of `$EB48` rather than a copy of it: same two pixels a
+      frame, same `$F5` to `$15` wrap, same pair of probe rows (`$51` clear,
+      `$79` solid). Three things differ, and each has a test of its own -
+      the height below which the ground is not looked for is `$26` rather than
+      `$1F`, a landing squares X up to an even column where `$EB48` leaves X
+      alone, and the tail runs an animation counter that every second frame
+      falls straight into `$25F1`.
+
+      That last one corrects the note on `PlayerSteer`. `$2515` is *not* the
+      only way into the steer: `$257C`'s `L_25E2` falls into `$25F1` as well,
+      so a player who walks off a ledge is steerable on the same every-second-
+      frame cadence a jump is.
+
+      The frame sets the X snap uses are not `$2519`'s, which is the reason
+      this is written out rather than shared with `PlayerLanding`. There `$04`
+      to `$09` round down and the rest round up. Here `$08` and `$09` round up
+      with the low frames and `$0A` upwards rounds down with the middle ones.
+      A translation that reused the landing's rule passes every other case and
+      fails those four.
+- [x] `PlayerFrame`, which is `$1CBD`, `$1E6C` and `$2162` - the thing that
+      calls everything above, and the answer to the "nothing drives the
+      players yet" note this section carried until now.
+
+      It is short, because all it is is four questions asked in order. Is the
+      rise counter out of its `$FF` idle - then the arc owns the frame
+      (`$21BD`). Is the ground byte out of *its* idle - then the fall does
+      (`$21C5`). On a row boundary with nothing underneath - then the ground
+      byte comes out of `$FF` and the fall runs on that same frame (`$21CD`).
+      Otherwise the stick: anything pushed reaches `$220C`, and nothing pushed
+      leaves a standing player breathing on a period of seven (`$21EB`).
+
+      Three pieces of `$2162` are deliberately absent, each named in the class
+      rather than skipped silently: `$2165`'s call to `$2301`, which a player
+      out of a bubble never reaches; the scan over the eighteen entity slots
+      at `$2171` that catches an enemy while up is held, which with no enemies
+      in play finds nothing and falls through to exactly where the arm that
+      skips it goes; and what happens to a captured player. Only state 1 is
+      dispatched - the jump table at `$1E3A` has an entry per state and the
+      rest are dying, captured, freed and the level-99 special. Only the two
+      player slots are driven, though `$1CBD`'s loop covers eight.
+
+      **A gap in `StartPlayers` fell out of writing this.** `$05F5` sets
+      `$8818` to `$FF` for all eight slots as a level starts and the port was
+      not doing it, so the byte sat at zero - which every mover reads as "in a
+      bubble" and refuses to turn a player on. Nothing had noticed, because
+      until now nothing called a mover.
 
 **Verified so far:** the solution builds with 0 warnings and
-`BubbleBobbleSharpLib.Tests` is 195/195. The table's width, its zeroed start
+`BubbleBobbleSharpLib.Tests` is 223/223. The table's width, its zeroed start
 and the independence of the two players' bytes are proved against the table
 itself. The port byte is proved a bit at a time - each direction clearing only
 its own bit, from either the keys or the pad, an idle port reading `$FF`, a
@@ -1166,6 +1212,23 @@ being four and five pixels out: a player placed where `$04BB` starts a life -
 the top of row 24, the floor the level is drawn inside. Standing on the floor
 is what starting a life looks like, and `$DD` and both origins have to agree
 for it to land there.
+
+The driver has thirteen cases of its own, and they prove the routing rather
+than the routines: an empty slot and a slot in an untranslated state both left
+alone, the walk on a floor, the fall started on the frame the floor goes, the
+ground check skipped off a row boundary, the arc winning over both the ground
+check and the stick, up and then the arc on the frame after, the idle animation
+on its period of seven and a bubbled player getting none of it, two players
+driven from their own sticks, and a standing player standing still - which
+reads as a test of nothing and is the one that fails if the ground check is
+inverted. `$257C` has its own eighteen, of which eight are the X snap alone.
+
+And the whole chain is proved in the app rather than in a harness, which is
+the first time anything in this port has been. `sdl-drive` held right for forty
+ticks and then tapped up, dumping frames as it went: the player walks right
+along the floor, the jump lifts them, and they land on the platform above and
+stay on it. Every one of the eight routines ran to produce that, and a break
+anywhere in the chain would have left them standing where `$04BB` put them.
 
 The real sheet is checked as well, beside the asset set's own tests: 97 sprites
 of 12 by 21 in one row. A sheet that lost one, or that was packed into a grid

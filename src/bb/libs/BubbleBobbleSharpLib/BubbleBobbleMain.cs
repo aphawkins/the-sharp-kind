@@ -43,10 +43,6 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     // cheapest check that the position bytes and the drawing offsets agree.
     private const byte SpawnY = 0xDD;
 
-    // $B2. One is a player alive and in play - see docs/bb-port-plan.md, which settles it by
-    // reading the byte in a running game rather than by inferring it.
-    private const byte PlayingState = 0x01;
-
     // There is no front end to choose two players with, so the game starts the one it can name.
     // Player two's slot stays empty, which is what an unjoined second player looks like.
     private const int PlayingPlayers = 1;
@@ -73,12 +69,13 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     private readonly IView<PlayerModel> _playerView;
     private readonly IView<HudModel> _hudView;
 
-    // The players' own bytes and the ones they share with everything else that moves. Nothing drives
-    // them yet: the routine that walks a player each frame is $D_1E6C's state dispatch, which
-    // Phase 4 has not settled - see docs/bb-port-plan.md. What they hold is a player placed where a
-    // life starts, so that the view has something true to draw.
+    // The players' own bytes and the ones they share with everything else that moves, and the chain
+    // that walks them: $1CBD reads the sticks, $1E6C dispatches on a player's state, and what hangs
+    // off that is the whole of Phase 4.
     private readonly PlayerTable _playerTable = new();
     private readonly EntityTable _entities = new();
+    private readonly Input _input;
+    private readonly PlayerFrame _frame;
     private readonly LayerRunner _layers;
 
     // What the HUD shows. $0969 clears both scores and the high score when a game starts, and
@@ -94,6 +91,10 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     // level's characters are settled the moment setup_level_screen has run.
     private PlayfieldModel _playfield;
     private SidebarModel _sidebar;
+
+    // The same level as a bit grid, which is what every collision test in Phase 4 reads. Built with
+    // the playfield rather than per frame: init_level_renderer builds it once, as a level starts.
+    private SolidMap _solids;
 
     public BubbleBobbleMain(
         IAbstraction abstraction,
@@ -125,6 +126,23 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         Sound = abstraction.Sound;
         AudioOptions = audioOptions;
         _levels = levels;
+
+        // $1CBD down to $267A, built once. Each of these is one routine out of the reference and they
+        // are wired in the order the reference calls them, innermost first: the steer is reached from
+        // the drift's tail and the fall's, the descent from the landing, the landing from the jump.
+        _input = new Input(Keyboard, Gamepad);
+
+        PlayerSteer steer = new(_playerTable, _entities);
+        PlayerDrift drift = new(_playerTable, _entities, steer);
+        PlayerDescent descent = new(_playerTable, _entities);
+        PlayerLanding landing = new(_playerTable, _entities, descent);
+
+        _frame = new PlayerFrame(
+            _playerTable,
+            _entities,
+            new PlayerMovement(_playerTable, _entities),
+            new PlayerJump(_playerTable, _entities, drift, landing),
+            new PlayerFall(_playerTable, _entities, steer));
 
         BbViewSurface surface = new(Graphics, Layout, assetLocator);
         _playfieldView = rendition.CreatePlayfieldView(surface);
@@ -182,6 +200,10 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         {
             ShowLevel(CurrentLevel == LevelStore.Count ? FirstLevel : CurrentLevel + 1);
         }
+
+        // $1CBD: both ports read once, then every live slot walked. One tick is one frame, so this
+        // runs at the rate the raster interrupt called it at.
+        _frame.Step(_input.Read(), _solids);
     }
 
     public void Draw()
@@ -193,12 +215,13 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
 
     // setup_level_screen, as far as this port has translated it: what the level's screen holds, and
     // what its border is decorated with. Both are settled once and then drawn every frame.
-    [MemberNotNull(nameof(_playfield), nameof(_sidebar))]
+    [MemberNotNull(nameof(_playfield), nameof(_sidebar), nameof(_solids))]
     internal void ShowLevel(int number)
     {
         Level level = _levels.Level(number);
 
         _playfield = Playfield.Build(level);
+        _solids = SolidMap.Build(level);
         _sidebar = Sidebars.Select(level);
         CurrentLevel = number;
 
@@ -215,18 +238,22 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         {
             bool playing = player < PlayingPlayers;
 
-            _playerTable.State[player] = playing ? PlayingState : (byte)0;
+            _playerTable.State[player] = playing ? PlayerFrame.PlayingState : (byte)0;
             _playerTable.X[player] = s_spawnX[player];
             _playerTable.Y[player] = SpawnY;
 
             _entities.Frame[player] = s_spawnFrame[player];
             _entities.Colour[player] = s_spawnColour[player];
 
-            // $04C4 to $04CB. None of the three is a count of anything yet: $FF is the value each
-            // of them reads as "not happening", which is what a player standing still is.
+            // $04C4 to $04CB, and $05F5 for the fourth. None of them is a count of anything yet:
+            // $FF is the value each reads as "not happening", which is what a player standing still
+            // is. The bubble timer belongs to the level-start loop rather than to $04BB, but it is
+            // set here for the same reason - the movers refuse to turn a player whose bubble timer
+            // is not negative, so leaving it at zero would leave them facing one way for good.
             _entities.RiseCounter[player] = 0xFF;
             _entities.FallCounter[player] = 0xFF;
             _entities.GroundState[player] = 0xFF;
+            _entities.BubbleTimer[player] = 0xFF;
         }
     }
 
