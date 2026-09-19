@@ -1997,8 +1997,8 @@ what is genuinely the bubble's own: blowing one, and the shared mover at
       **Verified:** solution builds with 0 warnings, and
       `BubbleBobbleSharpLib.Tests` is 346/346, up from 332.
 
-- [ ] **The cadence**, which is still open, and now has evidence pointing
-      somewhere specific.
+- [x] **The cadence**, measured under VICE on 2026-09-19 and settled. It is
+      not a pause in the AI at all - it is the capture's own clock.
 
       The capture shows two moves then a pause, in both the shot and the rise.
       Three things are now known that were not:
@@ -2048,9 +2048,32 @@ what is genuinely the bubble's own: blowing one, and the shared mover at
       already ticks - `$13BE` decrements `$A9FA` for all eighteen slots every
       pass with no gating, so any slot is a free pass counter.
 
-      **So the ratio is still unmeasured.** No travel item should be written
-      against the captured frame numbers until it is, because the conversion
-      between the two clocks is the thing in question.
+      **Measured: 3.0000 IRQ frames per game loop pass.** `$08` runs at 50.5 a
+      second and the pass counter `$A9FA` at 17.0, over a four second window,
+      and a three second window agrees at 2.98. So the game loop turns at
+      50/3, about 16.7Hz, and not at the 25Hz a plain reading of the
+      double-buffer wait suggests.
+
+      `$1CBD` is the capture's anchor and runs at 25Hz. Its `jsr` sits behind a
+      self-modifying jump at `$077C`, so the IRQ does not call it every time
+      and its rate cannot be read off the source at all - the 25Hz is the
+      earlier session's measurement of `$08` advancing by two across each
+      trigger.
+
+      That gives game loop passes per anchor of 16.7 / 25 = **0.667**. The
+      capture's own two numbers were 0.679 from the mover steps and 0.668 from
+      the timer. Three independent quantities at two thirds.
+
+      **So there is no pause.** Everything moves every game loop pass, exactly
+      as the code reads. The capture counted anchors, which tick three times
+      for every two passes, so one pass in three had no move to show. The
+      travel items can now be written against the code and converted to the
+      captured frame numbers with a factor of two thirds.
+
+      One caution carried forward: the ratio was measured on level 1 with one
+      player and nothing much happening. A `$0A5A` wait on a self-modified
+      value could differ when the loop has more work to do, so a busy level
+      should be re-measured rather than assumed.
 
 - [ ] **The RNG at `LE9EA`**, and a constraint that came with reading it.
 

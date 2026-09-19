@@ -16,12 +16,15 @@ Usage as a library:
 Usage from the command line:
 
     python monitor.py selftest      # is the game loaded and actually running?
+    python monitor.py start         # drive the front end into a live level
     python monitor.py passes 4      # game loop passes over a 4 second window
     python monitor.py watch 4 A9FA AA0C AA1E   # sample bytes across a window
 """
 
+import os
 import socket
 import struct
+import subprocess
 import sys
 import time
 
@@ -52,6 +55,22 @@ FRAME_COUNTER = 0x0008
 # $13BE decrements $A9FA for all eighteen slots every game loop pass, with no
 # gating at all, so any slot is a free pass counter mod 256.
 PASS_COUNTER = 0xA9FA
+
+# Both counters are single bytes. $08 runs at ~50/s, so it wraps in 256/50 = 5.1
+# seconds and a longer window silently loses a whole turn of it: a 6 second
+# measurement once returned 47 frames instead of 303 and a ratio of 0.47 instead
+# of 3.00, which is wrong in a way that still looks like a number. $A9FA at ~17/s
+# has 15 seconds of room, so $08 is the binding constraint.
+MAX_WINDOW = 4.5
+
+# master.s, eight slots each, players in 0 and 1. State $01 is a live player -
+# watched in VICE, not inferred. On level 1 player 1 starts at X $2C, Y $DD, and
+# $DD is exactly what check_player_state writes when it respawns one.
+PLAYER_STATE = 0x00B2
+PLAYER_X = 0x00BA
+PLAYER_Y = 0x00C2
+
+PRESS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "press.ps1")
 
 
 class MonitorError(RuntimeError):
@@ -161,6 +180,14 @@ class Monitor:
         self.resume()
         return (second - first) % 256, first, second
 
+    def player(self, slot=0):
+        """State, X and Y for one player. The direct answer to 'are we in a level'.
+
+        $A9FA turning says the game loop runs; this says a player exists in it.
+        """
+        block = self.mem(PLAYER_STATE, PLAYER_Y + 1)
+        return block[slot], block[8 + slot], block[16 + slot]
+
     def in_level(self, seconds=1.0):
         """True if the game loop is turning, not just the IRQ.
 
@@ -173,6 +200,47 @@ class Monitor:
         second = self.byte(PASS_COUNTER)
         self.resume()
         return (first - second) % 256
+
+
+def press(*keys, hold_ms=250):
+    """One press.ps1 invocation, waited on. See its header on why never two at once."""
+    subprocess.run(
+        ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", PRESS,
+         "-Keys", ",".join(keys), "-HoldMs", str(hold_ms)],
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False,
+    )
+
+
+def _start(argv):
+    """Drive the front end into a live level, and prove it got there.
+
+    Two presses, not one, and that is the whole trick. Fire only buys a credit
+    and moves the game on to PRESS 1 OR 2 TO PLAY, which reads the keyboard
+    rather than the stick. A session was lost to holding fire at that screen.
+    """
+    tries = int(argv[0]) if argv else 4
+    mon = Monitor()
+    mon.require_game()
+
+    for attempt in range(1, tries + 1):
+        state, x, y = mon.player()
+        print(f"attempt {attempt}: state=${state:02X} X=${x:02X} Y=${y:02X}")
+        if state == 0x01 and x != 0x00:
+            print(f"in play: player 1 at X=${x:02X} Y=${y:02X}")
+            mon.close()
+            return 0
+
+        mon.resume()
+        press("fire")           # title screen: inserts a credit
+        time.sleep(4)
+        press("one")            # select screen: starts a one-player game
+        time.sleep(9)
+
+    state, x, y = mon.player()
+    print(f"gave up after {tries}: state=${state:02X} X=${x:02X} Y=${y:02X}")
+    print("if state is $00 the front end never took - screenshot the window and look")
+    mon.close()
+    return 1
 
 
 def _selftest(argv):
@@ -201,8 +269,18 @@ def _selftest(argv):
     return 0
 
 
+def _check_window(window):
+    if window > MAX_WINDOW:
+        raise SystemExit(
+            f"window {window}s would wrap the $08 frame counter (limit "
+            f"{MAX_WINDOW}s at ~50/s) - the ratio would come back wrong rather "
+            f"than come back failed. Use a shorter window, or several."
+        )
+
+
 def _passes(argv):
     window = float(argv[0]) if argv else 4.0
+    _check_window(window)
     mon = Monitor()
     mon.require_game()
 
@@ -228,6 +306,7 @@ def _passes(argv):
 
 def _watch(argv):
     window = float(argv[0])
+    _check_window(window)
     addrs = [int(a, 16) for a in argv[1:]]
     mon = Monitor()
     mon.require_game()
@@ -247,7 +326,7 @@ def _watch(argv):
     return 0
 
 
-COMMANDS = {"selftest": _selftest, "passes": _passes, "watch": _watch}
+COMMANDS = {"selftest": _selftest, "start": _start, "passes": _passes, "watch": _watch}
 
 
 def main():
