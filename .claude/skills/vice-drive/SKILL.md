@@ -96,6 +96,23 @@ It only claims success on `state=$01` with a non-zero X. On level 1 that reads
 `state=$01 X=$2C Y=$DD`, and `$DD` is exactly what `check_player_state` writes
 when it respawns a player, so two sources agree on it.
 
+**It is reliable enough to use and not reliable enough to trust.** On
+2026-09-19 it succeeded three times and failed three times in one session, on
+the same machine and the same build, usually taking two attempts when it worked
+at all. `fire` lands every time; `one` is the flaky one. Two things help and
+neither cures it: the foreground fix in `press.ps1`, and giving it more tries -
+`start 4` rather than the default.
+
+So **always read what it printed**, and never assume a level loaded because the
+command ran. Three store-watchpoint runs were wasted in one session on exactly
+that: the watch armed correctly, nothing ever stored, and the reason was that
+no level had loaded. A capture built on an unchecked `start` is worth nothing,
+and it will not look like it.
+
+`$00B4-$00B9` zeroed clears the enemies and keeps a player alive - measured at a
+minute - but it does **not** complete the level. Whatever the completion check
+counts, it is not those bytes, so that is not a route to level 2.
+
 **The trick is that it takes two presses, and they are not the same kind of
 input.** Fire alone never starts a game. It buys a credit and moves the front
 end on to a *second* screen, PRESS 1 OR 2 TO PLAY, and that screen reads the

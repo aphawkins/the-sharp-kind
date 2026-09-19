@@ -1699,6 +1699,30 @@ travel, expiry and popping were moved here once that was found. Phase 5 keeps
 what is genuinely the bubble's own: blowing one, and the shared mover at
 `$0E23` that the bubble happened to need first.
 
+**Where this is up to, as of 2026-09-19.** The whole of `$0F98`'s call graph is
+translated - the loop at `$0CF2`, the dispatcher at `$0F48`, the bubble
+collision at `$105B` - along with `$13BE`'s clock, wobble and pop. The cadence
+that blocked everything is measured and gone.
+
+**Pick it up at the direction field in the collision map.** That is the one
+thing between here and the travel items, and it is the item below that names it.
+Two candidates are already eliminated and should not be revisited:
+`bubbleCurrent` has no reader anywhere in the reference, and the static data in
+`sprites2-tables.s` is `$80`/`$00` only. The bits are written at level load, so
+the level draw is where to look - `level-display.s` and `level-setup.s`. A store
+watchpoint on a cell that holds a non-zero low nibble in play, armed before the
+level loads, is the tool; see the `vice-drive` skill, and read what `start`
+printed before believing anything that follows it.
+
+**One caution over everything translated in this phase.** Nothing from the AI
+loop onwards has a golden trace behind it. `EnemyAiLoop`, `EnemyDispatcher`,
+`BubbleCollision` and `EntityTimers` are each tested against a reading of the
+6502, so their tests are self-consistent rather than proof. The `RowBias` item
+below is what that looks like when it goes wrong: the tests were written against
+the same constant they check and would have passed either way, and it took data
+from outside them to settle. Now that the machine can be driven, every one of
+those four is worth re-checking against it.
+
 - [ ] `entity-system.s` and the state tables.
 - [ ] `AddBbRandom`, with the RNG at `LE9EA`.
 - [x] **The loop's own walk**, `$0CF2`, as `Enemies/EnemyAiLoop.cs`.
