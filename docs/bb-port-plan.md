@@ -2124,10 +2124,38 @@ what is genuinely the bubble's own: blowing one, and the shared mover at
       column fourteen, inside the `$01` band. Two independent things agree.
 
       **What it needs.** `SolidMap` must keep the byte, not a bool - or gain a
-      direction alongside the solidity. Where the bytes come from has not been
-      traced yet: `init_level_renderer` fills the `$8B00` bitmap, one bit per
-      cell, so something else derives these bytes from that bitmap plus the
-      level's own `bubbleCurrent`, and that derivation is the thing to find.
+      direction alongside the solidity.
+
+      **`bubbleCurrent` is not where the field comes from.** The exporter takes
+      it as the high nibble of `physics_flags`, and `physics_flags` has exactly
+      one reader in the whole of `rebb64/src` - `level-renderer.s:712`. That
+      reader takes the low nibble, the wrap openings, into `$8B03` and `$8B63`.
+      The high nibble does reach `$8B63` as well, in bits 2 to 5, by way of the
+      `ora` after two `lsr`s. And `$8B03` and `$8B63` are then **never read** -
+      the only other mentions of either are the read half of their own
+      read-modify-write.
+
+      So the byte the port exports as `bubbleCurrent` has no consumer in the
+      reference at all. Whatever sets the map's direction bits, it is not that.
+      This item's premise was wrong and the field needs finding rather than
+      deriving.
+
+      **The map is rebuilt per level**, which is worth stating because it was
+      observed rather than assumed. Map row 2 reads `8080` then twenty-eight
+      `00` then `8080` on the select screen, and `8181`, thirteen `01`, four
+      `02`, eleven `03`, `8383` once level 1 is running.
+
+      **Still untraced, and why.** A store watchpoint on `$8560` - row 2,
+      column 16, a cell that holds `$02` in play - was armed three times and
+      never fired, because on all three runs the level failed to load while it
+      was armed. The watch itself registered correctly each time. This is a
+      gap in the evidence, not a finding about the map.
+
+      Worth trying next, cheapest first: compare the map across two different
+      levels. The `$8500` region has static initial contents in
+      `sprites2-tables.s`, so the direction field may be fixed and positional -
+      the same on every level - with only the solid bits rebuilt. If level 2's
+      low bits match level 1's, that settles it without any trap at all.
 
       Until then `$0D86` and `$0E00` cannot be translated, and with them the
       rise, the drift and the park - which is most of what "travel" means.
