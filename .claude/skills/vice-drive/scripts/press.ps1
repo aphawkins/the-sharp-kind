@@ -50,6 +50,24 @@ public static class ViceIn {
   [DllImport("user32.dll")] public static extern uint MapVirtualKey(uint code, uint mapType);
   [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
   [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h, int n);
+  [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+  [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr h, IntPtr pid);
+  [DllImport("kernel32.dll")] public static extern uint GetCurrentThreadId();
+  [DllImport("user32.dll")] public static extern bool AttachThreadInput(uint a, uint b, bool attach);
+
+  // Windows refuses SetForegroundWindow to a process that does not already own
+  // the foreground, and it fails SILENTLY - the keys then go to whatever does.
+  // That is why driving press.ps1 from a subprocess was flaky while the same
+  // call from an interactive shell worked. Borrowing the foreground thread's
+  // input queue lifts the restriction.
+  public static void Focus(IntPtr h) {
+    ShowWindow(h, 9);
+    uint us = GetCurrentThreadId();
+    uint them = GetWindowThreadProcessId(GetForegroundWindow(), IntPtr.Zero);
+    if (us != them) AttachThreadInput(us, them, true);
+    SetForegroundWindow(h);
+    if (us != them) AttachThreadInput(us, them, false);
+  }
 
   const uint SCANCODE = 0x0008, KEYUP = 0x0002;
 
@@ -82,8 +100,7 @@ $p = Get-Process x64sc -ErrorAction SilentlyContinue |
 
 if (-not $p) { Write-Output 'no VICE window found - is x64sc running?'; exit 1 }
 
-[void][ViceIn]::ShowWindow($p.MainWindowHandle, 9)   # SW_RESTORE
-[void][ViceIn]::SetForegroundWindow($p.MainWindowHandle)
+[ViceIn]::Focus($p.MainWindowHandle)
 Start-Sleep -Milliseconds 500
 
 for ($i = 0; $i -lt $Holds; $i++) {

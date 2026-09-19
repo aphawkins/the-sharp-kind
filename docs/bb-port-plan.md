@@ -2086,7 +2086,53 @@ what is genuinely the bubble's own: blowing one, and the shared mover at
       not just the bubble, and it should be settled before the verify step
       below is relied on.
 
-- [ ] Bubble drift on the level's `bubbleCurrent`.
+- [ ] **The direction field in the collision map**, which is what a bubble's
+      drift actually comes from, and which blocks the travel items above.
+
+      **`$0E00` picks a direction by reading the map.** A slot whose AI counter
+      has run down goes to `$0D86`, and `$0D86` falls straight through into
+      `$0E00` for anything with nothing near it - so a lone bubble is driven
+      entirely by `$0E00`. That routine builds a pointer from the entity's own
+      row and column, reads the byte at offset `$29` - the cell below and one
+      across - and falls into `$0E23` with it. `$0E23` masks it to two bits and
+      that is the direction.
+
+      **The map bytes carry that field, and `SolidMap` throws it away.** Read
+      off level 1 under VICE on 2026-09-19, forty bytes to the row, first
+      thirty-two shown:
+
+      | Map row | Tile bytes | Low two bits |
+      |---|---|---|
+      | 0 | all `$82` | 2, down |
+      | 1-3 | `$81`, then `$01` x13, `$02` x4, `$03` x12, `$83` | 1 right, 2 down, 3 left |
+      | 4 | as above but `$00` across the middle | 0, up |
+      | 5-7 | `$80` at the edges, `$00` between | 0, up |
+
+      Bit 7 is solid, exactly as the port has it. The low two bits are a
+      per-cell current, and the port's map is a `bool` per cell, so they are
+      gone.
+
+      **This is not the level scalar the plan assumed.** The item here used to
+      read "bubble drift on the level's `bubbleCurrent`", as though one value
+      per level pushed every bubble the same way. The map says otherwise: the
+      top of level 1 pushes right over columns 2 to 14, down over 15 to 18, and
+      left over 19 to 30, while the open playfield below reads zero and so
+      sends everything straight up.
+
+      That is the rise and the drift in one field. The captured bubble rose
+      through the `$00` rows and then drifted **right** from X `$74` to `$7C` -
+      column fourteen, inside the `$01` band. Two independent things agree.
+
+      **What it needs.** `SolidMap` must keep the byte, not a bool - or gain a
+      direction alongside the solidity. Where the bytes come from has not been
+      traced yet: `init_level_renderer` fills the `$8B00` bitmap, one bit per
+      cell, so something else derives these bytes from that bitmap plus the
+      level's own `bubbleCurrent`, and that derivation is the thing to find.
+
+      Until then `$0D86` and `$0E00` cannot be translated, and with them the
+      rise, the drift and the park - which is most of what "travel" means.
+      Assuming a clear cell reads zero would reproduce the rise and silently
+      lose every other direction in the game.
 - [ ] Wrap-around openings from `wrapOpenings`. The vertical half is done in
       `$0E23`: a row off either end comes back at the other and the thing
       becomes type `$38`.

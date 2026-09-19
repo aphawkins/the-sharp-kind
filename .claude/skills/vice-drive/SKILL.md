@@ -56,6 +56,11 @@ Both monitors at once is fine and tested. The binary one on 6502 is what
 `monitor.py` drives; the text one on 6510 is worth having only for its
 `screenshot` command - see **Seeing the screen**.
 
+Both monitors, every time. The binary one on 6502 is for reading state; the
+text one on 6510 is the only way to get a screenshot, and "Seeing the screen"
+below is useless without it. Launching with `-binarymonitor` alone leaves 6510
+refusing connections at the moment you most need to look.
+
 Then **wait about 30 seconds before sending any monitor traffic at all.**
 Autostart runs in warp and the C64 has to boot and load first. Connecting early
 halts the machine mid-boot and the game never loads.
