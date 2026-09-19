@@ -40,11 +40,11 @@ public sealed class PlayerFallTests
     [Fact]
     public void FallsTwoPixelsAFrame()
     {
-        (PlayerTable players, EntityTable entities, PlayerFall fall) = Falling(0x50);
+        (EntityTable entities, PlayerFall fall) = Falling(0x50);
 
         fall.Step(0, Input.Idle, PlayerCell.Of(StartX, 0x50), Open());
 
-        Assert.Equal(0x52, players.Y[0]);
+        Assert.Equal(0x52, entities.Y[0]);
         Assert.Equal(0x00, entities.GroundState[0]);
     }
 
@@ -53,22 +53,22 @@ public sealed class PlayerFallTests
     [Fact]
     public void WrapsFromTheBottomOfThePlayfieldToTheTop()
     {
-        (PlayerTable players, EntityTable entities, PlayerFall fall) = Falling(0xF3);
+        (EntityTable entities, PlayerFall fall) = Falling(0xF3);
 
         fall.Step(0, Input.Idle, PlayerCell.Of(StartX, 0xF3), Open());
 
-        Assert.Equal(0x15, players.Y[0]);
+        Assert.Equal(0x15, entities.Y[0]);
         Assert.Equal(0x00, entities.AnimationTimer[0]);
     }
 
     [Fact]
     public void DoesNotWrapSteppingPastTheBottom()
     {
-        (PlayerTable players, _, PlayerFall fall) = Falling(0xF4);
+        (EntityTable entities, PlayerFall fall) = Falling(0xF4);
 
         fall.Step(0, Input.Idle, PlayerCell.Of(StartX, 0xF4), Open());
 
-        Assert.Equal(0xF6, players.Y[0]);
+        Assert.Equal(0xF6, entities.Y[0]);
     }
 
     // $25AB and $25BF. A solid cell on the row below, with the player's own row clear, is the
@@ -76,11 +76,11 @@ public sealed class PlayerFallTests
     [Fact]
     public void LandsOnAFloor()
     {
-        (PlayerTable players, EntityTable entities, PlayerFall fall) = Falling(AlignedStart);
+        (EntityTable entities, PlayerFall fall) = Falling(AlignedStart);
 
         fall.Step(0, Input.Idle, PlayerCell.Of(StartX, AlignedStart), Floor());
 
-        Assert.Equal(0x55, players.Y[0]);
+        Assert.Equal(0x55, entities.Y[0]);
         Assert.Equal(0xFF, entities.GroundState[0]);
     }
 
@@ -89,7 +89,7 @@ public sealed class PlayerFallTests
     [Fact]
     public void FindsNoGroundWhileInsideASolidCell()
     {
-        (PlayerTable _, EntityTable entities, PlayerFall fall) = Falling(AlignedStart);
+        (EntityTable entities, PlayerFall fall) = Falling(AlignedStart);
 
         SolidMap map = Solid((6, FloorColumn), (FloorRow, FloorColumn));
 
@@ -102,11 +102,11 @@ public sealed class PlayerFallTests
     [Fact]
     public void LooksForGroundOnlyOnARowBoundary()
     {
-        (PlayerTable players, EntityTable entities, PlayerFall fall) = Falling(0x51);
+        (EntityTable entities, PlayerFall fall) = Falling(0x51);
 
         fall.Step(0, Input.Idle, PlayerCell.Of(StartX, 0x51), Floor());
 
-        Assert.Equal(0x53, players.Y[0]);
+        Assert.Equal(0x53, entities.Y[0]);
         Assert.Equal(0x00, entities.GroundState[0]);
     }
 
@@ -126,12 +126,12 @@ public sealed class PlayerFallTests
     [InlineData(0x0F, 0x44)]
     public void SquaresXUpInTheDirectionThePlayerFaces(byte frame, byte expected)
     {
-        (PlayerTable players, EntityTable entities, PlayerFall fall) = Falling(AlignedStart);
+        (EntityTable entities, PlayerFall fall) = Falling(AlignedStart);
         entities.Frame[0] = frame;
 
         fall.Step(0, Input.Idle, PlayerCell.Of(StartX, AlignedStart), Floor());
 
-        Assert.Equal(expected, players.X[0]);
+        Assert.Equal(expected, entities.X[0]);
     }
 
     // $25E2 falling into $25F1. The steer runs on every second frame of a fall and not on the
@@ -140,40 +140,39 @@ public sealed class PlayerFallTests
     [Fact]
     public void SteersOnEverySecondFrame()
     {
-        (PlayerTable players, _, PlayerFall fall) = Falling(0x50);
-        fall.Step(0, Right, PlayerCell.Of(players.X[0], players.Y[0]), Open());
-        Assert.Equal(StartX, players.X[0]);
+        (EntityTable entities, PlayerFall fall) = Falling(0x50);
+        fall.Step(0, Right, PlayerCell.Of(entities.X[0], entities.Y[0]), Open());
+        Assert.Equal(StartX, entities.X[0]);
 
-        fall.Step(0, Right, PlayerCell.Of(players.X[0], players.Y[0]), Open());
-        Assert.Equal(StartX + 1, players.X[0]);
+        fall.Step(0, Right, PlayerCell.Of(entities.X[0], entities.Y[0]), Open());
+        Assert.Equal(StartX + 1, entities.X[0]);
     }
 
     // And a landing frame never reaches the tail, so a player who lands does not also steer.
     [Fact]
     public void DoesNotSteerOnTheFrameItLands()
     {
-        (PlayerTable players, EntityTable entities, PlayerFall fall) = Falling(AlignedStart);
+        (EntityTable entities, PlayerFall fall) = Falling(AlignedStart);
         entities.AnimationTimer[0] = 0x01;
 
         fall.Step(0, Right, PlayerCell.Of(StartX, AlignedStart), Floor());
 
         // $46 is the snap alone. A steer on top of it would have made it $47.
-        Assert.Equal(0x46, players.X[0]);
+        Assert.Equal(0x46, entities.X[0]);
         Assert.Equal(0x01, entities.AnimationTimer[0]);
     }
 
-    private static (PlayerTable Players, EntityTable Entities, PlayerFall Fall) Falling(byte y)
+    private static (EntityTable Entities, PlayerFall Fall) Falling(byte y)
     {
-        PlayerTable players = new();
         EntityTable entities = new();
 
-        players.X[0] = StartX;
-        players.Y[0] = y;
+        entities.X[0] = StartX;
+        entities.Y[0] = y;
 
         // What $05F5 leaves it at. The steer will not turn a player whose bubble timer is positive.
         entities.BubbleTimer[0] = 0xFF;
 
-        return (players, entities, new(players, entities, new(players, entities, TestBlow.Of(players, entities))));
+        return (entities, new(entities, new(entities, TestBlow.Of(entities))));
     }
 
     private static SolidMap Open() => SolidMap.Build(Level());

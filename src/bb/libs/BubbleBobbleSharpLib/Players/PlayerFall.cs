@@ -57,17 +57,14 @@ internal sealed class PlayerFall
     // $25E2. Every second frame, and the reference's cmp is against two.
     private const byte AnimationPeriod = 0x02;
 
-    private readonly PlayerTable _players;
     private readonly EntityTable _entities;
     private readonly PlayerSteer _steer;
 
-    internal PlayerFall(PlayerTable players, EntityTable entities, PlayerSteer steer)
+    internal PlayerFall(EntityTable entities, PlayerSteer steer)
     {
-        ArgumentNullException.ThrowIfNull(players);
         ArgumentNullException.ThrowIfNull(entities);
         ArgumentNullException.ThrowIfNull(steer);
 
-        _players = players;
         _entities = entities;
         _steer = steer;
     }
@@ -79,13 +76,13 @@ internal sealed class PlayerFall
     {
         ArgumentNullException.ThrowIfNull(map);
 
-        byte y = unchecked((byte)(_players.Y[player] + Drop));
-        _players.Y[player] = y;
+        byte y = unchecked((byte)(_entities.Y[player] + Drop));
+        _entities.Y[player] = y;
 
         // $2586. The wrap is the whole of the frame - there is no animation after it.
         if (y == BottomWrap)
         {
-            _players.Y[player] = TopRow;
+            _entities.Y[player] = TopRow;
             return;
         }
 
@@ -123,10 +120,10 @@ internal sealed class PlayerFall
         // standing on something.
         _entities.GroundState[player]--;
 
-        byte x = _players.X[player];
+        byte x = _entities.X[player];
         byte frame = _entities.Frame[player];
 
-        _players.X[player] = frame is (>= 0x04 and < 0x08) or >= 0x0A
+        _entities.X[player] = frame is (>= 0x04 and < 0x08) or >= 0x0A
             ? (byte)(x & ColumnMask)
             : unchecked((byte)((x + 1) & ColumnMask));
     }

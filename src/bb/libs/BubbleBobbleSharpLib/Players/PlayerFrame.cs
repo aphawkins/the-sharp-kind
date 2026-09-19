@@ -49,7 +49,6 @@ internal sealed class PlayerFrame
     // $21FB. A player standing still with nothing pushed still breathes, on a period of seven.
     private const byte IdlePeriod = 0x07;
 
-    private readonly PlayerTable _players;
     private readonly EntityTable _entities;
     private readonly PlayerMovement _movement;
     private readonly PlayerJump _jump;
@@ -57,21 +56,18 @@ internal sealed class PlayerFrame
     private readonly BubbleBlow _blow;
 
     internal PlayerFrame(
-        PlayerTable players,
         EntityTable entities,
         PlayerMovement movement,
         PlayerJump jump,
         PlayerFall fall,
         BubbleBlow blow)
     {
-        ArgumentNullException.ThrowIfNull(players);
         ArgumentNullException.ThrowIfNull(entities);
         ArgumentNullException.ThrowIfNull(movement);
         ArgumentNullException.ThrowIfNull(jump);
         ArgumentNullException.ThrowIfNull(fall);
         ArgumentNullException.ThrowIfNull(blow);
 
-        _players = players;
         _entities = entities;
         _movement = movement;
         _jump = jump;
@@ -99,12 +95,12 @@ internal sealed class PlayerFrame
 
         // $1CDB. A zero state byte is an empty slot - an unjoined second player, or one between
         // lives - and the loop skips it without calling $1E6C at all.
-        if (_players.State[player] != PlayingState)
+        if (_entities.State[player] != PlayingState)
         {
             return;
         }
 
-        Playing(player, port, PlayerCell.Of(_players.X[player], _players.Y[player]), map);
+        Playing(player, port, PlayerCell.Of(_entities.X[player], _entities.Y[player]), map);
     }
 
     // Three cells of a row, the third only when the player straddles a column. $21CD asks it in the

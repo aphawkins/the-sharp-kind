@@ -13,6 +13,6 @@ namespace BubbleBobbleSharpLib.Tests.Players;
 // itself is proved.
 internal static class TestBlow
 {
-    internal static BubbleBlow Of(PlayerTable players, EntityTable entities)
-        => new(players, entities, new ObjectTable());
+    internal static BubbleBlow Of(EntityTable entities)
+        => new(new PlayerTable(), entities, new ObjectTable());
 }

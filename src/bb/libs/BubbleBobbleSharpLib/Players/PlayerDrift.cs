@@ -44,17 +44,14 @@ internal sealed class PlayerDrift
     // $2510. Frames from $08 up are left alone by the animation.
     private const byte AnimationCeiling = 0x08;
 
-    private readonly PlayerTable _players;
     private readonly EntityTable _entities;
     private readonly PlayerSteer _steer;
 
-    internal PlayerDrift(PlayerTable players, EntityTable entities, PlayerSteer steer)
+    internal PlayerDrift(EntityTable entities, PlayerSteer steer)
     {
-        ArgumentNullException.ThrowIfNull(players);
         ArgumentNullException.ThrowIfNull(entities);
         ArgumentNullException.ThrowIfNull(steer);
 
-        _players = players;
         _entities = entities;
         _steer = steer;
     }
@@ -95,9 +92,9 @@ internal sealed class PlayerDrift
     // $2490 to $24C4.
     private void Left(int player, in PlayerCell cell, SolidMap map)
     {
-        if (_players.X[player] < LeftEdgeLimit)
+        if (_entities.X[player] < LeftEdgeLimit)
         {
-            _players.X[player] = LeftEdge;
+            _entities.X[player] = LeftEdge;
             _entities.LeftFlag[player] = 0x00;
             return;
         }
@@ -106,7 +103,7 @@ internal sealed class PlayerDrift
 
         if (Open(player, cell, map, probe, probe + 1))
         {
-            _players.X[player]--;
+            _entities.X[player]--;
             return;
         }
 
@@ -117,9 +114,9 @@ internal sealed class PlayerDrift
     // before the probe rather than the one after it - the reference does `dey` here and `iny` there.
     private void Right(int player, in PlayerCell cell, SolidMap map)
     {
-        if (_players.X[player] >= RightEdge)
+        if (_entities.X[player] >= RightEdge)
         {
-            _players.X[player] = RightEdge;
+            _entities.X[player] = RightEdge;
             _entities.RightFlag[player] = 0x00;
             return;
         }
@@ -128,7 +125,7 @@ internal sealed class PlayerDrift
 
         if (Open(player, cell, map, probe, probe - 1))
         {
-            _players.X[player]++;
+            _entities.X[player]++;
             return;
         }
 
@@ -138,7 +135,7 @@ internal sealed class PlayerDrift
     // The two ways past the wall check, then the check itself. They are the walk's two as well:
     // nothing to run into above $2D, and a player straddling a column was let in last frame.
     private bool Open(int player, in PlayerCell cell, SolidMap map, int probe, int beyond)
-        => _players.Y[player] < WallCheckFloor
+        => _entities.Y[player] < WallCheckFloor
             || cell.FineX != 0
             || Clear(cell, map, probe, beyond);
 

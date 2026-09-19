@@ -154,7 +154,7 @@ internal sealed class BubbleBlow
         }
 
         // $232A. The horizontal half, which cannot fail: the subtraction wraps like the 6502's.
-        byte x = _players.X[player];
+        byte x = _entities.X[player];
         byte acrossX = (byte)(x - LeftEdge);
 
         _objects.X[slot] = x;
@@ -165,7 +165,7 @@ internal sealed class BubbleBlow
         // from the subtraction and $2349 abandons the whole spawn. The four bytes already written
         // are left where they are, exactly as the 6502 leaves them - the slot is still free,
         // because nothing has put a type in it yet.
-        byte y = _players.Y[player];
+        byte y = _entities.Y[player];
         int downY = y - TopEdge;
 
         _objects.Y[slot] = y;

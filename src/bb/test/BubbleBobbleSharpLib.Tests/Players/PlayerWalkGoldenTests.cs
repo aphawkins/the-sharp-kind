@@ -53,13 +53,12 @@ public sealed class PlayerWalkGoldenTests
     [Fact]
     public void WalksRightAcrossLevelOneExactlyAsTheGameDoes()
     {
-        PlayerTable players = new();
         EntityTable entities = new();
-        PlayerMovement movement = new(players, entities, TestBlow.Of(players, entities));
+        PlayerMovement movement = new(entities, TestBlow.Of(entities));
         SolidMap map = SolidMap.Build(s_levels.Level(1));
 
-        players.X[0] = StartX;
-        players.Y[0] = StartY;
+        entities.X[0] = StartX;
+        entities.Y[0] = StartY;
         entities.Frame[0] = 0x00;
         entities.BubbleTimer[0] = 0xFF;
 
@@ -69,7 +68,7 @@ public sealed class PlayerWalkGoldenTests
         for (int tick = 0; tick < s_x.Length; tick++)
         {
             movement.Step(0, PushRight, map);
-            x[tick] = players.X[0];
+            x[tick] = entities.X[0];
             frame[tick] = entities.Frame[0];
         }
 
@@ -100,12 +99,11 @@ public sealed class PlayerWalkGoldenTests
     // One step from one place, checking the cell the mover looked at was not solid.
     private static void Walk(SolidMap map, int number, byte startX, byte y, byte port, byte frame, int probe)
     {
-        PlayerTable players = new();
         EntityTable entities = new();
-        PlayerMovement movement = new(players, entities, TestBlow.Of(players, entities));
+        PlayerMovement movement = new(entities, TestBlow.Of(entities));
 
-        players.X[0] = startX;
-        players.Y[0] = y;
+        entities.X[0] = startX;
+        entities.Y[0] = y;
         entities.Frame[0] = frame;
         entities.BubbleTimer[0] = 0xFF;
 
@@ -114,7 +112,7 @@ public sealed class PlayerWalkGoldenTests
 
         movement.Step(0, port, map);
 
-        bool moved = players.X[0] != startX;
+        bool moved = entities.X[0] != startX;
 
         Assert.False(
             blocked && moved,

@@ -9,6 +9,9 @@ namespace BubbleBobbleSharpLib.Tests.Players;
 
 // The table is storage rather than behaviour, so what there is to prove is that it is the storage the
 // 6502 has: two bytes per field, starting at zero, and each player's byte its own.
+//
+// The state, X and Y this file used to cover are in EntityTableTests now. They are eight-slot arrays
+// shared with the six enemies, not two-slot arrays of the players' own - see that file.
 public sealed class PlayerTableTests
 {
     [Fact]
@@ -17,11 +20,10 @@ public sealed class PlayerTableTests
         PlayerTable players = new();
 
         Assert.Equal(2, PlayerTable.Capacity);
-        Assert.Equal(PlayerTable.Capacity, players.State.Length);
-        Assert.Equal(PlayerTable.Capacity, players.X.Length);
-        Assert.Equal(PlayerTable.Capacity, players.Y.Length);
         Assert.Equal(PlayerTable.Capacity, players.BubbleTimer.Length);
         Assert.Equal(PlayerTable.Capacity, players.Lives.Length);
+        Assert.Equal(PlayerTable.Capacity, players.Reload.Length);
+        Assert.Equal(PlayerTable.Capacity, players.BlowFacing.Length);
     }
 
     // A fresh table is the cleared page the game starts from, so no field may arrive carrying a value.
@@ -32,30 +34,27 @@ public sealed class PlayerTableTests
 
         for (int player = 0; player < PlayerTable.Capacity; player++)
         {
-            Assert.Equal(0, players.State[player]);
-            Assert.Equal(0, players.X[player]);
-            Assert.Equal(0, players.Y[player]);
             Assert.Equal(0, players.BubbleTimer[player]);
             Assert.Equal(0, players.Lives[player]);
+            Assert.Equal(0, players.Reload[player]);
+            Assert.Equal(0, players.BlowFacing[player]);
         }
     }
 
     // The spans are windows onto the arrays, not copies of them, and the two players do not share a
-    // byte. Both halves matter: a copy would lose every write, and a shared byte would move player 2
-    // whenever player 1 moved.
+    // byte. Both halves matter: a copy would lose every write, and a shared byte would give player 2
+    // whatever player 1 was given.
     [Fact]
     public void KeepsEachPlayersWritesApartAndKeepsThem()
     {
         PlayerTable players = new();
 
-        players.X[0] = 0x24;
-        players.X[1] = 0xF4;
         players.Lives[0] = 3;
+        players.Reload[1] = 0x08;
 
-        Assert.Equal(0x24, players.X[0]);
-        Assert.Equal(0xF4, players.X[1]);
         Assert.Equal(3, players.Lives[0]);
         Assert.Equal(0, players.Lives[1]);
-        Assert.Equal(0, players.Y[0]);
+        Assert.Equal(0x08, players.Reload[1]);
+        Assert.Equal(0, players.Reload[0]);
     }
 }

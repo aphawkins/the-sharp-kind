@@ -37,17 +37,14 @@ internal sealed class PlayerLanding
     // $2571. On that level alone, a player at this height is left where they are.
     private const byte SpecialHeight = 0xDD;
 
-    private readonly PlayerTable _players;
     private readonly EntityTable _entities;
     private readonly PlayerDescent _descent;
 
-    internal PlayerLanding(PlayerTable players, EntityTable entities, PlayerDescent descent)
+    internal PlayerLanding(EntityTable entities, PlayerDescent descent)
     {
-        ArgumentNullException.ThrowIfNull(players);
         ArgumentNullException.ThrowIfNull(entities);
         ArgumentNullException.ThrowIfNull(descent);
 
-        _players = players;
         _entities = entities;
         _descent = descent;
     }
@@ -78,7 +75,7 @@ internal sealed class PlayerLanding
         }
 
         // $2569. One level is excepted, at one height.
-        if (map.Number - 1 == SpecialLevel && _players.Y[player] == SpecialHeight)
+        if (map.Number - 1 == SpecialLevel && _entities.Y[player] == SpecialHeight)
         {
             return;
         }
@@ -102,9 +99,9 @@ internal sealed class PlayerLanding
     // the fall-through changes nothing and is not reproduced.
     private void Square(int player)
     {
-        byte x = _players.X[player];
+        byte x = _entities.X[player];
 
-        _players.X[player] = _entities.Frame[player] is >= 0x04 and < 0x0A
+        _entities.X[player] = _entities.Frame[player] is >= 0x04 and < 0x0A
             ? (byte)(x & ColumnMask)
             : unchecked((byte)((x + 1) & ColumnMask));
     }

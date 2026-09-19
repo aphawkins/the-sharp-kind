@@ -39,17 +39,14 @@ internal sealed class PlayerSteer
     private const byte FaceLeft = 0x04;
     private const byte FaceRight = 0x00;
 
-    private readonly PlayerTable _players;
     private readonly EntityTable _entities;
     private readonly BubbleBlow _blow;
 
-    internal PlayerSteer(PlayerTable players, EntityTable entities, BubbleBlow blow)
+    internal PlayerSteer(EntityTable entities, BubbleBlow blow)
     {
-        ArgumentNullException.ThrowIfNull(players);
         ArgumentNullException.ThrowIfNull(entities);
         ArgumentNullException.ThrowIfNull(blow);
 
-        _players = players;
         _entities = entities;
         _blow = blow;
     }
@@ -62,7 +59,7 @@ internal sealed class PlayerSteer
 
         // $25F1 opens with jsr $E9B8, so the cell is a fresh one - the arc has already moved the
         // player this frame, and the drift may have moved them again.
-        PlayerCell cell = PlayerCell.Of(_players.X[player], _players.Y[player]);
+        PlayerCell cell = PlayerCell.Of(_entities.X[player], _entities.Y[player]);
 
         // $25F5. The fire arm, and a jsr here rather than a jmp - a player blows and then carries on
         // steering in the same frame.
@@ -112,7 +109,7 @@ internal sealed class PlayerSteer
     // $261E to $263C.
     private void Left(int player, in PlayerCell cell, SolidMap map)
     {
-        if (_players.X[player] == LeftEdge)
+        if (_entities.X[player] == LeftEdge)
         {
             return;
         }
@@ -121,37 +118,37 @@ internal sealed class PlayerSteer
 
         // The reference jumps straight past the height test when the fine Y is zero, so a player on
         // a row boundary gets the wall check wherever they are. Only the split path can skip it.
-        if (!aligned && _players.Y[player] < WallCheckFloor)
+        if (!aligned && _entities.Y[player] < WallCheckFloor)
         {
-            _players.X[player]--;
+            _entities.X[player]--;
             return;
         }
 
         if (cell.FineX != 0 || !cell.Solid(map, aligned ? LeftProbeAligned : LeftProbeSplit))
         {
-            _players.X[player]--;
+            _entities.X[player]--;
         }
     }
 
     // $265D to $267A.
     private void Right(int player, in PlayerCell cell, SolidMap map)
     {
-        if (_players.X[player] == RightEdge)
+        if (_entities.X[player] == RightEdge)
         {
             return;
         }
 
         bool aligned = cell.FineY == 0;
 
-        if (!aligned && _players.Y[player] < WallCheckFloor)
+        if (!aligned && _entities.Y[player] < WallCheckFloor)
         {
-            _players.X[player]++;
+            _entities.X[player]++;
             return;
         }
 
         if (cell.FineX != 0 || !cell.Solid(map, aligned ? RightProbeAligned : RightProbeSplit))
         {
-            _players.X[player]++;
+            _entities.X[player]++;
         }
     }
 

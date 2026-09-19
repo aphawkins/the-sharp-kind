@@ -52,17 +52,14 @@ internal sealed class PlayerMovement
     private const byte JumpRise = 0x0F;
     private const byte Latched = 0xFF;
 
-    private readonly PlayerTable _players;
     private readonly EntityTable _entities;
     private readonly BubbleBlow _blow;
 
-    internal PlayerMovement(PlayerTable players, EntityTable entities, BubbleBlow blow)
+    internal PlayerMovement(EntityTable entities, BubbleBlow blow)
     {
-        ArgumentNullException.ThrowIfNull(players);
         ArgumentNullException.ThrowIfNull(entities);
         ArgumentNullException.ThrowIfNull(blow);
 
-        _players = players;
         _entities = entities;
         _blow = blow;
     }
@@ -85,7 +82,7 @@ internal sealed class PlayerMovement
         }
 
         // Down is shifted out and never tested - $2213 drops it on the way to the left bit.
-        PlayerCell cell = PlayerCell.Of(_players.X[player], _players.Y[player]);
+        PlayerCell cell = PlayerCell.Of(_entities.X[player], _entities.Y[player]);
 
         if ((port & Input.Left) == 0)
         {
@@ -209,7 +206,7 @@ internal sealed class PlayerMovement
         // Two ways past the check. Above $2D there is no level to walk into, and a player not
         // sitting on a column boundary is already part way into the next cell, so the cell they are
         // heading for was tested on the frame they entered it.
-        bool checkWall = _players.Y[player] >= WallCheckFloor && cell.FineX == 0;
+        bool checkWall = _entities.Y[player] >= WallCheckFloor && cell.FineX == 0;
 
         if (checkWall && cell.Solid(map, probe))
         {
@@ -218,6 +215,6 @@ internal sealed class PlayerMovement
 
         // $22B4 reads $63,x here and calls $7C21 when it is set. That routine is Phase 6's, and the
         // byte is clear for a walking player, so the call is not translated - see bb-port-plan.md.
-        _players.X[player] = unchecked((byte)(_players.X[player] + step));
+        _entities.X[player] = unchecked((byte)(_entities.X[player] + step));
     }
 }

@@ -49,15 +49,12 @@ internal sealed class PlayerDescent
     private const int FloorRowMiddle = 0x7A;
     private const int FloorRowRight = 0x7B;
 
-    private readonly PlayerTable _players;
     private readonly EntityTable _entities;
 
-    internal PlayerDescent(PlayerTable players, EntityTable entities)
+    internal PlayerDescent(EntityTable entities)
     {
-        ArgumentNullException.ThrowIfNull(players);
         ArgumentNullException.ThrowIfNull(entities);
 
-        _players = players;
         _entities = entities;
     }
 
@@ -67,12 +64,12 @@ internal sealed class PlayerDescent
     {
         ArgumentNullException.ThrowIfNull(map);
 
-        byte y = unchecked((byte)(_players.Y[player] + Drop));
-        _players.Y[player] = y;
+        byte y = unchecked((byte)(_entities.Y[player] + Drop));
+        _entities.Y[player] = y;
 
         if (y == BottomWrap)
         {
-            _players.Y[player] = TopRow;
+            _entities.Y[player] = TopRow;
             return;
         }
 

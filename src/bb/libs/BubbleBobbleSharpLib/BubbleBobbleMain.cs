@@ -137,7 +137,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         _input = new Input(Keyboard, Gamepad);
 
         _blow = new BubbleBlow(_playerTable, _entities, _objects);
-        _frame = BuildFrame(_playerTable, _entities, _blow);
+        _frame = BuildFrame(_entities, _blow);
 
         BbViewSurface surface = new(Graphics, Layout, assetLocator);
         _playfieldView = rendition.CreatePlayfieldView(surface);
@@ -236,19 +236,18 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     //
     // A method of its own rather than eight lines of the constructor, because the constructor is at
     // the class coupling limit and every routine Phase 5 adds would push it over.
-    private static PlayerFrame BuildFrame(PlayerTable players, EntityTable entities, BubbleBlow blow)
+    private static PlayerFrame BuildFrame(EntityTable entities, BubbleBlow blow)
     {
-        PlayerSteer steer = new(players, entities, blow);
-        PlayerDrift drift = new(players, entities, steer);
-        PlayerDescent descent = new(players, entities);
-        PlayerLanding landing = new(players, entities, descent);
+        PlayerSteer steer = new(entities, blow);
+        PlayerDrift drift = new(entities, steer);
+        PlayerDescent descent = new(entities);
+        PlayerLanding landing = new(entities, descent);
 
         return new PlayerFrame(
-            players,
             entities,
-            new PlayerMovement(players, entities, blow),
-            new PlayerJump(players, entities, drift, landing),
-            new PlayerFall(players, entities, steer),
+            new PlayerMovement(entities, blow),
+            new PlayerJump(entities, drift, landing),
+            new PlayerFall(entities, steer),
             blow);
     }
 
@@ -262,9 +261,9 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         {
             bool playing = player < PlayingPlayers;
 
-            _playerTable.State[player] = playing ? PlayerFrame.PlayingState : (byte)0;
-            _playerTable.X[player] = s_spawnX[player];
-            _playerTable.Y[player] = SpawnY;
+            _entities.State[player] = playing ? PlayerFrame.PlayingState : (byte)0;
+            _entities.X[player] = s_spawnX[player];
+            _entities.Y[player] = SpawnY;
 
             _entities.Frame[player] = s_spawnFrame[player];
             _entities.Colour[player] = s_spawnColour[player];
@@ -285,9 +284,9 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     // is drawn, but a player's bytes are the ones that change every frame, so there is nothing here
     // to cache.
     private PlayerModel Players() => new(
-        _playerTable.State,
-        _playerTable.X,
-        _playerTable.Y,
+        _entities.State,
+        _entities.X,
+        _entities.Y,
         _entities.Frame,
         _entities.Colour);
 

@@ -52,19 +52,16 @@ internal sealed class PlayerJump
         0x03, 0x03, 0x03, 0x04, 0x04, 0x04, 0x04, 0x04,
     ];
 
-    private readonly PlayerTable _players;
     private readonly EntityTable _entities;
     private readonly PlayerDrift _drift;
     private readonly PlayerLanding _landing;
 
-    internal PlayerJump(PlayerTable players, EntityTable entities, PlayerDrift drift, PlayerLanding landing)
+    internal PlayerJump(EntityTable entities, PlayerDrift drift, PlayerLanding landing)
     {
-        ArgumentNullException.ThrowIfNull(players);
         ArgumentNullException.ThrowIfNull(entities);
         ArgumentNullException.ThrowIfNull(drift);
         ArgumentNullException.ThrowIfNull(landing);
 
-        _players = players;
         _entities = entities;
         _drift = drift;
         _landing = landing;
@@ -109,18 +106,18 @@ internal sealed class PlayerJump
     {
         _entities.RiseCounter[player] = unchecked((byte)(rise - 1));
 
-        byte y = unchecked((byte)(_players.Y[player] - s_arc[rise]));
+        byte y = unchecked((byte)(_entities.Y[player] - s_arc[rise]));
 
         if (y < TopWrap)
         {
             y = unchecked((byte)(y + WrapStep));
         }
 
-        _players.Y[player] = y;
+        _entities.Y[player] = y;
 
         // $23FC leaves for $2483, which works the player sideways from the drift flags. The cell it
         // wants is a fresh one: $2483 calls $E9B8 on the way in, after this frame's move.
-        _drift.Step(player, port, PlayerCell.Of(_players.X[player], y), map);
+        _drift.Step(player, port, PlayerCell.Of(_entities.X[player], y), map);
     }
 
     // $2401 to $243B. The first frame of a fall tidies the sprite and zeroes the counter; every
@@ -144,14 +141,14 @@ internal sealed class PlayerJump
 
         _entities.FallCounter[player] = unchecked((byte)(fall + 1));
 
-        byte y = unchecked((byte)(_players.Y[player] + s_arc[fall]));
+        byte y = unchecked((byte)(_entities.Y[player] + s_arc[fall]));
 
         if (y >= BottomWrap)
         {
             y = unchecked((byte)(y - WrapStep));
         }
 
-        _players.Y[player] = y;
+        _entities.Y[player] = y;
 
         if (Land(player, cell, map, y, out PlayerCell landed))
         {
@@ -163,7 +160,7 @@ internal sealed class PlayerJump
 
         // $2453 and $2470 both leave for $248D, the same drift $23FC reaches through $2483. The
         // difference between the two entry points is the prologue, which is not translated.
-        _drift.Step(player, port, PlayerCell.Of(_players.X[player], y), map);
+        _drift.Step(player, port, PlayerCell.Of(_entities.X[player], y), map);
     }
 
     // $2404 to $2422. Frames 2, 3, 6 and 7 are masked down as a fall begins; the rest are left
@@ -201,7 +198,7 @@ internal sealed class PlayerJump
 
         // $2450, jsr D_E9B8: the probes below read the cell the player has just moved into, not the
         // one they started the frame in.
-        landed = PlayerCell.Of(_players.X[player], y);
+        landed = PlayerCell.Of(_entities.X[player], y);
 
         if (Blocked(landed, map, ClearRowLeft, ClearRowMiddle, ClearRowRight))
         {
@@ -213,7 +210,7 @@ internal sealed class PlayerJump
             return false;
         }
 
-        _players.Y[player] = unchecked((byte)((unchecked((byte)(y - GridBase)) & 0xF8) + GridBase));
+        _entities.Y[player] = unchecked((byte)((unchecked((byte)(y - GridBase)) & 0xF8) + GridBase));
         return true;
     }
 }

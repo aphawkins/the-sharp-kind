@@ -211,7 +211,7 @@ public sealed class BubbleBlowTests
         (PlayerTable players, EntityTable entities, ObjectTable objects, BubbleBlow blow) = Standing(FacingRight);
 
         // $59 less $15 is $44: row eight still, but four pixels down it.
-        players.Y[0] = 0x59;
+        entities.Y[0] = 0x59;
         entities.RiseCounter[0] = 0x05;
 
         Run(blow, entities, players);
@@ -226,7 +226,7 @@ public sealed class BubbleBlowTests
     public void DoesNotBlowIntoTheRowBelowWhileStanding()
     {
         (PlayerTable players, EntityTable entities, ObjectTable objects, BubbleBlow blow) = Standing(FacingRight);
-        players.Y[0] = 0x59;
+        entities.Y[0] = 0x59;
 
         Run(blow, entities, players);
 
@@ -254,7 +254,7 @@ public sealed class BubbleBlowTests
     public void AbandonsTheSpawnAboveTheTopOfThePlayfield()
     {
         (PlayerTable players, EntityTable entities, ObjectTable objects, BubbleBlow blow) = Standing(FacingRight);
-        players.Y[0] = 0x10;
+        entities.Y[0] = 0x10;
 
         Run(blow, entities, players);
 
@@ -337,8 +337,8 @@ public sealed class BubbleBlowTests
     // $2162 hands $2301.
     private static void Step(BubbleBlow blow, EntityTable entities, PlayerTable? players = null)
     {
-        byte x = players is null ? StandX : players.X[0];
-        byte y = players is null ? StandY : players.Y[0];
+        byte x = players is null ? StandX : entities.X[0];
+        byte y = players is null ? StandY : entities.Y[0];
 
         blow.Step(0, entities.BubbleTimer[0], PlayerCell.Of(x, y));
     }
@@ -361,9 +361,9 @@ public sealed class BubbleBlowTests
         EntityTable entities = new();
         ObjectTable objects = new();
 
-        players.State[0] = PlayerFrame.PlayingState;
-        players.X[0] = StandX;
-        players.Y[0] = StandY;
+        entities.State[0] = PlayerFrame.PlayingState;
+        entities.X[0] = StandX;
+        entities.Y[0] = StandY;
 
         entities.Frame[0] = facing;
         entities.RiseCounter[0] = 0xFF;

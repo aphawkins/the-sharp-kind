@@ -40,25 +40,25 @@ public sealed class PlayerFrameTests
     [Fact]
     public void LeavesAnEmptySlotAlone()
     {
-        (PlayerTable players, _, PlayerFrame frame) = Standing();
-        players.State[1] = 0x00;
-        players.X[1] = 0xEC;
+        (EntityTable entities, PlayerFrame frame) = Standing();
+        entities.State[1] = 0x00;
+        entities.X[1] = 0xEC;
 
         frame.Step([Right, Right], Floor());
 
-        Assert.Equal(0xEC, players.X[1]);
+        Assert.Equal(0xEC, entities.X[1]);
     }
 
     // And the same slot driven for itself, so that the skip is the state byte rather than the index.
     [Fact]
     public void LeavesASlotInAnUntranslatedStateAlone()
     {
-        (PlayerTable players, _, PlayerFrame frame) = Standing();
-        players.State[0] = 0x04;
+        (EntityTable entities, PlayerFrame frame) = Standing();
+        entities.State[0] = 0x04;
 
         frame.Step(0, Right, Floor());
 
-        Assert.Equal(StandX, players.X[0]);
+        Assert.Equal(StandX, entities.X[0]);
     }
 
     // $21EB into $220C. Standing on a floor with the stick pushed, the walk owns the frame - two
@@ -66,11 +66,11 @@ public sealed class PlayerFrameTests
     [Fact]
     public void WalksAPlayerStandingOnAFloor()
     {
-        (PlayerTable players, _, PlayerFrame frame) = Standing();
+        (EntityTable entities, PlayerFrame frame) = Standing();
 
         frame.Step(0, Right, Floor());
 
-        Assert.Equal(StandX + 2, players.X[0]);
+        Assert.Equal(StandX + 2, entities.X[0]);
     }
 
     // $21CD into $21E5. No floor, and on a row boundary, so the ground byte comes out of $FF and
@@ -78,12 +78,12 @@ public sealed class PlayerFrameTests
     [Fact]
     public void StartsAFallWhenTheFloorIsGone()
     {
-        (PlayerTable players, EntityTable entities, PlayerFrame frame) = Standing();
+        (EntityTable entities, PlayerFrame frame) = Standing();
 
         frame.Step(0, Input.Idle, Open());
 
         Assert.Equal(0x00, entities.GroundState[0]);
-        Assert.Equal(StandY + 2, players.Y[0]);
+        Assert.Equal(StandY + 2, entities.Y[0]);
     }
 
     // $21CD's first test. Off a row boundary the ground is not looked for at all, so a player part
@@ -91,13 +91,13 @@ public sealed class PlayerFrameTests
     [Fact]
     public void SkipsTheGroundCheckOffARowBoundary()
     {
-        (PlayerTable players, EntityTable entities, PlayerFrame frame) = Standing();
-        players.Y[0] = StandY + 1;
+        (EntityTable entities, PlayerFrame frame) = Standing();
+        entities.Y[0] = StandY + 1;
 
         frame.Step(0, Right, Open());
 
         Assert.Equal(0xFF, entities.GroundState[0]);
-        Assert.Equal(StandX + 2, players.X[0]);
+        Assert.Equal(StandX + 2, entities.X[0]);
     }
 
     // $21C5. Already off the ground with no arc running, and the frame belongs to $257C whatever
@@ -105,13 +105,13 @@ public sealed class PlayerFrameTests
     [Fact]
     public void FallsWhileTheGroundByteSaysThereIsNoGround()
     {
-        (PlayerTable players, EntityTable entities, PlayerFrame frame) = Standing();
+        (EntityTable entities, PlayerFrame frame) = Standing();
         entities.GroundState[0] = 0x00;
 
         frame.Step(0, Right, Floor());
 
-        Assert.Equal(StandY + 2, players.Y[0]);
-        Assert.Equal(StandX, players.X[0]);
+        Assert.Equal(StandY + 2, entities.Y[0]);
+        Assert.Equal(StandX, entities.X[0]);
     }
 
     // $21BD. A rise counter out of its idle means an arc is running, and the arc wins over both the
@@ -120,13 +120,13 @@ public sealed class PlayerFrameTests
     [Fact]
     public void RunsTheArcWhileTheRiseCounterIsSet()
     {
-        (PlayerTable players, EntityTable entities, PlayerFrame frame) = Standing();
+        (EntityTable entities, PlayerFrame frame) = Standing();
         entities.RiseCounter[0] = 0x0F;
 
         frame.Step(0, Input.Idle, Floor());
 
         // $ACCD's last entry is four, and the rise subtracts it.
-        Assert.Equal(StandY - 4, players.Y[0]);
+        Assert.Equal(StandY - 4, entities.Y[0]);
         Assert.Equal(0x0E, entities.RiseCounter[0]);
     }
 
@@ -135,16 +135,16 @@ public sealed class PlayerFrameTests
     [Fact]
     public void JumpsOnUpAndRisesOnTheFrameAfter()
     {
-        (PlayerTable players, EntityTable entities, PlayerFrame frame) = Standing();
+        (EntityTable entities, PlayerFrame frame) = Standing();
 
         frame.Step(0, Up, Floor());
 
         Assert.Equal(0x0F, entities.RiseCounter[0]);
-        Assert.Equal(StandY, players.Y[0]);
+        Assert.Equal(StandY, entities.Y[0]);
 
         frame.Step(0, Up, Floor());
 
-        Assert.Equal(StandY - 4, players.Y[0]);
+        Assert.Equal(StandY - 4, entities.Y[0]);
     }
 
     // $21F3 to $2209. Nothing pushed, and the player breathes on a period of seven - a third of the
@@ -152,7 +152,7 @@ public sealed class PlayerFrameTests
     [Fact]
     public void AnimatesAnIdlePlayerEverySeventhFrame()
     {
-        (PlayerTable players, EntityTable entities, PlayerFrame frame) = Standing();
+        (EntityTable entities, PlayerFrame frame) = Standing();
         SolidMap floor = Floor();
 
         for (int tick = 0; tick < 6; tick++)
@@ -161,7 +161,7 @@ public sealed class PlayerFrameTests
         }
 
         Assert.Equal(0x00, entities.Frame[0]);
-        Assert.Equal(StandX, players.X[0]);
+        Assert.Equal(StandX, entities.X[0]);
 
         frame.Step(0, Input.Idle, floor);
 
@@ -179,7 +179,7 @@ public sealed class PlayerFrameTests
     [Fact]
     public void DoesNotAnimateAPlayerWhileTheyBlow()
     {
-        (_, EntityTable entities, PlayerFrame frame) = Standing();
+        (EntityTable entities, PlayerFrame frame) = Standing();
         SolidMap floor = Floor();
 
         frame.Step(0, Fire, floor);
@@ -205,15 +205,15 @@ public sealed class PlayerFrameTests
     [Fact]
     public void DrivesTheTwoPlayersFromTheirOwnSticks()
     {
-        (PlayerTable players, _, PlayerFrame frame) = Standing();
-        players.State[1] = PlayerFrame.PlayingState;
-        players.X[1] = StandX;
-        players.Y[1] = StandY;
+        (EntityTable entities, PlayerFrame frame) = Standing();
+        entities.State[1] = PlayerFrame.PlayingState;
+        entities.X[1] = StandX;
+        entities.Y[1] = StandY;
 
         frame.Step([Right, Input.Idle], Floor());
 
-        Assert.Equal(StandX + 2, players.X[0]);
-        Assert.Equal(StandX, players.X[1]);
+        Assert.Equal(StandX + 2, entities.X[0]);
+        Assert.Equal(StandX, entities.X[1]);
     }
 
     // A player standing on a floor with nothing pushed stays exactly where they are. It reads as a
@@ -221,43 +221,41 @@ public sealed class PlayerFrameTests
     [Fact]
     public void LeavesAStandingPlayerWhereTheyAre()
     {
-        (PlayerTable players, EntityTable entities, PlayerFrame frame) = Standing();
+        (EntityTable entities, PlayerFrame frame) = Standing();
 
         frame.Step(0, Input.Idle, Floor());
 
-        Assert.Equal(StandX, players.X[0]);
-        Assert.Equal(StandY, players.Y[0]);
+        Assert.Equal(StandX, entities.X[0]);
+        Assert.Equal(StandY, entities.Y[0]);
         Assert.Equal(0xFF, entities.GroundState[0]);
     }
 
     // What $04BB and $05F5 leave a player at, which is where every case above starts.
-    private static (PlayerTable Players, EntityTable Entities, PlayerFrame Frame) Standing()
+    private static (EntityTable Entities, PlayerFrame Frame) Standing()
     {
-        PlayerTable players = new();
         EntityTable entities = new();
 
-        players.State[0] = PlayerFrame.PlayingState;
-        players.X[0] = StandX;
-        players.Y[0] = StandY;
+        entities.State[0] = PlayerFrame.PlayingState;
+        entities.X[0] = StandX;
+        entities.Y[0] = StandY;
 
         entities.RiseCounter[0] = 0xFF;
         entities.FallCounter[0] = 0xFF;
         entities.GroundState[0] = 0xFF;
         entities.BubbleTimer[0] = 0xFF;
 
-        BubbleBlow blow = TestBlow.Of(players, entities);
-        PlayerSteer steer = new(players, entities, blow);
-        PlayerDescent descent = new(players, entities);
+        BubbleBlow blow = TestBlow.Of(entities);
+        PlayerSteer steer = new(entities, blow);
+        PlayerDescent descent = new(entities);
 
         PlayerFrame frame = new(
-            players,
             entities,
-            new PlayerMovement(players, entities, blow),
-            new PlayerJump(players, entities, new PlayerDrift(players, entities, steer), new PlayerLanding(players, entities, descent)),
-            new PlayerFall(players, entities, steer),
+            new PlayerMovement(entities, blow),
+            new PlayerJump(entities, new PlayerDrift(entities, steer), new PlayerLanding(entities, descent)),
+            new PlayerFall(entities, steer),
             blow);
 
-        return (players, entities, frame);
+        return (entities, frame);
     }
 
     private static SolidMap Open() => SolidMap.Build(Level());

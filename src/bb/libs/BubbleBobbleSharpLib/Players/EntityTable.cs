@@ -24,6 +24,9 @@ internal sealed class EntityTable
     // count belongs to PESSION at $CA, which is a different array holding entity types.
     internal const int Capacity = 8;
 
+    private readonly byte[] _state = new byte[Capacity];
+    private readonly byte[] _x = new byte[Capacity];
+    private readonly byte[] _y = new byte[Capacity];
     private readonly byte[] _frame = new byte[Capacity];
     private readonly byte[] _animationTimer = new byte[Capacity];
     private readonly byte[] _bubbleTimer = new byte[Capacity];
@@ -33,6 +36,22 @@ internal sealed class EntityTable
     private readonly byte[] _rightFlag = new byte[Capacity];
     private readonly byte[] _groundState = new byte[Capacity];
     private readonly byte[] _colour = new byte[Capacity];
+
+    // $B2, ENESSION. Zero means the slot is empty, which is what the update loop tests first.
+    //
+    // This and the two below are the odd ones out here: they are zero page, not $85xx, so they are
+    // not a forty-byte row of the region the rest of this class comes from. They are eight slots
+    // all the same, and $105B proves it - it walks y from five down to zero over $B4, $BC and $C4,
+    // which are these three arrays two bytes along. Players are slots 0 and 1; the six enemies are
+    // slots 2 to 7.
+    internal Span<byte> State => _state;
+
+    // $BA, FA. A pixel column, and the movement routines let it wrap - see section 6.1.
+    internal Span<byte> X => _x;
+
+    // $C2. A pixel row, wrapped by hand rather than by the byte: the vertical mover turns $F5 into
+    // $15 and $14 into $F5, so a player who leaves the top of the playfield comes back at the bottom.
+    internal Span<byte> Y => _y;
 
     // $8520. Which sprite the thing is drawn with, and with it which way it faces: the movers set 0
     // to face right and 4 to face left, and bit 0 alternates to make the walk cycle.

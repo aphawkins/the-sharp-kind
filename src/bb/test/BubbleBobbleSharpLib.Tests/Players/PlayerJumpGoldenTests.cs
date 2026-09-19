@@ -52,17 +52,16 @@ public sealed class PlayerJumpGoldenTests
     [Fact]
     public void JumpsAndLandsOnLevelOneExactlyAsTheGameDoes()
     {
-        PlayerTable players = new();
         EntityTable entities = new();
-        PlayerSteer steer = new(players, entities, TestBlow.Of(players, entities));
-        PlayerDrift drift = new(players, entities, steer);
-        PlayerDescent descent = new(players, entities);
-        PlayerLanding landing = new(players, entities, descent);
-        PlayerJump jump = new(players, entities, drift, landing);
+        PlayerSteer steer = new(entities, TestBlow.Of(entities));
+        PlayerDrift drift = new(entities, steer);
+        PlayerDescent descent = new(entities);
+        PlayerLanding landing = new(entities, descent);
+        PlayerJump jump = new(entities, drift, landing);
         SolidMap map = SolidMap.Build(s_levels.Level(1));
 
-        players.X[0] = StartX;
-        players.Y[0] = StartY;
+        entities.X[0] = StartX;
+        entities.Y[0] = StartY;
         entities.Frame[0] = 0x01;
         entities.RiseCounter[0] = JumpRise;
         entities.FallCounter[0] = Idle;
@@ -73,10 +72,10 @@ public sealed class PlayerJumpGoldenTests
         {
             // $E9B8 runs at the top of the frame, so the cell a step reasons about is the one the
             // player was in before it moved.
-            PlayerCell cell = PlayerCell.Of(players.X[0], players.Y[0]);
+            PlayerCell cell = PlayerCell.Of(entities.X[0], entities.Y[0]);
 
             jump.Step(0, NoDirection, cell, map);
-            y[tick] = players.Y[0];
+            y[tick] = entities.Y[0];
         }
 
         Assert.Equal(s_y, y);
@@ -87,36 +86,35 @@ public sealed class PlayerJumpGoldenTests
     [Fact]
     public void RunsTheCountersTheGameRuns()
     {
-        PlayerTable players = new();
         EntityTable entities = new();
-        PlayerSteer steer = new(players, entities, TestBlow.Of(players, entities));
-        PlayerDrift drift = new(players, entities, steer);
-        PlayerDescent descent = new(players, entities);
-        PlayerLanding landing = new(players, entities, descent);
-        PlayerJump jump = new(players, entities, drift, landing);
+        PlayerSteer steer = new(entities, TestBlow.Of(entities));
+        PlayerDrift drift = new(entities, steer);
+        PlayerDescent descent = new(entities);
+        PlayerLanding landing = new(entities, descent);
+        PlayerJump jump = new(entities, drift, landing);
         SolidMap map = SolidMap.Build(s_levels.Level(1));
 
-        players.X[0] = StartX;
-        players.Y[0] = StartY;
+        entities.X[0] = StartX;
+        entities.Y[0] = StartY;
         entities.RiseCounter[0] = JumpRise;
         entities.FallCounter[0] = Idle;
 
         for (int tick = 0; tick < 15; tick++)
         {
-            jump.Step(0, NoDirection, PlayerCell.Of(players.X[0], players.Y[0]), map);
+            jump.Step(0, NoDirection, PlayerCell.Of(entities.X[0], entities.Y[0]), map);
             Assert.Equal(0x0E - tick, entities.RiseCounter[0]);
         }
 
         for (int tick = 0; tick < 3; tick++)
         {
-            jump.Step(0, NoDirection, PlayerCell.Of(players.X[0], players.Y[0]), map);
+            jump.Step(0, NoDirection, PlayerCell.Of(entities.X[0], entities.Y[0]), map);
             Assert.Equal(tick + 1, entities.FallCounter[0]);
         }
 
         // The fourth step of the fall is the one that lands, and $2519 puts both counters back to
         // the idle the caller tests for. Before $2519 was translated this asserted a fall counter of
         // four, which is what the capture reads at $2480 - one instruction before the reset.
-        jump.Step(0, NoDirection, PlayerCell.Of(players.X[0], players.Y[0]), map);
+        jump.Step(0, NoDirection, PlayerCell.Of(entities.X[0], entities.Y[0]), map);
 
         Assert.Equal(0xFF, entities.FallCounter[0]);
         Assert.Equal(0xFF, entities.RiseCounter[0]);
@@ -129,27 +127,26 @@ public sealed class PlayerJumpGoldenTests
     [Fact]
     public void EndsTheArcExactlyAsTheGameDoes()
     {
-        PlayerTable players = new();
         EntityTable entities = new();
-        PlayerSteer steer = new(players, entities, TestBlow.Of(players, entities));
-        PlayerDrift drift = new(players, entities, steer);
-        PlayerDescent descent = new(players, entities);
-        PlayerLanding landing = new(players, entities, descent);
-        PlayerJump jump = new(players, entities, drift, landing);
+        PlayerSteer steer = new(entities, TestBlow.Of(entities));
+        PlayerDrift drift = new(entities, steer);
+        PlayerDescent descent = new(entities);
+        PlayerLanding landing = new(entities, descent);
+        PlayerJump jump = new(entities, drift, landing);
         SolidMap map = SolidMap.Build(s_levels.Level(1));
 
-        players.X[0] = 0x53;
-        players.Y[0] = 0xB4;
+        entities.X[0] = 0x53;
+        entities.Y[0] = 0xB4;
         entities.Frame[0] = 0x00;
         entities.RiseCounter[0] = 0x00;
         entities.FallCounter[0] = 0x03;
         entities.BubbleTimer[0] = Idle;
         entities.GroundState[0] = Idle;
 
-        jump.Step(0, NoDirection, PlayerCell.Of(players.X[0], players.Y[0]), map);
+        jump.Step(0, NoDirection, PlayerCell.Of(entities.X[0], entities.Y[0]), map);
 
-        Assert.Equal(0xB5, players.Y[0]);
-        Assert.Equal(0x54, players.X[0]);
+        Assert.Equal(0xB5, entities.Y[0]);
+        Assert.Equal(0x54, entities.X[0]);
         Assert.Equal(Idle, entities.RiseCounter[0]);
         Assert.Equal(Idle, entities.FallCounter[0]);
 
@@ -162,25 +159,24 @@ public sealed class PlayerJumpGoldenTests
     [Fact]
     public void ALandingSnapsToTheRowGrid()
     {
-        PlayerTable players = new();
         EntityTable entities = new();
-        PlayerSteer steer = new(players, entities, TestBlow.Of(players, entities));
-        PlayerDrift drift = new(players, entities, steer);
-        PlayerDescent descent = new(players, entities);
-        PlayerLanding landing = new(players, entities, descent);
-        PlayerJump jump = new(players, entities, drift, landing);
+        PlayerSteer steer = new(entities, TestBlow.Of(entities));
+        PlayerDrift drift = new(entities, steer);
+        PlayerDescent descent = new(entities);
+        PlayerLanding landing = new(entities, descent);
+        PlayerJump jump = new(entities, drift, landing);
         SolidMap map = SolidMap.Build(s_levels.Level(1));
 
-        players.X[0] = StartX;
-        players.Y[0] = StartY;
+        entities.X[0] = StartX;
+        entities.Y[0] = StartY;
         entities.RiseCounter[0] = JumpRise;
         entities.FallCounter[0] = Idle;
 
         for (int tick = 0; tick < s_y.Length; tick++)
         {
-            jump.Step(0, NoDirection, PlayerCell.Of(players.X[0], players.Y[0]), map);
+            jump.Step(0, NoDirection, PlayerCell.Of(entities.X[0], entities.Y[0]), map);
         }
 
-        Assert.Equal(0, (players.Y[0] - 0x2D) % 8);
+        Assert.Equal(0, (entities.Y[0] - 0x2D) % 8);
     }
 }

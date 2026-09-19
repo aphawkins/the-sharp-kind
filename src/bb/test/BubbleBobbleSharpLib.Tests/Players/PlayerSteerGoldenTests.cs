@@ -54,17 +54,16 @@ public sealed class PlayerSteerGoldenTests
     [Fact]
     public void SteersThroughAJumpExactlyAsTheGameDoes()
     {
-        PlayerTable players = new();
         EntityTable entities = new();
-        PlayerSteer steer = new(players, entities, TestBlow.Of(players, entities));
-        PlayerDrift drift = new(players, entities, steer);
-        PlayerDescent descent = new(players, entities);
-        PlayerLanding landing = new(players, entities, descent);
-        PlayerJump jump = new(players, entities, drift, landing);
+        PlayerSteer steer = new(entities, TestBlow.Of(entities));
+        PlayerDrift drift = new(entities, steer);
+        PlayerDescent descent = new(entities);
+        PlayerLanding landing = new(entities, descent);
+        PlayerJump jump = new(entities, drift, landing);
         SolidMap map = SolidMap.Build(s_levels.Level(1));
 
-        players.X[0] = StartX;
-        players.Y[0] = StartY;
+        entities.X[0] = StartX;
+        entities.Y[0] = StartY;
         entities.Frame[0] = StartFrame;
         entities.AnimationTimer[0] = StartTimer;
         entities.RiseCounter[0] = StartRise;
@@ -80,9 +79,9 @@ public sealed class PlayerSteerGoldenTests
 
         for (int tick = 0; tick < s_x.Length; tick++)
         {
-            jump.Step(0, PushUpAndRight, PlayerCell.Of(players.X[0], players.Y[0]), map);
-            x[tick] = players.X[0];
-            y[tick] = players.Y[0];
+            jump.Step(0, PushUpAndRight, PlayerCell.Of(entities.X[0], entities.Y[0]), map);
+            x[tick] = entities.X[0];
+            y[tick] = entities.Y[0];
         }
 
         Assert.Equal(s_y, y);

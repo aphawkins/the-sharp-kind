@@ -24,11 +24,11 @@ public sealed class PlayerDescentTests
     [Fact]
     public void FallsTwoPixelsAFrame()
     {
-        (PlayerTable players, EntityTable entities, PlayerDescent descent) = Falling(0x50);
+        (EntityTable entities, PlayerDescent descent) = Falling(0x50);
 
         descent.Step(0, PlayerCell.Of(StartX, 0x50), Open());
 
-        Assert.Equal(0x52, players.Y[0]);
+        Assert.Equal(0x52, entities.Y[0]);
         Assert.Equal(0x00, entities.GroundState[0]);
     }
 
@@ -36,22 +36,22 @@ public sealed class PlayerDescentTests
     [Fact]
     public void WrapsFromTheBottomOfThePlayfieldToTheTop()
     {
-        (PlayerTable players, _, PlayerDescent descent) = Falling(0xF3);
+        (EntityTable entities, PlayerDescent descent) = Falling(0xF3);
 
         descent.Step(0, PlayerCell.Of(StartX, 0xF3), Open());
 
-        Assert.Equal(0x15, players.Y[0]);
+        Assert.Equal(0x15, entities.Y[0]);
     }
 
     // And a thing that steps over $F5 rather than onto it keeps going.
     [Fact]
     public void DoesNotWrapSteppingPastTheBottom()
     {
-        (PlayerTable players, _, PlayerDescent descent) = Falling(0xF4);
+        (EntityTable entities, PlayerDescent descent) = Falling(0xF4);
 
         descent.Step(0, PlayerCell.Of(StartX, 0xF4), Open());
 
-        Assert.Equal(0xF6, players.Y[0]);
+        Assert.Equal(0xF6, entities.Y[0]);
     }
 
     // $EB7D. A solid cell on the row below, with the thing's own row clear, is the ground - and
@@ -59,11 +59,11 @@ public sealed class PlayerDescentTests
     [Fact]
     public void MarksTheGroundWhenItFindsIt()
     {
-        (PlayerTable players, EntityTable entities, PlayerDescent descent) = Falling(0x53);
+        (EntityTable entities, PlayerDescent descent) = Falling(0x53);
 
         descent.Step(0, PlayerCell.Of(StartX, 0x53), Solid(7, 6));
 
-        Assert.Equal(0x55, players.Y[0]);
+        Assert.Equal(0x55, entities.Y[0]);
         Assert.Equal(0xFF, entities.GroundState[0]);
     }
 
@@ -72,7 +72,7 @@ public sealed class PlayerDescentTests
     [Fact]
     public void FindsNoGroundWhileInsideASolidCell()
     {
-        (PlayerTable _, EntityTable entities, PlayerDescent descent) = Falling(0x53);
+        (EntityTable entities, PlayerDescent descent) = Falling(0x53);
 
         descent.Step(0, PlayerCell.Of(StartX, 0x53), Solid((6, 6), (7, 6)));
 
@@ -83,23 +83,22 @@ public sealed class PlayerDescentTests
     [Fact]
     public void LooksForGroundOnlyOnARowBoundary()
     {
-        (PlayerTable players, EntityTable entities, PlayerDescent descent) = Falling(0x51);
+        (EntityTable entities, PlayerDescent descent) = Falling(0x51);
 
         descent.Step(0, PlayerCell.Of(StartX, 0x51), Solid(7, 6));
 
-        Assert.Equal(0x53, players.Y[0]);
+        Assert.Equal(0x53, entities.Y[0]);
         Assert.Equal(0x00, entities.GroundState[0]);
     }
 
-    private static (PlayerTable Players, EntityTable Entities, PlayerDescent Descent) Falling(byte y)
+    private static (EntityTable Entities, PlayerDescent Descent) Falling(byte y)
     {
-        PlayerTable players = new();
         EntityTable entities = new();
 
-        players.X[0] = StartX;
-        players.Y[0] = y;
+        entities.X[0] = StartX;
+        entities.Y[0] = y;
 
-        return (players, entities, new(players, entities));
+        return (entities, new(entities));
     }
 
     private static SolidMap Open() => SolidMap.Build(Level());

@@ -34,7 +34,7 @@ public sealed class PlayerFireTests
     [Fact]
     public void BlowsFromTheGround()
     {
-        (_, EntityTable entities, _, PlayerFrame frame) = Standing();
+        (EntityTable entities, _, PlayerFrame frame) = Standing();
 
         frame.Step(0, Fire, Floor());
 
@@ -45,11 +45,11 @@ public sealed class PlayerFireTests
     [Fact]
     public void BlowsAndWalksOnTheSameFrame()
     {
-        (PlayerTable players, EntityTable entities, _, PlayerFrame frame) = Standing();
+        (EntityTable entities, _, PlayerFrame frame) = Standing();
 
         frame.Step(0, RightAndFire, Floor());
 
-        Assert.Equal(StandX + 2, players.X[0]);
+        Assert.Equal(StandX + 2, entities.X[0]);
         Assert.Equal(BubbleBlow.BlowFrames, entities.BubbleTimer[0]);
     }
 
@@ -58,7 +58,7 @@ public sealed class PlayerFireTests
     [Fact]
     public void DoesNotBlowOnTheFrameAJumpStarts()
     {
-        (_, EntityTable entities, _, PlayerFrame frame) = Standing();
+        (EntityTable entities, _, PlayerFrame frame) = Standing();
 
         frame.Step(0, UpAndFire, Floor());
 
@@ -72,8 +72,8 @@ public sealed class PlayerFireTests
     [Fact]
     public void BlowsFromTheSteer()
     {
-        (PlayerTable players, EntityTable entities, ObjectTable objects, _) = Standing();
-        PlayerSteer steer = new(players, entities, new BubbleBlow(players, entities, objects));
+        (EntityTable entities, ObjectTable objects, _) = Standing();
+        PlayerSteer steer = new(entities, new BubbleBlow(new PlayerTable(), entities, objects));
 
         steer.Step(0, Fire, Floor());
 
@@ -85,7 +85,7 @@ public sealed class PlayerFireTests
     [Fact]
     public void MakesABubbleThreeFramesAfterThePress()
     {
-        (_, _, ObjectTable objects, PlayerFrame frame) = Standing();
+        (_, ObjectTable objects, PlayerFrame frame) = Standing();
         SolidMap floor = Floor();
 
         frame.Step(0, Fire, floor);
@@ -104,7 +104,7 @@ public sealed class PlayerFireTests
     [Fact]
     public void EndsTheBlowAfterSevenFrames()
     {
-        (_, EntityTable entities, _, PlayerFrame frame) = Standing();
+        (EntityTable entities, _, PlayerFrame frame) = Standing();
         SolidMap floor = Floor();
 
         frame.Step(0, Fire, floor);
@@ -118,34 +118,32 @@ public sealed class PlayerFireTests
         Assert.Equal(0x00, entities.Frame[0]);
     }
 
-    private static (PlayerTable Players, EntityTable Entities, ObjectTable Objects, PlayerFrame Frame) Standing()
+    private static (EntityTable Entities, ObjectTable Objects, PlayerFrame Frame) Standing()
     {
-        PlayerTable players = new();
         EntityTable entities = new();
         ObjectTable objects = new();
 
-        players.State[0] = PlayerFrame.PlayingState;
-        players.X[0] = StandX;
-        players.Y[0] = StandY;
+        entities.State[0] = PlayerFrame.PlayingState;
+        entities.X[0] = StandX;
+        entities.Y[0] = StandY;
 
         entities.RiseCounter[0] = 0xFF;
         entities.FallCounter[0] = 0xFF;
         entities.GroundState[0] = 0xFF;
         entities.BubbleTimer[0] = 0xFF;
 
-        BubbleBlow blow = new(players, entities, objects);
-        PlayerSteer steer = new(players, entities, blow);
-        PlayerDescent descent = new(players, entities);
+        BubbleBlow blow = new(new PlayerTable(), entities, objects);
+        PlayerSteer steer = new(entities, blow);
+        PlayerDescent descent = new(entities);
 
         PlayerFrame frame = new(
-            players,
             entities,
-            new PlayerMovement(players, entities, blow),
-            new PlayerJump(players, entities, new PlayerDrift(players, entities, steer), new PlayerLanding(players, entities, descent)),
-            new PlayerFall(players, entities, steer),
+            new PlayerMovement(entities, blow),
+            new PlayerJump(entities, new PlayerDrift(entities, steer), new PlayerLanding(entities, descent)),
+            new PlayerFall(entities, steer),
             blow);
 
-        return (players, entities, objects, frame);
+        return (entities, objects, frame);
     }
 
     private static SolidMap Floor() => SolidMap.Build(Level());
