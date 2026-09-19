@@ -2024,11 +2024,33 @@ what is genuinely the bubble's own: blowing one, and the shared mover at
       for every two passes of the `$0A00` game loop. The wait at `$0A5A` is on
       a self-modified value, so a variable ratio is possible.
 
-      **That is a hypothesis with arithmetic behind it, not a finding.** It
-      needs one VICE run that records `$A9B2` and `$A9FA` beside X and Y. Until
-      then no travel item should be written against the captured frame
-      numbers, because the conversion between the two clocks is the thing in
-      question.
+      **`$1CBD` is called from the IRQ handler, not the game loop.**
+      `irq-handlers.s:152` is the only caller. So the capture's anchor is on
+      the interrupt side and the movers are on the game loop side, and the two
+      really are different clocks - the question is only what the ratio is.
+      That much is settled by reading, and it is the strongest support the
+      hypothesis has.
+
+      **A VICE run was attempted to measure the ratio and did not produce a
+      usable number.** What it did establish: the emulator launches, the game
+      loads and is verified in RAM at `$0A4E`, and the keyset drives fire into
+      the window. What defeated it: the game sits on its title screen and the
+      held fire presses never reached the game loop, so `$A9FA` never moved,
+      and separately the monitor client returned values that cannot be real -
+      a three-byte jiffy clock reading `010101` and then `040404`, and the same
+      `$08` delta twice from different runs.
+
+      Three traps were found and are written up in the session memory notes:
+      every monitor command halts the emulator and not only a memory read; the
+      `MON_CMD_EXIT` reply must be consumed or the stream desynchronises; and
+      non-stopping checkpoints still emit a response per hit, which floods the
+      socket until the emulator stalls. The way to count is RAM the game
+      already ticks - `$13BE` decrements `$A9FA` for all eighteen slots every
+      pass with no gating, so any slot is a free pass counter.
+
+      **So the ratio is still unmeasured.** No travel item should be written
+      against the captured frame numbers until it is, because the conversion
+      between the two clocks is the thing in question.
 
 - [ ] **The RNG at `LE9EA`**, and a constraint that came with reading it.
 
