@@ -38,6 +38,7 @@ internal sealed class EntityTable
     private readonly byte[] _colour = new byte[Capacity];
     private readonly byte[] _mode = new byte[Capacity];
     private readonly byte[] _holdTimer = new byte[Capacity];
+    private readonly byte[] _flashTimer = new byte[Capacity];
 
     // $B2, ENESSION. Zero means the slot is empty, which is what the update loop tests first.
     //
@@ -86,6 +87,10 @@ internal sealed class EntityTable
     // on the screen at once. $1822 reads it as it fills the VIC's colour registers, and $05C5 gives
     // the two players theirs as a level starts.
     internal Span<byte> Colour => _colour;
+
+    // $8728. bubbles-sprites.s reads it as the flash a thing does after it is hurt, and $13FA sets
+    // it to $FF as a captured enemy is let back out of its bubble.
+    internal Span<byte> FlashTimer => _flashTimer;
 
     // $85C0. Which of two arms $1CDB takes for this slot: negative takes the ordinary per-slot
     // update and positive takes the other one. sprites2-tables.s starts the two players at $FF and

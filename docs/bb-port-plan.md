@@ -1950,6 +1950,97 @@ what is genuinely the bubble's own: blowing one, and the shared mover at
       to the mover itself. That cadence is unexplained and is the first thing
       to settle here.
 
+- [x] **The clock, the wobble and the pop**, `$13BE` in `player-sprites.s`, as
+      `Enemies/EntityTimers.cs`. The game loop calls it at `$0A51`, straight
+      after the AI loop.
+
+      This was taken on to explain the cadence, and it did not. It explained
+      two of the four phases instead.
+
+      **Nothing in `enemy-ai.s` expires anything.** A bubble is made with `$7D`
+      in `$A9FA`, and this is the only routine that takes anything off it. It
+      counts a different byte from the AI entirely: `$A9FA`, which
+      `ObjectTable` calls `Flags`, not the state counter `$A9B2`.
+
+      **The wobble is `eor #$4C`.** `$04` becomes `$48` and `$48` becomes
+      `$04`, so one exclusive-or does both halves. It runs only while the
+      clock is below `$11` and only on the even counts, which is why it is
+      half speed. That is the alternation the capture read at frames 195 to
+      215, and it is now reproduced.
+
+      **`$145C` is a `jsr` to the very next instruction.** The routine at
+      `$145F` therefore runs twice - once through the call and once by falling
+      into it - so the pressure pass pops two bubbles, not one. Read as a
+      plain call it is half the rate.
+
+      **And that pass is very nearly dead code.** `$144D` counts every slot at
+      or above `$34`, and a free slot is `$FF`, which is above `$34`. So the
+      empty table counts towards the total, the count reaches two the moment
+      any slot is free, and the pass returns having done nothing. It can only
+      fire with all eighteen slots full of low types. It reads like the thing
+      that stops a player parking a level full of bubbles, and on these bytes
+      it cannot fire until they already have.
+
+      **The release is asymmetric.** `$13E8` sets the bottom bit of the row
+      and `$13EE` clears the bottom bit of the column. A translation that
+      tidies those into a matching pair puts every released enemy in the wrong
+      place.
+
+      `$85C0`, `$8638` and `$8728` arrived with this and the item before it,
+      as `Mode`, `HoldTimer` and `FlashTimer`. All three are rows of the same
+      forty-byte region and are named for what they do.
+
+      The VIC sprite-enable flicker at `$142E` is not translated. It toggles a
+      bit in a hardware register through the mask table at `$AB55`, which is
+      VIC-II work and out of scope by section 1.
+
+      **Verified:** solution builds with 0 warnings, and
+      `BubbleBobbleSharpLib.Tests` is 346/346, up from 332.
+
+- [ ] **The cadence**, which is still open, and now has evidence pointing
+      somewhere specific.
+
+      The capture shows two moves then a pause, in both the shot and the rise.
+      Three things are now known that were not:
+
+      `$0D86` falls straight through into `$0E23`. So the two movers are not
+      chosen by type - they are chosen by the AI state counter. Non-zero sends
+      the slot to the dispatcher and eight-pixel moves; zero sends it to the
+      catch test, then the random AI, then the two-pixel mover. The shot and
+      the rise are the same bubble either side of that counter emptying.
+
+      `$0CF2` is called unconditionally, once per pass of the game loop. So
+      nothing gates the loop.
+
+      And the arithmetic now has a second, independent witness. `$A9FA` starts
+      at `$7D`, which is 125, and `$13BE` takes one off it every pass. The
+      capture's bubble is blown at frame 32 and pops at about frame 219, which
+      is 187 frames for 125 decrements - almost exactly the same two-thirds as
+      the mover steps show.
+
+      Two unrelated quantities running at two-thirds of the capture's frame
+      rate is not a pause in the AI. It points at the capture's own clock: the
+      `$1CBD` entity pass, which the anchor counts, running about three times
+      for every two passes of the `$0A00` game loop. The wait at `$0A5A` is on
+      a self-modified value, so a variable ratio is possible.
+
+      **That is a hypothesis with arithmetic behind it, not a finding.** It
+      needs one VICE run that records `$A9B2` and `$A9FA` beside X and Y. Until
+      then no travel item should be written against the captured frame
+      numbers, because the conversion between the two clocks is the thing in
+      question.
+
+- [ ] **The RNG at `LE9EA`**, and a constraint that came with reading it.
+
+      It mixes in `CIA1_TBLO`, a CIA timer's low byte. Section 1 puts CIA
+      emulation out of scope, so the sequence cannot be reproduced and
+      `$0D86`'s random arms can never be matched byte for byte against a
+      capture. Only the position-based arm at `$0E00` is deterministic.
+
+      That is a constraint on how every enemy in this phase can be verified,
+      not just the bubble, and it should be settled before the verify step
+      below is relied on.
+
 - [ ] Bubble drift on the level's `bubbleCurrent`.
 - [ ] Wrap-around openings from `wrapOpenings`. The vertical half is done in
       `$0E23`: a row off either end comes back at the other and the thing
