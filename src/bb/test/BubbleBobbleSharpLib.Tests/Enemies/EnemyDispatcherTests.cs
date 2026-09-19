@@ -302,6 +302,6 @@ public sealed class EnemyDispatcherTests
 
         EntityTable entities = new();
 
-        return (objects, entities, new EnemyDispatcher(objects, entities));
+        return (objects, entities, new EnemyDispatcher(objects, entities, new BubbleCollision(objects, entities)));
     }
 }

@@ -231,6 +231,9 @@ public sealed class EnemyAiLoopTests
         objects.Y[Slot] = PlayerY;
     }
 
+    private static EnemyDispatcher Dispatcher(ObjectTable objects, EntityTable entities)
+        => new(objects, entities, new BubbleCollision(objects, entities));
+
     private static (ObjectTable Objects, EntityTable Entities, EnemyAiLoop Loop) Table()
     {
         ObjectTable objects = new();
@@ -240,6 +243,6 @@ public sealed class EnemyAiLoopTests
         entities.X[1] = PlayerX;
         entities.Y[1] = PlayerY;
 
-        return (objects, entities, new EnemyAiLoop(objects, entities, new EnemyDispatcher(objects, entities)));
+        return (objects, entities, new EnemyAiLoop(objects, entities, Dispatcher(objects, entities)));
     }
 }

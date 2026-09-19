@@ -36,6 +36,8 @@ internal sealed class EntityTable
     private readonly byte[] _rightFlag = new byte[Capacity];
     private readonly byte[] _groundState = new byte[Capacity];
     private readonly byte[] _colour = new byte[Capacity];
+    private readonly byte[] _mode = new byte[Capacity];
+    private readonly byte[] _holdTimer = new byte[Capacity];
 
     // $B2, ENESSION. Zero means the slot is empty, which is what the update loop tests first.
     //
@@ -84,6 +86,17 @@ internal sealed class EntityTable
     // on the screen at once. $1822 reads it as it fills the VIC's colour registers, and $05C5 gives
     // the two players theirs as a level starts.
     internal Span<byte> Colour => _colour;
+
+    // $85C0. Which of two arms $1CDB takes for this slot: negative takes the ordinary per-slot
+    // update and positive takes the other one. sprites2-tables.s starts the two players at $FF and
+    // the six enemies at zero, and $10B9 puts a captured enemy back to $FF. bubbles-sprites.s counts
+    // it down. Nothing translated so far reads it - it is here because the capture writes it.
+    internal Span<byte> Mode => _mode;
+
+    // $8638. A countdown that holds something off while it is not zero: $1D11 reads it, skips the
+    // call at $1D21 and decrements it. The capture clears it. What it holds off is not translated
+    // yet, so it is named for what it does rather than for what it stops.
+    internal Span<byte> HoldTimer => _holdTimer;
 
     // $87F0. Negative while the thing has ground under it. $1F03 tests bit 7 before it will let a
     // player walk, and both $1F17 and $2575 start a fall by incrementing it out of $FF. $05C5 sets

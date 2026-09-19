@@ -15,7 +15,7 @@ namespace BubbleBobbleSharpLib.Enemies;
 // EntityMover at $0E23, and the two are not variants of one another. A bubble opens by travelling
 // eight pixels a frame through here, and then rises through EntityMover.
 //
-// The bubble collision at $105B is the one piece missing, and it is marked below.
+// The bubble collision at $105B is BubbleCollision, called down both arms of $0F98.
 internal sealed class EnemyDispatcher
 {
     // The six probe offsets of $0F98, written as the reference writes them: an offset off a pointer
@@ -75,14 +75,17 @@ internal sealed class EnemyDispatcher
 
     private readonly ObjectTable _objects;
     private readonly EntityTable _entities;
+    private readonly BubbleCollision _collision;
 
-    internal EnemyDispatcher(ObjectTable objects, EntityTable entities)
+    internal EnemyDispatcher(ObjectTable objects, EntityTable entities, BubbleCollision collision)
     {
         ArgumentNullException.ThrowIfNull(objects);
         ArgumentNullException.ThrowIfNull(entities);
+        ArgumentNullException.ThrowIfNull(collision);
 
         _objects = objects;
         _entities = entities;
+        _collision = collision;
     }
 
     // $0F48. One step, and then a second one for a slot that qualifies.
@@ -159,7 +162,10 @@ internal sealed class EnemyDispatcher
             _objects.Column[slot]--;
             _objects.X[slot] -= StepPixels;
 
-            // $0FB1's `jsr L105B`, the bubble collision. Not translated - see the note on the class.
+            // $0FB1's `jsr L105B`. A capture puts $18 or more in the type byte, which the test
+            // below then reads as a reason to stop - so the two lines are one thing, not two.
+            _ = _collision.Check(slot);
+
             if (_objects.Type[slot] >= NoProbeType)
             {
                 return;
@@ -184,6 +190,8 @@ internal sealed class EnemyDispatcher
         _objects.X[slot] += StepPixels;
 
         // $0FE0's `jsr L105B`, as above.
+        _ = _collision.Check(slot);
+
         if (_objects.Type[slot] >= NoProbeType)
         {
             return;

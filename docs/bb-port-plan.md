@@ -1869,10 +1869,60 @@ what is genuinely the bubble's own: blowing one, and the shared mover at
       `BubbleBobbleSharpLib.Tests` is 310/310, which is the 307 from the
       dispatcher plus the three new width tests.
 
-- [ ] **`$105B` and `$1090` themselves**, now that there is somewhere to read
-      them from. The walk over slots 5 down to 0, the sixteen-pixel box in
-      both axes, and the capture at `$1090` that empties the bubble and writes
-      `$AB81`'s score value into `$AA42`.
+- [x] **`$105B` and `$1090` themselves**, as `Enemies/BubbleCollision.cs`,
+      called from both arms of `$0F98`.
+
+      **Both paths end at the same store, and which byte arrives is decided
+      fifteen instructions earlier.** `$10B1` is `sta D_AA30,x`, and the
+      accumulator reaching it holds either the enemy's state byte, loaded at
+      `$1095`, or the rise counter it used to have, loaded at `$10A1`. What
+      picks between them is a `cmp` at `$1098` that does not touch the
+      accumulator at all. The score at `$10BF` is then indexed with whichever
+      one it was, so the two paths read different entries of the same table.
+      `CarriesTheStateByteOnTheShortPath` and
+      `CarriesTheOldRiseCounterOnTheLongPath` are the pair that separate them.
+
+      **The walk stops at slot 2, and that is load-bearing.** `$105B` counts
+      `y` from five down to zero over `$B4`, `$BC` and `$C4`, which is slots 7
+      down to 2 of the eight. Slots 0 and 1 are the two players, and a walk
+      that ran to the bottom would swallow a player standing where a bubble
+      is. `NeverLooksAtAPlayer` holds that.
+
+      **The band is `$0B` to `$15`, and `$0A` is outside it.** `$1060` and
+      `$1064` pass over an empty slot and a slot in that band, and test
+      everything else - including `$0A`, which sits just below the band and
+      which `$1098` then sends down the long path. So `$0A` is both tested and
+      reset, and a reading that lumps it in with the band misses an enemy
+      state entirely.
+
+      **The box is square here.** Sixteen pixels in both axes with no nudge,
+      unlike `$0D02`, which shifts its X two pixels. Three sixteen-pixel tests
+      now exist in this phase and only one of them is offset.
+
+      **Open question: `$AB81`'s real length.** The reference labels it eight
+      bytes, then `$AB89` begins. The byte that indexes it is the one just
+      written to `$AA30`, which is bounded by nothing - an enemy still
+      carrying the `$FF` its rise counter starts a level at walks straight off
+      the end, and even the short path can reach nine. The 6502 reads on into
+      `$AB89`.
+
+      This throws rather than inventing bytes, the way `$ACB6` does in the
+      dispatcher. It is not a settled rule and it may well need changing: a
+      VICE capture of a real capture is what will say where the table stops,
+      and that cannot happen until an enemy can be spawned.
+
+      Two arrays arrived with this: `$85C0` as `Mode` and `$8638` as
+      `HoldTimer`. Both are rows of the same forty-byte region the rest of
+      `EntityTable` comes from, both have other users elsewhere in the
+      reference, and both are named for what they do rather than for what they
+      are, because what they are is not yet known.
+
+      **Not proved against VICE.** Nothing spawns an enemy yet, so there is
+      nothing to capture and no golden trace behind any of this. Every case is
+      worked by hand off the reference.
+
+      **Verified:** solution builds with 0 warnings, and
+      `BubbleBobbleSharpLib.Tests` is 332/332, up from 310.
 
       **The type byte is an animation index, not a kind of thing.** `$0F91`
       reads `$ACB6` indexed by the AI state counter `$A9B2`, which `$0F61`
