@@ -441,3 +441,7 @@ The 8-bit rendition's `.fon` and TrueType fonts (`Bm437_Master_512.FON`,
 https://int10h.org/oldschool-pc-fonts/ - faithful reproductions of the
 character ROMs of the machines of the period, which is why they are what the
 rendition offers beside its own sheet.
+
+The 8-bit rendition's music (`elite.sid`) is the C64 version's theme,
+composed by David Dunn & Aidan Bell, 1985 Firebird. Sourced from the High
+Voltage SID Collection https://hvsc.c64.org/.

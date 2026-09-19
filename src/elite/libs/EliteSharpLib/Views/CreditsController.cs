@@ -23,6 +23,7 @@ internal sealed class CreditsController : IScreenController
         "The Sharp Kind - A Hawkins",
         "The New Kind - C Pinder",
         "Original Game - I Bell & D Braben",
+        "Music - D Dunn & A Bell",
     ];
 
     private readonly GameState _gameState;

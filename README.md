@@ -23,6 +23,10 @@ Status: Playable, feature-complete.
 
 Status: Playable, preview.
 
+### [Bubble Bobble - The Sharp Kind](docs/bb-readme.md)
+
+Status: Early work in progress, not yet playable end to end.
+
 ## Getting started
 
 Requires the [.NET SDK](https://dotnet.microsoft.com/download) (see `Directory.Build.props` for the target framework version).
