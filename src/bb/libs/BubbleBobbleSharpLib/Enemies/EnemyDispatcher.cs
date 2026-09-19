@@ -30,14 +30,23 @@ internal sealed class EnemyDispatcher
 
     private const int Stride = 40;
 
-    // $7BFE indexes the row table at $AC01, whose first four entries are $FF60, $FF88, $FFB0 and
-    // $FFD8. Adding the $85 page gives $8460, $8488, $84B0 and $84D8 - four forty-byte rows above
-    // the map's own base at $8500. So an entity's stored row is four greater than the row of
-    // SolidMap, and every probe in this class takes those four off.
+    // An entity's stored row is four greater than the row of SolidMap, and every probe here takes
+    // those four off.
     //
-    // This is not a guess off a comment. It is what the table's own bytes say, and it is what makes
-    // EntityMover's constants line up: that mover wraps a row at $1D, which is map row 25, one past
-    // the map's twenty-five - exactly off the bottom.
+    // The four is right but not for the obvious reason, and the obvious reason is wrong. $8500 is
+    // NOT the first row of level tiles: sprites2-tables.s lays each forty-byte group out as eight
+    // bytes of entity metadata followed by thirty-two tile bytes, and $8500-$851F is the screen wrap
+    // permission table and the two spawn point availability tables. Tile rows start at $8528, which
+    // is $AC01 entry five rather than four.
+    //
+    // What rescues the four is that the wrap permission block doubles as the ceiling a probe hits -
+    // it reads solid - so it is SolidMap's row 0. That gives SolidMap row = tile row + 1, and
+    // tile row = entity row - 5, and the two together give entity row - 4.
+    //
+    // Checked rather than argued. Level 1 read in play has its platforms on tile rows 8, 13 and 18,
+    // and the port's own level 1 bitmap puts them on SolidMap rows 9, 14 and 19. The +1 is measured
+    // on both sides. It also keeps EntityMover's constants lining up: that mover wraps a row at $1D,
+    // which is map row 25, one past the map's twenty-five - exactly off the bottom.
     private const int RowBias = 4;
 
     // $0F51 and $0FE1. Above this the slot is doing something the movement must not touch, and the

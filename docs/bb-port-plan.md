@@ -2166,27 +2166,32 @@ what is genuinely the bubble's own: blowing one, and the shared mover at
       zeroed. The geometry underneath it - platforms on tile rows 8, 13 and 18
       - has no bearing on the pattern at all.
 
-- [ ] **Check `EnemyDispatcher`'s `RowBias`, which may be out by one.**
+- [x] **`EnemyDispatcher`'s `RowBias` checked. It is 4, and it is right** -
+      but the reasoning that produced it was not, so the comment has been
+      rewritten rather than left resting on a wrong argument.
 
-      It is currently 4, taken from the `$AC01` table's first four entries
-      sitting four forty-byte rows below `$8500`. That arithmetic is right but
-      it assumed `$8500` is the first tile row, and `sprites2-tables.s` says it
-      is not: `$8500-$851F` is the screen wrap permission table and the two
-      spawn point availability tables. The tile rows start at `$8528`, which is
-      `$AC01` entry five, not four.
+      The doubt was real. `$8500` is **not** the first row of level tiles:
+      `sprites2-tables.s` lays each forty-byte group out as eight bytes of
+      entity metadata followed by thirty-two tile bytes, and `$8500-$851F` is
+      the screen wrap permission table and the two spawn point availability
+      tables. Tile rows start at `$8528`, which is `$AC01` entry five. On that
+      reading the bias should have been 5.
 
-      If that holds, every terrain probe in the dispatcher is reading one row
-      out. The tests would not catch it - they were written against the same
-      bias they are checking, so they are self-consistent rather than correct.
+      What rescues the 4 is that the wrap permission block doubles as the
+      ceiling a probe hits - it reads solid - so it is `SolidMap`'s row 0. That
+      gives `SolidMap` row = tile row + 1, and tile row = entity row - 5, and
+      the two together give entity row - 4.
 
-      Settle it by watching, not by reading: put a player on a known platform
-      and compare the row `$7BFE` computes against the row `SolidMap` has. Do
-      not simply change the constant.
+      **Measured on both sides rather than argued.** Level 1 read in play has
+      its platforms on tile rows 8, 13 and 18. The port's own level 1 bitmap
+      puts them on `SolidMap` rows 9, 14 and 19. The +1 is observed twice, from
+      two independent places, and the geometry matches exactly - which also
+      says `SolidMap.Build` reproduces the game's level correctly.
 
-      Until then `$0D86` and `$0E00` cannot be translated, and with them the
-      rise, the drift and the park - which is most of what "travel" means.
-      Assuming a clear cell reads zero would reproduce the rise and silently
-      lose every other direction in the game.
+      The tests were no help here and could not have been: they were written
+      against the same bias they check. What settled it was data from outside
+      them.
+
 - [ ] Wrap-around openings from `wrapOpenings`. The vertical half is done in
       `$0E23`: a row off either end comes back at the other and the thing
       becomes type `$38`.
