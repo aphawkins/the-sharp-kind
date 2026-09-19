@@ -1701,10 +1701,178 @@ what is genuinely the bubble's own: blowing one, and the shared mover at
 
 - [ ] `entity-system.s` and the state tables.
 - [ ] `AddBbRandom`, with the RNG at `LE9EA`.
-- [ ] **The AI loop itself**, `$0CF2`, and the movement dispatcher it reaches
-      by way of `$0F48`, `$0F61` and `$0F91`, with `$105B` (bubble collision)
-      and `$7BFE` (platform check). Roughly 350 of `enemy-ai.s`'s 626 lines.
-      `$0E23` is already done - see Phase 5.
+- [x] **The loop's own walk**, `$0CF2`, as `Enemies/EnemyAiLoop.cs`.
+
+      This is the loop and the two decisions it makes without leaving itself:
+      the special-type gate at `$0CF4` and the catch at `$0D02`. What it
+      reaches is the item below, and both places it falls out are marked in
+      the code.
+
+      **The catch box is not centred on the player.** `$0D14` nudges the
+      player's X two pixels right before the subtraction and `$0D28` does
+      nothing of the kind to their Y. So the sixteen-pixel box reaches two
+      pixels further right than left, and a translation that mirrors the two
+      axes is wrong on one side of every enemy in the game. `NudgesThePlayerXAndNotThePlayerY`
+      puts two slots the same distance from the player's own X, one each way,
+      and proves only one of them is caught.
+
+      **`$0D52`'s subtraction takes twenty-four, not twenty-three.** It is
+      `sbc #$23`, but it runs with the carry clear, because `$0D50`'s `bcs`
+      fell through to reach it. So types `$24` to `$33` index the sixteen
+      entry jump table as zero to fifteen. Reading the operand alone puts
+      every spawn handler in the game out by one. The handlers are not
+      translated, so nothing depends on this yet - it is recorded because the
+      next reader will make the same mistake.
+
+      **`$0193` means two different things.** The blow at `$2352` writes the
+      blower's facing into it, `$00` or `$80`, and `$0F98` reads the same byte
+      back and tests its top bit. The catch at `$0D33` writes a player index,
+      `0` or `1`, into that byte instead. Both are positive, so a caught slot
+      reads as facing right. That is the reference's overload, not a slip in
+      the translation, and anything later that reads `$0193` must know which
+      of the two it is holding.
+
+      **A caught slot is safe from being caught twice**, and by accident. The
+      catch writes `$34`, which is itself above `$0CF4`'s gate of `$24`, so
+      the next frame routes the slot to `$0D4E` and the type stored underneath
+      it survives. `DoesNotCatchTheSameSlotTwice` proves it, because a loop
+      without the gate would overwrite `$AA42` with `$34` and lose what the
+      thing was.
+
+      **`$AA42` is `EnemyType`, not `Variant`.** `ObjectTable` holds `$A9B2`,
+      `$AA30` and `$AA42` as `State`, `Variant` and `EnemyType`, in that
+      order, and `$0D3A` stores into the third of them. The first version of
+      this item wrote the second, which is `$AA30` - a byte `$0F66` reads to
+      decide whether to halve an animation index. Caught. The three names are
+      close enough that the next reader should check the addresses rather
+      than the words.
+
+      **Not proved against VICE.** Nothing drives this loop yet - the
+      dispatcher below is what the game spends its time in, and a capture of
+      the walk alone would show nothing. The catch has no golden trace behind
+      it either: level 1 with one player never puts a free enemy inside
+      sixteen pixels of them in the frames captured so far. Every assertion
+      here is worked by hand off the reference, and the first VICE run that
+      exercises a catch may yet correct it.
+
+      **Verified:** solution builds with 0 warnings, and
+      `BubbleBobbleSharpLib.Tests` is 290/290, up from the 271 Phase 5 left.
+
+- [x] **The movement dispatcher**, `$0F48`, `$0F61`, `$0F91`, `$0F98` and
+      `$100B`, with `$7BFE` folded in, as `Enemies/EnemyDispatcher.cs`.
+      `$0E23` is Phase 5 and `$0CF2` is above. **`$105B` is not done** - see
+      the item below it.
+
+      This is the eight-pixel half of entity movement, and it is not a variant
+      of `$0E23`. A bubble opens by travelling through here and then rises
+      through that.
+
+      **The index is the counter from before the decrement.** `$0F61` is `dec
+      D_A9B2,x` followed by `and #$7F`, and `dec` is a memory instruction that
+      never touches the accumulator. So the mask falls on whatever A already
+      held - the value `$0CF8` loaded, before the decrement. `$0F48` calls the
+      routine twice, and the second call passes the value the first left. A
+      translation that indexes with the decremented counter is one frame ahead
+      of the machine in every animation in the game, and it still looks
+      plausible. `IndexesWithTheCounterFromBeforeTheDecrement` is the test that
+      separates them: a counter of six must read `$00` and not `$02`.
+
+      **An entity's stored row is four more than a `SolidMap` row.** `$7BFE`
+      indexes the row table at `$AC01`, and its first four entries are `$FF60`,
+      `$FF88`, `$FFB0` and `$FFD8`. With the `$85` page added those are `$8460`,
+      `$8488`, `$84B0` and `$84D8` - four forty-byte rows above the map's base
+      at `$8500`. That is read off the table's own bytes, not off a comment,
+      and it is confirmed sideways: `EntityMover` wraps a row at `$1D`, which
+      is map row 25, exactly one past the map's twenty-five.
+
+      Worth noting that `PlayerCell` reaches the same map through `$AC03`,
+      one entry further along, with a bias of three. The two are consistent;
+      they simply start from different places.
+
+      **The two arms are not mirrors, three ways.** The right arm refuses to
+      leave column `$1C` and the left arm has no bound at all. The left probes
+      `$00`, `$29` and `$50`; the right probes `$01`, `$28` and `$51`, which is
+      not that set reflected. And both move *before* they probe, so a blocked
+      thing has already been moved and `$100B` is what puts it back.
+
+      **`$1012`'s `adc #$13` adds twenty.** The carry the subtraction at
+      `$100F` left is still set for any X at or above `$14`, so the snap back
+      to the eight pixel grid returns `$45` as `$44`. Read as nineteen it puts
+      every blocked thing one pixel short of its cell.
+
+      **`$101C` looks at player two and nobody else.** `$BB` and `$C3` are the
+      second byte of each of those arrays, and there is no index register in
+      the routine. Player one has no say, which `IgnoresPlayerOneEntirely`
+      proves by putting player one on top of the thing and getting a zero. The
+      proximity does not decide whether the thing is caught either - a blocked
+      thing with a negative counter is caught either way. All it decides is the
+      byte written to `$0193`, which is the same overloaded byte the catch at
+      `$0D33` writes.
+
+      **`$A9D6` is the sub-position, not a direction.** `$7BFE` returns it and
+      `$0FB4` branches on it to skip the first of the three probes, so the
+      probe is skipped exactly when the thing sits on a cell boundary. The
+      reference calls it a direction. `EntityMover` drives the same byte as a
+      sub-position and a VICE capture of one bubble's rise proves it counts
+      eight and wraps, so the comment is wrong and this is the eighth like it
+      in these two files.
+
+      **Not proved against VICE.** The bubble capture shows the eight-pixel
+      shot - X `$34` to `$74`, two moves then a pause - which is this routine,
+      but it was read one frame at a time and `$0F48` can run twice in a frame.
+      So it cannot be asserted step for step the way the rise is. Each arm and
+      each trap is tested on its own instead, worked by hand off the reference.
+      The unexplained cadence is still unexplained, and `$105B` is still
+      missing, so a capture that lines up is not possible yet.
+
+      **Verified:** solution builds with 0 warnings, and
+      `BubbleBobbleSharpLib.Tests` is 307/307, up from 290.
+
+- [ ] **The bubble collision**, `$105B` and the capture at `$1090`, which the
+      dispatcher calls twice and which is the last piece of `$0F98`.
+
+      **Blocked on a decision, not on reading.** `$105B` runs `ldy #$05` and
+      indexes `$B4,y`, `$BC,y` and `$C4,y`. Those are `$B2 + 2`, `$BA + 2` and
+      `$C2 + 2` - the state, X and Y arrays `PlayerTable` already holds, two
+      bytes along. `$1090` does the same with `$87A2`, `$87CA`, `$87F2`,
+      `$863A` and `$85C2`, each of which is an `EntityTable` base plus two.
+
+      So the two players and the six enemies share one set of eight-slot
+      arrays: players are slots 0 and 1, enemies are slots 2 to 7. The
+      reference has no separate enemy table at all.
+
+      `EntityTable` is already eight slots and took this without a change -
+      an enemy is just slot `y + 2`.
+
+      **Settled: the three arrays have moved to `EntityTable`.** `State`, `X`
+      and `Y` are eight slots there now, with players at 0 and 1. They are the
+      odd ones out in that class - zero page rather than `$85xx`, so not a
+      forty-byte row of the region the rest of it comes from - and the class
+      says so.
+
+      What that left in `PlayerTable` is what the 6502 really does keep two
+      of: `$5D`, `$045A`, `$A824` and `$ACCB`. Holding state, X and Y there
+      was a guess, and the reference has contradicted it.
+
+      The move cost 181 call sites across 23 files, and it took the whole of
+      `PlayerTable` out of eight classes - `PlayerFrame`, `PlayerMovement`,
+      `PlayerJump`, `PlayerFall`, `PlayerDrift`, `PlayerSteer`, `PlayerLanding`
+      and `PlayerDescent` no longer reference it at all, because those three
+      arrays were the only thing they wanted from it. That is the split coming
+      out clean rather than anything being lost.
+
+      `EntityTableTests` is new and holds the width as a fact: eight slots,
+      not two, with `$105B`'s own walk as the reason.
+
+      **Verified:** the move changes no behaviour, and the whole of the
+      existing suite proves it - solution builds with 0 warnings and
+      `BubbleBobbleSharpLib.Tests` is 310/310, which is the 307 from the
+      dispatcher plus the three new width tests.
+
+- [ ] **`$105B` and `$1090` themselves**, now that there is somewhere to read
+      them from. The walk over slots 5 down to 0, the sixteen-pixel box in
+      both axes, and the capture at `$1090` that empties the bubble and writes
+      `$AB81`'s score value into `$AA42`.
 
       **The type byte is an animation index, not a kind of thing.** `$0F91`
       reads `$ACB6` indexed by the AI state counter `$A9B2`, which `$0F61`
