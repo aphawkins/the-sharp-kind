@@ -2151,11 +2151,37 @@ what is genuinely the bubble's own: blowing one, and the shared mover at
       was armed. The watch itself registered correctly each time. This is a
       gap in the evidence, not a finding about the map.
 
-      Worth trying next, cheapest first: compare the map across two different
-      levels. The `$8500` region has static initial contents in
-      `sprites2-tables.s`, so the direction field may be fixed and positional -
-      the same on every level - with only the solid bits rebuilt. If level 2's
-      low bits match level 1's, that settles it without any trap at all.
+      **The field is not static initial data.** That was the next thing to
+      check and it is now answered, from `sprites2-tables.s` rather than from
+      the emulator. Each forty-byte group there is eight bytes of entity
+      metadata followed by thirty-two tile bytes, and every one of those tile
+      bytes is `$80` or `$00` - wall or empty, and nothing else. The running
+      game shows `$81`, `$82`, `$83`, `$01`, `$02` and `$03`. So the direction
+      bits are written at level load, by the level draw, and the remaining
+      question is only what decides them.
+
+      Level 1's field, read in play: the low two bits are zero across every row
+      but the top five. Rows 1 to 3 read `1` for fourteen columns, `2` for
+      four, then `3` for fourteen; row 4 is the same with the middle four
+      zeroed. The geometry underneath it - platforms on tile rows 8, 13 and 18
+      - has no bearing on the pattern at all.
+
+- [ ] **Check `EnemyDispatcher`'s `RowBias`, which may be out by one.**
+
+      It is currently 4, taken from the `$AC01` table's first four entries
+      sitting four forty-byte rows below `$8500`. That arithmetic is right but
+      it assumed `$8500` is the first tile row, and `sprites2-tables.s` says it
+      is not: `$8500-$851F` is the screen wrap permission table and the two
+      spawn point availability tables. The tile rows start at `$8528`, which is
+      `$AC01` entry five, not four.
+
+      If that holds, every terrain probe in the dispatcher is reading one row
+      out. The tests would not catch it - they were written against the same
+      bias they are checking, so they are self-consistent rather than correct.
+
+      Settle it by watching, not by reading: put a player on a known platform
+      and compare the row `$7BFE` computes against the row `SolidMap` has. Do
+      not simply change the constant.
 
       Until then `$0D86` and `$0E00` cannot be translated, and with them the
       rise, the drift and the park - which is most of what "travel" means.
