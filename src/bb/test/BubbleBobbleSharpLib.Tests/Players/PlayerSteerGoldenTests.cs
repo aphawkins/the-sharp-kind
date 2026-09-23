@@ -60,7 +60,7 @@ public sealed class PlayerSteerGoldenTests
         PlayerDescent descent = new(entities);
         PlayerLanding landing = new(entities, descent);
         PlayerJump jump = new(entities, drift, landing);
-        SolidMap map = SolidMap.Build(s_levels.Level(1));
+        SolidMap map = SolidMap.Build(s_levels.Level(1), []);
 
         entities.X[0] = StartX;
         entities.Y[0] = StartY;

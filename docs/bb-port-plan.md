@@ -1707,19 +1707,17 @@ translated - the loop at `$0CF2`, the dispatcher at `$0F48`, the bubble
 collision at `$105B` - along with `$13BE`'s clock, wobble and pop. The cadence
 that blocked everything is measured and gone.
 
-**Pick it up at the direction field in the collision map.** That is the one
-thing between here and the travel items, and it is the item below that names it.
-As of 2026-09-23 it is fully settled, all four pieces confirmed by reading
-plus our own VICE captures: a rectangle's `zone_type` is the direction, every
-level's zone data ends in an unconditional mirror whether or not it says
-`mirror`, row 0's and row 24's own default is `bubbleCurrent` - **that earlier
-elimination was wrong**, from a grep that missed an indirect read; do not
-revisit it as settled the old way - and rows 1-23 default to the last two
-bits of their own row's wall-bitmap byte, confirmed with an exec checkpoint
-at `$E1A2` inside `decompress_level_data` (see the `vice-drive` skill's "Exec
-checkpoints, working" section for the recipe - the earlier store-watchpoint
-attempts failed for a sequencing reason, not a wrong address). What is left
-is turning this into code: `SolidMap` carrying the byte rather than a `bool`.
+**Pick it up at "A bubble's travel, expiry and popping"**, above. The
+direction field that blocked it is done: `SolidMap` carries the reference's
+own byte now, bit 7 solid and the low two bits a direction, built from a
+rectangle's `zone_type`, the unconditional mirror every level's zone data
+ends in whether or not it says `mirror`, `bubbleCurrent` for row 0 and row
+24, and rows 1-23's own wall-bitmap byte where nothing else covers them -
+all four confirmed by reading plus our own VICE captures, and now built and
+tested rather than only understood. **`bubbleCurrent` having no reader was
+wrong** - a grep that missed an indirect read; do not revisit it as settled
+the old way. What is left of this phase is wiring `$0E00` to read
+`SolidMap.Direction` instead of nothing, which is the travel item's own job.
 
 **One caution over everything translated in this phase.** Nothing from the AI
 loop onwards has a golden trace behind it. `EnemyAiLoop`, `EnemyDispatcher`,
@@ -2117,7 +2115,7 @@ those four is worth re-checking against it.
       not just the bubble, and it should be settled before the verify step
       below is relied on.
 
-- [ ] **The direction field in the collision map**, which is what a bubble's
+- [x] **The direction field in the collision map**, which is what a bubble's
       drift actually comes from, and which blocks the travel items above.
 
       **`$0E00` picks a direction by reading the map.** A slot whose AI counter
@@ -2281,15 +2279,50 @@ those four is worth re-checking against it.
       `00` then `8080` on the select screen, and `8181`, thirteen `01`, four
       `02`, eleven `03`, `8383` once level 1 is running.
 
-      **What it needs.** `SolidMap` must keep the byte, not a bool - or gain a
-      direction alongside the solidity. Building it needs: the level's own
-      rectangles (already in `zones.json` as `zone_type`, currently discarded
-      outside mirror expansion), the *unconditional* mirror on every level
-      regardless of an explicit `mirror` command, `bubbleCurrent` as row 0's
-      and row 24's default, and rows 1-23 defaulting to the last two bits of
-      their own row's wall-bitmap byte - all four pieces are now confirmed by
-      reading plus our own VICE capture. Building `SolidMap` itself is the
-      remaining work; nothing about the mechanism is still open.
+      **Built, 2026-09-23.** `SolidMap` keeps one byte a cell now - bit 7
+      solid, low two bits direction - and `SolidMap.Build(Level, IReadOnlyList<ZoneRect>)`
+      layers it the way the reference does: a uniform row default first
+      (`bubbleCurrent` for row 0 and row 24, the last two columns of that
+      row's own bitmap for every other row), the existing solid computation
+      unchanged except for one real bug this surfaced - the rightmost two
+      columns were never forced solid the way the leftmost two already were,
+      which `WallsOffTheOutermostTwoColumnsOfEveryLevel` now covers on both
+      edges - and the level's own rectangles overlaid last, direction only,
+      never touching the solid bit zone data never carries.
+
+      **The export tool had the matching bug**, found while wiring this up
+      rather than before. `mirror_rect` copied a rectangle's direction
+      unchanged instead of flipping 1 and 3, and `level_rects` only mirrored
+      when an explicit `mirror` command appeared in `zone-data.txt` - which,
+      checked directly, happens **zero times in the whole file**. Every
+      level's mirror, where one applies, comes from the terminator byte alone
+      - `has_trailing_zero` now runs the real `encode_level` to ask whether a
+      terminator exists at all, rather than re-deriving its branch and
+      risking drifting from what the build actually produces. Level 1's
+      `zones.json` entry gained its second, mirrored rectangle
+      (`x=18 width=14 type=3`) from this fix alone; level 14, whose
+      rectangles fill their declared block with no room for a terminator, is
+      unchanged, which is the exact case that made width-29 rectangles look
+      wrong until the terminator check explained them.
+
+      `ZoneRect`, `LevelZones` and `ZoneStore` mirror `Level`/`LevelStore`,
+      reading `zones.json` as a file of its own rather than folding it into
+      `Level` - Phase 2 kept the two exports apart on purpose, and `SolidMap`
+      is the one place they now meet, at build time rather than load time.
+      Wired through `BubbleBobbleServiceCollectionExtensions` and
+      `BubbleBobbleMain` the same way `LevelStore` already was. `Playfield`
+      passes `[]`: it only ever reads the solid bit, which zone data never
+      changes, so it owes SolidMap nothing further.
+
+      **Verified:** solution builds with 0 warnings, `BubbleBobbleSharpLib.Tests`
+      is 350/350, up from 346, including a byte-exact check of level 1's own
+      row 1 against the VICE capture above - `81 81` then thirteen `01`, four
+      `02`, twelve `03`, `83 83` - and confirmed in the real app: `ShowLevel(1)`
+      builds a `SolidMap` through the new `ZoneStore` wiring without error, and
+      a `GAME_FRAME_DUMP_DIR` capture of level 1 is pixel-identical to earlier
+      ones, as it has to be - the two changed columns are always under the
+      sidebar decoration in the composited frame, so nothing about this was
+      ever going to be visible, only reachable by a probe.
 
 - [x] **`EnemyDispatcher`'s `RowBias` checked. It is 4, and it is right** -
       but the reasoning that produced it was not, so the comment has been

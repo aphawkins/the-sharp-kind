@@ -272,9 +272,9 @@ public sealed class EnemyDispatcherTests
         Assert.Equal(0, objects.Direction[Slot]);
     }
 
-    private static SolidMap Open() => SolidMap.Build(Level());
+    private static SolidMap Open() => SolidMap.Build(Level(), []);
 
-    private static SolidMap Solid(int row, int column) => SolidMap.Build(Level((row, column)));
+    private static SolidMap Solid(int row, int column) => SolidMap.Build(Level((row, column)), []);
 
     // SolidMap puts the level's own twenty-three rows below a solid ceiling, so a map row is one
     // more than the bitmap line it came from.

@@ -258,9 +258,9 @@ public sealed class PlayerFrameTests
         return (entities, frame);
     }
 
-    private static SolidMap Open() => SolidMap.Build(Level());
+    private static SolidMap Open() => SolidMap.Build(Level(), []);
 
-    private static SolidMap Floor() => SolidMap.Build(Level((FloorRow, FloorColumn)));
+    private static SolidMap Floor() => SolidMap.Build(Level((FloorRow, FloorColumn)), []);
 
     private static Level Level(params (int Row, int Column)[] cells)
     {

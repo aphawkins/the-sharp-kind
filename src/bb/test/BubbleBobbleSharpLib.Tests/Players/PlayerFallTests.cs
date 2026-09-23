@@ -175,11 +175,11 @@ public sealed class PlayerFallTests
         return (entities, new(entities, new(entities, TestBlow.Of(entities))));
     }
 
-    private static SolidMap Open() => SolidMap.Build(Level());
+    private static SolidMap Open() => SolidMap.Build(Level(), []);
 
     private static SolidMap Floor() => Solid((FloorRow, FloorColumn));
 
-    private static SolidMap Solid(params (int Row, int Column)[] cells) => SolidMap.Build(Level(cells));
+    private static SolidMap Solid(params (int Row, int Column)[] cells) => SolidMap.Build(Level(cells), []);
 
     private static Level Level(params (int Row, int Column)[] cells)
     {

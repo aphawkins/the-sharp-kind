@@ -82,7 +82,7 @@ public sealed class PlayerCellTests
 
         Assert.Equal(5, cell.Row);
         Assert.Equal(5, cell.Column);
-        Assert.True(cell.Solid(SolidMap.Build(Level(row, column)), offset));
+        Assert.True(cell.Solid(SolidMap.Build(Level(row, column), []), offset));
     }
 
     // And nothing else: the same probe over a level whose one solid cell is the next one along reads
@@ -91,7 +91,7 @@ public sealed class PlayerCellTests
     public void ReadsNoCellButTheOneTheOffsetNames()
     {
         PlayerCell cell = PlayerCell.Of(0x44, 0x55);
-        SolidMap map = SolidMap.Build(Level(7, 7));
+        SolidMap map = SolidMap.Build(Level(7, 7), []);
 
         Assert.False(cell.Solid(map, 0x51));
         Assert.True(cell.Solid(map, 0x52));

@@ -65,6 +65,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
 
     private readonly IAbstraction _abstraction;
     private readonly LevelStore _levels;
+    private readonly ZoneStore _zones;
     private readonly IView<PlayfieldModel> _playfieldView;
     private readonly IView<SidebarModel> _sidebarView;
     private readonly IView<PlayerModel> _playerView;
@@ -107,8 +108,9 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         IAbstraction abstraction,
         IAssetLocator assetLocator,
         IBbRendition rendition,
-        LevelStore levels)
-        : this(abstraction, assetLocator, rendition, levels, new())
+        LevelStore levels,
+        ZoneStore zones)
+        : this(abstraction, assetLocator, rendition, levels, zones, new())
     {
     }
 
@@ -117,12 +119,14 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         IAssetLocator assetLocator,
         IBbRendition rendition,
         LevelStore levels,
+        ZoneStore zones,
         AudioOptions audioOptions)
     {
         ArgumentNullException.ThrowIfNull(abstraction);
         ArgumentNullException.ThrowIfNull(assetLocator);
         ArgumentNullException.ThrowIfNull(rendition);
         ArgumentNullException.ThrowIfNull(levels);
+        ArgumentNullException.ThrowIfNull(zones);
         ArgumentNullException.ThrowIfNull(audioOptions);
 
         _abstraction = abstraction;
@@ -133,6 +137,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         Sound = abstraction.Sound;
         AudioOptions = audioOptions;
         _levels = levels;
+        _zones = zones;
 
         _input = new Input(Keyboard, Gamepad);
 
@@ -219,7 +224,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         Level level = _levels.Level(number);
 
         _playfield = Playfield.Build(level);
-        _solids = SolidMap.Build(level);
+        _solids = SolidMap.Build(level, _zones.Zones(number));
         _sidebar = Sidebars.Select(level);
         CurrentLevel = number;
 

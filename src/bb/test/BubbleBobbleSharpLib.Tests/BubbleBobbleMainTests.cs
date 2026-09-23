@@ -36,6 +36,14 @@ public sealed class BubbleBobbleMainTests
         "Levels",
         "levels.json"));
 
+    private static readonly ZoneStore s_zones = ZoneStore.Read(Path.Combine(
+        AppContext.BaseDirectory,
+        "Renditions",
+        "BubbleBobbleSharp.Renditions.EightBit",
+        "Assets",
+        "Levels",
+        "zones.json"));
+
     [Fact]
     public void NewGameIsRunning()
     {
@@ -180,5 +188,5 @@ public sealed class BubbleBobbleMainTests
     }
 
     private static BubbleBobbleMain Game(FakeAbstraction abstraction)
-        => new(abstraction, new FakeAssetLocator(), new EightBitRendition(), s_levels);
+        => new(abstraction, new FakeAssetLocator(), new EightBitRendition(), s_levels, s_zones);
 }

@@ -29,7 +29,9 @@ internal static class Playfield
         // holds one character per level. $E0CE splits the colour byte into the two nibbles the
         // background registers take; the byte itself crosses whole, since which nibble means what
         // is the rendition's business rather than the level's.
-        return new(level.Number - 1, level.Colours, Characters(SolidMap.Build(level)));
+        // No zones: the playfield draws a tile wherever the level's own bitmap is solid, which
+        // zone data never touches - see SolidMap.Build. Direction is Phase 6's business.
+        return new(level.Number - 1, level.Colours, Characters(SolidMap.Build(level, [])));
     }
 
     // $E0B1. Every set bit puts the level's own tile on the screen, and three characters with it:

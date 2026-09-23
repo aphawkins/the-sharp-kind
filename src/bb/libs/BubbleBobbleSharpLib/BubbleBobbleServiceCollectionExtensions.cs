@@ -73,6 +73,11 @@ public static class BubbleBobbleServiceCollectionExtensions
         // names images, fonts and a palette, and a hundred levels are none of those.
         services.AddSingleton(_ => LevelStore.Read(LevelPath(renditions)));
 
+        // A sibling file rather than a field on Level: Phase 2 kept zone-data.txt's export apart
+        // from levels.txt's, so that the port reads rectangles and nothing else, and SolidMap is
+        // the one place the two are brought together.
+        services.AddSingleton(_ => ZoneStore.Read(ZonePath(renditions)));
+
         return services;
     }
 
@@ -82,6 +87,14 @@ public static class BubbleBobbleServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(renditions);
 
         return Path.Combine(renditions.Folder, "Assets", "Levels", "levels.json");
+    }
+
+    // <rendition folder>/Assets/Levels/zones.json, beside levels.json.
+    public static string ZonePath(InstalledRenditions renditions)
+    {
+        ArgumentNullException.ThrowIfNull(renditions);
+
+        return Path.Combine(renditions.Folder, "Assets", "Levels", "zones.json");
     }
 
     // The composition root asks for the game, not the pieces it is built from.
@@ -94,6 +107,7 @@ public static class BubbleBobbleServiceCollectionExtensions
             sp.GetRequiredService<IAssetLocator>(),
             sp.GetRequiredService<IBbRendition>(),
             sp.GetRequiredService<LevelStore>(),
+            sp.GetRequiredService<ZoneStore>(),
             sp.GetRequiredService<AudioOptions>()));
         services.AddSingleton<IGame>(sp => sp.GetRequiredService<BubbleBobbleMain>());
         services.AddSingleton<IGameApp>(sp => sp.GetRequiredService<BubbleBobbleMain>());

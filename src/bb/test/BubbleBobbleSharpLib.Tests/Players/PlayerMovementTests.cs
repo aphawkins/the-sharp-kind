@@ -215,11 +215,11 @@ public sealed class PlayerMovementTests
         return (entities, new(entities, TestBlow.Of(entities)));
     }
 
-    private static SolidMap Open() => SolidMap.Build(Level(null, null));
+    private static SolidMap Open() => SolidMap.Build(Level(null, null), []);
 
-    private static SolidMap Solid() => SolidMap.Build(Level(null, null, solid: true));
+    private static SolidMap Solid() => SolidMap.Build(Level(null, null, solid: true), []);
 
-    private static SolidMap Blocked(int row, int column) => SolidMap.Build(Level(row, column));
+    private static SolidMap Blocked(int row, int column) => SolidMap.Build(Level(row, column), []);
 
     // A level that is open everywhere but the one cell asked for. Map row 0 is the ceiling, so the
     // bitmap's own rows start at map row 1.

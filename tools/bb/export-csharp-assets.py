@@ -372,6 +372,13 @@ def export_levels(path):
 # =============================================================================
 
 
+# The direction 0-3 (up, right, down, left) a mirrored cell ends up with. $E271:
+# `and #$01` tests bit 0 first and copies unchanged if it is clear, so only 1
+# (right) and 3 (left) ever flip, into each other, by `eor #$02`. 0 and 2 are
+# their own mirror.
+_MIRRORED_TYPE = [0, 3, 2, 1]
+
+
 def mirror_rect(rect):
     """
     Reflect a rectangle about the screen's centre column.
@@ -385,32 +392,53 @@ def mirror_rect(rect):
         "y": rect["y"],
         "width": rect["width"],
         "height": rect["height"],
-        "type": rect["type"],
+        "type": _MIRRORED_TYPE[rect["type"]],
     }
+
+
+def has_trailing_zero(level):
+    """
+    Whether this level's encoded zone data carries a $00 terminator byte.
+
+    Not the same question as "does zone-data.txt say `mirror`" - it never
+    does, in the whole of the real data, zero times across all hundred
+    levels. `$E1F3` dispatches on bit 7 alone, so `decompress_level_data`
+    reads a $00 terminator exactly the way it would read an explicit `mirror`
+    opcode, and falls into the horizontal mirror at `$E24C` regardless -
+    confirmed against a VICE capture of the transient buffer, see
+    docs/bb-port-plan.md's "direction field" item. `encode_level` only omits
+    the terminator when a level's declared `size=` leaves no room for one; run
+    the real encoder rather than re-deriving its branch, so this can never
+    drift from what the build actually produces.
+    """
+    encoded = zones_mod.encode_level(level)
+    rect_count = sum(1 for c in level["commands"] if c["type"] == "rect")
+    return len(encoded) > 1 + (3 * rect_count)
 
 
 def level_rects(level):
     """
-    Run one level's command list into a plain rectangle list.
+    Run one level's command list into a plain rectangle list, mirror included.
 
-    The binary keeps `mirror` as an opcode the 6502 acts on while it walks
-    the data. The port has no reason to: applying it here means the game
-    reads rectangles and nothing else.
+    `mirror` never appears as an opcode in zone-data.txt - see
+    has_trailing_zero - so what decides whether a level's right half is a
+    mirror of its left is only ever the implicit terminator, checked once
+    here rather than modelled as a command the loop reacts to.
     """
-    rects = []
-    for command in level["commands"]:
-        if command["type"] == "rect":
-            rects.append(
-                {
-                    "x": command["x"],
-                    "y": command["y"],
-                    "width": command["width"],
-                    "height": command["height"],
-                    "type": command["zone_type"],
-                }
-            )
-        elif command["type"] == "mirror":
-            rects.extend(mirror_rect(x) for x in reversed(rects))
+    rects = [
+        {
+            "x": command["x"],
+            "y": command["y"],
+            "width": command["width"],
+            "height": command["height"],
+            "type": command["zone_type"],
+        }
+        for command in level["commands"]
+        if command["type"] == "rect"
+    ]
+
+    if has_trailing_zero(level):
+        rects += [mirror_rect(r) for r in reversed(rects)]
 
     return rects
 

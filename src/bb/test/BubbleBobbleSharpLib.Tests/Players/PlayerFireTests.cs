@@ -146,7 +146,7 @@ public sealed class PlayerFireTests
         return (entities, objects, frame);
     }
 
-    private static SolidMap Floor() => SolidMap.Build(Level());
+    private static SolidMap Floor() => SolidMap.Build(Level(), []);
 
     private static Level Level()
     {

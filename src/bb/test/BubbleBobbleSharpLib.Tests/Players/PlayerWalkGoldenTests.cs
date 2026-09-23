@@ -55,7 +55,7 @@ public sealed class PlayerWalkGoldenTests
     {
         EntityTable entities = new();
         PlayerMovement movement = new(entities, TestBlow.Of(entities));
-        SolidMap map = SolidMap.Build(s_levels.Level(1));
+        SolidMap map = SolidMap.Build(s_levels.Level(1), []);
 
         entities.X[0] = StartX;
         entities.Y[0] = StartY;
@@ -83,7 +83,7 @@ public sealed class PlayerWalkGoldenTests
     {
         for (int number = 1; number <= LevelStore.Count; number++)
         {
-            SolidMap map = SolidMap.Build(s_levels.Level(number));
+            SolidMap map = SolidMap.Build(s_levels.Level(number), []);
 
             for (byte y = 0x2D; y < 0xF4; y += 8)
             {

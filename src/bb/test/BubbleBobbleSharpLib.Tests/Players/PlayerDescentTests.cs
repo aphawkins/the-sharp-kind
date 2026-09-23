@@ -101,11 +101,11 @@ public sealed class PlayerDescentTests
         return (entities, new(entities));
     }
 
-    private static SolidMap Open() => SolidMap.Build(Level());
+    private static SolidMap Open() => SolidMap.Build(Level(), []);
 
-    private static SolidMap Solid(int row, int column) => SolidMap.Build(Level((row, column)));
+    private static SolidMap Solid(int row, int column) => SolidMap.Build(Level((row, column)), []);
 
-    private static SolidMap Solid(params (int Row, int Column)[] cells) => SolidMap.Build(Level(cells));
+    private static SolidMap Solid(params (int Row, int Column)[] cells) => SolidMap.Build(Level(cells), []);
 
     private static Level Level(params (int Row, int Column)[] cells)
     {

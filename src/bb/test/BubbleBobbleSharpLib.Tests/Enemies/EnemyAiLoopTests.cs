@@ -30,11 +30,13 @@ public sealed class EnemyAiLoopTests
 
     // A level with nothing solid in it. None of these tests reaches the dispatcher, so what the map
     // holds does not matter - it only has to exist.
-    private static readonly SolidMap s_open = SolidMap.Build(new Level
-    {
-        Number = 1,
-        Bitmap = [.. Enumerable.Repeat(new string('.', 32), 23)],
-    });
+    private static readonly SolidMap s_open = SolidMap.Build(
+        new Level
+        {
+            Number = 1,
+            Bitmap = [.. Enumerable.Repeat(new string('.', 32), 23)],
+        },
+        []);
 
     [Fact]
     public void LeavesAnEmptyTableAlone()
