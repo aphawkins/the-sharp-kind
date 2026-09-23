@@ -1714,9 +1714,10 @@ reference's own byte, and `$0E00` reads it.
 `$13BE`, so a bubble moves in the tests and not in the app. Joining them to a
 game loop belongs with `game-loop.s`, which is Phase 7's.
 
-**Pick it up at "Each enemy type"**, below. Nothing can spawn an enemy
-yet, so it needs `entity-spawn.s` first. Which enemy takes state 5, and so
-`DiagonalMover`, is a good first question for it.
+**Pick it up at "Each enemy type"**, below. The spawn is done, so an
+enemy can now be put in a slot. Class 3 takes state 5, and so
+`DiagonalMover`. The spawn and the `$3A6C` row copy both have golden
+tests from VICE.
 
 **One caution over everything translated in this phase.** Nothing from the AI
 loop onwards has a golden trace behind it. `EnemyAiLoop`, `EnemyDispatcher`,
@@ -2006,8 +2007,9 @@ those four is worth re-checking against it.
       every random move is sideways, and deeper levels move vertically more
       often. On `SUBFLG` `$48` a fill loop has left `$02` in A, and `$02` is
       stored. The same fill loop writes `$02` to `$88C9`, `$88F1`, `$8919` and
-      `$8941`. Those addresses are map row 24 and three rows below the map, and
-      `SolidMap` does not model them yet.
+      `$8941`. Those addresses are map row 24 and three rows below the map.
+      `SolidMap` now reads the three rows below as copies of row 24 (see the
+      row copy item), but it does not model this write yet.
 
       **The replay, in passes from the blow**, with the capture's frames
       converted at two thirds:
@@ -2448,6 +2450,100 @@ those four is worth re-checking against it.
 
       **Verified:** solution builds with 0 warnings, and
       `BubbleBobbleSharpLib.Tests` is 389/389, up from 374.
+
+- [x] **The enemy spawn**, `$1E2E` and `$39D2` in `entity-spawn.s`, as
+      `Enemies/EnemySpawner.cs`. A level's list goes into slots 2 to 7.
+
+      **The state is the class plus two.** `$39FB` adds two to the class
+      bits and stores the result in `$B4`, which is `State` two slots along.
+      So class 3 takes state 5, and state 5 is `DiagonalMover`. That answers
+      the question the wrap item left open.
+
+      **`$1E2E` is not "get random spawn data".** It clears `State`, `X` and
+      `Y` of slots 2 to 7 and returns the zero it cleared them with. That
+      zero is then the enemy count at `$4A`, the first slot and the first
+      byte of the list.
+
+      **Classes 6 and 7 read past each table.** `$AB61`, `$AB69`, `$AB71`
+      and `$AB79` are eight bytes each, indexed by the state, and states 8
+      and 9 go past the end. The tables are next to each other, so the 6502
+      reads the first two bytes of the next one. Class 7 gets its frame count
+      from `$AB81`, which is `$00`, and so a frame mask of `$FF`. This is not
+      rare: 133 of the 572 spawns in the game are class 6 or 7.
+
+      **`$8638` is the spawn delay.** `$39F0` stores twice the record's delay
+      there, and it clears the two players' bytes. `HoldTimer` was named for
+      what it does before anything told us what it holds.
+
+      **The column's carry goes into the row.** `$3A0B` adds with the carry
+      that `$3A03` left, so a column of 30 or more puts the thing one pixel
+      lower. No level has such a column.
+
+      Five arrays arrived with this: `$8598` `SpriteBase`, `$8660`
+      `TurnTimer`, `$8688` `TurnInterval`, `$8750` `FrameCount` and `$8778`
+      `FrameMask`. `$4A` is `EntityTable.EnemyCount`.
+
+      **Not done here.** `$3A6C` copies the map's edge rows outwards. That is
+      the next item. `$3A89` sets up a level's special bubbles through
+      operands in the game loop, so it goes to Phase 7 with `game-loop.s`.
+      Nothing in the app calls the spawn yet.
+
+      **Proved against VICE on 2026-09-23.** An exec checkpoint on `$3A89`,
+      the first instruction after the spawn loop and the row copy, stopped
+      the machine, and every array the spawn writes was read for slots 2 to
+      7. Level 1 was a real game. Levels 6 and 60 were an intervention: the
+      game stopped at `$39B0`, the `ldx SUBFLG` that picks the list, and
+      `SUBFLG` was written there. That gave classes 6 and 7. Every byte of
+      all eleven enemies matches the port, including class 7's frame count
+      of `$00` and mask of `$FF`. The eleven turn timers are the RNG's, so
+      the test checks only that each is in the range its table allows, and
+      all of them are. `EnemySpawnerGoldenTests` holds the capture.
+
+      **Verified:** solution builds with 0 warnings, and
+      `BubbleBobbleSharpLib.Tests` is 400/400, up from 389. The golden test
+      came with the next item.
+
+- [x] **The row copy**, `$3A6C` in `entity-spawn.s`, in `SolidMap`.
+
+      **The rows past the map's edges are not a solid ceiling.** The tables
+      in `sprites2-tables.s` start `$8488`, `$84B0` and `$84D8` as rows of
+      `$80`. But `$3A6C` copies all forty bytes of row 0 over each of the
+      three as every level starts, and row 24 over `$88E8`, `$8910` and
+      `$8938`. So a wrap opening goes on through three more rows, and those
+      rows carry the edge's direction. `SolidMap` had them as solid and
+      direction 0. That is correct for the tables' first bytes and wrong
+      after the first level starts.
+
+      `SolidMap` does not store the copies. It reads rows −3 to −1 as row 0
+      and rows 25 to 27 as row 24. The map does not change after it is
+      built, so this gives the same result as the copy. Row −4, `$8460`,
+      is not copied. It still reads solid, and what it really holds is not
+      known.
+
+      **This changes one reading in `EnemyAiLoop`.** `$0E00` clamped at the
+      bottom reads one row past the map, at `$88E8`. That read now gives the
+      floor's direction, where it gave 0 before. No existing test depended
+      on the old value.
+
+      **Proved against VICE on 2026-09-23,** in the same capture as the
+      spawn. On level 1, `$8488`, `$84B0` and `$84D8` read `$82` in all
+      thirty-two columns. That is row 0, and not the `$80` that the tables
+      start them as. `$88E8`, `$8910` and `$8938` read `$80`, which is row
+      24. Level 1 has no wrap opening, so the opening case is not captured.
+      But the copy is all forty bytes, so it cannot treat an opening in a
+      different way.
+
+      **Row −4 is not solid.** `$8460` reads `ff f0 c0 00 00 ...` - a
+      pattern with `$00` cells in the middle of it. `SolidMap` reads that row
+      as solid. What the bytes are, and whether any probe really reaches
+      them, is not known. `EnemyDispatcher`'s bias of 4 puts entity row 0 on
+      it, so this is where to look first if a thing at the top of the screen
+      disagrees with a capture.
+
+      **Verified:** solution builds with 0 warnings, and
+      `BubbleBobbleSharpLib.Tests` is 407/407, up from 400. One off-map test
+      case moved out to rows −4 and 28. Four hand-worked cases and one
+      golden case cover the copy, and three golden cases cover the spawn.
 
 - [ ] Each enemy type, one at a time.
 - [ ] Baron Von Blubba (`baron_von_blubba` in `special-enemies.s`).

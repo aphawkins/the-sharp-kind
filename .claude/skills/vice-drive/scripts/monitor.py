@@ -32,12 +32,14 @@ STX = 0x02
 API = 0x02
 
 CMD_MEM_GET = 0x01
+CMD_MEM_SET = 0x02
 CMD_CHECKPOINT_GET = 0x11
 CMD_CHECKPOINT_SET = 0x12
 CMD_CHECKPOINT_DELETE = 0x13
 CMD_EXIT = 0xAA
 
 RESP_MEM_GET = 0x01
+RESP_MEM_SET = 0x02
 RESP_CHECKPOINT = 0x11
 RESP_CHECKPOINT_DELETE = 0x13
 RESP_STOPPED = 0x62
@@ -93,6 +95,7 @@ class Monitor:
         self.sock.settimeout(timeout)
         self._buf = b""
         self._next_id = 1
+        self._stops = []
 
     # -- wire ------------------------------------------------------------
 
@@ -130,6 +133,12 @@ class Monitor:
         rid = self._send(cmd, body)
         for _ in range(tries):
             rtype, err, got, payload = self._read_response()
+            if got == UNSOLICITED and rtype == RESP_STOPPED:
+                # A checkpoint close to where the machine was resumed can hit before
+                # EXIT's own reply arrives. Keep it for wait_for_stop, or it is lost.
+                # A command's own halt sends one of these too, so keeping it proves
+                # nothing on its own - wait_for_stop(pc=...) tells the two apart.
+                self._stops.append(payload)
             if got != rid:
                 continue  # unsolicited, or an earlier command's answer
             if want is not None and rtype != want:
@@ -152,6 +161,14 @@ class Monitor:
     def byte(self, addr):
         return self.mem(addr)[0]
 
+    def set_mem(self, start, data):
+        """Write bytes from start. HALTS the machine, same as any command - resume() after.
+
+        This is an intervention on the game. Say so in whatever the capture supports.
+        """
+        body = struct.pack("<BHHBH", 0, start, start + len(data) - 1, 0, 0) + bytes(data)
+        self.request(CMD_MEM_SET, body, want=RESP_MEM_SET)
+
     def set_checkpoint(self, start, end=None, operation=OP_EXEC, stop_when_hit=True,
                         enabled=True, temporary=False):
         """Arm a checkpoint. HALTS the machine, same as any command - resume() after.
@@ -173,7 +190,7 @@ class Monitor:
         self.request(CMD_CHECKPOINT_DELETE, struct.pack("<I", number),
                      want=RESP_CHECKPOINT_DELETE)
 
-    def wait_for_stop(self, timeout=20.0):
+    def wait_for_stop(self, timeout=20.0, pc=None):
         """Block for the unsolicited STOPPED event a hit checkpoint sends.
 
         Do NOT send any other command between resume() and this call - every command
@@ -182,14 +199,28 @@ class Monitor:
         sends CHECKPOINT_INFO (0x11) first, then STOPPED (0x62), both with request id
         UNSOLICITED - see SKILL.md, "The traps", and vice_13.html on the binary
         monitor. Returns the STOPPED body (PC is its first two bytes, little-endian).
+
+        Pass pc to wait for a stop at that address and nothing else. A command's own
+        halt sends STOPPED too, at wherever the machine was - usually $E498 - so
+        without pc the first stop of any kind is returned. With pc, a hit that came
+        in while resume() was still waiting for EXIT's reply is found as well: a
+        checkpoint a few hundred instructions on hits before that reply arrives.
         """
+        def at(body):
+            return pc is None or (body[0] | (body[1] << 8)) == pc
+
+        for body in self._stops:
+            if pc is not None and at(body):
+                self._stops.clear()
+                return body
+        self._stops.clear()
         self.sock.settimeout(timeout)
         try:
             while True:
                 rtype, err, rid, body = self._read_response()
                 if rid != UNSOLICITED:
                     continue  # an ordinary reply arriving out of turn - not our event
-                if rtype == RESP_STOPPED:
+                if rtype == RESP_STOPPED and at(body):
                     return body
         finally:
             self.sock.settimeout(10.0)
@@ -201,6 +232,7 @@ class Monitor:
         checkpoint halts it too. Without this the machine stays stopped and every
         counter reads the same value for ever.
         """
+        self._stops.clear()  # a stop from before this EXIT is not a checkpoint hit
         self.request(CMD_EXIT)
 
     def close(self):

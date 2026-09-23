@@ -341,3 +341,30 @@ so `decompress_level_data` itself is `$E189` and the segment's base is
 twice on this session's capture: the computed target (`$E1A2`, three bytes
 past a `jsr init_level_renderer` at listing offset `$019F`) is exactly where
 `STOPPED` reported the machine.
+
+## A second checkpoint close behind the first - 2026-09-23
+
+Stopping at one address, changing something, then stopping again a few hundred
+instructions on is how the spawn capture worked (stop at `$39B0`, write
+`SUBFLG`, stop at `$3A89`). Two traps came with it.
+
+**The second hit can come before `resume()` returns.** `resume()` sends EXIT
+and waits for its reply. A checkpoint a few hundred instructions on hits in that
+window, its STOPPED arrives first, and `request()` used to throw it away as
+unsolicited. `wait_for_stop` then waited for ever on a machine already halted.
+`request()` now keeps every unsolicited STOPPED it sees.
+
+**A command's own halt sends STOPPED too.** It is unsolicited, the same as a
+hit's, and it reports wherever the machine was - usually `$E498`. So a kept
+STOPPED proves nothing on its own. Always pass the address:
+
+```python
+body = mon.wait_for_stop(timeout=30.0, pc=0x3A89)
+```
+
+That returns only a stop at that address, whether it arrived early or late.
+Assert the PC anyway.
+
+**Writing memory** is `mon.set_mem(addr, [bytes])`, command `0x02`. It halts
+the machine like any command. It is an intervention on the game, so say so in
+whatever the capture supports.
