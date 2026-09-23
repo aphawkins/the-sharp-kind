@@ -1714,9 +1714,9 @@ reference's own byte, and `$0E00` reads it.
 `$13BE`, so a bubble moves in the tests and not in the app. Joining them to a
 game loop belongs with `game-loop.s`, which is Phase 7's.
 
-**Pick it up at "Wrap-around openings"**, below, or at "Each enemy type".
-Nothing can spawn an enemy yet, so the second one needs `entity-spawn.s`
-first.
+**Pick it up at "Each enemy type"**, below. Nothing can spawn an enemy
+yet, so it needs `entity-spawn.s` first. Which enemy takes state 5, and so
+`DiagonalMover`, is a good first question for it.
 
 **One caution over everything translated in this phase.** Nothing from the AI
 loop onwards has a golden trace behind it. `EnemyAiLoop`, `EnemyDispatcher`,
@@ -2410,9 +2410,45 @@ those four is worth re-checking against it.
       against the same bias they check. What settled it was data from outside
       them.
 
-- [ ] Wrap-around openings from `wrapOpenings`. The vertical half is done in
-      `$0E23`: a row off either end comes back at the other and the thing
-      becomes type `$38`.
+- [x] **Wrap-around openings from `wrapOpenings`**, as the whole of `$EFC0`
+      in `Enemies/DiagonalMover.cs`. `$0E23` was already done: a row off
+      either end comes back at the other and the thing becomes type `$38`,
+      and that mover asks nothing about the level.
+
+      **`$EF4C` and `$EFA0` are the only readers of the wrap tables.** They are
+      the up and down halves of `$EFC0`, which is state 5 in the `$1E3A`
+      table: a thing that moves one pixel up or down and two across on each
+      pass, and turns round off whatever it meets. `$8501` and `$88C1` are
+      `SolidMap` rows 0 and 24, one column in, and `Edge` already opens them
+      from `wrapOpenings`. So nothing new was needed from the level data.
+      The routine was translated whole, because the wrap is part of its
+      vertical halves. `$85E8` arrived with it as `EntityTable.Heading`: bit
+      0 set is left, and bit 2 set is up.
+
+      **The two wrap checks are one pixel apart.** Both reference comments say
+      the `sbc` runs with the carry clear. In both cases the carry is set.
+      The top check is reached through a `bne` that is not taken, and the
+      bottom check through a `bcc` that is not taken. So the top check
+      subtracts `$13` and the bottom check subtracts `$14`. At X `$53` the top
+      asks about column 9 and the bottom asks about column 8.
+      `AsksAboutTheColumnAPixelFurtherRightAtTheTop` holds both edges of an
+      opening.
+
+      **A wrap does not end the pass.** Unlike `$2586` in `PlayerFall`, the
+      wrap returns into `$EFD6`. So the thing still moves across and animates
+      on the pass it wraps.
+
+      `$EEEB` and `$EF2A` have other callers. Those callers store `$BD` into
+      `$EF15`, so a turn also flips the sprite's facing. `$EFD6` stores `$60`,
+      an `rts`, so that path is not here.
+
+      **Not proved against VICE.** Which enemy takes state 5 is not known, and
+      nothing in the port calls the mover yet. Every case is worked by hand
+      off the reference.
+
+      **Verified:** solution builds with 0 warnings, and
+      `BubbleBobbleSharpLib.Tests` is 389/389, up from 374.
+
 - [ ] Each enemy type, one at a time.
 - [ ] Baron Von Blubba (`baron_von_blubba` in `special-enemies.s`).
 - [ ] The anger state that speeds enemies up.

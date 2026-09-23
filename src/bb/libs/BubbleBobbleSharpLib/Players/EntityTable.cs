@@ -39,6 +39,7 @@ internal sealed class EntityTable
     private readonly byte[] _mode = new byte[Capacity];
     private readonly byte[] _holdTimer = new byte[Capacity];
     private readonly byte[] _flashTimer = new byte[Capacity];
+    private readonly byte[] _heading = new byte[Capacity];
 
     // $B2, ENESSION. Zero means the slot is empty, which is what the update loop tests first.
     //
@@ -107,4 +108,9 @@ internal sealed class EntityTable
     // player walk, and both $1F17 and $2575 start a fall by incrementing it out of $FF. $05C5 sets
     // it to $FF as a level starts.
     internal Span<byte> GroundState => _groundState;
+
+    // $85E8. Which way a thing that bounces round the level is going: bit 0 set is left and bit 2
+    // set is up. $EF0D turns it round sideways with `eor #$03` and $EF8F turns it round vertically
+    // with `eor #$0C`, so bits 1 and 3 flip with them and nothing translated so far reads either.
+    internal Span<byte> Heading => _heading;
 }
