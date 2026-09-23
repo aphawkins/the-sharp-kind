@@ -139,8 +139,23 @@ public sealed class EnemyDispatcherTests
         Assert.Equal(TypeAtOne, objects.Type[Slot]);
     }
 
-    // $0F91 indexes seven bytes with a masked counter that can be up to $7F, and the 6502 would
-    // read whatever follows the table. This fails loudly instead.
+    // A bubble is blown with $88 in its counter, so its first step indexes eight - past $ACB6's seven
+    // bytes and into $ACBD, whose second byte is $00.
+    [Theory]
+    [InlineData(0x88)]
+    [InlineData(0x87)]
+    public void ReadsOnIntoTheNextTableForAFreshBubble(byte counter)
+    {
+        (ObjectTable objects, _, EnemyDispatcher dispatcher) = Entity();
+        objects.State[Slot] = counter;
+
+        dispatcher.Step(Slot, Open());
+
+        Assert.Equal(0x00, objects.Type[Slot]);
+    }
+
+    // $0F91 indexes with a masked counter that can be up to $7F, and the 6502 would read whatever
+    // follows. Past the bytes a counter is known to reach, this fails loudly instead.
     [Fact]
     public void ThrowsRatherThanReadPastTheTable()
     {

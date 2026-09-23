@@ -80,7 +80,11 @@ internal sealed class EnemyDispatcher
     // $ACB6 in game-tables-2.s, seven bytes. The AI state counter indexes it, so a counter walking
     // down from six gives $00 $02 $02 $02 $04 $04 $10 - which is exactly the order the VICE capture
     // of one bubble read its type byte in. The reference heads it a direction table; it is not one.
-    private static readonly byte[] s_types = [0x10, 0x04, 0x04, 0x02, 0x02, 0x02, 0x00];
+    //
+    // **Plus the first two bytes of $ACBD, which is the next table along.** A bubble is blown with $88
+    // in its counter, so its first two steps index eight and seven and the 6502 reads on past the
+    // seven bytes into $ACBD's $00 $00. Stopping at seven throws on the first frame of every bubble.
+    private static readonly byte[] s_types = [0x10, 0x04, 0x04, 0x02, 0x02, 0x02, 0x00, 0x00, 0x00];
 
     private readonly ObjectTable _objects;
     private readonly EntityTable _entities;
@@ -146,9 +150,9 @@ internal sealed class EnemyDispatcher
             }
         }
 
-        // $0F91. Seven bytes, and nothing here bounds the index - the 6502 would read whatever sits
-        // after the table. This throws instead, so a state counter that should never have been this
-        // large fails where it is made rather than somewhere downstream.
+        // $0F91. Nothing here bounds the index - the 6502 reads whatever sits after the table. The
+        // nine bytes above are as far as a counter is known to reach; past them this throws, so a
+        // counter nobody has seen fails where it is made rather than somewhere downstream.
         _objects.Type[slot] = s_types[index];
 
         Move(slot, MovedType, map);
