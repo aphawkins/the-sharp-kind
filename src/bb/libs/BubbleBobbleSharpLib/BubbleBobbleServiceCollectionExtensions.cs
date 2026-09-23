@@ -8,6 +8,7 @@ using BubbleBobbleSharpLib.Levels;
 using BubbleBobbleSharpLib.Renditions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using SharpKind;
 using SharpKind.Abstraction;
 using SharpKind.Abstraction.Config;
 using SharpKind.Assets;
@@ -95,6 +96,16 @@ public static class BubbleBobbleServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(renditions);
 
         return Path.Combine(renditions.Folder, "Assets", "Levels", "zones.json");
+    }
+
+    // $E9EA's generator. Random.Shared stands in for the CIA timer byte it mixes in, the one part of
+    // it that is hardware; the rest is BbRandom's own.
+    public static IServiceCollection AddBbRandom(this IServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        services.AddSingleton(_ => new BbRandom(new RandomSource(Random.Shared)));
+        return services;
     }
 
     // The composition root asks for the game, not the pieces it is built from.

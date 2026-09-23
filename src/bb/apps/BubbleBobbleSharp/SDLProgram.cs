@@ -47,6 +47,7 @@ internal static class SDLProgram
             loggerFactory);
         services.AddBbConfig(userDataPath);
         services.AddBbRenditionAssets(renditions);
+        services.AddBbRandom();
         services.AddBbMain();
 
         return services;
