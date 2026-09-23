@@ -39,8 +39,18 @@ CMD_EXIT = 0xAA
 
 RESP_MEM_GET = 0x01
 RESP_CHECKPOINT = 0x11
+RESP_CHECKPOINT_DELETE = 0x13
+RESP_STOPPED = 0x62
+RESP_RESUMED = 0x63
 
 UNSOLICITED = 0xFFFFFFFF
+
+# CHECKPOINT_SET's operation byte: vice_13.html, "Command 0x12: Checkpoint Set".
+# Confirmed against a captured wire example (checkpoint set for an exec trap):
+# ... 12 | e2 fc | e3 fc | 01 | 01 | 04 | 01 - the 04 there is exec.
+OP_LOAD = 0x01
+OP_STORE = 0x02
+OP_EXEC = 0x04
 
 # jsr $0CF2 at $0A4E - the game loop's call to enemy_ai_update. If these three
 # bytes are not here, rebb64 is not loaded and nothing else read is worth having.
@@ -141,6 +151,48 @@ class Monitor:
 
     def byte(self, addr):
         return self.mem(addr)[0]
+
+    def set_checkpoint(self, start, end=None, operation=OP_EXEC, stop_when_hit=True,
+                        enabled=True, temporary=False):
+        """Arm a checkpoint. HALTS the machine, same as any command - resume() after.
+
+        Returns the checkpoint number, for delete_checkpoint(). temporary=True asks
+        VICE to remove it itself on the first hit; delete it explicitly too, since a
+        client that vanishes with one pending leaves VICE's own monitor window open
+        and the emulator frozen - see SKILL.md, "Cleaning up".
+        """
+        end = start if end is None else end
+        body = struct.pack(
+            "<HHBBBB", start, end, int(stop_when_hit), int(enabled), operation,
+            int(temporary),
+        )
+        payload = self.request(CMD_CHECKPOINT_SET, body, want=RESP_CHECKPOINT)
+        return struct.unpack("<I", payload[:4])[0]
+
+    def delete_checkpoint(self, number):
+        self.request(CMD_CHECKPOINT_DELETE, struct.pack("<I", number),
+                     want=RESP_CHECKPOINT_DELETE)
+
+    def wait_for_stop(self, timeout=20.0):
+        """Block for the unsolicited STOPPED event a hit checkpoint sends.
+
+        Do NOT send any other command between resume() and this call - every command
+        halts the machine on its own, which would stop it somewhere that is not the
+        checkpoint and this would then report that halt instead. A checkpoint hit
+        sends CHECKPOINT_INFO (0x11) first, then STOPPED (0x62), both with request id
+        UNSOLICITED - see SKILL.md, "The traps", and vice_13.html on the binary
+        monitor. Returns the STOPPED body (PC is its first two bytes, little-endian).
+        """
+        self.sock.settimeout(timeout)
+        try:
+            while True:
+                rtype, err, rid, body = self._read_response()
+                if rid != UNSOLICITED:
+                    continue  # an ordinary reply arriving out of turn - not our event
+                if rtype == RESP_STOPPED:
+                    return body
+        finally:
+            self.sock.settimeout(10.0)
 
     def resume(self):
         """Let the machine run again.

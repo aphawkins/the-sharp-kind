@@ -7,7 +7,10 @@ The port is a translation of
 [zaidka/rebb64](https://github.com/zaidka/rebb64), a complete, documented,
 byte-exact 6502 disassembly of the Commodore 64 conversion. That checkout is
 referred to below as **`rebb64/`**, and a path like `rebb64/src/enemy-ai.s`
-means a file in it, not in this repo.
+means a file in it, not in this repo. On this machine it is checked out at
+`C:\code\github\zaidka\rebb64` - the `vice-drive` skill already names this
+path for building and running it; this is so a plain reading session finds it
+too, without a build step.
 
 This is a developer's document. It is the plan and the progress: tick a box
 when the item is done and its verify step passes. Players want
@@ -1706,13 +1709,17 @@ that blocked everything is measured and gone.
 
 **Pick it up at the direction field in the collision map.** That is the one
 thing between here and the travel items, and it is the item below that names it.
-Two candidates are already eliminated and should not be revisited:
-`bubbleCurrent` has no reader anywhere in the reference, and the static data in
-`sprites2-tables.s` is `$80`/`$00` only. The bits are written at level load, so
-the level draw is where to look - `level-display.s` and `level-setup.s`. A store
-watchpoint on a cell that holds a non-zero low nibble in play, armed before the
-level loads, is the tool; see the `vice-drive` skill, and read what `start`
-printed before believing anything that follows it.
+As of 2026-09-23 it is fully settled, all four pieces confirmed by reading
+plus our own VICE captures: a rectangle's `zone_type` is the direction, every
+level's zone data ends in an unconditional mirror whether or not it says
+`mirror`, row 0's and row 24's own default is `bubbleCurrent` - **that earlier
+elimination was wrong**, from a grep that missed an indirect read; do not
+revisit it as settled the old way - and rows 1-23 default to the last two
+bits of their own row's wall-bitmap byte, confirmed with an exec checkpoint
+at `$E1A2` inside `decompress_level_data` (see the `vice-drive` skill's "Exec
+checkpoints, working" section for the recipe - the earlier store-watchpoint
+attempts failed for a sequencing reason, not a wrong address). What is left
+is turning this into code: `SolidMap` carrying the byte rather than a `bool`.
 
 **One caution over everything translated in this phase.** Nothing from the AI
 loop onwards has a golden trace behind it. `EnemyAiLoop`, `EnemyDispatcher`,
@@ -2147,48 +2154,142 @@ those four is worth re-checking against it.
       through the `$00` rows and then drifted **right** from X `$74` to `$7C` -
       column fourteen, inside the `$01` band. Two independent things agree.
 
-      **What it needs.** `SolidMap` must keep the byte, not a bool - or gain a
-      direction alongside the solidity.
+      **Withdrawn: "`bubbleCurrent` is not where the field comes from."** That
+      claim rested on a text search for `D_8B03` and `D_8B63` as symbols, and
+      missed the one place either is read: `decompress_level_data` in
+      `level-renderer.s`, which reaches them through a runtime pointer
+      (`($13),y`) that no grep finds. Traced and confirmed against VICE below -
+      `bubbleCurrent` is a real input to this field, just not the only one.
 
-      **`bubbleCurrent` is not where the field comes from.** The exporter takes
-      it as the high nibble of `physics_flags`, and `physics_flags` has exactly
-      one reader in the whole of `rebb64/src` - `level-renderer.s:712`. That
-      reader takes the low nibble, the wrap openings, into `$8B03` and `$8B63`.
-      The high nibble does reach `$8B63` as well, in bits 2 to 5, by way of the
-      `ora` after two `lsr`s. And `$8B03` and `$8B63` are then **never read** -
-      the only other mentions of either are the read half of their own
-      read-modify-write.
+      **Mostly settled 2026-09-23, by reading plus a VICE capture on level 1
+      (`SUBFLG` `$00`).** Three mechanisms, found in `level-renderer.s`, and
+      each checked against the live map at `$8500`:
 
-      So the byte the port exports as `bubbleCurrent` has no consumer in the
-      reference at all. Whatever sets the map's direction bits, it is not that.
-      This item's premise was wrong and the field needs finding rather than
-      deriving.
+      **1. A rectangle's `zone_type` *is* the direction, one for one.**
+      `decompress_level_data` (`$E18B`) reads from `zone_data`, which is
+      `zones.json`'s own source (`build/convert-zone-data.py`). A rectangle
+      encodes as `byte1 = 0x80 | (zone_type << 5) | x`, and `$E1F3`'s fill-
+      pattern math - `and #$60` then two `asl` and two `rol` - is exactly the
+      inverse: it takes bits 6-5 back out and packs them into bits 1-0. Level
+      0's zone data (`level 1 -> 0` redirects here) has one rectangle,
+      `rect 0 1 14 4 type=1`, and the VICE read of row 1 has direction `1`
+      across exactly fourteen columns, `0` to `13` - the rectangle's own
+      `x=0 width=14`, byte for byte.
+
+      **2. The terminator byte triggers an unconditional mirror.** After a
+      rectangle, `$E282` compares the command cursor against `$11` and jumps
+      back to `$E1F3` if they differ - and `$11` holds the block's *total*
+      length, not the command length, so the terminator (`$00`) is fed to the
+      same dispatch as a command byte. `$E1F3` chooses format by bit 7 alone
+      (`bpl` to the mirror path), and a `$00` terminator has bit 7 clear. So
+      every level's zone data ends by falling into `$E24C`, the horizontal
+      mirror, whether or not `zone-data.txt` says `mirror` - the explicit
+      command and the terminator both land there, and Phase 2's "mirror
+      expanded" bookkeeping only ever tracked the explicit one.
+
+      The mirror copies column `c` (0-15) to column `31 - c`, and flips
+      direction 1 and 3 into each other - `eor #$02` - whenever the source's
+      bit 0 is set, leaving 0 and 2 alone. Checked column by column against
+      the capture: source column 1 is `$81` (solid, direction 1); its mirror
+      is column 30, and `1 eor 2 = 3` predicts `$83` there - which is what
+      VICE reads. Column 13 (direction 1, the rectangle's last column) mirrors
+      to column 18 and predicts direction 3 - also read. All twelve of columns
+      18-29 check out the same way, as mirrors of the rectangle's columns
+      2-13. This is what closes the "direction 3 for twelve columns" part of
+      the pattern without needing a second rectangle - reading the zone data
+      alone, there IS only one.
+
+      Columns 0-1 and 30-31 read solid regardless of any of this - that is
+      `init_level_renderer` forcing the sidebar columns wall, already
+      established two bullets up, and orthogonal to the direction math.
+
+      **3. Row 0's own default, where nothing else has drawn on it yet, is
+      `bubbleCurrent`.** Before any rectangle runs, `$E1D1` fills each row
+      uniformly from one byte: `AND #$03` against `($13),y` with `y = 3`, and
+      `$13` walks from `$8B00` four bytes a row. Row 0 reads that byte at
+      `$8B03` - and `init_level_renderer` (`$E2C3`-`$E374`) writes `$8B03`
+      itself, in the "Update hole bits" step: `physics_flags[level]` is
+      consumed four bits at a time, the low nibble (wrap openings) driving two
+      table lookups into `$8B00`-`$8B03` and `$8B60`-`$8B63`, and what is left
+      after those four `lsr`s - the high nibble, `bubbleCurrent` - has its own
+      low two bits `ora`'d into `$8B03` and its high two into `$8B63`. Level
+      0's `physics_flags` byte, read at `$C58E` (`physics_flags` is a fixed
+      100-byte table, one per level, per `binaries.s`), is `$20` -
+      `bubbleCurrent = 2`. Row 0's read direction, uniformly, is `2`. That is
+      the whole of row 0's `$82 82 82 ...`, matched exactly.
+
+      Four independent numbers now agree with `bubbleCurrent`, not with a
+      guess: the exported field, the `physics_flags` byte read live, the
+      `$8B03` derivation traced by hand, and row 0's own bytes.
+
+      **Rows 1-23's own default, confirmed 2026-09-23 by our own capture.**
+      [A write-up of this exact mechanism](https://geon.github.io/programming/2025/01/05/bubble-bobble-c64-wind)
+      exists, from someone who disassembled the same routine independently. It
+      says outright: "Read the last 2 bits off the unpacked level bitmap for
+      each line to use as wind current. The top and bottom lines get their
+      data from the hole metadata... Those 2 bits can be used since the sides
+      of the levels always are solid anyway." That is our `$8B03`/`$8B63`
+      "hole metadata" path for row 0 and row 24, and for rows 1-23 it is
+      exactly the earlier guess: the fourth of each row's four copied bitmap
+      bytes, reread as a direction - safe to repurpose because
+      `init_level_renderer` forces the level's own leftmost and rightmost
+      columns solid regardless of what the level bitmap says there, so
+      whatever the true wall bit at that position would have been is already
+      known and thrown away.
+
+      Confirmed against an exec checkpoint on our own build, not taken on the
+      other write-up's word alone. `$8B00`-`$8B5F` is `__SCREEN_BACKUP__`, and
+      by the time a level is running it has been overwritten for its ordinary
+      job - a read taken in a running level shows exactly that, `$8B04`
+      onward reading `$10` repeating, a screen colour, not level data. So the
+      capture breaks *inside* `decompress_level_data`, at `$E1A2` - the
+      instruction right after its own `jsr init_level_renderer` returns, found
+      from a `ca65 --listing` of `master.s` rather than guessed - which is
+      after the buffer is filled and before `$E1D1` starts consuming it. See
+      the `vice-drive` skill's "Exec checkpoints, working" section for the
+      recipe; the checkpoint landed exactly on `$E1A2`, confirmed by the
+      `STOPPED` event's own program counter.
+
+      Level 1 (`SUBFLG $00`), row by row, the copied buffer's fourth byte
+      against the live `$8500` map's own leftover columns, same level
+      instance, both read in the same session:
+
+      | Row | Buffer bytes | Last byte low 2 | Live map's own default |
+      |---|---|---|---|
+      | 0 | `FF FF FF FE` | 2 | 2 (`$8B03`/`bubbleCurrent`, not this table) |
+      | 1-3 | `C0 00 00 02` | 2 | 2 |
+      | 4-8 | `C0 00 00 00` | 0 | 0 |
+      | 9, 14, 19 | `F1 FF FF 8C` | 0 | 0 |
+      | 10-13, 15-18, 20-23 | `C0 00 00 00` | 0 | 0 |
+
+      Every row matches. Rows 9, 14 and 19 are the platform rows the `RowBias`
+      item measured independently (`SolidMap` rows 9, 14, 19 - entity row minus
+      four), which is a second, unrelated confirmation that this buffer really
+      is the level's own wall bitmap: the distinctive byte pattern lands
+      exactly where the platforms are already known to be. The leading `C0` on
+      the ordinary rows is `init_level_renderer`'s own "Set border wall bits"
+      step (`ora #$C0` on each row's first copied byte), matching row 0-1's
+      own forced-solid left edge.
+
+      This closes the item: all four pieces - a rectangle's `zone_type`, the
+      unconditional mirror, `bubbleCurrent` for rows 0 and 24, and each other
+      row's own wall-bitmap byte - are now confirmed by reading plus our own
+      VICE capture, not resting on a second source alone.
 
       **The map is rebuilt per level**, which is worth stating because it was
       observed rather than assumed. Map row 2 reads `8080` then twenty-eight
       `00` then `8080` on the select screen, and `8181`, thirteen `01`, four
       `02`, eleven `03`, `8383` once level 1 is running.
 
-      **Still untraced, and why.** A store watchpoint on `$8560` - row 2,
-      column 16, a cell that holds `$02` in play - was armed three times and
-      never fired, because on all three runs the level failed to load while it
-      was armed. The watch itself registered correctly each time. This is a
-      gap in the evidence, not a finding about the map.
-
-      **The field is not static initial data.** That was the next thing to
-      check and it is now answered, from `sprites2-tables.s` rather than from
-      the emulator. Each forty-byte group there is eight bytes of entity
-      metadata followed by thirty-two tile bytes, and every one of those tile
-      bytes is `$80` or `$00` - wall or empty, and nothing else. The running
-      game shows `$81`, `$82`, `$83`, `$01`, `$02` and `$03`. So the direction
-      bits are written at level load, by the level draw, and the remaining
-      question is only what decides them.
-
-      Level 1's field, read in play: the low two bits are zero across every row
-      but the top five. Rows 1 to 3 read `1` for fourteen columns, `2` for
-      four, then `3` for fourteen; row 4 is the same with the middle four
-      zeroed. The geometry underneath it - platforms on tile rows 8, 13 and 18
-      - has no bearing on the pattern at all.
+      **What it needs.** `SolidMap` must keep the byte, not a bool - or gain a
+      direction alongside the solidity. Building it needs: the level's own
+      rectangles (already in `zones.json` as `zone_type`, currently discarded
+      outside mirror expansion), the *unconditional* mirror on every level
+      regardless of an explicit `mirror` command, `bubbleCurrent` as row 0's
+      and row 24's default, and rows 1-23 defaulting to the last two bits of
+      their own row's wall-bitmap byte - all four pieces are now confirmed by
+      reading plus our own VICE capture. Building `SolidMap` itself is the
+      remaining work; nothing about the mechanism is still open.
 
 - [x] **`EnemyDispatcher`'s `RowBias` checked. It is 4, and it is right** -
       but the reasoning that produced it was not, so the comment has been

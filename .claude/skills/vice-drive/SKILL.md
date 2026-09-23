@@ -278,3 +278,66 @@ Delete checkpoints before disconnecting. If a client vanishes with one pending,
 VICE opens its own monitor window and the emulator freezes; `vice.log` then says
 `Monitor UI: ... enabling PETSCII output`. `Monitor.close()` resumes and closes
 tidily.
+
+## Exec checkpoints, working - 2026-09-23
+
+Earlier sessions armed store watchpoints three times and never got one to fire
+- see the "Still untraced" trail in `bb-port-plan.md`'s "direction field"
+item. The fix wasn't the checkpoint, it was the sequencing: a checkpoint is
+just another command, and every command halts the machine, so arming one and
+then immediately trying to drive keys into a halted emulator does nothing -
+the halt has to be released first. `Monitor` now has `set_checkpoint`,
+`delete_checkpoint` and `wait_for_stop` for this. The working order:
+
+```python
+mon = Monitor()
+mon.require_game()
+cp = mon.set_checkpoint(0xE1A2, operation=OP_EXEC, temporary=True)
+mon.resume()                    # release the halt set_checkpoint left
+press("fire"); time.sleep(4); press("one")   # drive the front end, as in `start`
+body = mon.wait_for_stop(timeout=20.0)        # blocks for the hit, sends nothing
+pc = body[0] | (body[1] << 8)
+buf = mon.mem(0x8B00, 0x8B67)    # machine is halted at the checkpoint - read now
+mon.resume()
+mon.close()
+```
+
+**Send nothing between `resume()` and `wait_for_stop()`.** Any command in
+between halts the machine at whatever it is doing right then, which is not
+the checkpoint, and `wait_for_stop` would then report that halt as if it were
+the hit. This is the same trap as "every command halts the emulator", but it
+bites differently on a checkpoint: the earlier watch attempts likely fired
+into this without knowing it.
+
+**A checkpoint hit is not a reply - it is two unsolicited messages.**
+CHECKPOINT_INFO (`0x11`) then STOPPED (`0x62`), both with request id
+`0xFFFFFFFF`. `Monitor.request()` matches replies to the request that asked
+for them and would ignore these forever; `wait_for_stop` reads raw off the
+socket instead, which is why it exists as its own method rather than a
+`request()` call.
+
+**`temporary=True` self-removes on the first hit - do not delete it again.**
+`delete_checkpoint` on a temporary checkpoint's number after it has already
+fired gets no reply and times out; harmless (the checkpoint is already gone,
+which was the goal), but do not read the timeout as the capture having
+failed. Non-temporary checkpoints still need an explicit delete.
+
+**Finding the address needs an assembler listing, not the address arithmetic
+in a comment.** `rebb64/src/*.s` headers give a routine's own address
+(`; ROUTINE: init_level_renderer ($E299)`) but not the address of an
+arbitrary point inside another routine, such as "the instruction right after
+a `jsr`". Get a listing and read it off directly:
+
+```bash
+ca65 --cpu 6502 -I ../src -I . -o /tmp/x.o --listing /tmp/x.lst ../src/master.s
+```
+
+Addresses in the listing are relative to the segment (`000189r`, the `r`
+marking it unrelocated), not final. Find the same routine's real address in a
+header comment, compute the constant offset once (`decompress_level_data` is
+listed at `000189`, documented at `$E18B` for `L_E18B` two bytes further in,
+so `decompress_level_data` itself is `$E189` and the segment's base is
+`$E000`), and every other address in that listing is `offset + base`. Checked
+twice on this session's capture: the computed target (`$E1A2`, three bytes
+past a `jsr init_level_renderer` at listing offset `$019F`) is exactly where
+`STOPPED` reported the machine.
