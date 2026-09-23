@@ -40,6 +40,11 @@ internal sealed class EntityTable
     private readonly byte[] _holdTimer = new byte[Capacity];
     private readonly byte[] _flashTimer = new byte[Capacity];
     private readonly byte[] _heading = new byte[Capacity];
+    private readonly byte[] _spriteBase = new byte[Capacity];
+    private readonly byte[] _turnTimer = new byte[Capacity];
+    private readonly byte[] _turnInterval = new byte[Capacity];
+    private readonly byte[] _frameCount = new byte[Capacity];
+    private readonly byte[] _frameMask = new byte[Capacity];
 
     // $B2, ENESSION. Zero means the slot is empty, which is what the update loop tests first.
     //
@@ -113,4 +118,28 @@ internal sealed class EntityTable
     // set is up. $EF0D turns it round sideways with `eor #$03` and $EF8F turns it round vertically
     // with `eor #$0C`, so bits 1 and 3 flip with them and nothing translated so far reads either.
     internal Span<byte> Heading => _heading;
+
+    // $8598. What Frame is added to for the VIC sprite pointer: set_sprite_pointer in
+    // bubbles-sprites.s masks Frame to five bits and adds this, so it picks the block of sprite
+    // images a thing is drawn from.
+    internal Span<byte> SpriteBase => _spriteBase;
+
+    // $8660 and $8688. $EE91 counts the first down while a player is below the thing, flips a
+    // direction when it reaches zero, and reloads it from the second. $39D2 starts both at the same
+    // random value.
+    internal Span<byte> TurnTimer => _turnTimer;
+
+    internal Span<byte> TurnInterval => _turnInterval;
+
+    // $8750 and $8778. How many frames a walk cycle has, and that number less one. $EB0F steps Frame
+    // on, and once the step leaves Frame a multiple of the cycle it takes the count back off - so a
+    // thing facing left, which starts at the count, cycles through the second block of frames.
+    internal Span<byte> FrameCount => _frameCount;
+
+    internal Span<byte> FrameMask => _frameMask;
+
+    // $4A, the enemies still to be dealt with on this level. It is zero page and one byte, not a row
+    // of the region, and is here because this is what it counts: $39D2 adds one for each slot it
+    // fills, and collision.s and bubbles-sprites.s read it.
+    internal byte EnemyCount { get; set; }
 }
