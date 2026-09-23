@@ -1702,22 +1702,21 @@ travel, expiry and popping were moved here once that was found. Phase 5 keeps
 what is genuinely the bubble's own: blowing one, and the shared mover at
 `$0E23` that the bubble happened to need first.
 
-**Where this is up to, as of 2026-09-19.** The whole of `$0F98`'s call graph is
-translated - the loop at `$0CF2`, the dispatcher at `$0F48`, the bubble
-collision at `$105B` - along with `$13BE`'s clock, wobble and pop. The cadence
-that blocked everything is measured and gone.
+**Where this is up to, as of 2026-09-23.** A bubble runs from blow to pop.
+The loop at `$0CF2` reaches every arm it has for an ordinary slot now - the
+dispatcher, the catch, the random AI at `$0D86` and the map read at `$0E00` -
+and a replay of the captured level 1 bubble matches the capture at every
+checkpoint, at the measured two thirds. That is the first golden check in
+this phase. The direction field is done and in use: `SolidMap` carries the
+reference's own byte, and `$0E00` reads it.
 
-**Pick it up at "A bubble's travel, expiry and popping"**, above. The
-direction field that blocked it is done: `SolidMap` carries the reference's
-own byte now, bit 7 solid and the low two bits a direction, built from a
-rectangle's `zone_type`, the unconditional mirror every level's zone data
-ends in whether or not it says `mirror`, `bubbleCurrent` for row 0 and row
-24, and rows 1-23's own wall-bitmap byte where nothing else covers them -
-all four confirmed by reading plus our own VICE captures, and now built and
-tested rather than only understood. **`bubbleCurrent` having no reader was
-wrong** - a grep that missed an indirect read; do not revisit it as settled
-the old way. What is left of this phase is wiring `$0E00` to read
-`SolidMap.Direction` instead of nothing, which is the travel item's own job.
+**Nothing calls the loop yet.** `BubbleBobbleMain` does not run `$0CF2` or
+`$13BE`, so a bubble moves in the tests and not in the app. Joining them to a
+game loop belongs with `game-loop.s`, which is Phase 7's.
+
+**Pick it up at "Wrap-around openings"**, below, or at "Each enemy type".
+Nothing can spawn an enemy yet, so the second one needs `entity-spawn.s`
+first.
 
 **One caution over everything translated in this phase.** Nothing from the AI
 loop onwards has a golden trace behind it. `EnemyAiLoop`, `EnemyDispatcher`,
@@ -1729,7 +1728,9 @@ from outside them to settle. Now that the machine can be driven, every one of
 those four is worth re-checking against it.
 
 - [ ] `entity-system.s` and the state tables.
-- [ ] `AddBbRandom`, with the RNG at `LE9EA`.
+- [x] `AddBbRandom`, with the RNG at `LE9EA`. `BbRandom` is `$E9EA` exactly,
+      except the `CIA1_TBLO` byte, which comes from an injected
+      `IRandomSource`. See "The RNG at `LE9EA`" below.
 - [x] **The loop's own walk**, `$0CF2`, as `Enemies/EnemyAiLoop.cs`.
 
       This is the loop and the two decisions it makes without leaving itself:
@@ -1960,7 +1961,7 @@ those four is worth re-checking against it.
       then `$02`, then `$04` is exactly the order the bubble capture read.
       Reading and watching agree, which is rare enough in this file to record.
 
-- [ ] **A bubble's travel, expiry and popping**, which is the first thing the
+- [x] **A bubble's travel, expiry and popping**, which is the first thing the
       loop above will be able to drive. Golden data is already captured: one
       bubble on level 1, born at frame 32 and gone at frame 227.
 
@@ -1978,6 +1979,57 @@ those four is worth re-checking against it.
       pause, in both phases - belongs to whatever drives the mover rather than
       to the mover itself. That cadence is unexplained and is the first thing
       to settle here.
+
+      **Done 2026-09-23.** The cadence is settled below. The last piece was the
+      drift, which is `$0D86` and `$0E00` in `Enemies/EnemyAiLoop.cs`, and a
+      replay of this capture is `BubbleTravelTests`.
+
+      **`$0E00` reads offset `$29`, one row down and one column across.** Its
+      row table at `$AD1E` gives `$8500` for row 4, which is the dispatcher's
+      base and its bias of 4. The row it reads from is held to `$04`-`$1C`.
+      `DoesNotReadItsOwnCell` holds the offset: a translation that reads the
+      thing's own cell still rises and drifts, but at the wrong column.
+
+      **A new bubble reads past `$ACB6`.** `$232A` blows a bubble with `$88` in
+      its counter, so the dispatcher's first two steps index 8 and 7 in a
+      seven-byte table. The 6502 reads on into `$ACBD`, whose first two bytes
+      are `$00 $00`. The dispatcher threw there, so every bubble would have
+      crashed it on its first frame. Its table now carries those two bytes, and
+      it still throws past them. Nothing found this until a real bubble went
+      through the loop. The three-types story in the dispatcher item is
+      unchanged: `$00` for the first four steps, then `$02`, then `$04`.
+
+      **The random arm's threshold is the level, not `$1E`.** `cmp #$1E` at
+      `$0DC5` is self-modified. `$F23C` stores into its operand at every
+      level's setup, and it stores A, which holds `SUBFLG`. The `$1E` or `$E6`
+      that `$F230` works out goes into Y, and Y is never stored. So on level 1
+      every random move is sideways, and deeper levels move vertically more
+      often. On `SUBFLG` `$48` a fill loop has left `$02` in A, and `$02` is
+      stored. The same fill loop writes `$02` to `$88C9`, `$88F1`, `$8919` and
+      `$8941`. Those addresses are map row 24 and three rows below the map, and
+      `SolidMap` does not model them yet.
+
+      **The replay, in passes from the blow**, with the capture's frames
+      converted at two thirds:
+
+      | Phase | Capture | Port |
+      |---|---|---|
+      | Shot, X `$34` to `$74` | 0-8 | 0-8 |
+      | Rise, Y `$DD` to `$4D` | 9-79 | 9-80 |
+      | Drift, X `$74` to `$7C` | 81-83 | 81-84 |
+      | Wobble | 109-122 | 109-124 |
+      | Pop | about 125 | 125, which is `$7D` |
+
+      **One disagreement is open.** Under the ceiling the port moves up and
+      down between Y `$45` and `$47`. Map row 3 at column 14 pushes down and
+      row 4 pushes up, so the code gives this result. The capture's summary
+      above says "parked at `$47`". A capture that samples two passes out of
+      three sees both values, so the summary may have smoothed it. Or the
+      reading is wrong. A per-frame read of `$AA1E` for slot 17 in that
+      window settles it.
+
+      **Verified:** solution builds with 0 warnings, and
+      `BubbleBobbleSharpLib.Tests` is 374/374, up from 350.
 
 - [x] **The clock, the wobble and the pop**, `$13BE` in `player-sprites.s`, as
       `Enemies/EntityTimers.cs`. The game loop calls it at `$0A51`, straight
@@ -2104,7 +2156,7 @@ those four is worth re-checking against it.
       value could differ when the loop has more work to do, so a busy level
       should be re-measured rather than assumed.
 
-- [ ] **The RNG at `LE9EA`**, and a constraint that came with reading it.
+- [x] **The RNG at `LE9EA`**, and a constraint that came with reading it.
 
       It mixes in `CIA1_TBLO`, a CIA timer's low byte. Section 1 puts CIA
       emulation out of scope, so the sequence cannot be reproduced and
@@ -2114,6 +2166,14 @@ those four is worth re-checking against it.
       That is a constraint on how every enemy in this phase can be verified,
       not just the bubble, and it should be settled before the verify step
       below is relied on.
+
+      **Settled 2026-09-23.** `BbRandom` translates `$E9EA`: the sixteen-bit
+      shift, the fold, and the carry that `rol RESHO` leaves. It takes the
+      timer byte from an injected `IRandomSource`. A test with a fake source
+      reaches every branch. A capture can check a path only where the draw
+      has no effect. That includes a lone bubble: with no neighbour, `$0D86`
+      ends at `$0E00` whatever the draw is. The level-setup seed at `$2BFC`
+      saves and restores the state, so nothing seeds it for play.
 
 - [x] **The direction field in the collision map**, which is what a bubble's
       drift actually comes from, and which blocks the travel items above.

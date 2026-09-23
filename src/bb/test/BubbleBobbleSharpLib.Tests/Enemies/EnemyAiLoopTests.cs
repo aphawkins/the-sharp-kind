@@ -6,16 +6,21 @@ using BubbleBobbleSharpLib.Bubbles;
 using BubbleBobbleSharpLib.Enemies;
 using BubbleBobbleSharpLib.Levels;
 using BubbleBobbleSharpLib.Players;
+using SharpKind.Fakes;
 using Xunit;
 
 namespace BubbleBobbleSharpLib.Tests.Enemies;
 
-// $0CF2: the walk over the eighteen slots, and the two decisions it makes on its own.
+// $0CF2: the walk over the eighteen slots, the decisions it makes on its own, and the random AI at
+// $0D86 with the map read at $0E00 that ends it.
 //
-// What the loop reaches is not tested here, because it is not translated yet. These prove the walk,
-// the special-type gate, and the catch - and in particular the two places a careful reading of the
-// reference gives the wrong answer: the catch box is nudged two pixels in one axis only, and a
-// caught slot's own new type puts it beyond the gate.
+// The dispatcher and the mover each have tests of their own. These prove the walk, the special-type
+// gate, the catch, and which way a slot with no AI state goes - and in particular the places a
+// careful reading of the reference gives the wrong answer: the catch box is nudged two pixels in one
+// axis only, a caught slot's own new type puts it beyond the gate, the map is read one row down and
+// one column across, and the random arm's threshold is the level rather than the $1E in the source.
+//
+// A zero timer byte and zero generator state make every draw zero, which is how these force a branch.
 public sealed class EnemyAiLoopTests
 {
     private const int Slot = 17;
@@ -28,15 +33,8 @@ public sealed class EnemyAiLoopTests
     private const byte PlayerX = 0x40;
     private const byte PlayerY = 0x40;
 
-    // A level with nothing solid in it. None of these tests reaches the dispatcher, so what the map
-    // holds does not matter - it only has to exist.
-    private static readonly SolidMap s_open = SolidMap.Build(
-        new Level
-        {
-            Number = 1,
-            Bitmap = [.. Enumerable.Repeat(new string('.', 32), 23)],
-        },
-        []);
+    // A level with nothing solid in it and no current, so anything $0E00 drives goes straight up.
+    private static readonly SolidMap s_open = Open(1);
 
     [Fact]
     public void LeavesAnEmptyTableAlone()
@@ -225,6 +223,181 @@ public sealed class EnemyAiLoopTests
         }
     }
 
+    // $0E00. A lone thing reads the map one row below and one column right of its own cell - offset
+    // $29 off a row four above the map's - and that is the whole of where it goes.
+    [Fact]
+    public void DriftsTheWayTheMapReadsBelowAndAcross()
+    {
+        (ObjectTable objects, _, EnemyAiLoop loop) = Table();
+        Standing(objects);
+        objects.Row[Slot] = 0x08;
+        objects.Column[Slot] = 0x09;
+
+        loop.Update(Current(5, 10));
+
+        Assert.Equal(PlayerX + 2, objects.X[Slot]);
+        Assert.Equal(PlayerY, objects.Y[Slot]);
+    }
+
+    // The same thing over a current in its own cell, which is not where $0E00 looks. It goes up.
+    [Fact]
+    public void DoesNotReadItsOwnCell()
+    {
+        (ObjectTable objects, _, EnemyAiLoop loop) = Table();
+        Standing(objects);
+        objects.Row[Slot] = 0x08;
+        objects.Column[Slot] = 0x09;
+
+        loop.Update(Current(4, 9));
+
+        Assert.Equal(PlayerX, objects.X[Slot]);
+        Assert.Equal(PlayerY - 2, objects.Y[Slot]);
+    }
+
+    // $0E02. A row above four is read as four, so everything near the top takes map row one.
+    [Theory]
+    [InlineData(0x00)]
+    [InlineData(0x03)]
+    [InlineData(0x04)]
+    public void ReadsTheTopRowsAsRowFour(byte row)
+    {
+        (ObjectTable objects, _, EnemyAiLoop loop) = Table();
+        Standing(objects);
+        objects.Row[Slot] = row;
+        objects.Column[Slot] = 0x09;
+
+        loop.Update(Current(1, 10));
+
+        Assert.Equal(PlayerX + 2, objects.X[Slot]);
+    }
+
+    // $0D86's draw is below $EA, so the scan runs - and with nobody near, it falls out into $0E00.
+    [Fact]
+    public void GoesByTheMapWithNobodyNear()
+    {
+        (ObjectTable objects, _, EnemyAiLoop loop) = Table();
+        Standing(objects);
+        objects.Column[Slot] = 0x01;
+
+        loop.Update(s_open);
+
+        Assert.Equal(PlayerX, objects.X[Slot]);
+        Assert.Equal(PlayerY - 2, objects.Y[Slot]);
+    }
+
+    // With a neighbour inside sixteen pixels, the random arm moves it instead. The first level's
+    // threshold is zero, so the move is sideways, and column one is near the left edge, so it is
+    // right. The map would have sent it up.
+    [Fact]
+    public void MovesAtRandomBesideANeighbour()
+    {
+        (ObjectTable objects, _, EnemyAiLoop loop) = Table();
+        Standing(objects);
+        Neighbour(objects);
+        objects.Column[Slot] = 0x01;
+
+        loop.Update(s_open);
+
+        Assert.Equal(PlayerX + 2, objects.X[Slot]);
+        Assert.Equal(PlayerY, objects.Y[Slot]);
+    }
+
+    // $0D96 and $0D9B. A neighbour with an AI state, or of a special type, is not a neighbour.
+    [Theory]
+    [InlineData(0x01, Bubble)]
+    [InlineData(0x00, 0x24)]
+    public void PassesOverANeighbourItMayNotCount(byte state, byte type)
+    {
+        (ObjectTable objects, _, EnemyAiLoop loop) = Table();
+        Standing(objects);
+        Neighbour(objects);
+        objects.State[Slot - 1] = state;
+        objects.Type[Slot - 1] = type;
+        objects.Column[Slot] = 0x01;
+
+        loop.Update(s_open);
+
+        Assert.Equal(PlayerX, objects.X[Slot]);
+        Assert.Equal(PlayerY - 2, objects.Y[Slot]);
+    }
+
+    // $0D8B. A draw at or above $EA skips the scan, neighbour or not.
+    [Fact]
+    public void SkipsTheScanOnAHighDraw()
+    {
+        (ObjectTable objects, _, EnemyAiLoop loop) = Table(0xF0);
+        Standing(objects);
+        Neighbour(objects);
+        objects.Column[Slot] = 0x01;
+
+        loop.Update(s_open);
+
+        Assert.Equal(PlayerX, objects.X[Slot]);
+        Assert.Equal(PlayerY - 2, objects.Y[Slot]);
+    }
+
+    // $0DC5's operand is the level, stored at $F23C. The same zero draw is sideways on the first
+    // level and vertical on the second - and at row zero, vertical means down.
+    [Theory]
+    [InlineData(1, 2, 0)]
+    [InlineData(2, 0, 2)]
+    public void TakesTheLevelAsTheThreshold(int level, int dx, int dy)
+    {
+        (ObjectTable objects, _, EnemyAiLoop loop) = Table();
+        Standing(objects);
+        Neighbour(objects);
+        objects.Column[Slot] = 0x01;
+
+        loop.Update(Open(level));
+
+        Assert.Equal(PlayerX + dx, objects.X[Slot]);
+        Assert.Equal(PlayerY + dy, objects.Y[Slot]);
+    }
+
+    // $F219. On the level whose byte is $48, a fill loop has left $02 in A, and that is what is
+    // stored, not $48. A timer byte of two makes the draws two and then six: six is at or above two,
+    // so that level moves sideways, where the level after it, at $49, moves down.
+    [Theory]
+    [InlineData(0x49, 2, 0)]
+    [InlineData(0x4A, 0, 2)]
+    public void TakesTwoOnTheOneLevelTheFillLoopRuns(int level, int dx, int dy)
+    {
+        (ObjectTable objects, _, EnemyAiLoop loop) = Table(0x02);
+        Standing(objects);
+        Neighbour(objects);
+        objects.Column[Slot] = 0x01;
+
+        loop.Update(Open(level));
+
+        Assert.Equal(PlayerX + dx, objects.X[Slot]);
+        Assert.Equal(PlayerY + dy, objects.Y[Slot]);
+    }
+
+    // A second bubble one slot down, on the same spot.
+    private static void Neighbour(ObjectTable objects)
+    {
+        objects.Type[Slot - 1] = Bubble;
+        objects.X[Slot - 1] = PlayerX;
+        objects.Y[Slot - 1] = PlayerY;
+    }
+
+    private static SolidMap Open(int number) => SolidMap.Build(
+        new Level
+        {
+            Number = number,
+            Bitmap = [.. Enumerable.Repeat(new string('.', 32), 23)],
+        },
+        []);
+
+    // An open first level with one cell whose current pushes right.
+    private static SolidMap Current(int row, int column) => SolidMap.Build(
+        new Level
+        {
+            Number = 1,
+            Bitmap = [.. Enumerable.Repeat(new string('.', 32), 23)],
+        },
+        [new ZoneRect { X = column, Y = row, Width = 1, Height = 1, Type = EntityMover.Right }]);
+
     // A bubble in the top slot, sitting exactly on the player, with neither player active yet.
     private static void Standing(ObjectTable objects)
     {
@@ -236,7 +409,7 @@ public sealed class EnemyAiLoopTests
     private static EnemyDispatcher Dispatcher(ObjectTable objects, EntityTable entities)
         => new(objects, entities, new BubbleCollision(objects, entities));
 
-    private static (ObjectTable Objects, EntityTable Entities, EnemyAiLoop Loop) Table()
+    private static (ObjectTable Objects, EntityTable Entities, EnemyAiLoop Loop) Table(int timer = 0x00)
     {
         ObjectTable objects = new();
         EntityTable entities = new();
@@ -245,6 +418,13 @@ public sealed class EnemyAiLoopTests
         entities.X[1] = PlayerX;
         entities.Y[1] = PlayerY;
 
-        return (objects, entities, new EnemyAiLoop(objects, entities, Dispatcher(objects, entities)));
+        EnemyAiLoop loop = new(
+            objects,
+            entities,
+            Dispatcher(objects, entities),
+            new EntityMover(objects),
+            new BbRandom(new FakeRandomSource { RandomValue = timer }));
+
+        return (objects, entities, loop);
     }
 }
