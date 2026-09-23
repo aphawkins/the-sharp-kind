@@ -217,8 +217,8 @@ internal sealed class EnemyAiLoop
     // $0E00. The current in the cell below and one across, off the collision map's own byte.
     //
     // Clamped at the top, the read lands on row one of the map. Clamped at the bottom it lands one
-    // row past the map's last, which SolidMap answers with direction 0; the reference reads whatever
-    // is at $88E8 onwards, and nothing has checked what that is.
+    // row past the map's last, at $88E8, which $3A6C fills with a copy of row 24. So it reads the
+    // floor's direction.
     private int MapDirection(int slot, SolidMap map)
     {
         int row = Math.Clamp((int)_objects.Row[slot], TopRow, BottomRow);

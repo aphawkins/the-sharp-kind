@@ -16,14 +16,19 @@ namespace BubbleBobbleSharpLib.Levels;
 // written twice. What survives is the shape a probe sees - see PlayerCell, which turns a position
 // into a row and a column here.
 //
-// Three rows above the level are solid and always were: $8488, $84B0 and $84D8 are forty-byte rows
-// of $80 that the map's own addressing reaches when a thing is near the top. Everything off the map
-// reads solid here for the same reason - nothing may leave the level by walking out of it - and
-// direction 0, matching those rows' own constant byte.
+// Three rows above the map and three below it are copies of its edges. $8488, $84B0 and $84D8 start
+// as rows of $80, but $3A6C in entity-spawn.s copies row 0 over all three as every level starts,
+// and row 24 over $88E8, $8910 and $8938. The map's own addressing reaches them when a thing is
+// near the top or the bottom, so a wrap opening goes on through them rather than stopping at a
+// ceiling. Everything further off the map reads solid - nothing may leave the level by walking out
+// of it - and direction 0.
 internal sealed class SolidMap
 {
     internal const int Columns = 32;
     internal const int Rows = 25;
+
+    // $3A6C. How many rows past each edge are copies of it.
+    private const int CopiedRows = 3;
 
     private const byte SolidBit = 0x80;
     private const byte DirectionMask = 0x03;
@@ -54,10 +59,11 @@ internal sealed class SolidMap
     // like it index from zero.
     internal int Number { get; }
 
-    // A cell off the map is solid, which is the map's own arrangement rather than a guard: the rows
-    // above it hold $80 and the columns beside it are the wall the level is drawn inside.
+    // A cell off the map is solid, which is the map's own arrangement rather than a guard: the
+    // columns beside it are the wall the level is drawn inside. The three rows past each edge are
+    // the edge again - see Copied.
     internal bool this[int row, int column]
-        => !InBounds(row, column) || (_cells[(row * Columns) + column] & SolidBit) != 0;
+        => !InBounds(Copied(row), column) || (_cells[(Copied(row) * Columns) + column] & SolidBit) != 0;
 
     // $E299 plus $E18B, decompress_level_data: init_level_renderer fills the hundred bytes the
     // renderer reads, and decompress_level_data lays a direction under every one of them before the
@@ -115,13 +121,23 @@ internal sealed class SolidMap
     }
 
     // $0E23. The direction a lone thing in this cell drifts, masked to two bits the way the
-    // reference masks the byte it reads: 0 up, 1 right, 2 down, 3 left. Off the map reads 0, the
-    // direction the solid rows above the level carry in their own constant byte.
+    // reference masks the byte it reads: 0 up, 1 right, 2 down, 3 left. The three rows past each
+    // edge read the edge's direction, and further off the map reads 0.
     internal int Direction(int row, int column)
-        => InBounds(row, column) ? _cells[(row * Columns) + column] & DirectionMask : 0;
+        => InBounds(Copied(row), column) ? _cells[(Copied(row) * Columns) + column] & DirectionMask : 0;
 
     private static bool InBounds(int row, int column)
         => row >= 0 && row < Rows && column >= 0 && column < Columns;
+
+    // $3A6C: ldx #$27, then dex and bpl, so all forty bytes of row 0 go to each of the three rows
+    // above, and all forty of row 24 to each of the three below. The copy is made once, after the
+    // map is built, and this map does not change after that, so reading the edge row is the same.
+    private static int Copied(int row) => row switch
+    {
+        >= -CopiedRows and < 0 => 0,
+        >= Rows and < Rows + CopiedRows => Rows - 1,
+        _ => row,
+    };
 
     // $E1D1. Before any rectangle runs, every row is filled with one direction across its whole
     // width - the reference's own uniform pass, `AND #$03` against one byte per row. Row 0 and row

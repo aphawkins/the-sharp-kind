@@ -29,14 +29,11 @@ public sealed class SolidMapTests
         "Levels",
         "zones.json"));
 
-    // $8488, $84B0 and $84D8 are three forty-byte rows of $80 above the map, and the map's own
-    // addressing reaches them: a thing near the top of the playfield probes rows that are not the
-    // level's. They read solid, and so does everything else off the map - direction 0, the same
-    // constant byte those rows themselves are.
+    // Past the three rows $3A6C copies at each edge, and past the columns, the map reads solid and
+    // direction 0. Level 1's bubbleCurrent is 2, so a copied row would read 2 here.
     [Theory]
-    [InlineData(-3, 0)]
-    [InlineData(-1, 0)]
-    [InlineData(SolidMap.Rows, 0)]
+    [InlineData(-4, 0)]
+    [InlineData(SolidMap.Rows + 3, 0)]
     [InlineData(0, -1)]
     [InlineData(0, SolidMap.Columns)]
     public void ReadsSolidOffTheMap(int row, int column)
@@ -201,6 +198,55 @@ public sealed class SolidMapTests
 
             Assert.Equal(solid, map[1, column]);
             Assert.Equal(direction, map.Direction(1, column));
+        }
+    }
+
+    // $3A6C copies all of row 0 into $8488, $84B0 and $84D8, the three rows above the map, and all
+    // of row 24 into the three below. So a wrap opening goes on through them, and they carry the
+    // edge's direction. The tables in sprites2-tables.s start them as $80, but that is before any
+    // level has started.
+    [Theory]
+    [InlineData(-3, 0)]
+    [InlineData(-1, 0)]
+    [InlineData(SolidMap.Rows, SolidMap.Rows - 1)]
+    [InlineData(SolidMap.Rows + 2, SolidMap.Rows - 1)]
+    public void CopiesTheEdgeRowsThreeRowsOutwards(int row, int edge)
+    {
+        Level level = Level([.. Enumerable.Repeat(new string('.', 32), 23)], wrapOpenings: 0x0F, bubbleCurrent: 0x0D);
+
+        SolidMap map = SolidMap.Build(level, []);
+
+        for (int column = 0; column < SolidMap.Columns; column++)
+        {
+            Assert.Equal(map[edge, column], map[row, column]);
+            Assert.Equal(map.Direction(edge, column), map.Direction(row, column));
+        }
+
+        Assert.False(map[row, 9]);
+        Assert.NotEqual(0, map.Direction(row, 9));
+    }
+
+    // Read out of VICE on level 1, stopped at $3A89 straight after the copy, on 2026-09-23. $8488,
+    // $84B0 and $84D8 all read $82 in all thirty-two columns, which is row 0 and not the $80 the
+    // tables start them as. $88E8, $8910 and $8938 all read $80, which is row 24.
+    [Fact]
+    public void ReadsTheCopiedRowsTheWayTheGameHasThemOnLevelOne()
+    {
+        SolidMap map = SolidMap.Build(s_levels.Level(1), s_zones.Zones(1));
+
+        for (int column = 0; column < SolidMap.Columns; column++)
+        {
+            for (int row = -3; row < 0; row++)
+            {
+                Assert.True(map[row, column]);
+                Assert.Equal(2, map.Direction(row, column));
+            }
+
+            for (int row = SolidMap.Rows; row < SolidMap.Rows + 3; row++)
+            {
+                Assert.True(map[row, column]);
+                Assert.Equal(0, map.Direction(row, column));
+            }
         }
     }
 
