@@ -80,6 +80,37 @@ public sealed class LevelItemsTests
         Assert.Equal(next, rig.Items.Milestone);
     }
 
+    // $2B5F, $2BC2, $2BCD, $2C37 and $2C40. The food $10 and the special item $1E take their art and
+    // colour from $A892, $A8E4, $A8C1 and $A913, and are drawn at their level cells.
+    [Fact]
+    public void EachItemTakesItsArtAndColour()
+    {
+        Rig rig = new();
+        rig.Items.FoodBase = 0x10;
+
+        rig.Items.Setup(s_level, 0);
+
+        Assert.Equal([0x26, 0x1A], rig.Items.Art.ToArray());
+        Assert.Equal([0x0B, 0x0C], rig.Items.Colour.ToArray());
+        Assert.Equal([9, 21], rig.Items.Column.ToArray());
+        Assert.Equal([7, 7], rig.Items.Row.ToArray());
+    }
+
+    // $2CB7. The special item $18 flashes while it shows, and not while it is hidden.
+    [Theory]
+    [InlineData(0x18, 0x09)]
+    [InlineData(0x98, 0x0C)]
+    public void TheFlashingItemFlipsItsColour(byte type, byte colour)
+    {
+        Rig rig = new();
+        rig.Items.Setup(s_level, 0);
+        rig.Items.Type[1] = type;
+
+        rig.Items.Collect(0);
+
+        Assert.Equal(colour, rig.Items.Colour[1]);
+    }
+
     [Fact]
     public void ThrowsForTheBonusLevel()
     {

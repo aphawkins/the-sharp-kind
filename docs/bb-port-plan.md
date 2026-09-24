@@ -309,8 +309,25 @@ Each item ends with how it is proved.
       - [ ] **2d. The specials**: `$24`–`$32` and `$44`–`$4C` vectors
         (`$E758`, `$3E94`, `$3EFD`, `$E752`, `$3ED4`, `$E767` for the Baron,
         `$3E77`, `$3F28`, `$3F88`), with item 5.
-      - [ ] **2e. The level's items**, `$52`/`$53`, drawn in characters by
-        `$1578`'s neighbours.
+      - [x] **2e. The level's items**, `$52`/`$53`, drawn in characters.
+        `$2B31` copies each item's 32 bytes from `sprites_rom` (`$9AE0` +
+        index × 32; `$A892` food, `$A8C1` special) into characters
+        `$42`–`$45` and `$46`–`$49`. `$1844` (`L_1934`) writes them as a
+        2×2 block at the level cell (`$4E`/`$50`), in column order. It
+        writes the item's colour (`$5F`/`$60`, from `$A8E4`/`$A913`) to all
+        four colour-RAM cells (`L_186B`). `$1578` puts the cells back when
+        the item goes. `LevelItems` now holds `Art`, `Colour`, `Column` and
+        `Row`, and `$2CB7`'s EOR 5 flash for a visible `$18`. `ItemsModel`
+        and `ItemView8Bit` draw from `item-chars.tga` (exported by
+        `export_item_chars`, blocks 0–`$39`). They draw in a layer just
+        above the playfield, with entry 11 in the item's own colour and entry
+        00 opaque black. **Proved against VICE:**
+        `Views/Captures/items-level-1.txt` (level 1, food `$19`, no
+        intervention) holds the bytes at `$0A4B` and the food's 16×16
+        pixels from the screenshot at the next `$E90E`.
+        `ItemView8BitGoldenTests` matches them pixel for pixel. The
+        characters at `$4210` equal block `$26` of the export byte for byte.
+        Not captured: the special item, and the `$18` flash.
 
       Verify: golden frames compared pixel for pixel with VICE screenshots
       (bytes at `$0A4B`, picture at the next `$E90E`), for a bubble in each

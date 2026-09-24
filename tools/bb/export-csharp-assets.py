@@ -437,6 +437,61 @@ def export_object_sprites(out_dir, canonical):
 
 
 # =============================================================================
+# Level items (the bonus food and the special item), drawn as characters
+# =============================================================================
+#
+# See docs/bb-port-plan.md, item 2e. $2B31 copies 32 bytes from
+# sprites_rom + index x 32 ($9AE0, inside software-sprites.bin) into four
+# characters, and $1844 puts them on the screen as a 2x2 block in column order:
+# top-left, bottom-left, top-right, bottom-right. So a block is two 16-byte
+# columns, one byte a row - the software sprites' own layout, two columns wide.
+#
+# The indices are $A892 (food) and $A8C1 (special item); the highest is $39.
+
+ITEM_CELL_WIDTH = 8
+ITEM_CELL_HEIGHT = 16
+ITEM_BLOCK_BYTES = 32
+ITEM_BLOCK_COUNT = 0x3A
+ITEMS_ROM = 0x9AE0
+
+
+def export_item_chars(out_dir, canonical):
+    """
+    Write item-chars.tga: blocks 0-$39 from sprites_rom, one 8x16 multicolour
+    cell each, in a single row. Entry 00 is the screen's background, which the
+    item's characters draw over whatever was in the cell - so it is index 4,
+    opaque black, as in object-sprites.tga, not transparent.
+    """
+    image = tga_mod.parse_tga(os.path.join(DATA, "software-sprites.tga"))
+    software_sprites = tga_mod.convert_software_sprites(image, 4, 16, 0)
+
+    width = ITEM_CELL_WIDTH * ITEM_BLOCK_COUNT
+    pixels = bytearray(width * ITEM_CELL_HEIGHT)
+
+    for block in range(ITEM_BLOCK_COUNT):
+        data = _read_bytes(
+            software_sprites,
+            ITEMS_ROM + ITEM_BLOCK_BYTES * block,
+            SOFTWARE_SPRITES_BASE,
+            ITEM_BLOCK_BYTES,
+        )
+        for row in range(ITEM_CELL_HEIGHT):
+            for col in range(2):
+                for i, value in enumerate(_bit_pairs(data[col * 16 + row])):
+                    x = block * ITEM_CELL_WIDTH + col * 4 + i
+                    pixels[row * width + x] = value if value != 0 else 4
+
+    write_tga(
+        os.path.join(out_dir, "Images", "item-chars.tga"),
+        {"width": width, "height": ITEM_CELL_HEIGHT, "pixels": pixels, "palette": [None] * 5},
+        0,
+        list(canonical[:4]) + [canonical[0]],
+    )
+
+    return ITEM_BLOCK_COUNT
+
+
+# =============================================================================
 # Font
 # =============================================================================
 
@@ -780,6 +835,12 @@ def main():
     print(
         f"Wrote {count} object sprite cells -> "
         f"{os.path.join(args.out, 'Images', 'object-sprites.tga')}"
+    )
+
+    count = export_item_chars(args.out, canonical)
+    print(
+        f"Wrote {count} item blocks -> "
+        f"{os.path.join(args.out, 'Images', 'item-chars.tga')}"
     )
 
 

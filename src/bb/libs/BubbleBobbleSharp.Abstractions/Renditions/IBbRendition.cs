@@ -79,4 +79,11 @@ public interface IBbRendition
     /// <param name="surface">Everything the view draws with.</param>
     /// <returns>The view.</returns>
     public IView<ObjectsModel> CreateObjectView(IViewSurface surface);
+
+    /// <summary>
+    /// Creates the view that draws the level's two items: the food and the special item.
+    /// </summary>
+    /// <param name="surface">Everything the view draws with.</param>
+    /// <returns>The view.</returns>
+    public IView<ItemsModel> CreateItemView(IViewSurface surface);
 }

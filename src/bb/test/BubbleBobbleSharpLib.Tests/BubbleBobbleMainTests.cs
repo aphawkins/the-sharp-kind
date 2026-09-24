@@ -23,7 +23,7 @@ public sealed class BubbleBobbleMainTests
     // The sheets the views draw from. The game repaints them - in the level's colours for the
     // playfield's two, in the sprite's own colour for the players' - before it draws, so the surface
     // has to be holding them by the time a frame is composed.
-    private static readonly string[] s_sheets = ["LevelTiles", "TileEdges", "Sidebars", "SpritesGame", "ObjectSprites"];
+    private static readonly string[] s_sheets = ["LevelTiles", "TileEdges", "Sidebars", "SpritesGame", "ObjectSprites", "ItemChars"];
 
     private static readonly LevelStore s_levels = LevelStore.Read(Path.Combine(
         AppContext.BaseDirectory,
@@ -111,17 +111,18 @@ public sealed class BubbleBobbleMainTests
         Assert.Equal(2, game.CurrentLevel);
     }
 
-    // Four bands: the level trimmed to the 28 columns the decoration leaves, the decoration over the
-    // whole 32, the players over that, and the HUD in the eight columns past them. All four are the
-    // full height of the screen. The players share the decoration's band because a sprite may be
-    // anywhere on the level, including over its outermost columns.
+    // The level and its items trimmed to the 28 columns the decoration leaves, the bubbles and the
+    // decoration over the whole 32, the players over that, and the HUD in the eight columns past them.
+    // All are the full height of the screen. The players share the decoration's band because a sprite
+    // may be anywhere on the level, including over its outermost columns.
     [Fact]
-    public void ComposesTheLevelItsDecorationThePlayersAndTheHudAsFiveLayers()
+    public void ComposesTheLevelItsItemsBubblesDecorationPlayersAndHudAsSixLayers()
     {
         RecordingGraphics graphics = Draw();
 
         Assert.Equal(
             [(new Vector2(16, 0), 224f, 200f),
+             (new Vector2(16, 0), 224f, 200f),
              (new Vector2(0, 0), 256f, 200f),
              (new Vector2(0, 0), 256f, 200f),
              (new Vector2(0, 0), 256f, 200f),

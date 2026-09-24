@@ -32,13 +32,13 @@ namespace BubbleBobbleSharp.Renditions.EightBit;
 /// </summary>
 internal sealed class MulticolourSheet
 {
-    // Where a repainted sheet lives, beside the one it was painted from.
-    private const string Suffix = ".Recoloured";
-
     // $09B8, game-loop.s: colour RAM is filled with $0D before the level is drawn. Bit 3 of that is
     // what puts the cell in multicolour mode, and only the low three bits are left to be a colour -
-    // so entry 11 is colour 5 on every cell of the playfield.
-    private const int ColourRam = 0x0D & 0x07;
+    // so entry 11 is colour 5 on every cell of the playfield. The level's items write their own.
+    internal const int PlayfieldColourRam = 0x0D;
+
+    // Where a repainted sheet lives, beside the one it was painted from.
+    private const string Suffix = ".Recoloured";
 
     // No level's colour byte is negative, so the first draw always repaints.
     private const int NotPainted = -1;
@@ -48,14 +48,15 @@ internal sealed class MulticolourSheet
     private readonly string _source;
 
     private int _colours = NotPainted;
+    private int _colourRam = NotPainted;
 
-    internal MulticolourSheet(IViewSurface surface, string source)
+    internal MulticolourSheet(IViewSurface surface, string source, string? name = null)
     {
         _graphics = surface.Graphics;
         _palette = surface.Palette;
         _source = source;
 
-        Name = source + Suffix;
+        Name = (name ?? source) + Suffix;
     }
 
     /// <summary>
@@ -69,25 +70,27 @@ internal sealed class MulticolourSheet
     /// wearing it.
     /// </summary>
     /// <param name="colours">The level's colour byte.</param>
-    internal void Paint(int colours)
+    /// <param name="colourRam">The cells' colour RAM byte, whose low three bits are entry 11.</param>
+    internal void Paint(int colours, int colourRam = PlayfieldColourRam)
     {
-        if (colours == _colours)
+        if (colours == _colours && colourRam == _colourRam)
         {
             return;
         }
 
-        _graphics.SetImage(Name, _graphics.Image(_source).Recolour(Entries(colours)));
+        _graphics.SetImage(Name, _graphics.Image(_source).Recolour(Entries(colours, colourRam)));
         _colours = colours;
+        _colourRam = colourRam;
     }
 
     // $E0CE, level-renderer.s: the high nibble goes to $1D and the low to $1F, and the split-screen
     // IRQ at $072E writes those to the two background registers in that order. Entry 00 is the
     // screen's own background, which the sheets carry as a transparent pixel and nothing repaints.
-    private Dictionary<uint, FastColor> Entries(int colours) => new()
+    private Dictionary<uint, FastColor> Entries(int colours, int colourRam) => new()
     {
         [Colour(1).Argb] = Colour((colours >> 4) & 0x0F),
         [Colour(2).Argb] = Colour(colours & 0x0F),
-        [Colour(3).Argb] = Colour(ColourRam),
+        [Colour(3).Argb] = Colour(colourRam & 0x07),
     };
 
     private FastColor Colour(int index) => _palette[index.ToString(CultureInfo.InvariantCulture)];

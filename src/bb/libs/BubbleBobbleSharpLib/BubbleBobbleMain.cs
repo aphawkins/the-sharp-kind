@@ -57,6 +57,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     private readonly IView<SpriteModel> _spriteView;
     private readonly IView<HudModel> _hudView;
     private readonly IView<ObjectsModel> _objectView;
+    private readonly IView<ItemsModel> _itemView;
 
     // Everything that moves, and the routines that move it, in the reference's order.
     private readonly GameLoop _loop;
@@ -117,6 +118,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         _spriteView = rendition.CreateSpriteView(surface);
         _hudView = rendition.CreateHudView(surface);
         _objectView = rendition.CreateObjectView(surface);
+        _itemView = rendition.CreateItemView(surface);
 
         ShowLevel(FirstLevel);
 
@@ -131,6 +133,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         _layers = new LayerRunner(
             Graphics,
             new RenderLayer(interior, interiorWidth, height, new PlayfieldLayer(this)),
+            new RenderLayer(interior, interiorWidth, height, new ItemLayer(this)),
             new RenderLayer(whole, wholeWidth, height, new ObjectLayer(this)),
             new RenderLayer(whole, wholeWidth, height, new SidebarLayer(this)),
             new RenderLayer(whole, wholeWidth, height, new SpriteLayer(this)),
@@ -222,10 +225,26 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         _loop.Objects.SubY,
         _playfield.Colours);
 
+    // $1844's L_1934: the level's two items, as characters, with their colour RAM from L_186B.
+    private ItemsModel Items() => new(
+        _loop.Items.Type,
+        _loop.Items.Column,
+        _loop.Items.Row,
+        _loop.Items.Art,
+        _loop.Items.Colour,
+        _playfield.Colours);
+
     // Layer 0, the level itself, trimmed to the columns the decoration does not cover.
     private sealed class PlayfieldLayer(BubbleBobbleMain game) : ILayerDrawer
     {
         public void Draw() => game._playfieldView.Draw(game._playfield);
+    }
+
+    // Layer 0 still, $1844: the food and the special item are characters of the level, so they sit
+    // in it, under the bubbles - see docs/bb-port-plan.md, item 2e.
+    private sealed class ItemLayer(BubbleBobbleMain game) : ILayerDrawer
+    {
+        public void Draw() => game._itemView.Draw(game.Items());
     }
 
     // Layer 1, $E90E: the bubbles and the pop animation, over the level and under everything else -

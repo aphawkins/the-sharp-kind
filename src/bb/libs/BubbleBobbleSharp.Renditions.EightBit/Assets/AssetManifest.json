@@ -18,7 +18,8 @@
     "BonusCake": "bonus-cake.tga",
     "BonusDiamond": "bonus-diamond.tga",
     "BonusMelon": "bonus-melon.tga",
-    "ObjectSprites": "object-sprites.tga"
+    "ObjectSprites": "object-sprites.tga",
+    "ItemChars": "item-chars.tga"
   },
   "Fonts": {
     "Bitmap": {

@@ -20,8 +20,10 @@ namespace BubbleBobbleSharpLib.Items;
 // $58 is the food's quality. The level's food type is $58 plus up to three, and $1719 sets $58 as a
 // level ends from how long the level took - which is Phase 7's level timer, so it is set from outside.
 //
-// **Not here:** the item pictures and colours, which are rendering, and item 1's colour flash for
-// type $18 at $2CB7; the bonus level, $63, which has handlers of its own; and $2D06's store in $B0.
+// Each item is drawn as four characters whose art $2B31 copies in from sprites_rom, in a colour
+// $5F/$60 holds; $1844 draws them. Art and Colour carry both out to the rendition.
+//
+// **Not here:** the bonus level, $63, which has handlers of its own; and $2D06's store in $B0.
 internal sealed class LevelItems
 {
     internal const int Count = 2;
@@ -65,6 +67,10 @@ internal sealed class LevelItems
     private const byte FoodHighFrom = 0x0F;
     private const byte SpecialHighFrom = 0x18;
 
+    // $2CB9 and $2CBF. The special item that flashes, and the colour bits it flips.
+    private const byte FlashingItem = 0x18;
+    private const byte FlashBits = 0x05;
+
     // $A936 and $A94C after it: the food's score, by type.
     private static readonly byte[] s_foodScores =
     [
@@ -81,7 +87,41 @@ internal sealed class LevelItems
         0x02, 0x02, 0x05,
     ];
 
+    // $A892 and $A8C1: the food's and the special item's art, a block of sprites_rom, by type.
+    private static readonly byte[] s_foodArt =
+    [
+        0x2C, 0x34, 0x2D, 0x1E, 0x2E, 0x29, 0x2B, 0x0B, 0x00, 0x1B, 0x31, 0x30, 0x02, 0x1C, 0x0B, 0x0E,
+        0x26, 0x01, 0x11, 0x19, 0x20, 0x22, 0x21, 0x05, 0x24, 0x26, 0x0C, 0x08, 0x17, 0x25, 0x26, 0x36,
+        0x0F, 0x23, 0x06, 0x15, 0x27, 0x2F, 0x04, 0x28, 0x04, 0x07, 0x04, 0x07, 0x07, 0x38, 0x32,
+    ];
+
+    private static readonly byte[] s_specialArt =
+    [
+        0x09, 0x1D, 0x1D, 0x0D, 0x0D, 0x0D, 0x13, 0x13, 0x13, 0x14, 0x14, 0x14, 0x1F, 0x1F, 0x1F, 0x12,
+        0x16, 0x16, 0x16, 0x1A, 0x0A, 0x1D, 0x0A, 0x1D, 0x37, 0x35, 0x35, 0x35, 0x14, 0x18, 0x1A, 0x33,
+        0x39, 0x39, 0x2A,
+    ];
+
+    // $A8E4 and $A913: the food's and the special item's colour RAM byte, by type.
+    private static readonly byte[] s_foodColours =
+    [
+        0x0C, 0x09, 0x09, 0x09, 0x0F, 0x0A, 0x0A, 0x0E, 0x0F, 0x0F, 0x0A, 0x0A, 0x0A, 0x0A, 0x0A, 0x0F,
+        0x0B, 0x0F, 0x0A, 0x0C, 0x0D, 0x0F, 0x0F, 0x0A, 0x0D, 0x09, 0x0A, 0x0A, 0x0F, 0x0F, 0x0F, 0x09,
+        0x0F, 0x0A, 0x0C, 0x0B, 0x0F, 0x0A, 0x0F, 0x0F, 0x0A, 0x0F, 0x0D, 0x0D, 0x0C, 0x0F, 0x0F,
+    ];
+
+    private static readonly byte[] s_specialColours =
+    [
+        0x0A, 0x09, 0x0A, 0x0F, 0x0C, 0x0E, 0x0A, 0x0F, 0x0B, 0x0A, 0x0F, 0x0C, 0x0C, 0x0A, 0x0E, 0x0D,
+        0x0D, 0x0C, 0x0F, 0x0D, 0x0E, 0x0F, 0x0C, 0x0B, 0x0A, 0x0F, 0x0E, 0x09, 0x0D, 0x0C, 0x0C, 0x0A,
+        0x0A, 0x09, 0x0D,
+    ];
+
     private readonly byte[] _type = [0xFF, 0xFF];
+    private readonly byte[] _art = new byte[Count];
+    private readonly byte[] _colour = new byte[Count];
+    private readonly byte[] _column = new byte[Count];
+    private readonly byte[] _row = new byte[Count];
     private readonly byte[] _x = new byte[Count];
     private readonly byte[] _y = new byte[Count];
     private readonly byte[] _timer = new byte[Count];
@@ -112,6 +152,18 @@ internal sealed class LevelItems
 
     internal Span<byte> Y => _y;
 
+    // Which block of sprites_rom $2B31 copied in for each item's characters.
+    internal ReadOnlySpan<byte> Art => _art;
+
+    // $4E/$50 and $4F/$51, as the level cell they address: where $1844 draws each item's top-left
+    // character. Held apart from X and Y, which $2C8C's add can wrap.
+    internal ReadOnlySpan<byte> Column => _column;
+
+    internal ReadOnlySpan<byte> Row => _row;
+
+    // $5F and $60. Each item's colour RAM byte.
+    internal ReadOnlySpan<byte> Colour => _colour;
+
     // $5D and $5E. Seconds until the item appears, or goes.
     internal Span<byte> Timer => _timer;
 
@@ -139,13 +191,24 @@ internal sealed class LevelItems
         _y[0] = (byte)(level.FoodDrop.Y << 3);
         _x[1] = (byte)(level.PowerupSpawn.X << 3);
         _y[1] = (byte)(level.PowerupSpawn.Y << 3);
+        _column[0] = (byte)level.FoodDrop.X;
+        _row[0] = (byte)level.FoodDrop.Y;
+        _column[1] = (byte)level.PowerupSpawn.X;
+        _row[1] = (byte)level.PowerupSpawn.Y;
 
         // $2BB0. The `adc` takes the carry $E9EA left, which `and` does not touch.
         int food = (_random.Next() & 0x03) + FoodBase + (_random.Carry ? 1 : 0);
-        _type[0] = (byte)(Math.Min(food, BestFood) | 0x80);
+        food = Math.Min(food, BestFood);
+        _type[0] = (byte)(food | 0x80);
+        _art[0] = s_foodArt[food];
+        _colour[0] = s_foodColours[food];
         FoodBase = 0;
 
-        _type[1] = (byte)(Special(number) | 0x80);
+        // $2C32.
+        int special = Special(number);
+        _type[1] = (byte)(special | 0x80);
+        _art[1] = s_specialArt[special];
+        _colour[1] = s_specialColours[special];
 
         // $2C5B. Three to ten seconds before the food, and one to sixteen before the special item.
         _timer[0] = (byte)((_random.Next() & 0x07) + 3);
@@ -199,6 +262,12 @@ internal sealed class LevelItems
     // until $1578 clears it, so both players can take the same one in the same pass.
     internal void Collect(byte number)
     {
+        // $2CB7. Only while the item shows: the comparison takes bit 7 with it.
+        if (_type[1] == FlashingItem)
+        {
+            _colour[1] ^= FlashBits;
+        }
+
         for (int player = 1; player >= 0; player--)
         {
             byte state = _entities.State[player];
