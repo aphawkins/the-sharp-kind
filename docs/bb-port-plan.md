@@ -1702,7 +1702,12 @@ travel, expiry and popping were moved here once that was found. Phase 5 keeps
 what is genuinely the bubble's own: blowing one, and the shared mover at
 `$0E23` that the bubble happened to need first.
 
-**Where this is up to, as of 2026-09-23.** A bubble runs from blow to pop.
+**Where this is up to, as of 2026-09-24.** All eight enemy classes are
+translated, and every one matches VICE frame for frame - see "Each enemy type"
+below, and so does the Baron. Nothing is left in this phase. What calls it all
+is Phase 7's.
+
+**As of 2026-09-23.** A bubble runs from blow to pop.
 The loop at `$0CF2` reaches every arm it has for an ordinary slot now - the
 dispatcher, the catch, the random AI at `$0D86` and the map read at `$0E00` -
 and a replay of the captured level 1 bubble matches the capture at every
@@ -1714,10 +1719,9 @@ reference's own byte, and `$0E00` reads it.
 `$13BE`, so a bubble moves in the tests and not in the app. Joining them to a
 game loop belongs with `game-loop.s`, which is Phase 7's.
 
-**Pick it up at "Each enemy type"**, below. The spawn is done, so an
-enemy can now be put in a slot. Class 3 takes state 5, and so
-`DiagonalMover`. The spawn and the `$3A6C` row copy both have golden
-tests from VICE.
+**Pick it up at Phase 7.** `EnemyFrame` and `EnemyAiLoop` need a game loop
+to call them, and the hurry-up that spawns the Baron and angers every enemy is
+the level timer's.
 
 **One caution over everything translated in this phase.** Nothing from the AI
 loop onwards has a golden trace behind it. `EnemyAiLoop`, `EnemyDispatcher`,
@@ -1728,7 +1732,13 @@ the same constant they check and would have passed either way, and it took data
 from outside them to settle. Now that the machine can be driven, every one of
 those four is worth re-checking against it.
 
-- [ ] `entity-system.s` and the state tables.
+- [x] `entity-system.s` and the state tables. `$E9FD` to `$EFEA` is
+      translated, across `EnemyWalker`, `EnemyJump`, `EnemyShot`,
+      `EnemyChase`, `DiagonalMover`, `EntityAnimation` and the Phase 4
+      player classes. What is left is `$F005`, the title screen, which is
+      Phase 9's. `entity-state-tables.s` holds no state tables: `$3CB2` is
+      screen-scroll code and data, and `$3CD7` sets up sprite pointers, so
+      neither is Phase 6's.
 - [x] `AddBbRandom`, with the RNG at `LE9EA`. `BbRandom` is `$E9EA` exactly,
       except the `CIA1_TBLO` byte, which comes from an injected
       `IRandomSource`. See "The RNG at `LE9EA`" below.
@@ -2545,9 +2555,119 @@ those four is worth re-checking against it.
       case moved out to rows −4 and 28. Four hand-worked cases and one
       golden case cover the copy, and three golden cases cover the spawn.
 
-- [ ] Each enemy type, one at a time.
-- [ ] Baron Von Blubba (`baron_von_blubba` in `special-enemies.s`).
-- [ ] The anger state that speeds enemies up.
+- [x] **Each enemy type**, as `Enemies/EnemyFrame.cs` - `$1CBD`'s loop over
+      slots 7 to 2, `$1CA0`, `$1E87` and `$1E6C` - and one class per
+      handler in the `$1E3A` table.
+
+      | Class | State | Handler | Class in the port | Levels |
+      |---|---|---|---|---|
+      | 0 | 2 | `$EA08` | `EnemyWalker`, `EnemyJump` | 1, 3 |
+      | 1 | 3 | `$E9FD` | `EnemyShot`, then the walker | 42 |
+      | 2 | 4 | `$1F2E` | `EnemyHopper` | 36 |
+      | 3 | 5 | `$EFC0` | `DiagonalMover.Step` | 22 |
+      | 4 | 6 | `$EEB2` | `DiagonalMover.StepFacing` | 12 |
+      | 5 | 7 | `$E9FD` | `EnemyShot`, then the walker | 50 |
+      | 6 | 8 | `$E9FD` | `EnemyShot`, then the walker | 7 |
+      | 7 | 9 | `$1E9F` | `EnemyRunner` | 60 |
+
+      **Proved against VICE on 2026-09-23, every class, a frame at a time.**
+      Two exec checkpoints bracket one enemy slot's turn of `$1CBD`: `$1CDB`,
+      the top of the loop, and `$1D24`, its end. Every array the slot owns was
+      read at both, with the two players, `$26`, `$27` and ObjectTable. The
+      game stopped at `$09A5`, the level's initialisation, and `SUBFLG` was
+      written there for every level but 1. It counts from zero. The player
+      pressed up every three seconds. `EnemyFrameGoldenTests` replays 9,450
+      slot frames on the eight levels in the table, and
+      `EnemyWalkerGoldenTests` replays 2,100 calls of `$1E6C` on levels 1
+      and 3. All match, byte for byte.
+
+      The random draws are recovered, not matched. The test works out the CIA
+      byte that takes `$26` and `$27` from the capture's before to its after,
+      and feeds it back through `IRandomSource`. That proves every decision
+      taken on a draw.
+
+      **Classes 1, 5 and 6 are class 0 with a gun.** `$E9FD` runs `$EDCD`,
+      which books a shot in ObjectTable, and then either the walker or `$ED3B`,
+      which fires the shot seven frames later. While a shot is booked, `$8818`
+      is the countdown and `$87A0` holds the booked slot. The indexes are two
+      along: the 6502's slot 0 is ObjectTable's slot 2.
+
+      **`$EDF1` subtracts with the RNG's carry.** The `and #$03` after
+      `jsr $E9EA` does not touch the carry. So an enemy exactly level with its
+      player in X takes either arm, by the draw. `BbRandom.Carry` exposes it.
+
+      **`PlayerCell.Solid` now carries a column into the row.** `$ED3B`'s
+      probe at `$27` is the row below and one column left, and the old
+      arithmetic read the same row 39 columns on. Level 7's shots found it.
+      Every offset used before gives the same answer both ways.
+
+      **The map's rows end in entity arrays, and a probe can read them.**
+      `$EA92`'s leap looks nine columns along. Near a wall, that is one of the
+      eight bytes after the level's 32 in the forty-byte row - `$8840` on row
+      20, and so on. Level 50 found it: a class 5 enemy at column 25 did not
+      leap, because slot 2's `$8840` is zero. `SolidMap` now reads columns 32
+      to 39 through `IRowTails`, which `EntityTable` answers for, and
+      `ShowLevel` passes it in. Rows 23 and 24's tails read zero in every
+      capture.
+
+      **`$EBB8` changes only an opcode.** The hopper falls by `$EB48` with an
+      `rts` continuation, but a landing leaves through `$EB94`, whose operand
+      is still `$EB0F`. So a hopper steps its frame as it lands, and at no
+      other time in a fall. Level 36 found it.
+
+      **Several reference headings are wrong.** `$1F2E` and `$1E9F` are enemy
+      handlers, not player code. `$ED68`'s shot goes left, not right.
+      `$EE62`'s "player below" is the player above. The class comments record
+      each one.
+
+      **Not here:** `$1CFB`'s test of `$67`, which freezes enemies below state
+      `$0B` while an item's effect runs. That is Phase 7's, and no capture
+      reached it. Nothing in the app calls `EnemyFrame` yet.
+
+      **Verified:** solution builds with 0 warnings, and
+      `BubbleBobbleSharpLib.Tests` is 12,001/12,001, up from 407.
+
+- [x] **Baron Von Blubba**, as `Enemies/Baron.cs` - `$1473` to `$1577`,
+      reached from `EnemyAiLoop` for types `$2E` and `$30`.
+
+      **He is not `baron_von_blubba`.** `special-enemies.s` gives that name to
+      `$10D3` and type `$44`. He was watched in VICE on 2026-09-23: level 1,
+      the enemy slots `$B4` to `$B9` zeroed, the player idle, and the types
+      and states sampled each second. No `$44` appeared. When the hurry-up ran
+      out, about 40 seconds in, `$1677` put type `$2E` in ObjectTable slot 0.
+      Twenty seconds later player 1 was in state `$0E`, with no enemy in any
+      slot. `$0D4E`'s table sends `$2E` and `$30` to `$1473`, which the
+      reference calls `player_death_handler`. `$44` is a bubble type that
+      `$23D5` writes.
+
+      There is one Baron per player, in the ObjectTable slot of the player's
+      number. He moves one cell a pass, in runs along one axis and then the
+      other, with a thirty-pass pause between pairs of runs, and through
+      walls. He kills a player within sixteen pixels in each axis, and he goes
+      when his own player dies.
+
+      **Not here, and Phase 7's:** `$1621`, which spawns him as the hurry-up
+      ends, and `$1490`'s store in `$2B`, the level timer.
+
+      **Proved against VICE on 2026-09-24.** Level 1, with `$B4` to `$B9`
+      zeroed as the level started so the player lived to the hurry-up. Once
+      `$CA` held `$2E`, exec checkpoints on `$1473` and the next `$0D4A`
+      bracketed 800 of his passes, with the player moved by a key every two
+      and a half seconds. They include 43 column moves, 40 row moves, 24 new
+      runs, 12 arrivals, both facings and two kills. `BaronGoldenTests`
+      replays every pass, and all match byte for byte. The 19 cases in
+      `BaronTests` stay as the hand-worked proof.
+
+      **Verified:** solution builds with 0 warnings, and
+      `BubbleBobbleSharpLib.Tests` is 12,802/12,802.
+
+- [x] **The anger state.** At `$1D03`, an enemy whose `$8728` is not zero
+      takes a second `$1E6C` on every frame whose counter has bit 1 clear, so
+      it moves half as fast again. `EnemyFrame` has it, and level 1's capture
+      proves it: `$8728` was written `$FF` eight seconds in. What sets it is
+      already translated for the bubble release (`$13FA`, `EntityTimers`). The
+      hurry-up and the last enemy standing also set it, at `$16E4`. That is
+      the level timer's, and so Phase 7's.
 
 **Verify:** each type spawned on an empty test level matches a recorded byte
 trace from VICE over 200 ticks. A golden frame per enemy type. And the bubble:

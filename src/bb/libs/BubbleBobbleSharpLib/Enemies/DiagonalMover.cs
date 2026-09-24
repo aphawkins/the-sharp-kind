@@ -7,12 +7,12 @@ using BubbleBobbleSharpLib.Players;
 
 namespace BubbleBobbleSharpLib.Enemies;
 
-// $EFC0 in entity-system.s: state 5 of the $1E3A table, a thing that travels on the diagonal and
-// turns round off whatever it meets.
+// $EFC0 and $EEB2 in entity-system.s: states 5 and 6 of the $1E3A table, things that travel on the
+// diagonal and turn round off whatever they meet. The spawn gives class 3 state 5 and class 4 state 6.
 //
-// One pixel up or down and two across, every pass. $85E8 holds which way, and a solid cell turns
-// only the axis that met it, so the thing bounces round the level rather than stopping. Which enemy
-// takes state 5 is not known yet - nothing translated so far writes it.
+// One pixel up or down and two across, every pass - two up or down for state 6. $85E8 holds which
+// way, and a solid cell turns only the axis that met it, so the thing bounces round the level rather
+// than stopping.
 //
 // **This is the level's wrapOpenings at work.** $EF4C and $EFA0, the two vertical halves, are the
 // only code in the reference that reads the wrap tables at $8501 and $88C1, and those are SolidMap's
@@ -26,9 +26,8 @@ namespace BubbleBobbleSharpLib.Enemies;
 // and `sbc #$14` takes $14, and a thing at the top asks about the column a pixel to the right of the
 // one a thing at the bottom asks about.
 //
-// $EEEB and $EF2A, the horizontal halves, have other callers that store $BD into $EF15 and so also
-// flip the sprite's facing when they turn. $EFD6 stores $60, an `rts`, and that is the only path
-// here.
+// $EEEB and $EF2A, the horizontal halves, are entered with $60, an `rts`, in $EF15 by state 5, and
+// with $BD by state 6, which makes a turn flip the sprite's facing too.
 internal sealed class DiagonalMover
 {
     // $85E8. Bit 0 set is left and bit 2 set is up.
@@ -39,9 +38,12 @@ internal sealed class DiagonalMover
     private const byte TurnAcross = 0x03;
     private const byte TurnUpOrDown = 0x0C;
 
-    // $EFC0 puts one in $04, and $EF4C negates it for the up arm.
-    private const byte Down = 0x01;
-    private const byte Up = 0xFF;
+    // $EFC0 puts one in $04 and $EEB2 puts two, and $EF4C negates it for the up arm.
+    private const byte Slow = 0x01;
+    private const byte Fast = 0x02;
+
+    // $EEDF and $EF1E. State 6 faces right on frames 0 to 3 and left from 4.
+    private const byte FacingLeft = 0x04;
 
     // $EF08 and $EF47. Two pixels, by two `dec` or two `inc`.
     private const byte Across = 0x02;
@@ -99,28 +101,69 @@ internal sealed class DiagonalMover
 
         // $EFC7. Saved before the vertical half can turn it, and the horizontal half reads this.
         byte heading = _entities.Heading[slot];
-
-        if ((heading & UpBit) != 0)
-        {
-            StepUp(slot, cell, map);
-        }
-        else
-        {
-            StepDown(slot, cell, map);
-        }
-
-        PlayerCell moved = PlayerCell.Of(_entities.X[slot], _entities.Y[slot]);
+        PlayerCell moved = Vertically(slot, heading, cell, map, Slow);
 
         if ((heading & LeftBit) != 0)
         {
-            StepLeft(slot, moved, map);
+            StepLeft(slot, moved, map, false);
         }
         else
         {
-            StepRight(slot, moved, map);
+            StepRight(slot, moved, map, false);
         }
 
         Animate(slot);
+    }
+
+    // $EEB2, state 6: the same diagonal at twice the vertical speed, by a thing that faces the way it
+    // goes. It turns to face first and moves on the next pass, and a wall that turns it round also
+    // flips its frame, because $EEEB and $EF2A are entered with $BD in $EF15 rather than an `rts`.
+    // Then the frame steps through $EB0F, not $EFEA.
+    internal void StepFacing(int slot, in PlayerCell cell, SolidMap map)
+    {
+        ArgumentNullException.ThrowIfNull(map);
+
+        // $1E6F's copy of the frame, which $EEDF and $EF1E read.
+        byte facing = _entities.Frame[slot];
+        byte heading = _entities.Heading[slot];
+        PlayerCell moved = Vertically(slot, heading, cell, map, Fast);
+
+        if ((heading & LeftBit) != 0)
+        {
+            if (facing < FacingLeft)
+            {
+                _entities.Frame[slot] = FacingLeft;
+            }
+            else
+            {
+                StepLeft(slot, moved, map, true);
+            }
+        }
+        else if (facing >= FacingLeft)
+        {
+            _entities.Frame[slot] = 0;
+        }
+        else
+        {
+            StepRight(slot, moved, map, true);
+        }
+
+        EntityAnimation.Step(_entities, slot);
+    }
+
+    // $EFEA. Reached whatever the two halves did, including a wrap and a turn. $1E87 calls it on its
+    // own for a thing that is not free to move.
+    internal void Animate(int slot)
+    {
+        _entities.AnimationTimer[slot]++;
+
+        if (_entities.AnimationTimer[slot] < AnimationPeriod)
+        {
+            return;
+        }
+
+        _entities.AnimationTimer[slot] = 0;
+        _entities.Frame[slot] = (byte)((_entities.Frame[slot] + 1) & FrameMask);
     }
 
     // $EF7D. The third cell only counts when the thing is off a column boundary and so overlaps it.
@@ -131,12 +174,28 @@ internal sealed class DiagonalMover
     private static bool Beside(in PlayerCell cell, SolidMap map, int top, int middle, int bottom)
         => cell.Solid(map, top) || cell.Solid(map, middle) || (cell.FineY != 0 && cell.Solid(map, bottom));
 
+    // $EFC7 to $EFD6, and $EEBB to $EEC8: the vertical half, then the cell again from where it left
+    // the thing.
+    private PlayerCell Vertically(int slot, byte heading, in PlayerCell cell, SolidMap map, byte speed)
+    {
+        if ((heading & UpBit) != 0)
+        {
+            StepUp(slot, cell, map, unchecked((byte)-speed));
+        }
+        else
+        {
+            StepDown(slot, cell, map, speed);
+        }
+
+        return PlayerCell.Of(_entities.X[slot], _entities.Y[slot]);
+    }
+
     // $EF4C. Off a row boundary nothing is probed at all.
-    private void StepUp(int slot, in PlayerCell cell, SolidMap map)
+    private void StepUp(int slot, in PlayerCell cell, SolidMap map, byte up)
     {
         if (cell.FineY != 0)
         {
-            MoveVertically(slot, Up);
+            MoveVertically(slot, up);
             return;
         }
 
@@ -157,15 +216,15 @@ internal sealed class DiagonalMover
             return;
         }
 
-        MoveVertically(slot, Up);
+        MoveVertically(slot, up);
     }
 
     // $EFA0.
-    private void StepDown(int slot, in PlayerCell cell, SolidMap map)
+    private void StepDown(int slot, in PlayerCell cell, SolidMap map, byte down)
     {
         if (cell.FineY != 0)
         {
-            MoveVertically(slot, Down);
+            MoveVertically(slot, down);
             return;
         }
 
@@ -181,7 +240,7 @@ internal sealed class DiagonalMover
             return;
         }
 
-        MoveVertically(slot, Down);
+        MoveVertically(slot, down);
     }
 
     // $EF5E and $EFAA. The cell on the far edge is the whole question: open, and the thing comes
@@ -201,11 +260,11 @@ internal sealed class DiagonalMover
 
     // $EEEB. On a column boundary the three cells to the left are probed, the third only when the
     // thing is off a row boundary.
-    private void StepLeft(int slot, in PlayerCell cell, SolidMap map)
+    private void StepLeft(int slot, in PlayerCell cell, SolidMap map, bool faces)
     {
         if (cell.FineX == 0 && Beside(cell, map, LeftTop, LeftMiddle, LeftBottom))
         {
-            _entities.Heading[slot] ^= TurnAcross;
+            TurnAcrossWay(slot, faces);
             return;
         }
 
@@ -213,11 +272,11 @@ internal sealed class DiagonalMover
     }
 
     // $EF2A.
-    private void StepRight(int slot, in PlayerCell cell, SolidMap map)
+    private void StepRight(int slot, in PlayerCell cell, SolidMap map, bool faces)
     {
         if (cell.FineX == 0 && Beside(cell, map, RightTop, RightMiddle, RightBottom))
         {
-            _entities.Heading[slot] ^= TurnAcross;
+            TurnAcrossWay(slot, faces);
             return;
         }
 
@@ -231,17 +290,14 @@ internal sealed class DiagonalMover
     // $EF8F.
     private void TurnVertically(int slot) => _entities.Heading[slot] ^= TurnUpOrDown;
 
-    // $EFEA. Reached whatever the two halves did, including a wrap and a turn.
-    private void Animate(int slot)
+    // $EF0D, and $EF15 when it holds $BD: `lda D_8520,x` / `eor #$04` / `sta D_8520,x`.
+    private void TurnAcrossWay(int slot, bool faces)
     {
-        _entities.AnimationTimer[slot]++;
+        _entities.Heading[slot] ^= TurnAcross;
 
-        if (_entities.AnimationTimer[slot] < AnimationPeriod)
+        if (faces)
         {
-            return;
+            _entities.Frame[slot] ^= FacingLeft;
         }
-
-        _entities.AnimationTimer[slot] = 0;
-        _entities.Frame[slot] = (byte)((_entities.Frame[slot] + 1) & FrameMask);
     }
 }

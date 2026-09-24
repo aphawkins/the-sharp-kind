@@ -73,25 +73,29 @@ internal sealed class EnemyAiLoop
     private readonly EnemyDispatcher _dispatcher;
     private readonly EntityMover _mover;
     private readonly BbRandom _random;
+    private readonly Baron _baron;
 
     internal EnemyAiLoop(
         ObjectTable objects,
         EntityTable entities,
         EnemyDispatcher dispatcher,
         EntityMover mover,
-        BbRandom random)
+        BbRandom random,
+        Baron baron)
     {
         ArgumentNullException.ThrowIfNull(objects);
         ArgumentNullException.ThrowIfNull(entities);
         ArgumentNullException.ThrowIfNull(dispatcher);
         ArgumentNullException.ThrowIfNull(mover);
         ArgumentNullException.ThrowIfNull(random);
+        ArgumentNullException.ThrowIfNull(baron);
 
         _objects = objects;
         _entities = entities;
         _dispatcher = dispatcher;
         _mover = mover;
         _random = random;
+        _baron = baron;
     }
 
     // $0CF2. `ldx #$11`, then down to zero. Seventeen first, which is the same direction the spawn
@@ -111,19 +115,23 @@ internal sealed class EnemyAiLoop
 
         if (type >= SpecialType)
         {
-            // $0D4E. Types $24 upwards get no AI at all; they are routed by value, and none of the
-            // three arms is translated.
+            // $0D4E. Types $24 upwards get no AI at all; they are routed by value.
             //
-            // Below $34, the type indexes a jump table of sixteen spawn handlers - and $0D52's
-            // `sbc #$23` runs with the carry *clear*, because $0D50's `bcs` fell through. So it
-            // takes twenty-four off, not twenty-three, and types $24 to $33 index that table as
-            // zero to fifteen. Reading the operand alone puts every one of those handlers out by
-            // one. $0D56 also gates the whole table on $67, the game state byte, which nothing
-            // here writes yet.
+            // Below $34, the type indexes a jump table - and $0D52's `sbc #$23` runs with the carry
+            // *clear*, because $0D50's `bcs` fell through. So it takes twenty-four off, not
+            // twenty-three, and types $24 to $33 index that table as zero to fifteen. The table's
+            // low and high bytes are interleaved one apart, so only the even types reach a whole
+            // address: $2E and $30 reach $1473, which is the Baron, and the other six are not
+            // translated. $0D56 also gates the whole table on $67, which nothing here writes yet.
             //
-            // At or above $34, only two values mean anything: $44 is Baron Von Blubba, and $0D7F's
-            // arm is $4C, which reaches $0EC5. Everything else, a free slot's $FF included, simply
-            // moves on to the next slot.
+            // At or above $34, only two values mean anything: $44, a bubble type $23D5 writes, reaches
+            // $10D3, and $4C reaches $0EC5. Neither is translated. Everything else, a free slot's $FF
+            // included, simply moves on to the next slot.
+            if (Baron.Is(type))
+            {
+                _baron.Step(slot);
+            }
+
             return;
         }
 

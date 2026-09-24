@@ -22,6 +22,11 @@ namespace BubbleBobbleSharpLib.Levels;
 // near the top or the bottom, so a wrap opening goes on through them rather than stopping at a
 // ceiling. Everything further off the map reads solid - nothing may leave the level by walking out
 // of it - and direction 0.
+//
+// **Columns 32 to 39 are the row's tail.** The forty-byte row goes on past the level into eight
+// bytes of an entity array, and a probe far enough past the edge reads one of them. IRowTails
+// answers for those. The copies above and below the map take the tail of row 0 or row 24 as they
+// are now, where the 6502 has the tail as it was when $3A6C copied it. No probe known reaches them.
 internal sealed class SolidMap
 {
     internal const int Columns = 32;
@@ -29,6 +34,10 @@ internal sealed class SolidMap
 
     // $3A6C. How many rows past each edge are copies of it.
     private const int CopiedRows = 3;
+
+    // Where a row's tail starts, and how long it is.
+    private const int TailColumn = 32;
+    private const int TailLength = 8;
 
     private const byte SolidBit = 0x80;
     private const byte DirectionMask = 0x03;
@@ -46,11 +55,13 @@ internal sealed class SolidMap
     ];
 
     private readonly byte[] _cells;
+    private readonly IRowTails? _tails;
 
-    private SolidMap(byte[] cells, int number)
+    private SolidMap(byte[] cells, int number, IRowTails? tails)
     {
         _cells = cells;
         Number = number;
+        _tails = tails;
     }
 
     // Which level this is, counted the way the game counts them, 1 to 100. It rides along because
@@ -62,8 +73,19 @@ internal sealed class SolidMap
     // A cell off the map is solid, which is the map's own arrangement rather than a guard: the
     // columns beside it are the wall the level is drawn inside. The three rows past each edge are
     // the edge again - see Copied.
+    //
+    // Without tails, a tail reads solid, which is what the renderer and a test with no entities want.
     internal bool this[int row, int column]
-        => !InBounds(Copied(row), column) || (_cells[(Copied(row) * Columns) + column] & SolidBit) != 0;
+    {
+        get
+        {
+            int edge = Copied(row);
+
+            return _tails != null && edge is >= 0 and < Rows && column is >= TailColumn and < TailColumn + TailLength
+                ? _tails.Solid(edge, column - TailColumn)
+                : !InBounds(edge, column) || (_cells[(edge * Columns) + column] & SolidBit) != 0;
+        }
+    }
 
     // $E299 plus $E18B, decompress_level_data: init_level_renderer fills the hundred bytes the
     // renderer reads, and decompress_level_data lays a direction under every one of them before the
@@ -75,7 +97,7 @@ internal sealed class SolidMap
     // "direction field" item in Phase 6. An empty list is a level with no current anywhere a
     // rectangle does not reach, which is a real state - not every level carries one - not a caller
     // that forgot to pass zones.
-    internal static SolidMap Build(Level level, IReadOnlyList<ZoneRect> zones)
+    internal static SolidMap Build(Level level, IReadOnlyList<ZoneRect> zones, IRowTails? tails = null)
     {
         ArgumentNullException.ThrowIfNull(level);
         ArgumentNullException.ThrowIfNull(zones);
@@ -117,7 +139,7 @@ internal sealed class SolidMap
             Overlay(cells, zone);
         }
 
-        return new(cells, level.Number);
+        return new(cells, level.Number, tails);
     }
 
     // $0E23. The direction a lone thing in this cell drifts, masked to two bits the way the

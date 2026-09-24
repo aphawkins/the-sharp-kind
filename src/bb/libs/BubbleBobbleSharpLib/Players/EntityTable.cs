@@ -2,6 +2,8 @@
 // 'rebb64' - github.com/zaidka/rebb64.
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
+using BubbleBobbleSharpLib.Levels;
+
 namespace BubbleBobbleSharpLib.Players;
 
 // The arrays a player shares with every other moving thing, from the $85xx-$88xx region.
@@ -18,7 +20,7 @@ namespace BubbleBobbleSharpLib.Players;
 // One field per array, added as the routine that reads it arrives, the way PlayerTable is built.
 // Section 6.4 asks for this shape and the movement code needs it: $220C and the movers index these
 // with the same register they index the player's own bytes with.
-internal sealed class EntityTable
+internal sealed class EntityTable : IRowTails
 {
     // $1CBD: ldx #$07, then dec and bpl. Eight slots, not the eighteen section 6.4 mentions - that
     // count belongs to PESSION at $CA, which is a different array holding entity types.
@@ -45,6 +47,10 @@ internal sealed class EntityTable
     private readonly byte[] _turnInterval = new byte[Capacity];
     private readonly byte[] _frameCount = new byte[Capacity];
     private readonly byte[] _frameMask = new byte[Capacity];
+    private readonly bool[] _climbNext = new bool[Capacity];
+    private readonly byte[] _leapFlag = new byte[Capacity];
+    private readonly byte[] _climbFlag = new byte[Capacity];
+    private readonly byte[] _attackTimer = new byte[Capacity];
 
     // $B2, ENESSION. Zero means the slot is empty, which is what the update loop tests first.
     //
@@ -138,8 +144,59 @@ internal sealed class EntityTable
 
     internal Span<byte> FrameMask => _frameMask;
 
+    // $86D8 and $8700. What a walking enemy may try while its player is not below it: a leap across a
+    // gap in the floor, and a jump up onto the platform above. Negative is yes. $EE62 sets the first
+    // when the player is level with the thing and clears both when the player is below it.
+    //
+    // While the player is above, $EE91 alternates them, one on and one off, each time the turn timer
+    // runs out. It does that by indexing $86D8 with $86B0, which holds either the slot or the slot plus
+    // $28 - and $86D8 plus $28 is $8700. ClimbNext is that choice: false points at LeapFlag and true
+    // at ClimbFlag. $05C5 stores the slot, which is false.
+    internal Span<byte> LeapFlag => _leapFlag;
+
+    internal Span<byte> ClimbFlag => _climbFlag;
+
+    internal Span<bool> ClimbNext => _climbNext;
+
+    // $8890. Three uses, one at a time. While an enemy drops into the level at $1CA0 it is the row
+    // the drop stops at; the drop leaves it at $0A. Then $EDCD counts it down between an enemy's
+    // shots, and state 9's handler at $1E9F counts it down too.
+    internal Span<byte> AttackTimer => _attackTimer;
+
     // $4A, the enemies still to be dealt with on this level. It is zero page and one byte, not a row
     // of the region, and is here because this is what it counts: $39D2 adds one for each slot it
     // fills, and collision.s and bubbles-sprites.s read it.
     internal byte EnemyCount { get; set; }
+
+    // IRowTails. Row r of $8500's map ends in the eight slots of the array at $8520 plus forty times r,
+    // so the arrays here are those tails, row by row. Two rows hold arrays this class does not keep,
+    // and neither can read solid: $8570 is a colour, below $10, and $86B0 is a slot, or a slot plus
+    // $28. Rows 23 and 24, $88B8 and $88E0, read zero in every capture taken.
+    public bool Solid(int row, int index) => (Tail(row, index) & 0x80) != 0;
+
+    private byte Tail(int row, int index) => row switch
+    {
+        0 => _frame[index],
+        1 => _colour[index],
+        3 => _spriteBase[index],
+        4 => _mode[index],
+        5 => _heading[index],
+        6 => _animationTimer[index],
+        7 => _holdTimer[index],
+        8 => _turnTimer[index],
+        9 => _turnInterval[index],
+        11 => _leapFlag[index],
+        12 => _climbFlag[index],
+        13 => _flashTimer[index],
+        14 => _frameCount[index],
+        15 => _frameMask[index],
+        16 => _riseCounter[index],
+        17 => _fallCounter[index],
+        18 => _groundState[index],
+        19 => _bubbleTimer[index],
+        20 => _leftFlag[index],
+        21 => _rightFlag[index],
+        22 => _attackTimer[index],
+        _ => 0,
+    };
 }

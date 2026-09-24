@@ -20,9 +20,8 @@ namespace BubbleBobbleSharpLib.Players;
 // **The self-modifying code is deliberately not reproduced.** $EB34, $EB3F and $EBB8 each write a
 // different continuation into $EB94 and $EBB5 and then fall into this body, so what they really
 // choose between is where to go afterwards: the entity animation step at $EB0F, $EE4A reached past a
-// BIT, or a bare rts. Phase 4 arrives through $EB3F, whose continuation is $EB0F both ways out.
-// $EB0F is the generic entity animation and wants two arrays this port has no reader for yet, so it
-// is left to Phase 6 and this class stops where the continuation begins.
+// BIT, or a bare rts. This class stops where the continuation begins, and each caller runs its own:
+// EnemyWalker, EnemyHopper and EnemyRunner.
 internal sealed class PlayerDescent
 {
     // $EB51. Flat, and twice the arc's slowest step.

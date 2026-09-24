@@ -48,10 +48,17 @@ internal readonly record struct PlayerCell(int Row, int Column, int FineX, int F
 
     // One indexed read off the pointer, by the offset the reference writes. $51 is two rows down and
     // one column across, because forty is a row; $28 is the row below; $00 is the cell itself.
+    //
+    // The offset is added to the pointer, not to the row and the column apart, so a column that goes
+    // past forty carries into the row. $27 is the row below and one column left: $ED3B's shot probe
+    // proved it, which read the same row thirty-nine columns on before this carried.
     internal bool Solid(SolidMap map, int offset)
     {
         ArgumentNullException.ThrowIfNull(map);
 
-        return map[Row + (offset / Stride), Column + (offset % Stride)];
+        int column = Column + offset;
+        int rows = column >= 0 ? column / Stride : ((column + 1) / Stride) - 1;
+
+        return map[Row + rows, column - (rows * Stride)];
     }
 }

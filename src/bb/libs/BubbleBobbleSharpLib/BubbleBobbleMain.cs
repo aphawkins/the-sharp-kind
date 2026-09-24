@@ -224,7 +224,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         Level level = _levels.Level(number);
 
         _playfield = Playfield.Build(level);
-        _solids = SolidMap.Build(level, _zones.Zones(number));
+        _solids = SolidMap.Build(level, _zones.Zones(number), _entities);
         _sidebar = Sidebars.Select(level);
         CurrentLevel = number;
 

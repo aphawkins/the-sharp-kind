@@ -119,7 +119,8 @@ public sealed class BubbleTravelTests
             entities,
             new EnemyDispatcher(objects, entities, new BubbleCollision(objects, entities)),
             new EntityMover(objects),
-            new BbRandom(new FakeRandomSource()));
+            new BbRandom(new FakeRandomSource()),
+            new Baron(objects, entities));
         EntityTimers timers = new(objects, entities);
 
         objects.Type[Slot] = BubbleBlow.BubbleType;

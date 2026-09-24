@@ -35,6 +35,10 @@ internal sealed class BbRandom
 
     internal byte High { get; set; }
 
+    // The carry $E9EA's `adc` leaves. The `eor` and the `sta` after it do not touch it, so it is still
+    // there when the caller returns - and $EDF1 subtracts with it.
+    internal bool Carry { get; private set; }
+
     // $E9EA. The carry the `adc` uses is the one `rol RESHO` left, which is the top bit $26 had on
     // the way in - the `asl` at the start shifted a copy in A and not $26 itself.
     internal byte Next()
@@ -45,9 +49,10 @@ internal sealed class BbRandom
         High = (byte)((High << 1) | lowTop);
         Low = (byte)((Low << 1) | highTop);
 
-        int mixed = ((High ^ Low) + High + lowTop) & 0xFF;
+        int mixed = (High ^ Low) + High + lowTop;
+        Carry = mixed > 0xFF;
 
-        Low = (byte)(mixed ^ _timer.Random(0x100));
+        Low = (byte)((mixed & 0xFF) ^ _timer.Random(0x100));
         return Low;
     }
 }

@@ -28,6 +28,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="Enemies\Captures\*.txt" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <RenditionProject Include="..\..\libs\BubbleBobbleSharp.Renditions.EightBit\BubbleBobbleSharp.Renditions.EightBit.csproj" />
   </ItemGroup>
 
