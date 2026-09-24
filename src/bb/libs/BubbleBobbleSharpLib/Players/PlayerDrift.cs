@@ -2,6 +2,7 @@
 // 'rebb64' - github.com/zaidka/rebb64.
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
+using BubbleBobbleSharpLib.Items;
 using BubbleBobbleSharpLib.Levels;
 
 namespace BubbleBobbleSharpLib.Players;
@@ -46,14 +47,25 @@ internal sealed class PlayerDrift
 
     private readonly EntityTable _entities;
     private readonly PlayerSteer _steer;
+    private readonly Rings _rings;
 
-    internal PlayerDrift(EntityTable entities, PlayerSteer steer)
+    internal PlayerDrift(EntityTable entities, PlayerSteer steer, Rings rings)
     {
         ArgumentNullException.ThrowIfNull(entities);
         ArgumentNullException.ThrowIfNull(steer);
+        ArgumentNullException.ThrowIfNull(rings);
 
         _entities = entities;
         _steer = steer;
+        _rings = rings;
+    }
+
+    // $2483. The jump's way in: the drift ring's ten points, then the drift. A fall comes in at
+    // $248D, below the ring, through Step.
+    internal void Enter(int player, byte port, in PlayerCell cell, SolidMap map)
+    {
+        _rings.Drift(player);
+        Step(player, port, cell, map);
     }
 
     // $248D. The left flag is looked at first and wins, then the right, then the animation runs
@@ -63,9 +75,6 @@ internal sealed class PlayerDrift
     // $2483 gets it by calling $E9B8 on the way in; the fall reaches $248D directly, having already
     // called it at $2450. Either way the caller has a current cell, so this takes one rather than
     // working it out again.
-    //
-    // $2483's own prologue reads $61,x and calls $7C21 when it is set. That is Phase 6's, and not
-    // translated.
     internal void Step(int player, byte port, in PlayerCell cell, SolidMap map)
     {
         ArgumentNullException.ThrowIfNull(map);

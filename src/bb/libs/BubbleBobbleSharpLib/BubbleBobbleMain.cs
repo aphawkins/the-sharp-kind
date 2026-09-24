@@ -7,10 +7,10 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using BubbleBobbleSharp.Abstractions.Renditions;
 using BubbleBobbleSharp.Abstractions.Views;
-using BubbleBobbleSharpLib.Bubbles;
 using BubbleBobbleSharpLib.Graphics;
 using BubbleBobbleSharpLib.Levels;
 using BubbleBobbleSharpLib.Players;
+using SharpKind;
 using SharpKind.Abstraction;
 using SharpKind.Assets;
 using SharpKind.Audio;
@@ -29,20 +29,15 @@ namespace BubbleBobbleSharpLib;
 /// </summary>
 public sealed class BubbleBobbleMain : IGame, IGameApp
 {
-    // The C64 runs off the PAL raster interrupt, so one tick is one frame. Every counter
-    // translated out of the reference is measured in these.
-    internal const int TickRate = 50;
+    // One tick is one pass of the game loop, which waits for two of the PAL raster interrupt's 50
+    // frames each time round - see GameLoop.
+    internal const int TickRate = 25;
 
     // The level the game opens on. There is no front end yet to choose another.
     private const int FirstLevel = 1;
 
     // $0956, game-loop.s: both players start a game with three lives.
     private const int StartingLives = 3;
-
-    // The row check_player_state puts a player on as a life starts. $04E1 writes it to $C2 for
-    // either of them. A player at $2C/$DD stands with their feet exactly on the floor, which is the
-    // cheapest check that the position bytes and the drawing offsets agree.
-    private const byte SpawnY = 0xDD;
 
     // There is no front end to choose two players with, so the game starts the one it can name.
     // Player two's slot stays empty, which is what an unjoined second player looks like.
@@ -54,15 +49,6 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     // the two together photograph any level asked for.
     private const ConsoleKey NextLevelKey = ConsoleKey.N;
 
-    // $A735, read at $04E5: the two players start a life at opposite ends of the same row.
-    private static readonly byte[] s_spawnX = [0x2C, 0xEC];
-
-    // $A737, read at $04C0: player one starts facing right and player two facing left.
-    private static readonly byte[] s_spawnFrame = [0x00, 0x04];
-
-    // $05C5. Player one's sprite is colour 5 and player two's is colour 3.
-    private static readonly byte[] s_spawnColour = [0x05, 0x03];
-
     private readonly IAbstraction _abstraction;
     private readonly LevelStore _levels;
     private readonly ZoneStore _zones;
@@ -71,38 +57,19 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     private readonly IView<PlayerModel> _playerView;
     private readonly IView<HudModel> _hudView;
 
-    // The players' own bytes and the ones they share with everything else that moves, and the chain
-    // that walks them: $1CBD reads the sticks, $1E6C dispatches on a player's state, and what hangs
-    // off that is the whole of Phase 4.
-    private readonly PlayerTable _playerTable = new();
-    private readonly EntityTable _entities = new();
-
-    // The eighteen slots a bubble goes into. Nothing reads them back yet - what travels, expires
-    // and pops is the rest of Phase 5 - but the blow fills them, so they are held from here.
-    private readonly ObjectTable _objects = new();
+    // Everything that moves, and the routines that move it, in the reference's order.
+    private readonly GameLoop _loop;
 
     private readonly Input _input;
-    private readonly PlayerFrame _frame;
-    private readonly BubbleBlow _blow;
     private readonly LayerRunner _layers;
 
-    // What the HUD shows. $0969 clears both scores and the high score when a game starts, and
-    // nothing has scored yet: there is no player to score with until Phase 4.
-    private readonly HudModel _hud = new(
-        new byte[HudModel.ScoreBytes],
-        new byte[HudModel.ScoreBytes],
-        new byte[HudModel.ScoreBytes],
-        StartingLives,
-        StartingLives);
+    // $0969 clears the high score when a game starts. Nothing translated sets it yet.
+    private readonly byte[] _highScore = new byte[HudModel.ScoreBytes];
 
     // What the level in play looks like, rebuilt when the level changes rather than per frame: a
     // level's characters are settled the moment setup_level_screen has run.
     private PlayfieldModel _playfield;
     private SidebarModel _sidebar;
-
-    // The same level as a bit grid, which is what every collision test in Phase 4 reads. Built with
-    // the playfield rather than per frame: init_level_renderer builds it once, as a level starts.
-    private SolidMap _solids;
 
     public BubbleBobbleMain(
         IAbstraction abstraction,
@@ -141,8 +108,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
 
         _input = new Input(Keyboard, Gamepad);
 
-        _blow = new BubbleBlow(_playerTable, _entities, _objects);
-        _frame = BuildFrame(_entities, _blow);
+        _loop = new GameLoop(new BbRandom(new RandomSource(Random.Shared)), PlayingPlayers);
 
         BbViewSurface surface = new(Graphics, Layout, assetLocator);
         _playfieldView = rendition.CreatePlayfieldView(surface);
@@ -201,12 +167,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
             ShowLevel(CurrentLevel == LevelStore.Count ? FirstLevel : CurrentLevel + 1);
         }
 
-        // $0A28, which the game loop runs before the entity update rather than after it.
-        _blow.Tick();
-
-        // $1CBD: both ports read once, then every live slot walked. One tick is one frame, so this
-        // runs at the rate the raster interrupt called it at.
-        _frame.Step(_input.Read(), _solids);
+        _loop.Pass(_input.Read());
     }
 
     public void Draw()
@@ -218,82 +179,35 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
 
     // setup_level_screen, as far as this port has translated it: what the level's screen holds, and
     // what its border is decorated with. Both are settled once and then drawn every frame.
-    [MemberNotNull(nameof(_playfield), nameof(_sidebar), nameof(_solids))]
+    [MemberNotNull(nameof(_playfield), nameof(_sidebar))]
     internal void ShowLevel(int number)
     {
         Level level = _levels.Level(number);
 
         _playfield = Playfield.Build(level);
-        _solids = SolidMap.Build(level, _zones.Zones(number), _entities);
         _sidebar = Sidebars.Select(level);
         CurrentLevel = number;
 
-        StartPlayers();
-    }
-
-    // $04BB and $05C5, as far as a player who is only drawn needs them: where a life starts, which
-    // way the player faces, what colour they are, and the three counters a level start puts back to
-    // $FF. The rest of both routines - the music, the invincibility timer, the lives - belongs to
-    // the phases that read those bytes, and is not translated here.
-    // $1CBD down to $267A, built once. Each of these is one routine out of the reference and they
-    // are wired in the order the reference calls them, innermost first: the steer is reached from
-    // the drift's tail and the fall's, the descent from the landing, the landing from the jump.
-    //
-    // A method of its own rather than eight lines of the constructor, because the constructor is at
-    // the class coupling limit and every routine Phase 5 adds would push it over.
-    private static PlayerFrame BuildFrame(EntityTable entities, BubbleBlow blow)
-    {
-        PlayerSteer steer = new(entities, blow);
-        PlayerDrift drift = new(entities, steer);
-        PlayerDescent descent = new(entities);
-        PlayerLanding landing = new(entities, descent);
-
-        return new PlayerFrame(
-            entities,
-            new PlayerMovement(entities, blow),
-            new PlayerJump(entities, drift, landing),
-            new PlayerFall(entities, steer),
-            blow);
-    }
-
-    private void StartPlayers()
-    {
-        // $0620 and $062B. Every one of the eighteen slots goes back to free, so bubbles blown on
-        // the last level are not still there on this one.
-        _objects.Reset();
-
-        for (int player = 0; player < PlayerTable.Capacity; player++)
-        {
-            bool playing = player < PlayingPlayers;
-
-            _entities.State[player] = playing ? PlayerFrame.PlayingState : (byte)0;
-            _entities.X[player] = s_spawnX[player];
-            _entities.Y[player] = SpawnY;
-
-            _entities.Frame[player] = s_spawnFrame[player];
-            _entities.Colour[player] = s_spawnColour[player];
-
-            // $04C4 to $04CB, and $05F5 for the fourth. None of them is a count of anything yet:
-            // $FF is the value each reads as "not happening", which is what a player standing still
-            // is. The bubble timer belongs to the level-start loop rather than to $04BB, but it is
-            // set here for the same reason - the movers refuse to turn a player whose bubble timer
-            // is not negative, so leaving it at zero would leave them facing one way for good.
-            _entities.RiseCounter[player] = 0xFF;
-            _entities.FallCounter[player] = 0xFF;
-            _entities.GroundState[player] = 0xFF;
-            _entities.BubbleTimer[player] = 0xFF;
-        }
+        _loop.Start(level, _zones.Zones(number), number);
     }
 
     // $1805, built fresh each frame rather than held. A level's characters are settled the moment it
     // is drawn, but a player's bytes are the ones that change every frame, so there is nothing here
     // to cache.
     private PlayerModel Players() => new(
-        _entities.State,
-        _entities.X,
-        _entities.Y,
-        _entities.Frame,
-        _entities.Colour);
+        _loop.Entities.State,
+        _loop.Entities.X,
+        _loop.Entities.Y,
+        _loop.Entities.Frame,
+        _loop.Entities.Colour);
+
+    // $E3A7 and $046C: both scores from $0400, the high score and the lives.
+    private HudModel Hud() => new(
+        _loop.Scores.Bytes[..HudModel.ScoreBytes],
+        _loop.Scores.Bytes[HudModel.ScoreBytes..],
+        _highScore,
+        StartingLives,
+        StartingLives);
 
     // Layer 0, the level itself, trimmed to the columns the decoration does not cover.
     private sealed class PlayfieldLayer(BubbleBobbleMain game) : ILayerDrawer
@@ -317,6 +231,6 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     // Layer 3, $E3A7 and $046C: the scores and lives, in the columns the level never reaches.
     private sealed class HudLayer(BubbleBobbleMain game) : ILayerDrawer
     {
-        public void Draw() => game._hudView.Draw(game._hud);
+        public void Draw() => game._hudView.Draw(game.Hud());
     }
 }

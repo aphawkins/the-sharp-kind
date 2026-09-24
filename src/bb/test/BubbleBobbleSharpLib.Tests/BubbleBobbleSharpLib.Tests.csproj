@@ -29,6 +29,8 @@
 
   <ItemGroup>
     <None Include="Enemies\Captures\*.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Items\Captures\*.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Bubbles\Captures\*.txt" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

@@ -371,6 +371,6 @@ public sealed class BubbleBlowTests
         entities.GroundState[0] = 0xFF;
         entities.BubbleTimer[0] = 0xFF;
 
-        return (players, entities, objects, new BubbleBlow(players, entities, objects));
+        return (players, entities, objects, new BubbleBlow(players, entities, objects, new(players, new())));
     }
 }

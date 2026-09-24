@@ -41,17 +41,20 @@ internal sealed class BubbleCollision
     // $10BB. What the capture leaves in $A9FA.
     private const byte CapturedFlags = 0xA0;
 
-    // $AB81 in game-tables-2.s, as the reference labels it: eight bytes, then $AB89 begins.
+    // $AB81 in game-tables-2.s, eight bytes, and $AB89 after it: the sprite frame each enemy class is
+    // drawn with inside a bubble. $3CB2 puts it in the enemy's $8520 while the bubble carries it.
     //
-    // **The index can run past it.** $10BF indexes this with the byte $10B1 has just written to
-    // $AA30, which is either an enemy's rise counter - $FF at level start - or its state byte, which
-    // this routine only reaches when it is below $0B. Nine is already past eight. The 6502 reads on
-    // into $AB89 and keeps going, and there is nothing here that says where the table really stops.
-    //
-    // So this throws rather than guessing at bytes, the way $ACB6 does in EnemyDispatcher. A capture
-    // from VICE is what settles the real bound, and until then a throw says plainly that the port
-    // does not know. See docs/bb-port-plan.md.
-    private static readonly byte[] s_scores = [0x02, 0x00, 0x0B, 0x0B, 0x0B, 0x07, 0x0B, 0x07];
+    // **The index runs past $AB81.** $10BF indexes it with the byte $10B1 has just written to $AA30:
+    // an enemy's state, which is below $0B here, or its rise counter. States 8 and 9 are enemy
+    // classes, and the game loop reaches them, so the 6502 reads on into $AB89 - the animation
+    // offsets FoodDrop uses too. The image is byte-exact, so those are the bytes it reads, and they
+    // are carried here. Past them the next table is text, and a rise counter that far out has not
+    // been seen, so an index beyond still throws rather than guessing.
+    private static readonly byte[] s_caughtFrames =
+    [
+        0x02, 0x00, 0x0B, 0x0B, 0x0B, 0x07, 0x0B, 0x07,
+        0x07, 0x05, 0x07, 0x07, 0x07, 0x03, 0x07, 0x03, 0x03, 0x01,
+    ];
 
     private readonly ObjectTable _objects;
     private readonly EntityTable _entities;
@@ -114,7 +117,7 @@ internal sealed class BubbleCollision
         // That swap is easy to miss. `cmp` does not touch the accumulator, so on the short path the
         // `sta D_AA30,x` at $10B1 is still storing what `lda $B4,y` loaded at $1095. Two different
         // bytes reach the same place depending on a branch taken fifteen instructions earlier, and
-        // the score below is indexed with whichever one it was.
+        // the frame below is indexed with whichever one it was.
         if (state is 0x0A or >= SkipBefore)
         {
             carried = _entities.RiseCounter[entity];
@@ -134,7 +137,8 @@ internal sealed class BubbleCollision
         _entities.Mode[entity] = 0xFF;
         _objects.Flags[slot] = CapturedFlags;
 
-        // $10BF. Indexed by the byte that just went to $AA30 - see the note on the table.
-        _objects.EnemyType[slot] = s_scores[carried];
+        // $10BF. The frame the enemy will be drawn with inside the bubble, indexed by the byte that just
+        // went to $AA30 - see the note on the table.
+        _objects.EnemyType[slot] = s_caughtFrames[carried];
     }
 }

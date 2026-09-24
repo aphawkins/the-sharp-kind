@@ -73,7 +73,7 @@ public sealed class PlayerFireTests
     public void BlowsFromTheSteer()
     {
         (EntityTable entities, ObjectTable objects, _) = Standing();
-        PlayerSteer steer = new(entities, new BubbleBlow(new PlayerTable(), entities, objects));
+        PlayerSteer steer = new(entities, new BubbleBlow(new PlayerTable(), entities, objects, TestBlow.NoRings()));
 
         steer.Step(0, Fire, Floor());
 
@@ -132,14 +132,14 @@ public sealed class PlayerFireTests
         entities.GroundState[0] = 0xFF;
         entities.BubbleTimer[0] = 0xFF;
 
-        BubbleBlow blow = new(new PlayerTable(), entities, objects);
+        BubbleBlow blow = new(new PlayerTable(), entities, objects, TestBlow.NoRings());
         PlayerSteer steer = new(entities, blow);
         PlayerDescent descent = new(entities);
 
         PlayerFrame frame = new(
             entities,
-            new PlayerMovement(entities, blow),
-            new PlayerJump(entities, new PlayerDrift(entities, steer), new PlayerLanding(entities, descent)),
+            new PlayerMovement(entities, blow, TestBlow.NoRings()),
+            new PlayerJump(entities, new PlayerDrift(entities, steer, TestBlow.NoRings()), new PlayerLanding(entities, descent)),
             new PlayerFall(entities, steer),
             blow);
 

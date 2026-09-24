@@ -3,6 +3,7 @@
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
 using BubbleBobbleSharpLib.Bubbles;
+using BubbleBobbleSharpLib.Items;
 using BubbleBobbleSharpLib.Levels;
 
 namespace BubbleBobbleSharpLib.Players;
@@ -54,14 +55,17 @@ internal sealed class PlayerMovement
 
     private readonly EntityTable _entities;
     private readonly BubbleBlow _blow;
+    private readonly Rings _rings;
 
-    internal PlayerMovement(EntityTable entities, BubbleBlow blow)
+    internal PlayerMovement(EntityTable entities, BubbleBlow blow, Rings rings)
     {
         ArgumentNullException.ThrowIfNull(entities);
         ArgumentNullException.ThrowIfNull(blow);
+        ArgumentNullException.ThrowIfNull(rings);
 
         _entities = entities;
         _blow = blow;
+        _rings = rings;
     }
 
     // $220C. The port byte is shifted a bit at a time and each direction handled as it falls out, so
@@ -213,8 +217,8 @@ internal sealed class PlayerMovement
             return;
         }
 
-        // $22B4 reads $63,x here and calls $7C21 when it is set. That routine is Phase 6's, and the
-        // byte is clear for a walking player, so the call is not translated - see bb-port-plan.md.
+        // $22B4. The walk ring's ten points, on every step the wall let through.
+        _rings.Walk(player);
         _entities.X[player] = unchecked((byte)(_entities.X[player] + step));
     }
 }

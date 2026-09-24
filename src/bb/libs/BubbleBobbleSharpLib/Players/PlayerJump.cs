@@ -117,7 +117,7 @@ internal sealed class PlayerJump
 
         // $23FC leaves for $2483, which works the player sideways from the drift flags. The cell it
         // wants is a fresh one: $2483 calls $E9B8 on the way in, after this frame's move.
-        _drift.Step(player, port, PlayerCell.Of(_entities.X[player], y), map);
+        _drift.Enter(player, port, PlayerCell.Of(_entities.X[player], y), map);
     }
 
     // $2401 to $243B. The first frame of a fall tidies the sprite and zeroes the counter; every

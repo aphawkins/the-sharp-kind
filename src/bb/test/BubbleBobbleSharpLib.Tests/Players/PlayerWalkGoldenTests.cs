@@ -54,7 +54,7 @@ public sealed class PlayerWalkGoldenTests
     public void WalksRightAcrossLevelOneExactlyAsTheGameDoes()
     {
         EntityTable entities = new();
-        PlayerMovement movement = new(entities, TestBlow.Of(entities));
+        PlayerMovement movement = new(entities, TestBlow.Of(entities), TestBlow.NoRings());
         SolidMap map = SolidMap.Build(s_levels.Level(1), []);
 
         entities.X[0] = StartX;
@@ -100,7 +100,7 @@ public sealed class PlayerWalkGoldenTests
     private static void Walk(SolidMap map, int number, byte startX, byte y, byte port, byte frame, int probe)
     {
         EntityTable entities = new();
-        PlayerMovement movement = new(entities, TestBlow.Of(entities));
+        PlayerMovement movement = new(entities, TestBlow.Of(entities), TestBlow.NoRings());
 
         entities.X[0] = startX;
         entities.Y[0] = y;

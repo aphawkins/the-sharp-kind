@@ -2,6 +2,7 @@
 // 'rebb64' - github.com/zaidka/rebb64.
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
+using BubbleBobbleSharpLib.Items;
 using BubbleBobbleSharpLib.Levels;
 using BubbleBobbleSharpLib.Players;
 
@@ -60,6 +61,7 @@ internal sealed class EnemyFrame
     private readonly EnemyHopper _hopper;
     private readonly DiagonalMover _diagonal;
     private readonly EnemyRunner _runner;
+    private readonly FoodDrop _food;
 
     internal EnemyFrame(
         EntityTable entities,
@@ -67,7 +69,8 @@ internal sealed class EnemyFrame
         EnemyShot shot,
         EnemyHopper hopper,
         DiagonalMover diagonal,
-        EnemyRunner runner)
+        EnemyRunner runner,
+        FoodDrop food)
     {
         ArgumentNullException.ThrowIfNull(entities);
         ArgumentNullException.ThrowIfNull(walker);
@@ -75,6 +78,7 @@ internal sealed class EnemyFrame
         ArgumentNullException.ThrowIfNull(hopper);
         ArgumentNullException.ThrowIfNull(diagonal);
         ArgumentNullException.ThrowIfNull(runner);
+        ArgumentNullException.ThrowIfNull(food);
 
         _entities = entities;
         _walker = walker;
@@ -82,12 +86,15 @@ internal sealed class EnemyFrame
         _hopper = hopper;
         _diagonal = diagonal;
         _runner = runner;
+        _food = food;
     }
 
     // $1CBD's loop, from slot 7 down. counter is $08, the frame counter the IRQ steps.
     internal void Step(byte counter, SolidMap map)
     {
         ArgumentNullException.ThrowIfNull(map);
+
+        _food.BeginFrame();
 
         for (int slot = EntityTable.Capacity - 1; slot >= FirstEnemy; slot--)
         {
@@ -173,7 +180,8 @@ internal sealed class EnemyFrame
     }
 
     // $1E6C. The cell first, then the state, through the $1E3A table. States 2 to 9 are the eight
-    // enemy classes; the others belong to things this class does not drive.
+    // enemy classes, and $0B, $0C, $11 and $12 are a killed enemy on its way to being food. The
+    // others belong to things this class does not drive.
     private void Dispatch(int slot, int target, SolidMap map)
     {
         PlayerCell cell = PlayerCell.Of(_entities.X[slot], _entities.Y[slot]);
@@ -199,6 +207,18 @@ internal sealed class EnemyFrame
                 break;
             case RunnerState:
                 _runner.Step(slot, target, cell, map);
+                break;
+            case FoodDrop.FlyingState:
+                _food.Fly(slot);
+                break;
+            case FoodDrop.FallingState:
+                _food.Fall(slot, cell, map);
+                break;
+            case FoodDrop.LandedState:
+                _food.Land(slot);
+                break;
+            case FoodDrop.FoodState:
+                _food.Wait(slot);
                 break;
         }
     }

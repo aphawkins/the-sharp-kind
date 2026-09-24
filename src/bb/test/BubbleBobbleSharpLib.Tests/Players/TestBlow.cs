@@ -3,6 +3,7 @@
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
 using BubbleBobbleSharpLib.Bubbles;
+using BubbleBobbleSharpLib.Items;
 using BubbleBobbleSharpLib.Players;
 
 namespace BubbleBobbleSharpLib.Tests.Players;
@@ -14,5 +15,8 @@ namespace BubbleBobbleSharpLib.Tests.Players;
 internal static class TestBlow
 {
     internal static BubbleBlow Of(EntityTable entities)
-        => new(new PlayerTable(), entities, new ObjectTable());
+        => new(new PlayerTable(), entities, new ObjectTable(), NoRings());
+
+    // Rings on a table of their own, so none is ever set and nothing scores.
+    internal static Rings NoRings() => new(new PlayerTable(), new Scores());
 }

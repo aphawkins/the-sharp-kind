@@ -250,8 +250,8 @@ public sealed class PlayerFrameTests
 
         PlayerFrame frame = new(
             entities,
-            new PlayerMovement(entities, blow),
-            new PlayerJump(entities, new PlayerDrift(entities, steer), new PlayerLanding(entities, descent)),
+            new PlayerMovement(entities, blow, TestBlow.NoRings()),
+            new PlayerJump(entities, new PlayerDrift(entities, steer, TestBlow.NoRings()), new PlayerLanding(entities, descent)),
             new PlayerFall(entities, steer),
             blow);
 

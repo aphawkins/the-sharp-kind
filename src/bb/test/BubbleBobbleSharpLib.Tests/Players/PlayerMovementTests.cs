@@ -212,7 +212,7 @@ public sealed class PlayerMovementTests
         entities.BubbleTimer[0] = 0xFF;
         entities.BubbleTimer[1] = 0xFF;
 
-        return (entities, new(entities, TestBlow.Of(entities)));
+        return (entities, new(entities, TestBlow.Of(entities), TestBlow.NoRings()));
     }
 
     private static SolidMap Open() => SolidMap.Build(Level(null, null), []);

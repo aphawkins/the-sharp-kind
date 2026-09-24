@@ -2,6 +2,7 @@
 // 'rebb64' - github.com/zaidka/rebb64.
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
+using BubbleBobbleSharpLib.Items;
 using BubbleBobbleSharpLib.Players;
 
 namespace BubbleBobbleSharpLib.Bubbles;
@@ -17,12 +18,11 @@ namespace BubbleBobbleSharpLib.Bubbles;
 // The reference heads $22E8 "bubble release timer/animation" and $2301 "continue bubble animation
 // update", and for once both are right.
 //
-// Three pieces of $2301 are left out, each gated by a byte that a level start leaves in the state
+// Two pieces of $2301 are left out, each gated by a byte that a level start leaves in the state
 // that skips it, and each named here rather than skipped silently:
 //
 //   * $23B8's arm on $A783, which turns the new bubble into type $44. Level setup puts $FF in
 //     $A783 for both players, and the arm wants it positive. It belongs to Phase 7.
-//   * $23D7's sound trigger on $65, which $05C5 leaves at zero. Phase 8.
 //   * $23DE's arm on $37C7, which rewrites the bubble's flag byte. Level setup zeroes it and the
 //     arm wants it negative. Phase 7 again.
 internal sealed class BubbleBlow
@@ -54,26 +54,22 @@ internal sealed class BubbleBlow
     // $ACC4, indexed by the timer. Entry 0 is never read: a timer of zero takes $2301's other arm.
     private static readonly byte[] s_blowSprite = [0x00, 0x08, 0x08, 0x09, 0x09, 0x08, 0x08];
 
-    // $A77B, $A77D, $A77F and $A781, one byte per player and the same byte in both. $2364 copies
-    // three of them into the new bubble and the fourth into the player's reload.
-    private static readonly byte[] s_reload = [0x08, 0x08];
-    private static readonly byte[] s_state = [0x88, 0x88];
-    private static readonly byte[] s_variant = [0x04, 0x04];
-    private static readonly byte[] s_enemyType = [0x04, 0x04];
-
     private readonly PlayerTable _players;
     private readonly EntityTable _entities;
     private readonly ObjectTable _objects;
+    private readonly Rings _rings;
 
-    internal BubbleBlow(PlayerTable players, EntityTable entities, ObjectTable objects)
+    internal BubbleBlow(PlayerTable players, EntityTable entities, ObjectTable objects, Rings rings)
     {
         ArgumentNullException.ThrowIfNull(players);
         ArgumentNullException.ThrowIfNull(entities);
         ArgumentNullException.ThrowIfNull(objects);
+        ArgumentNullException.ThrowIfNull(rings);
 
         _players = players;
         _entities = entities;
         _objects = objects;
+        _rings = rings;
     }
 
     // $0A28 in game-loop.s, which is the only thing that ever clears a reload. It runs once a frame
@@ -185,12 +181,15 @@ internal sealed class BubbleBlow
 
         // $2364. The reload starts here rather than at the button, so its eight frames are measured
         // from the bubble and a player holding fire is on a fourteen-frame cycle.
-        _players.Reload[player] = s_reload[player];
-        _objects.EnemyType[slot] = s_enemyType[player];
-        _objects.State[slot] = s_state[player];
-        _objects.Variant[slot] = s_variant[player];
+        _players.Reload[player] = _players.BlowReload[player];
+        _objects.EnemyType[slot] = _players.BlowType[player];
+        _objects.State[slot] = _players.BlowState[player];
+        _objects.Variant[slot] = _players.BlowVariant[player];
 
         Place(player, slot, cell);
+
+        // $23D7. The blow ring's ten points, once $23B8's arm has been passed over.
+        _rings.Blow(player);
     }
 
     // $2385 to $23B7. Two adjustments to where the bubble landed, and the direction byte that falls

@@ -23,15 +23,17 @@ internal sealed class PlayerTable
     // Two, and the game has no way to say otherwise: the C64 conversion has two joystick ports.
     internal const int Capacity = 2;
 
-    private readonly byte[] _bubbleTimer = new byte[Capacity];
     private readonly byte[] _lives = new byte[Capacity];
     private readonly byte[] _reload = new byte[Capacity];
     private readonly byte[] _blowFacing = new byte[Capacity];
-
-    // $5D and $5E. bubbles-sprites.s reads these as the timer for the blowing animation drawn in
-    // characters behind the player, which is a screen effect rather than a rule. An earlier note
-    // here called it the reload; the reload is Reload below, and nothing reads these two yet.
-    internal Span<byte> BubbleTimer => _bubbleTimer;
+    private readonly byte[] _extendLetters = new byte[Capacity];
+    private readonly byte[] _blowReload = [0x08, 0x08];
+    private readonly byte[] _blowState = [0x88, 0x88];
+    private readonly byte[] _blowVariant = [0x04, 0x04];
+    private readonly byte[] _blowType = [0x04, 0x04];
+    private readonly byte[] _driftRing = new byte[Capacity];
+    private readonly byte[] _walkRing = new byte[Capacity];
+    private readonly byte[] _blowRing = new byte[Capacity];
 
     // $045A and $045B, the two bytes game-variables.s sets aside for the lives counters.
     internal Span<byte> Lives => _lives;
@@ -48,4 +50,29 @@ internal sealed class PlayerTable
     // runs so that every frame of the animation is built from the same facing. $22E8 stores $00 or
     // $02 and $2301 doubles it back into a sprite frame.
     internal Span<byte> BlowFacing => _blowFacing;
+
+    // $54 and $55. The EXTEND letters the player holds, one bit each from $AB53: $3DF9 sets them as
+    // a letter bubble pops. extend-bonus.s reads them, and nothing translated does yet.
+    internal Span<byte> ExtendLetters => _extendLetters;
+
+    // $A77B, $A77D, $A77F and $A781: what a blow makes. $2364 copies the first into Reload and the
+    // other three into the new bubble's $A9B2, $AA30 and $AA42. $7F53 sets them to these values
+    // whenever a player starts or dies, and the candies at $2DAB, $2DB2 and $2DCD change them.
+    internal Span<byte> BlowReload => _blowReload;
+
+    internal Span<byte> BlowState => _blowState;
+
+    internal Span<byte> BlowVariant => _blowVariant;
+
+    internal Span<byte> BlowType => _blowType;
+
+    // $61, $63 and $65. The three rings: while one is not zero, $2483 (a step of the drift), $22B4
+    // (a step of the walk) and $23D7 (a blow) each call $7C21 and score ten points. $2F5F, $2F62
+    // and $2F65 set them by decrementing them from zero, and $7F53 clears them. Nothing translated
+    // reads them yet.
+    internal Span<byte> DriftRing => _driftRing;
+
+    internal Span<byte> WalkRing => _walkRing;
+
+    internal Span<byte> BlowRing => _blowRing;
 }

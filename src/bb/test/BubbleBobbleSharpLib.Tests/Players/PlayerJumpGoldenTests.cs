@@ -54,7 +54,7 @@ public sealed class PlayerJumpGoldenTests
     {
         EntityTable entities = new();
         PlayerSteer steer = new(entities, TestBlow.Of(entities));
-        PlayerDrift drift = new(entities, steer);
+        PlayerDrift drift = new(entities, steer, TestBlow.NoRings());
         PlayerDescent descent = new(entities);
         PlayerLanding landing = new(entities, descent);
         PlayerJump jump = new(entities, drift, landing);
@@ -88,7 +88,7 @@ public sealed class PlayerJumpGoldenTests
     {
         EntityTable entities = new();
         PlayerSteer steer = new(entities, TestBlow.Of(entities));
-        PlayerDrift drift = new(entities, steer);
+        PlayerDrift drift = new(entities, steer, TestBlow.NoRings());
         PlayerDescent descent = new(entities);
         PlayerLanding landing = new(entities, descent);
         PlayerJump jump = new(entities, drift, landing);
@@ -129,7 +129,7 @@ public sealed class PlayerJumpGoldenTests
     {
         EntityTable entities = new();
         PlayerSteer steer = new(entities, TestBlow.Of(entities));
-        PlayerDrift drift = new(entities, steer);
+        PlayerDrift drift = new(entities, steer, TestBlow.NoRings());
         PlayerDescent descent = new(entities);
         PlayerLanding landing = new(entities, descent);
         PlayerJump jump = new(entities, drift, landing);
@@ -161,7 +161,7 @@ public sealed class PlayerJumpGoldenTests
     {
         EntityTable entities = new();
         PlayerSteer steer = new(entities, TestBlow.Of(entities));
-        PlayerDrift drift = new(entities, steer);
+        PlayerDrift drift = new(entities, steer, TestBlow.NoRings());
         PlayerDescent descent = new(entities);
         PlayerLanding landing = new(entities, descent);
         PlayerJump jump = new(entities, drift, landing);

@@ -20,7 +20,6 @@ public sealed class PlayerTableTests
         PlayerTable players = new();
 
         Assert.Equal(2, PlayerTable.Capacity);
-        Assert.Equal(PlayerTable.Capacity, players.BubbleTimer.Length);
         Assert.Equal(PlayerTable.Capacity, players.Lives.Length);
         Assert.Equal(PlayerTable.Capacity, players.Reload.Length);
         Assert.Equal(PlayerTable.Capacity, players.BlowFacing.Length);
@@ -34,7 +33,6 @@ public sealed class PlayerTableTests
 
         for (int player = 0; player < PlayerTable.Capacity; player++)
         {
-            Assert.Equal(0, players.BubbleTimer[player]);
             Assert.Equal(0, players.Lives[player]);
             Assert.Equal(0, players.Reload[player]);
             Assert.Equal(0, players.BlowFacing[player]);
