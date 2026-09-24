@@ -54,7 +54,6 @@ internal sealed class GameLoop
     private readonly EnemyFrame _enemies;
     private readonly EnemyAiLoop _ai;
     private readonly EntityTimers _timers;
-    private readonly BubblePop _pop;
     private readonly EnemySpawner _spawner;
     private readonly int _playing;
 
@@ -77,7 +76,7 @@ internal sealed class GameLoop
         _enemies = BuildEnemies(Entities, Objects, random, food);
         _ai = new(Objects, Entities, new(Objects, Entities, new(Objects, Entities)), new(Objects), random, new(Objects, Entities));
         _timers = new(Objects, Entities);
-        _pop = new(Objects, Entities, PlayerTable, food, Scores);
+        Pop = new(Objects, Entities, PlayerTable, food, Scores);
         _spawner = new(Entities, random);
 
         // $093F to $0946 and $098A: what a new game leaves for the first level's items.
@@ -93,6 +92,9 @@ internal sealed class GameLoop
     internal ObjectTable Objects { get; } = new();
 
     internal PlayerTable PlayerTable { get; } = new();
+
+    // $E90E's own record of what it drew, for the object layer - see BubblePop.Drawn.
+    internal BubblePop Pop { get; }
 
     internal Scores Scores { get; } = new();
 
@@ -133,7 +135,7 @@ internal sealed class GameLoop
 
         Items.Update();
         _blow.Tick();
-        _pop.Update();
+        Pop.Update();
         _ai.Update(map);
         _timers.Update(ReleasedState);
         Items.Collect(_subflg);

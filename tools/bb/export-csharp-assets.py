@@ -39,6 +39,7 @@ SCREEN_COLUMNS = 32
 
 # Set by load_converters() once the checkout's path is known.
 DATA = None
+SRC = None
 levels_mod = None
 zones_mod = None
 tga_mod = None
@@ -51,12 +52,13 @@ def load_converters(rebb64):
     They are imported by path because their filenames carry hyphens, which no
     import statement would accept.
     """
-    global DATA, levels_mod, zones_mod, tga_mod
+    global DATA, SRC, levels_mod, zones_mod, tga_mod
 
     build = os.path.join(rebb64, "build")
     DATA = os.path.join(rebb64, "data")
+    SRC = os.path.join(rebb64, "src")
 
-    for required in (build, DATA):
+    for required in (build, DATA, SRC):
         if not os.path.isdir(required):
             raise SystemExit(
                 f"'{rebb64}' does not look like a rebb64 checkout: {required} is missing."
@@ -179,6 +181,259 @@ def export_images(out_dir, canonical):
         write_tga(os.path.join(out_dir, "Images", name), image, 0, canonical)
 
     return len(SPRITE_SHEETS)
+
+
+# =============================================================================
+# Object sprites (bubbles and pop frames), composed from masked ROM data
+# =============================================================================
+#
+# See docs/bb-port-plan.md, item 2c. $E779/sprite-composer.s draws a bubble or
+# pop frame as three 8-pixel-wide character columns, sixteen rows tall, by
+# `(screen AND mask) OR graphic` per byte - not a plain image copy, so the
+# graphic and mask bytes have to be recombined here the way the 6502 would.
+#
+# Both bubble-masks.tga and software-sprites.tga are already exported as
+# plain sheets (SPRITE_SHEETS above); this reads the same source images again,
+# through rebb64's own convert_bubble_masks/convert_software_sprites, to get
+# the exact ROM bytes the build produces, then decodes those bytes back into
+# per-pixel values by the memory map docs/bb-port-plan.md records. It does not
+# re-derive that map; it is copied from there.
+
+OBJECT_CELL_WIDTH = 12
+OBJECT_CELL_HEIGHT = 16
+OBJECT_ENTRY_COUNT = 44
+OBJECT_POP_FRAME_COUNT = 8
+
+BUBBLE_MASKS_BASE = 0x8000
+SOFTWARE_SPRITES_BASE = 0x8F00
+ANIM_MASKS_BASE = 0x8960
+
+# Graphic pointer for entry e (bb-port-plan.md, item 2c). Ranges give the
+# first entry's address; every later entry in the range is $30 further on.
+_ENTRY_GRAPHIC_RANGES = [
+    (0, 12, 0x8000),
+    (12, 15, 0x9080),
+    (15, 20, 0x9110),
+    (20, 24, 0x9200),
+    (24, 27, 0x9480),
+    (27, 32, 0x9510),
+    (32, 38, 0x9600),
+    (38, 43, 0x9720),
+    (43, 44, 0x9810),
+]
+
+# The four AND-mask blocks entries 12+ cycle through, by e & 3.
+_HIGH_ENTRY_MASKS = (0x83C0, 0x83F0, 0x8420, 0x8450)
+
+# $3CE5 (entity-state-tables.s) points every pop frame's AND-mask operand at
+# $8260 - entry 0's own third-column mask, which is entirely "keep
+# background" since entry 0's small bubble never reaches that column. Composed
+# through it, every pop frame is blank; see decode_pop_frame_cell for why pop
+# frames are composed without any mask at all.
+
+
+def _entry_graphic_addr(entry):
+    for lo, hi, base in _ENTRY_GRAPHIC_RANGES:
+        if lo <= entry < hi:
+            return base + 0x30 * (entry - lo)
+    raise ValueError(f"entry {entry} is out of range")
+
+
+def _entry_mask_addr(entry):
+    if entry < 12:
+        return 0x8240 + 0x30 * entry
+    return _HIGH_ENTRY_MASKS[entry & 3]
+
+
+def _read_bytes(data, addr, base, length):
+    offset = addr - base
+    if offset < 0 or offset + length > len(data):
+        raise SystemExit(
+            f"address {addr:#06x} plus {length} bytes falls outside the "
+            f"{length and base:#06x}-based block ({len(data)} bytes long)."
+        )
+    return data[offset : offset + length]
+
+
+def _block_bytes(addr, bubble_masks, software_sprites):
+    """The 48 bytes (three 16-byte columns) at a graphic/mask address."""
+    if BUBBLE_MASKS_BASE <= addr < BUBBLE_MASKS_BASE + len(bubble_masks):
+        return _read_bytes(bubble_masks, addr, BUBBLE_MASKS_BASE, 48)
+    if SOFTWARE_SPRITES_BASE <= addr < SOFTWARE_SPRITES_BASE + len(software_sprites):
+        return _read_bytes(software_sprites, addr, SOFTWARE_SPRITES_BASE, 48)
+    raise SystemExit(f"address {addr:#06x} is in neither known ROM block.")
+
+
+def _bit_pairs(byte):
+    """A byte's four 2-bit fields, most significant first."""
+    return [(byte >> shift) & 0x03 for shift in (6, 4, 2, 0)]
+
+
+def parse_bubble_anim_masks(src):
+    """
+    bubble_anim_masks ($8960-$8AFF, sprites2-tables.s): 26 blocks of 16 bytes,
+    already plain 2-bit-per-pixel multicolour bytes (unlike the bit-per-pixel
+    bubble-masks.tga/software-sprites.tga data). It is source-only - no build
+    artefact carries it - so it is parsed straight out of the .s file.
+    """
+    path = os.path.join(src, "sprites2-tables.s")
+    with open(path, encoding="utf-8") as f:
+        text = f.read()
+
+    start = text.index("bubble_anim_masks:") + len("bubble_anim_masks:")
+    end = text.index("Region 3", start)
+    body = text[start:end]
+
+    blocks = []
+    for line in body.splitlines():
+        line = line.split(";", 1)[0].strip()
+        if line.startswith(".res"):
+            # `.res 16, $00` - 16 repeats of one byte.
+            args = line[len(".res") :].split(",")
+            count = int(args[0].strip())
+            value = int(args[1].strip().lstrip("$"), 16)
+            blocks.append(bytes([value]) * count)
+        elif line.startswith(".byte"):
+            args = line[len(".byte") :].split(",")
+            blocks.append(bytes(int(a.strip().lstrip("$"), 16) for a in args))
+        elif line:
+            raise SystemExit(f"Unexpected line in bubble_anim_masks: {line!r}")
+
+    data = b"".join(blocks)
+    if len(data) != 26 * 16:
+        raise SystemExit(
+            f"bubble_anim_masks parsed to {len(data)} bytes, expected {26 * 16}."
+        )
+
+    return data
+
+
+def decode_object_cell(graphic48, mask48, report):
+    """
+    Compose one entry's or pop frame's 12x16 cell from its 48-byte graphic and
+    mask blocks (three 16-byte columns, one byte per row).
+
+    Per bit-pair: mask 11 keeps the background, drawn here as index 0
+    (transparent, matching every other sheet) regardless of the graphic -
+    that a masked-out pixel still carries leftover graphic data is normal,
+    since hiding it is what the mask is for. Mask 00 takes the graphic,
+    drawn as the graphic's own value, or index 4 (opaque black - a colour no
+    level ever repaints) when that value is 0. Any other mask value is data
+    this rule cannot explain, so it is counted in `report` rather than
+    guessed at.
+    """
+    pixels = [[0] * OBJECT_CELL_WIDTH for _ in range(OBJECT_CELL_HEIGHT)]
+
+    for row in range(OBJECT_CELL_HEIGHT):
+        for col in range(3):
+            g_vals = _bit_pairs(graphic48[col * 16 + row])
+            m_vals = _bit_pairs(mask48[col * 16 + row])
+
+            for i in range(4):
+                g, m = g_vals[i], m_vals[i]
+
+                if m == 0x03:
+                    pixel = 0
+                elif m == 0x00:
+                    pixel = g if g != 0 else 4
+                else:
+                    report["mixed_mask"] += 1
+                    pixel = 0
+
+                pixels[row][col * 4 + i] = pixel
+
+    return pixels
+
+
+def decode_pop_frame_cell(graphic48):
+    """
+    Compose a pop frame's 12x16 cell directly from its graphic bytes.
+
+    $3CE5 (entity-state-tables.s) sets every AND-mask operand to the same
+    $8260 for a pop frame - which turns out to be entry 0's own third-column
+    mask, entirely "keep background" (that column is unused by entry 0's
+    small bubble). Composited through it, every pop frame would be blank,
+    which the game never is. bubble_anim_masks' own bytes only ever hold 0
+    or 3 per bit-pair (checked against every frame), which is what a
+    direct-copy graphic looks like: 0 draws nothing, 3 draws colour 3 -
+    exactly the spinning-spark shape a bubble's pop animation should be. So
+    a pop frame is composed straight from the graphic, with no masking step.
+    """
+    pixels = [[0] * OBJECT_CELL_WIDTH for _ in range(OBJECT_CELL_HEIGHT)]
+
+    for row in range(OBJECT_CELL_HEIGHT):
+        for col in range(3):
+            g_vals = _bit_pairs(graphic48[col * 16 + row])
+            for i in range(4):
+                pixels[row][col * 4 + i] = g_vals[i]
+
+    return pixels
+
+
+def export_object_sprites(out_dir, canonical):
+    """
+    Compose object-sprites.tga: entries 0-43 (bubbles and lightning), then the
+    eight pop-animation frames, one 12x16 cell each, laid out in a single row.
+    """
+    bubble_masks_image = tga_mod.parse_tga(os.path.join(DATA, "bubble-masks.tga"))
+    software_sprites_image = tga_mod.parse_tga(os.path.join(DATA, "software-sprites.tga"))
+
+    bubble_masks = tga_mod.convert_bubble_masks(bubble_masks_image, 8, 16, 0)
+    software_sprites = tga_mod.convert_software_sprites(software_sprites_image, 4, 16, 0)
+
+    anim_masks = parse_bubble_anim_masks(SRC)
+
+    report = {"mixed_mask": 0}
+    cells = []
+
+    for entry in range(OBJECT_ENTRY_COUNT):
+        graphic48 = _block_bytes(
+            _entry_graphic_addr(entry), bubble_masks, software_sprites
+        )
+        mask48 = _block_bytes(_entry_mask_addr(entry), bubble_masks, software_sprites)
+        cells.append(decode_object_cell(graphic48, mask48, report))
+
+    for frame in range(OBJECT_POP_FRAME_COUNT):
+        block_start = (0x20 + 0x30 * frame) // 16
+        graphic48 = anim_masks[block_start * 16 : block_start * 16 + 48]
+        cells.append(decode_pop_frame_cell(graphic48))
+
+    if report["mixed_mask"]:
+        raise SystemExit(
+            "object-sprites.tga: the AND/OR masking rule does not explain "
+            f"this data - {report['mixed_mask']} mixed mask bit-pairs (01/10). "
+            "Not guessing; the rule or the addresses need checking against "
+            "docs/bb-port-plan.md, item 2c."
+        )
+
+    width = OBJECT_CELL_WIDTH * len(cells)
+    pixels = bytearray(width * OBJECT_CELL_HEIGHT)
+    for index, cell in enumerate(cells):
+        for row in range(OBJECT_CELL_HEIGHT):
+            for x in range(OBJECT_CELL_WIDTH):
+                pixels[row * width + index * OBJECT_CELL_WIDTH + x] = cell[row][x]
+
+    image = {
+        "width": width,
+        "height": OBJECT_CELL_HEIGHT,
+        "pixels": pixels,
+        "palette": [None] * 5,
+    }
+
+    # Index 4 is not a real palette entry - it borrows canonical[0]'s colour
+    # (the game's own colour 0, black) but keeps its own alpha, so it stays
+    # opaque black where index 0 in the same sheet is transparent. See
+    # decode_object_cell.
+    object_canonical = list(canonical[:4]) + [canonical[0]]
+
+    write_tga(
+        os.path.join(out_dir, "Images", "object-sprites.tga"),
+        image,
+        0,
+        object_canonical,
+    )
+
+    return len(cells)
 
 
 # =============================================================================
@@ -519,6 +774,12 @@ def main():
     print(
         f"Wrote {count} tile edge characters -> "
         f"{os.path.join(args.out, 'Images', 'tile-edges.tga')}"
+    )
+
+    count = export_object_sprites(args.out, canonical)
+    print(
+        f"Wrote {count} object sprite cells -> "
+        f"{os.path.join(args.out, 'Images', 'object-sprites.tga')}"
     )
 
 

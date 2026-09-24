@@ -29,10 +29,20 @@ namespace BubbleBobbleSharpLib.Bubbles;
 // After the loop, $E97F scores each player's chain once it has stopped growing: 1000 for one enemy,
 // doubling for each after it.
 //
-// **Not here:** the drawing, and the special bubbles' own arms at $3E02 - $06, $0A and $08. Only a
-// special bubble reaches them, and nothing translated makes one, so they throw rather than guess.
+// **The drawing itself is recorded, not done.** Drawn records each slot's software-sprite entry into
+// object-sprites.tga - $00-$14 (a bubble, `type x2 + $A9C4`) and $34/$3A/$3C, $3E/$40 (the pop's first
+// and later frames, `frame + $A9C4`) - since the screen shows what this pass drew before $0CF2 moves
+// anything. Nothing is recorded for a caught enemy ($18-$22, its own hardware sprite draws it) or for
+// $36, $38, $42, $48, $4A and the specials, which item 2d has yet to translate.
+//
+// **Not here:** the special bubbles' own arms at $3E02 - $06, $0A and $08. Only a special bubble
+// reaches them, and nothing translated makes one, so they throw rather than guess.
 internal sealed class BubblePop
 {
+    // Nothing drawn this pass - a free or hidden slot, a caught enemy (its own hardware sprite draws
+    // it), or a type not translated yet (item 2d). Internal: ObjectView8Bit needs it to skip a slot.
+    internal const byte NotDrawn = 0xFF;
+
     // The types this class steps. $3C to $40 and $38 to $36 are the frames of the pop.
     private const byte BlownType = 0x16;
     private const byte FloatingType = 0x00;
@@ -46,6 +56,13 @@ internal sealed class BubblePop
 
     // $E931's `bmi`. Nothing at or above $80 is drawn or stepped.
     private const byte Hidden = 0x80;
+
+    // $00-$14: a bubble or lightning bubble, drawn by the render pass before this one moves anything.
+    private const byte LastFloatingType = 0x14;
+
+    // docs/bb-port-plan.md, item 2c: object-sprites.tga holds entries 0-43 (type x2 + $A9C4), then
+    // pop frames 44-51 (0-3 for the early frames, 4-7 for the late ones, also + $A9C4).
+    private const int PopFrameBase = 44;
 
     // $3D38. Only bubbles and the things in them are popped along with the first.
     private const byte ChainBelow = 0x24;
@@ -89,6 +106,11 @@ internal sealed class BubblePop
     private readonly byte[] _chain = new byte[PlayerTable.Capacity];
     private readonly byte[] _chainBefore = new byte[PlayerTable.Capacity];
 
+    // What this pass drew for each slot, an index into object-sprites.tga, or NotDrawn. Recorded here
+    // because the screen shows the drawing this pass made before $0CF2 moves anything - by the time a
+    // later pass runs, the slot's own position and type may already have moved on.
+    private readonly byte[] _drawn = new byte[ObjectTable.Capacity];
+
     internal BubblePop(ObjectTable objects, EntityTable entities, PlayerTable players, FoodDrop food, Scores scores)
     {
         ArgumentNullException.ThrowIfNull(objects);
@@ -106,6 +128,9 @@ internal sealed class BubblePop
 
     // $46 and $47: how many enemies each player's chain has let out so far.
     internal Span<byte> Chain => _chain;
+
+    // What this pass drew for each of the eighteen slots. See object-sprites.tga and _drawn.
+    internal Span<byte> Drawn => _drawn;
 
     // $E90E's loop and $E97F after it.
     internal void Update()
@@ -125,14 +150,25 @@ internal sealed class BubblePop
 
     private void Step(int slot)
     {
-        switch (_objects.Type[slot])
+        byte type = _objects.Type[slot];
+
+        _drawn[slot] = type switch
+        {
+            <= LastFloatingType => Entry(type, slot),
+            TouchedType or ExpiredType or PopFrom => PopFrame(0, slot),
+            PopMiddle or PopLate => PopFrame(4, slot),
+            _ => NotDrawn,
+        };
+
+        switch (type)
         {
             case >= Hidden:
                 break;
 
-            // $7BD4.
+            // $7BD4. Drawn as $00 above: the type becomes it before this pass draws the slot.
             case BlownType:
                 _objects.Type[slot] = FloatingType;
+                _drawn[slot] = Entry(FloatingType, slot);
                 break;
             case >= CapturedFrom and < CapturedBelow:
                 Carry(slot);
@@ -173,6 +209,12 @@ internal sealed class BubblePop
                 break;
         }
     }
+
+    // type x2 + $A9C4: entries 0-43 of object-sprites.tga, the plain bubbles and lightning bubble.
+    private byte Entry(byte type, int slot) => (byte)((type * 2) + _objects.SubX[slot]);
+
+    // base (0 or 4) + $A9C4: entries 44-51, the pop animation's eight frames.
+    private byte PopFrame(int frameBase, int slot) => (byte)(PopFrameBase + frameBase + _objects.SubX[slot]);
 
     // $3CB2. The type is $18 plus twice the enemy, and its sprite is slot 2 onwards.
     private void Carry(int slot)

@@ -34,4 +34,6 @@ public sealed class EightBitRendition : IBbRendition
     public IView<PlayerModel> CreatePlayerView(IViewSurface surface) => new PlayerView8Bit(surface);
 
     public IView<HudModel> CreateHudView(IViewSurface surface) => new HudView8Bit(surface);
+
+    public IView<ObjectsModel> CreateObjectView(IViewSurface surface) => new ObjectView8Bit(surface);
 }

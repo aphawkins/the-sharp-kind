@@ -56,6 +56,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     private readonly IView<SidebarModel> _sidebarView;
     private readonly IView<PlayerModel> _playerView;
     private readonly IView<HudModel> _hudView;
+    private readonly IView<ObjectsModel> _objectView;
 
     // Everything that moves, and the routines that move it, in the reference's order.
     private readonly GameLoop _loop;
@@ -115,6 +116,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         _sidebarView = rendition.CreateSidebarView(surface);
         _playerView = rendition.CreatePlayerView(surface);
         _hudView = rendition.CreateHudView(surface);
+        _objectView = rendition.CreateObjectView(surface);
 
         ShowLevel(FirstLevel);
 
@@ -129,6 +131,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         _layers = new LayerRunner(
             Graphics,
             new RenderLayer(interior, interiorWidth, height, new PlayfieldLayer(this)),
+            new RenderLayer(whole, wholeWidth, height, new ObjectLayer(this)),
             new RenderLayer(whole, wholeWidth, height, new SidebarLayer(this)),
             new RenderLayer(whole, wholeWidth, height, new PlayerLayer(this)),
             new RenderLayer(hud, hudWidth, height, new HudLayer(this)));
@@ -209,26 +212,41 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         StartingLives,
         StartingLives);
 
+    // $E90E, built fresh each frame: what BubblePop drew this pass, and where.
+    private ObjectsModel Objects() => new(
+        _loop.Pop.Drawn,
+        _loop.Objects.X,
+        _loop.Objects.Row,
+        _loop.Objects.SubY,
+        _playfield.Colours);
+
     // Layer 0, the level itself, trimmed to the columns the decoration does not cover.
     private sealed class PlayfieldLayer(BubbleBobbleMain game) : ILayerDrawer
     {
         public void Draw() => game._playfieldView.Draw(game._playfield);
     }
 
-    // Layer 1, draw_border: the decoration down both edges, over the level already on the screen.
+    // Layer 1, $E90E: the bubbles and the pop animation, over the level and under everything else -
+    // see docs/bb-port-plan.md, item 2c.
+    private sealed class ObjectLayer(BubbleBobbleMain game) : ILayerDrawer
+    {
+        public void Draw() => game._objectView.Draw(game.Objects());
+    }
+
+    // Layer 2, draw_border: the decoration down both edges, over the level already on the screen.
     private sealed class SidebarLayer(BubbleBobbleMain game) : ILayerDrawer
     {
         public void Draw() => game._sidebarView.Draw(game._sidebar);
     }
 
-    // Layer 2, $1805: the players, over the level and the decoration both. A C64 sprite is in front
+    // Layer 3, $1805: the players, over the level and the decoration both. A C64 sprite is in front
     // of the characters it passes, which is what this order stands in for.
     private sealed class PlayerLayer(BubbleBobbleMain game) : ILayerDrawer
     {
         public void Draw() => game._playerView.Draw(game.Players());
     }
 
-    // Layer 3, $E3A7 and $046C: the scores and lives, in the columns the level never reaches.
+    // Layer 4, $E3A7 and $046C: the scores and lives, in the columns the level never reaches.
     private sealed class HudLayer(BubbleBobbleMain game) : ILayerDrawer
     {
         public void Draw() => game._hudView.Draw(game.Hud());

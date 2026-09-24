@@ -72,4 +72,11 @@ public interface IBbRendition
     /// <param name="surface">Everything the view draws with.</param>
     /// <returns>The view.</returns>
     public IView<HudModel> CreateHudView(IViewSurface surface);
+
+    /// <summary>
+    /// Creates the view that draws the bubbles and the pop animation.
+    /// </summary>
+    /// <param name="surface">Everything the view draws with.</param>
+    /// <returns>The view.</returns>
+    public IView<ObjectsModel> CreateObjectView(IViewSurface surface);
 }

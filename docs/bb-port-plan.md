@@ -220,31 +220,70 @@ Each item ends with how it is proved.
           moves. Record bytes at `$0A4B` and screenshot at the next `$E90E`.
         - Type `$48` (wobble) and `$4A` draw nothing, so a wobbling bubble
           flickers.
-        - **Next step, designed but not started.** Compose in
-          `tools/bb/export-csharp-assets.py`: get the ROM bytes with rebb64's
-          own `convert_bubble_masks` (8×16) and `convert_software_sprites`
-          (4×16), and parse the pop frames from `sprites2-tables.s`
+        - [x] **Compose `object-sprites.tga`.** Done in
+          `tools/bb/export-csharp-assets.py` (`export_object_sprites` and
+          helpers): gets the ROM bytes with rebb64's own
+          `convert_bubble_masks` (8×16) and `convert_software_sprites`
+          (4×16), and parses the pop frames from `sprites2-tables.s`
           (`bubble_anim_masks`, `$8960`–`$8AFF`, 26 blocks of 16; frame k is
-          three blocks at `+$20 + $30k`). Write `object-sprites.tga`: one 12×16
-          cell per entry (entries 0–43, then pop frames 0–7). Per bit-pair,
-          mask 11 keeps the background (graphic 00 → index 0, transparent);
+          three blocks at `+$20 + $30k`). Writes one 12×16 cell per entry
+          (entries 0–43, then pop frames 0–7), all in a single row (index
+          `i`'s cell is at x = `12i`). Per bit-pair, mask 11 keeps the
+          background (index 0, transparent, regardless of the graphic - a
+          masked pixel's leftover graphic data is normal and not reported);
           mask 00 takes the graphic (graphic 00 → index 4, opaque black, a
-          fifth colour-map entry). Count any mixed mask pairs (01/10), and any
-          mask 11 over a non-zero graphic, and report them rather than guess.
-          Memory map: masks `$8000`; software sprites `$8F00`. Graphic
-          pointers: entry e<12 `$8000+$30e`; 12–14 `$9080`; 15–19 `$9110`;
-          20–23 `$9200`; 24–26 `$9480`; 27–31 `$9510`; 32–37 `$9600`; 38–42
-          `$9720`; 43 `$9810` (each `+$30` per entry). Masks: e<12
-          `$8240+$30e`; e≥12 `[$83C0,$83F0,$8420,$8450][e&3]`.
-        - Then in the port: the `$E90E` pass (`BubblePop`, worth renaming
-          `ObjectPass`) records what it drew, since the screen shows the
-          drawing made before `$0CF2` moves anything: `$00`–`$14` →
-          entry `type×2+$A9C4` (a `$16` becomes `$00` first); `$34`/`$3A`
-          bursting and `$3C` → pop `0|$A9C4`; `$3E`, `$40` → pop `4|$A9C4`;
-          nothing for `$18`–`$22`, `$36`, `$38`, `$42`, `$48`, `$4A`. An
-          `ObjectModel` and `ObjectView8Bit` draw the cells doubled, through a
-          `MulticolourSheet` in the level's colours, as a layer after the
-          playfield and before the hardware sprites.
+          fifth colour-map entry that borrows canonical colour 0's RGB but
+          keeps its own alpha). Any other mask value is reported, not
+          guessed at - none occurred. Memory map: masks `$8000`; software
+          sprites `$8F00`. Graphic pointers: entry e<12 `$8000+$30e`; 12–14
+          `$9080`; 15–19 `$9110`; 20–23 `$9200`; 24–26 `$9480`; 27–31
+          `$9510`; 32–37 `$9600`; 38–42 `$9720`; 43 `$9810` (each `+$30` per
+          entry). Masks: e<12 `$8240+$30e`; e≥12
+          `[$83C0,$83F0,$8420,$8450][e&3]`.
+          - **Pop frames are composed without any mask.** `$3CE5`
+            (`entity-state-tables.s`) points every pop frame's AND-mask
+            operand at `$8260` for all three columns - which is entry 0's
+            own third-column mask, entirely 11 (background), since entry
+            0's small bubble never reaches that column. Composited through
+            it, every pop frame would be blank. `bubble_anim_masks`' bytes
+            only ever hold 0 or 3 per bit-pair, which decodes clean into a
+            spinning-spark burst shape with no masking at all (0 →
+            transparent, 3 → colour 3 directly) - checked by eye against
+            all eight frames, not guessed. The AND/OR compositing that
+            `sprite-composer.s`'s comments describe is a C64 technique for
+            blending a sprite into an arbitrary sub-character screen row (it
+            runs only for a few edge rows, decided by `OLDTXT`/`$A9D6`; most
+            rows are a straight, unmasked copy) - not a general per-pixel
+            transparency rule, so it need not (and for pop frames, cannot)
+            be replicated literally for a standalone asset.
+        - [x] **`BubblePop` records what it drew.** `Drawn` (a slot's index
+          into `object-sprites.tga`, or `NotDrawn`) is computed from the type
+          read at the start of `Step`, before that same call mutates it -
+          since the screen shows the drawing made before `$0CF2` moves
+          anything: `$00`–`$14` → entry `type×2+$A9C4` (a `$16` becomes `$00`
+          first, since `$7BD4` converts the type before drawing it); `$34`,
+          `$3A`, `$3C` → pop `0|$A9C4`; `$3E`, `$40` → pop `4|$A9C4`; nothing
+          for `$18`–`$22`, `$36`, `$38`, `$42`, `$48`, `$4A`, or any type not
+          matched (item 2d's specials). Not renamed to `ObjectPass` - the
+          rename is cosmetic and the class still steps the eighteen slots as
+          it always did.
+        - [x] **`ObjectsModel` and `ObjectView8Bit` draw the cells.** A new
+          `RenderLayer` between the playfield and the sidebar - the sidebar
+          only ever touches the level's outermost two columns, so the order
+          between it and the objects does not matter; the hardware sprites
+          (players, and item 2b's enemies) come after both. Position: left
+          edge `$AA0C - $14`; the bottom pixel row sits in character row `$EE
+          - 2` at sub-position `($A9D6 + 7) & 7`, and the sixteen-pixel cell
+          builds upward from there. Doubled horizontally through a
+          `MulticolourSheet`, as every other multicolour sheet is.
+          **Smoke-tested, not yet golden-framed:** driving the app with a
+          scripted blow shows a clean, correctly proportioned bubble that
+          rises and drifts through the level with no garbling - see
+          `.claude/skills/sdl-drive`. That is not the pixel-exact proof this
+          item's own verify step asks for, which still needs a VICE capture;
+          the position formula above is the one place this item did not
+          re-derive from first principles and could be wrong in a way a
+          smoke test would not catch (an off-by-one row, for instance).
       - [ ] **2d. The specials**: `$24`–`$32` and `$44`–`$4C` vectors
         (`$E758`, `$3E94`, `$3EFD`, `$E752`, `$3ED4`, `$E767` for the Baron,
         `$3E77`, `$3F28`, `$3F88`), with item 5.
