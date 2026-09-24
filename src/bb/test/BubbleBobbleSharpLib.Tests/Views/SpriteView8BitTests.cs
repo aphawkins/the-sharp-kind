@@ -11,10 +11,10 @@ using Xunit;
 
 namespace BubbleBobbleSharpLib.Tests.Views;
 
-// What the view puts on screen is one rectangle per player, so the recording surface proves the
+// What the view puts on screen is one rectangle per sprite, so the recording surface proves the
 // whole of it: how many are drawn, where they land, which sprite they come from and what colour the
 // sheet was painted in.
-public sealed class PlayerView8BitTests
+public sealed class SpriteView8BitTests
 {
     // The C64's own sprite origin for a 40-by-25 display, which is the only arithmetic between a
     // player's bytes and the screen: $1805 writes them to the registers untouched.
@@ -27,6 +27,9 @@ public sealed class PlayerView8BitTests
     private const byte PlayerTwoX = 0xEC;
     private const byte PlayerOneColour = 0x05;
     private const byte PlayerTwoColour = 0x03;
+
+    // Class 0's colour, from $AB63.
+    private const byte EnemyColour = 0x0C;
 
     // The last of the level's twenty-five rows, which is the floor the level is drawn inside.
     private const int FloorRow = 24;
@@ -69,7 +72,7 @@ public sealed class PlayerView8BitTests
     [InlineData(0x1F, 372)]
     public void TakesTheSpriteFromItsColumnOfTheSheet(byte frame, float column)
     {
-        RecordingGraphics graphics = Draw(Model(state: [0x01, 0x00], frame: [frame, 0]));
+        RecordingGraphics graphics = Draw(Model(state: [0x01, 0x00], frame: [frame, 0x04]));
 
         (_, _, _, Vector2 sourcePosition, _) = Assert.Single(graphics.ImageParts);
 
@@ -113,20 +116,52 @@ public sealed class PlayerView8BitTests
         Assert.Equal(TestSurface.Colour(1), painted.GetPixel(3, 0));
     }
 
-    private static PlayerModel Model(byte[]? state = null, byte[]? frame = null)
-        => new(
-            state ?? [0x01, 0x01],
-            [SpawnX, PlayerTwoX],
-            [SpawnY, SpawnY],
-            frame ?? [0x00, 0x04],
-            [PlayerOneColour, PlayerTwoColour]);
+    // An enemy of class 0 (state 2, base $73) in slot 2 on frame 9, where player one stands: pointer
+    // $7C, the sheet's column $1C. $1805 writes slot 2 before slot 0,
+    // so the enemy is drawn first and the player over it.
+    [Fact]
+    public void DrawsAnEnemyFromItsBaseUnderThePlayers()
+    {
+        byte[] state = [0x01, 0x00, 0x02, 0, 0, 0, 0, 0];
+        byte[] frame = [0x00, 0x00, 0x09, 0, 0, 0, 0, 0];
+        byte[] spriteBase = [0x60, 0x60, 0x73, 0, 0, 0, 0, 0];
+        byte[] colour = [PlayerOneColour, PlayerTwoColour, EnemyColour, 0, 0, 0, 0, 0];
+        byte[] position = [SpawnX, PlayerTwoX, SpawnX, 0, 0, 0, 0, 0];
+        byte[] height = [SpawnY, SpawnY, SpawnY, 0, 0, 0, 0, 0];
 
-    private static RecordingGraphics Draw(PlayerModel model)
+        RecordingGraphics graphics = Draw(new(state, position, height, frame, spriteBase, colour, new byte[8]));
+
+        Assert.Equal(
+            ["SpritesGame.Colour12", "SpritesGame.Colour5"],
+            graphics.ImageParts.Select(x => x.ImageType));
+        Assert.Equal(new(0x1C * 12, 0), graphics.ImageParts[0].SourcePosition);
+        Assert.Equal(new(0, 0), graphics.ImageParts[1].SourcePosition);
+    }
+
+    // The two players in slots 0 and 1, with the six enemy slots empty.
+    private static SpriteModel Model(byte[]? state = null, byte[]? frame = null)
+    {
+        byte[] states = new byte[SpriteModel.Capacity];
+        byte[] frames = new byte[SpriteModel.Capacity];
+        (state ?? [0x01, 0x01]).CopyTo(states, 0);
+        (frame ?? [0x00, 0x04]).CopyTo(frames, 0);
+
+        return new(
+            states,
+            [SpawnX, PlayerTwoX, 0, 0, 0, 0, 0, 0],
+            [SpawnY, SpawnY, 0, 0, 0, 0, 0, 0],
+            frames,
+            [0x60, 0x60, 0, 0, 0, 0, 0, 0],
+            [PlayerOneColour, PlayerTwoColour, 0, 0, 0, 0, 0, 0],
+            new byte[SpriteModel.Capacity]);
+    }
+
+    private static RecordingGraphics Draw(SpriteModel model)
     {
         RecordingGraphics graphics = new(320, 200);
         EightBitRendition rendition = new();
 
-        rendition.CreatePlayerView(new TestSurface(graphics, "SpritesGame")).Draw(model);
+        rendition.CreateSpriteView(new TestSurface(graphics, "SpritesGame")).Draw(model);
 
         return graphics;
     }

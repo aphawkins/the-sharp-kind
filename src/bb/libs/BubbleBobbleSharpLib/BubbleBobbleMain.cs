@@ -54,7 +54,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     private readonly ZoneStore _zones;
     private readonly IView<PlayfieldModel> _playfieldView;
     private readonly IView<SidebarModel> _sidebarView;
-    private readonly IView<PlayerModel> _playerView;
+    private readonly IView<SpriteModel> _spriteView;
     private readonly IView<HudModel> _hudView;
     private readonly IView<ObjectsModel> _objectView;
 
@@ -114,7 +114,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         BbViewSurface surface = new(Graphics, Layout, assetLocator);
         _playfieldView = rendition.CreatePlayfieldView(surface);
         _sidebarView = rendition.CreateSidebarView(surface);
-        _playerView = rendition.CreatePlayerView(surface);
+        _spriteView = rendition.CreateSpriteView(surface);
         _hudView = rendition.CreateHudView(surface);
         _objectView = rendition.CreateObjectView(surface);
 
@@ -133,7 +133,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
             new RenderLayer(interior, interiorWidth, height, new PlayfieldLayer(this)),
             new RenderLayer(whole, wholeWidth, height, new ObjectLayer(this)),
             new RenderLayer(whole, wholeWidth, height, new SidebarLayer(this)),
-            new RenderLayer(whole, wholeWidth, height, new PlayerLayer(this)),
+            new RenderLayer(whole, wholeWidth, height, new SpriteLayer(this)),
             new RenderLayer(hud, hudWidth, height, new HudLayer(this)));
     }
 
@@ -195,14 +195,16 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     }
 
     // $1805, built fresh each frame rather than held. A level's characters are settled the moment it
-    // is drawn, but a player's bytes are the ones that change every frame, so there is nothing here
+    // is drawn, but a sprite's bytes are the ones that change every frame, so there is nothing here
     // to cache.
-    private PlayerModel Players() => new(
+    private SpriteModel Sprites() => new(
         _loop.Entities.State,
         _loop.Entities.X,
         _loop.Entities.Y,
         _loop.Entities.Frame,
-        _loop.Entities.Colour);
+        _loop.Entities.SpriteBase,
+        _loop.Entities.Colour,
+        _loop.Entities.FlashTimer);
 
     // $E3A7 and $046C: both scores from $0400, the high score and the lives.
     private HudModel Hud() => new(
@@ -239,11 +241,11 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         public void Draw() => game._sidebarView.Draw(game._sidebar);
     }
 
-    // Layer 3, $1805: the players, over the level and the decoration both. A C64 sprite is in front
-    // of the characters it passes, which is what this order stands in for.
-    private sealed class PlayerLayer(BubbleBobbleMain game) : ILayerDrawer
+    // Layer 3, $1805: the players and the enemies, over the level and the decoration both. A C64
+    // sprite is in front of the characters it passes, which is what this order stands in for.
+    private sealed class SpriteLayer(BubbleBobbleMain game) : ILayerDrawer
     {
-        public void Draw() => game._playerView.Draw(game.Players());
+        public void Draw() => game._spriteView.Draw(game.Sprites());
     }
 
     // Layer 4, $E3A7 and $046C: the scores and lives, in the columns the level never reaches.

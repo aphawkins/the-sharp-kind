@@ -20,9 +20,6 @@ public sealed class BubbleBobbleMainTests
     // Twelve two-row blocks down each edge plus the last row's top half, both edges.
     private const int SidebarCharacters = 100;
 
-    // One sprite, drawn last of all: a game with no front end starts the one player it can name.
-    private const int PlayerSprites = 1;
-
     // The sheets the views draw from. The game repaints them - in the level's colours for the
     // playfield's two, in the sprite's own colour for the players' - before it draws, so the surface
     // has to be holding them by the time a frame is composed.
@@ -156,9 +153,11 @@ public sealed class BubbleBobbleMainTests
 
         float[] edges = [0f, 8f, 240f, 248f];
 
-        // The players are drawn after both of them, so they come off the end first.
+        // The hardware sprites - the player and the level's enemies - are drawn after both of them,
+        // so they come off the end first.
+        int sprites = graphics.ImageParts.Reverse().TakeWhile(x => x.ImageType.StartsWith("SpritesGame", StringComparison.Ordinal)).Count();
         (string ImageType, Vector2 Position, Vector2 Size, Vector2 SourcePosition, Vector2 SourceSize)[] characters =
-            [.. graphics.ImageParts.SkipLast(PlayerSprites)];
+            [.. graphics.ImageParts.SkipLast(sprites)];
 
         Assert.Equal(
             edges,

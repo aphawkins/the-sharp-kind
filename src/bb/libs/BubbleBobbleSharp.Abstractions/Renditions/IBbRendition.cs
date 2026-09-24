@@ -60,11 +60,11 @@ public interface IBbRendition
     public IView<PlayfieldModel> CreatePlayfieldView(IViewSurface surface);
 
     /// <summary>
-    /// Creates the view that draws the two players.
+    /// Creates the view that draws the hardware sprites: the players and the enemies.
     /// </summary>
     /// <param name="surface">Everything the view draws with.</param>
     /// <returns>The view.</returns>
-    public IView<PlayerModel> CreatePlayerView(IViewSurface surface);
+    public IView<SpriteModel> CreateSpriteView(IViewSurface surface);
 
     /// <summary>
     /// Creates the view that draws the scores and lives beside the level.

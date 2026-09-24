@@ -8,8 +8,8 @@ using SharpKind.Graphics;
 namespace BubbleBobbleSharp.Renditions.EightBit;
 
 /// <summary>
-/// Draws the two players: one of the game's sprites each, at the position the
-/// player's own two bytes name.
+/// Draws the eight hardware sprites - the players and the enemies: one of the
+/// game's sprites each, at the position the slot's own two bytes name.
 /// <para>
 /// A C64 sprite is 24 pixels by 21, and a multicolour one is those 24 as twelve
 /// two-bit entry numbers - so a sprite is twelve pixels wide in the sheet and
@@ -33,7 +33,7 @@ namespace BubbleBobbleSharp.Renditions.EightBit;
 /// two rows down from there.
 /// </para>
 /// </summary>
-internal sealed class PlayerView8Bit : IView<PlayerModel>
+internal sealed class SpriteView8Bit : IView<SpriteModel>
 {
     // A multicolour sprite: twelve entry numbers across in the sheet, 24 pixels on screen, 21 rows
     // tall either way.
@@ -50,7 +50,7 @@ internal sealed class PlayerView8Bit : IView<PlayerModel>
     private readonly IGraphics _graphics;
     private readonly MulticolourSprites _sprites;
 
-    internal PlayerView8Bit(IViewSurface surface)
+    internal SpriteView8Bit(IViewSurface surface)
     {
         ArgumentNullException.ThrowIfNull(surface);
 
@@ -59,29 +59,28 @@ internal sealed class PlayerView8Bit : IView<PlayerModel>
     }
 
     // $1805 walks the slots from 7 down to 0, so a lower-numbered sprite is written last. That is
-    // not a drawing order on the C64 - the VIC gives sprite 0 priority over sprite 1 in hardware -
-    // but drawing player two first and player one over it is the same picture.
-    public void Draw(PlayerModel model)
+    // not a drawing order on the C64 - the VIC gives a lower-numbered sprite priority in hardware -
+    // but drawing from slot 7 up to slot 0 over it is the same picture.
+    public void Draw(SpriteModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        for (int player = PlayerModel.Capacity - 1; player >= 0; player--)
+        for (int slot = SpriteModel.Capacity - 1; slot >= 0; slot--)
         {
-            if (model.IsActive(player))
+            if (model.IsDrawn(slot))
             {
-                DrawPlayer(model, player);
+                DrawSprite(model, slot);
             }
         }
     }
 
     // The sheet is the 97 sprites of $5800 in one row, in the order they sit in memory, so a
-    // sprite's index is its column and there is no row to work out. A player's index is masked to
-    // five bits before it arrives, so it is always one of the first thirty-two.
-    private void DrawPlayer(PlayerModel model, int player)
+    // sprite's index is its column and there is no row to work out.
+    private void DrawSprite(SpriteModel model, int slot)
         => _graphics.DrawImagePart(
-            _sprites.Paint(model.Colour(player)),
-            new(model.X(player) - SpriteOriginX, model.Y(player) - SpriteOriginY),
+            _sprites.Paint(model.Colour(slot)),
+            new(model.X(slot) - SpriteOriginX, model.Y(slot) - SpriteOriginY),
             new(SourceSpriteWidth * 2, SpriteHeight),
-            new(model.Sprite(player) * SourceSpriteWidth, 0),
+            new(model.Sprite(slot) * SourceSpriteWidth, 0),
             new(SourceSpriteWidth, SpriteHeight));
 }

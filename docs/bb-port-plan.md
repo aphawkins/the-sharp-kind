@@ -121,7 +121,8 @@ Each line names the classes. Their header comments have the detail.
 
 - [x] `Input`, `PlayerTable`, `EntityTable` (eight slots: players 0–1, enemies
       2–7), `PlayerCell` (`$E9B8`), `SolidMap` (bit 7 solid, low two bits the
-      bubble current), `PlayerModel`/`PlayerView8Bit` (`$1805`).
+      bubble current), `PlayerModel`/`PlayerView8Bit` (`$1805`; now
+      `SpriteModel`/`SpriteView8Bit`, all eight slots).
 - [x] `PlayerFrame` (`$1CBD`, `$1E6C`, `$2162`), `PlayerMovement` (`$220C`,
       walk and `$222B` jump trigger), `PlayerJump` (`$23EA`), `PlayerDrift`
       (`$2483`/`$248D`), `PlayerSteer` (`$25F1`), `PlayerLanding` (`$2519`),
@@ -192,11 +193,32 @@ Each item ends with how it is proved.
         not scores. Proved by hand in `BubblePopTests`.
       - [ ] **2b. Enemies and caught enemies**, through `$1805`: the hardware
         sprite path, for slots 2–7 as well as 0–1. The pointer is
-        `(Frame & $1F) + $8598`. `sprites-game.tga` holds pointers `$60`–`$C0`
-        only; enemy pointers reach higher, into the per-level sprite sets
-        (`grumple-gromit.tga` and others, `convert_level_sprites`), which need
-        finding and exporting first. Food uses `$F2`, a sprite `$2921` builds
-        at run time from `$A892`.
+        `(Frame & $1F) + $8598`, in the VIC bank at `$4000`.
+        - [x] **Where the enemy art is.** `EnemySpawner`'s `$8598` table is
+          indexed by state (class + 2), so its first two bytes (`$03`, `$0F`)
+          are never an enemy's; the enemy bases are `$73`, `$7F`, `$8B`,
+          `$97`, `$9F`, `$AB`, `$B3`, `$BB`. Measured over the whole port (every
+          level, three seeds, 3,000 passes, the `GameLoopTests` stick), every
+          enemy pointer in every state (walking `$02`–`$09`, caught `$0A`,
+          popped `$0B`/`$0C`, food-bound `$11`) lies in `$73`–`$BF`, all
+          inside `sprites-game.tga` (`$60`–`$C0`). No per-level sprite set is
+          needed. Caught enemies (`$0A`) only showed pointer `base + 0`.
+          Food (`$12`) uses `$F4`–`$F9` from base `$F2`: `$7C80`–`$7E7F`,
+          which `$2921` fills at run time, so food waits for `$2921`. Not
+          reached by the run: the Baron (`$1473`), since the hurry-up is
+          untranslated.
+        - [x] **Draw all eight slots.** `PlayerModel`/`PlayerView8Bit` are
+          now `SpriteModel`/`SpriteView8Bit`: pointer `(Frame & $1F) +
+          SpriteBase`, less `$60` for the sheet column, drawn 7 down to 0.
+          `GameLoop` gives the players their `$60` base (`$451E`). `$1822`'s
+          flash is in: a slot below state `$11` with `$8728` running takes
+          `$8570` (`$47B5`: 5, 3, then 10 for every enemy), so an angry enemy
+          is light red. A pointer outside the sheet is not drawn, which today
+          is only food (a gap until `$2921`). Proved by hand in
+          `SpriteModelTests`/`SpriteView8BitTests`; smoke-tested in the app
+          (level 1's enemy drawn on the top platform). Still open: the
+          Baron's pointers, and whether `$182F`'s store back to `$8520`
+          matters (does any routine leave a frame above `$1F`?).
       - [ ] **2c. Bubbles and pop frames**, drawn as software sprites. Each is a
         3×16 character-column graphic (12×16 multicolour pixels) and a mask,
         composed as `(background AND mask) OR graphic`, in the level's

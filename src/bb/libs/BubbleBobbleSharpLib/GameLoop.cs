@@ -45,6 +45,10 @@ internal sealed class GameLoop
 
     // $04BB and $05C5: where a life starts, which way it faces and its colour.
     private const byte SpawnY = 0xDD;
+
+    // $451E copies $47BD into $8598 once, at boot: $60 for both players, the pointer $5800's sprites
+    // start at. Nothing writes a player's byte again, so setting it with the rest of a life is the same.
+    private const byte PlayerSpriteBase = 0x60;
     private static readonly byte[] s_spawnX = [0x2C, 0xEC];
     private static readonly byte[] s_spawnFrame = [0x00, 0x04];
     private static readonly byte[] s_spawnColour = [0x05, 0x03];
@@ -197,6 +201,7 @@ internal sealed class GameLoop
             Entities.Y[player] = SpawnY;
             Entities.Frame[player] = s_spawnFrame[player];
             Entities.Colour[player] = s_spawnColour[player];
+            Entities.SpriteBase[player] = PlayerSpriteBase;
 
             // $04C4 to $04CB and $05F5: the counters a standing player reads as idle.
             Entities.RiseCounter[player] = 0xFF;
