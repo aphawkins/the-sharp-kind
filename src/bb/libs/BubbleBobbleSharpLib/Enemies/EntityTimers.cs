@@ -154,12 +154,17 @@ internal sealed class EntityTimers
         byte type = _objects.Type[slot];
 
         // $1428. The wobble the capture read at frames 195 to 215: $04 and $48, turn about.
-        // $142E's other arm has a captured enemy flicker instead, by toggling its bit in the VIC's
-        // sprite enable register through the mask table at $AB55. That is VIC-II work and section 1
-        // puts it out of scope, so it is not translated - nothing else in here depends on it.
         if (type is BubbleType or WobbleType)
         {
             _objects.Type[slot] = (byte)(type ^ WobbleToggle);
+            return;
+        }
+
+        // $142E. A caught enemy flickers instead: its bit in $D015 is toggled through the mask
+        // table at $AB55, $04 for the first enemy up to $80 for the sixth - its slot's own bit.
+        if (type is >= CapturedFrom and < SpecialFrom)
+        {
+            _entities.SpriteEnable ^= (byte)(1 << (((type - CapturedFrom) >> 1) + EnemyBase));
         }
     }
 

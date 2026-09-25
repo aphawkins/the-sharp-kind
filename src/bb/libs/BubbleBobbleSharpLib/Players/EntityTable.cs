@@ -168,6 +168,13 @@ internal sealed class EntityTable : IRowTails
     // fills, and collision.s and bubbles-sprites.s read it.
     internal byte EnemyCount { get; set; }
 
+    // $D015, the VIC-II's sprite enable register, one bit a slot. The game treats it as state: $09CD
+    // turns all eight on as a level starts, $142E toggles a caught enemy's bit to make it flicker as
+    // its bubble runs out, and $3D91 turns it back on as the bubble pops. It is what keeps a slot on
+    // the screen, not $B2 - a caught enemy's state byte is zero while it rides its bubble, and VICE
+    // shows it drawn there.
+    internal byte SpriteEnable { get; set; }
+
     // IRowTails. Row r of $8500's map ends in the eight slots of the array at $8520 plus forty times r,
     // so the arrays here are those tails, row by row. Two rows hold arrays this class does not keep,
     // and neither can read solid: $8570 is a colour, below $10, and $86B0 is a slot, or a slot plus

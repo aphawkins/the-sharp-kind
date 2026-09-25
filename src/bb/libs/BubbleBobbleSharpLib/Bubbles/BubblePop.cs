@@ -271,6 +271,9 @@ internal sealed class BubblePop
         _entities.State[enemy + 2] = _objects.Variant[slot];
         _food.Kill(enemy);
 
+        // $3D91. The sprite comes back on, whichever way $142E's flicker left it.
+        _entities.SpriteEnable |= (byte)(1 << (enemy + 2));
+
         _chain[player]++;
         _entities.AttackTimer[enemy + 2] = _chain[player];
 

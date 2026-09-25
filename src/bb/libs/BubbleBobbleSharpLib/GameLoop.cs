@@ -110,6 +110,9 @@ internal sealed class GameLoop
         ArgumentNullException.ThrowIfNull(level);
         ArgumentNullException.ThrowIfNull(zones);
 
+        // $09CD, just before $09DC: every sprite on.
+        Entities.SpriteEnable = 0xFF;
+
         // $09DF, decompress_level_data.
         _map = SolidMap.Build(level, zones, Entities);
 

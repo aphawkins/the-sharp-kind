@@ -55,6 +55,7 @@ public sealed class SpriteModel
     /// <param name="spriteBase">Each slot's sprite base, as $8598 holds it.</param>
     /// <param name="colour">Each slot's sprite colour, as $8548 holds it.</param>
     /// <param name="flashTimer">Each slot's flash timer, as $8728 holds it.</param>
+    /// <param name="enabled">The sprite enable bits, one a slot, as $D015 holds them.</param>
     public SpriteModel(
         ReadOnlySpan<byte> state,
         ReadOnlySpan<byte> x,
@@ -62,7 +63,8 @@ public sealed class SpriteModel
         ReadOnlySpan<byte> frame,
         ReadOnlySpan<byte> spriteBase,
         ReadOnlySpan<byte> colour,
-        ReadOnlySpan<byte> flashTimer)
+        ReadOnlySpan<byte> flashTimer,
+        byte enabled)
     {
         Check(state, nameof(state));
         Check(x, nameof(x));
@@ -83,15 +85,18 @@ public sealed class SpriteModel
             // $182F. The add is a byte add, so it wraps.
             int sprite = (byte)((frame[slot] & FrameMask) + spriteBase[slot]) - FirstPointer;
 
-            // $1817. A slot whose state byte is zero is empty, and the routine skips the colour
-            // work for it - but it writes its position and its pointer regardless, because the VIC
-            // draws whatever its registers hold. What keeps an empty slot off the screen is
-            // $D015, the sprite enable register, which this port reads as the slot being in use.
+            // $1817. A slot whose state byte is zero skips the colour work - but its position and
+            // pointer are written regardless, and the VIC draws whatever its registers hold. So the
+            // state byte does not say whether a slot is seen. A caught enemy's is zero while it
+            // rides its bubble, and VICE shows it drawn there. What the VIC reads is $D015, the
+            // sprite enable register, and during play the game keeps all eight bits on except
+            // while $142E flickers a caught enemy. An empty slot is kept off the screen by its
+            // position instead: it is parked at Y $15, whose 21 rows lie in the top border.
             //
             // A pointer outside $5800's sprites is not drawn either. The one the translated routines
             // make is food's: base $F2, $7C80 onwards, which $2921 builds at run time and which is
             // not translated. It is a gap, and closes with $2921.
-            _drawn[slot] = state[slot] != 0 && sprite is >= 0 and < SheetSprites;
+            _drawn[slot] = (enabled & (1 << slot)) != 0 && sprite is >= 0 and < SheetSprites;
             _sprite[slot] = sprite;
 
             // $1822. A slot in play below state $11 with its flash timer running takes $8570's

@@ -191,7 +191,7 @@ Each item ends with how it is proved.
         with the frame in `$AA42`). So `$AA42` after a capture is a sprite
         frame, and `BubbleCollision`'s `$AB81` table is caught-enemy frames,
         not scores. Proved by hand in `BubblePopTests`.
-      - [ ] **2b. Enemies and caught enemies**, through `$1805`: the hardware
+      - [x] **2b. Enemies and caught enemies**, through `$1805`: the hardware
         sprite path, for slots 2–7 as well as 0–1. The pointer is
         `(Frame & $1F) + $8598`, in the VIC bank at `$4000`.
         - [x] **Where the enemy art is.** `EnemySpawner`'s `$8598` table is
@@ -219,6 +219,29 @@ Each item ends with how it is proved.
           (level 1's enemy drawn on the top platform). Still open: the
           Baron's pointers, and whether `$182F`'s store back to `$8520`
           matters (does any routine leave a frame above `$1F`?).
+        - [x] **Proved against VICE.** `Views/Captures/sprites-level-1.txt`
+          (54 cases) holds the players, class 0 walking, a caught enemy
+          (pointer `$7E`), popped enemies (`$0B`/`$0C`), and every other class
+          walking. `SpriteView8BitGoldenTests` matches every opaque pixel, and
+          `$1805`'s registers. Level 1 has only class 0, so the other classes
+          are an intervention: `$8598` was written for slots 2–7 before each
+          pass. The protocol: bytes at `$1843` (`$1805`'s `rts`), then the frame
+          at the next `$1805`. The sprite registers have held for a whole frame
+          by then, and they read the same at both stops in every sample.
+          The capture found one bug:
+          - **`$D015`, not `$B2`, decides whether a sprite is seen.** A caught
+            enemy's `$B2` is zero while it rides its bubble, and the C64 draws
+            it. The port hid every state-0 slot, so it never drew caught
+            enemies. `$D015` is now game state (`EntityTable.SpriteEnable`):
+            `$09CD` sets all eight bits, `$142E` toggles a caught enemy's bit
+            (the flicker, translated in `EntityTimers`), and `$3D91` sets it
+            again at the pop (`BubblePop`). An empty slot stays off screen
+            because it is parked at Y `$15`, inside the top border.
+          The only mismatches were sprites under a lower-numbered one: three
+          were slot 4 under slot 3's food, which the port cannot draw until
+          `$2921`. Not captured: the flash colour (`$8728`), and the other
+          `$D015` writers (`level-transition.s`, `render-screen.s`,
+          `special-enemies.s`), which are not translated.
       - [x] **2c. Bubbles and pop frames**, drawn as software sprites. Each is a
         3×16 character-column graphic (12×16 multicolour pixels) and a mask,
         composed as `(background AND mask) OR graphic`, in the level's

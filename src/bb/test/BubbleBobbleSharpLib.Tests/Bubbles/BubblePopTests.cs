@@ -155,6 +155,20 @@ public sealed class BubblePopTests
         Assert.Equal(new byte[6], rig.Scores.Bytes.ToArray());
     }
 
+    // $3D91. The enemy's sprite comes back on in $D015, whichever way $142E's flicker left it, and
+    // no other slot's bit moves.
+    [Fact]
+    public void TurnsTheEnemysSpriteBackOn()
+    {
+        Rig rig = new();
+        Touched(rig, Slot, 0x1C, player: 0);
+        rig.Entities.SpriteEnable = 0xE3;
+
+        rig.Pop.Update();
+
+        Assert.Equal(0xF3, rig.Entities.SpriteEnable);
+    }
+
     // $E97F. Three enemies in one chain are food 1, 2 and 3, and 4000 once the chain stops.
     [Fact]
     public void ScoresTheChainOnceItStops()

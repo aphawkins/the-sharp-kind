@@ -79,10 +79,9 @@ public sealed class SpriteView8BitTests
         Assert.Equal(new(column, 0), sourcePosition);
     }
 
-    // $1817. An empty slot is not drawn - on the C64 what keeps it off the screen is $D015 rather
-    // than the sprite's registers, which this port reads as the slot being active.
+    // A slot whose bit in $D015 is clear is not drawn, whatever its registers hold.
     [Fact]
-    public void DrawsNothingForAnEmptySlot() => Assert.Empty(Draw(Model(state: [0x00, 0x00])).ImageParts);
+    public void DrawsNothingForADisabledSlot() => Assert.Empty(Draw(Model(state: [0x00, 0x00])).ImageParts);
 
     // Both players, each from the sheet painted in their own colour. $1805 walks the slots downwards,
     // so player two is written first and player one over it.
@@ -129,7 +128,7 @@ public sealed class SpriteView8BitTests
         byte[] position = [SpawnX, PlayerTwoX, SpawnX, 0, 0, 0, 0, 0];
         byte[] height = [SpawnY, SpawnY, SpawnY, 0, 0, 0, 0, 0];
 
-        RecordingGraphics graphics = Draw(new(state, position, height, frame, spriteBase, colour, new byte[8]));
+        RecordingGraphics graphics = Draw(new(state, position, height, frame, spriteBase, colour, new byte[8], 0x05));
 
         Assert.Equal(
             ["SpritesGame.Colour12", "SpritesGame.Colour5"],
@@ -138,7 +137,8 @@ public sealed class SpriteView8BitTests
         Assert.Equal(new(0, 0), graphics.ImageParts[1].SourcePosition);
     }
 
-    // The two players in slots 0 and 1, with the six enemy slots empty.
+    // The two players in slots 0 and 1, with the six enemy slots empty. A slot given a state is
+    // enabled in $D015 and the rest are not.
     private static SpriteModel Model(byte[]? state = null, byte[]? frame = null)
     {
         byte[] states = new byte[SpriteModel.Capacity];
@@ -153,7 +153,8 @@ public sealed class SpriteView8BitTests
             frames,
             [0x60, 0x60, 0, 0, 0, 0, 0, 0],
             [PlayerOneColour, PlayerTwoColour, 0, 0, 0, 0, 0, 0],
-            new byte[SpriteModel.Capacity]);
+            new byte[SpriteModel.Capacity],
+            (byte)Enumerable.Range(0, SpriteModel.Capacity).Where(i => states[i] != 0).Sum(i => 1 << i));
     }
 
     private static RecordingGraphics Draw(SpriteModel model)

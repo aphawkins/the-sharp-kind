@@ -63,13 +63,15 @@ public sealed class SpriteModelTests
     public void DrawsNothingOutsideTheSheet(byte spriteBase, byte frame)
         => Assert.False(Model(frame: Slots(frame), spriteBase: Slots(spriteBase)).IsDrawn(0));
 
-    // $1817. A slot whose state byte is zero holds nothing.
+    // $D015, not $B2, says whether a slot is seen: a caught enemy rides its bubble with its state
+    // byte at zero, and VICE draws it.
     [Theory]
-    [InlineData(0x00, false)]
-    [InlineData(0x01, true)]
-    [InlineData(0x0F, true)]
-    public void ReadsAZeroStateByteAsAnEmptySlot(byte state, bool drawn)
-        => Assert.Equal(drawn, Model(state: Slots(state)).IsDrawn(0));
+    [InlineData(0x00, 0x01, true)]
+    [InlineData(0x01, 0x01, true)]
+    [InlineData(0x01, 0xFE, false)]
+    [InlineData(0x00, 0x00, false)]
+    public void DrawsWhatTheSpriteEnableBitsSay(byte state, byte enabled, bool drawn)
+        => Assert.Equal(drawn, Model(state: Slots(state), enabled: enabled).IsDrawn(0));
 
     // The slots are independent, which is the whole reason the reference indexes these arrays rather
     // than naming bytes for each.
@@ -82,7 +84,8 @@ public sealed class SpriteModelTests
             y: [0xDD, 0x40, 0x55, 0, 0, 0, 0, 0x66],
             frame: [0x00, 0x04, 0x03, 0, 0, 0, 0, 0x01],
             spriteBase: [0x60, 0x60, 0x73, 0, 0, 0, 0, 0xBB],
-            colour: [0x05, 0x03, 0x0C, 0, 0, 0, 0, 0x02]);
+            colour: [0x05, 0x03, 0x0C, 0, 0, 0, 0, 0x02],
+            enabled: 0x85);
 
         Assert.Equal(
             [true, false, true, false, false, false, false, true],
@@ -138,13 +141,13 @@ public sealed class SpriteModelTests
         byte[] all = new byte[SpriteModel.Capacity];
         byte[] one = new byte[1];
 
-        Assert.Throws<ArgumentException>("state", () => new SpriteModel(one, all, all, all, all, all, all));
-        Assert.Throws<ArgumentException>("x", () => new SpriteModel(all, one, all, all, all, all, all));
-        Assert.Throws<ArgumentException>("y", () => new SpriteModel(all, all, one, all, all, all, all));
-        Assert.Throws<ArgumentException>("frame", () => new SpriteModel(all, all, all, one, all, all, all));
-        Assert.Throws<ArgumentException>("spriteBase", () => new SpriteModel(all, all, all, all, one, all, all));
-        Assert.Throws<ArgumentException>("colour", () => new SpriteModel(all, all, all, all, all, one, all));
-        Assert.Throws<ArgumentException>("flashTimer", () => new SpriteModel(all, all, all, all, all, all, one));
+        Assert.Throws<ArgumentException>("state", () => new SpriteModel(one, all, all, all, all, all, all, 0xFF));
+        Assert.Throws<ArgumentException>("x", () => new SpriteModel(all, one, all, all, all, all, all, 0xFF));
+        Assert.Throws<ArgumentException>("y", () => new SpriteModel(all, all, one, all, all, all, all, 0xFF));
+        Assert.Throws<ArgumentException>("frame", () => new SpriteModel(all, all, all, one, all, all, all, 0xFF));
+        Assert.Throws<ArgumentException>("spriteBase", () => new SpriteModel(all, all, all, all, one, all, all, 0xFF));
+        Assert.Throws<ArgumentException>("colour", () => new SpriteModel(all, all, all, all, all, one, all, 0xFF));
+        Assert.Throws<ArgumentException>("flashTimer", () => new SpriteModel(all, all, all, all, all, all, one, 0xFF));
     }
 
     // Slot 0 holds the byte given; the other seven are zero.
@@ -163,7 +166,8 @@ public sealed class SpriteModelTests
         byte[]? frame = null,
         byte[]? spriteBase = null,
         byte[]? colour = null,
-        byte[]? flashTimer = null)
+        byte[]? flashTimer = null,
+        byte enabled = 0xFF)
         => new(
             state ?? Slots(0x01),
             x ?? Slots(0x00),
@@ -171,5 +175,6 @@ public sealed class SpriteModelTests
             frame ?? Slots(0x00),
             spriteBase ?? Slots(0x60),
             colour ?? Slots(0x00),
-            flashTimer ?? Slots(0x00));
+            flashTimer ?? Slots(0x00),
+            enabled);
 }

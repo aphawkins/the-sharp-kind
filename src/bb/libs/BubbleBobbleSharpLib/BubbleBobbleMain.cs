@@ -207,7 +207,8 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         _loop.Entities.Frame,
         _loop.Entities.SpriteBase,
         _loop.Entities.Colour,
-        _loop.Entities.FlashTimer);
+        _loop.Entities.FlashTimer,
+        _loop.Entities.SpriteEnable);
 
     // $E3A7 and $046C: both scores from $0400, the high score and the lives.
     private HudModel Hud() => new(

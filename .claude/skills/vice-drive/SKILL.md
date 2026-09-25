@@ -383,3 +383,21 @@ pixel or a pass, and each still gave a plausible picture.
 - **The screen is double-buffered** (`$D018` swaps `$41`/`$53`). The frame on
   show at a pass's `$E90E` was drawn in the pass before last. Pair bytes read
   at `$0A4B` with the frame read at the `$E90E` after next.
+
+### Hardware sprites - 2026-09-25
+
+Found proving item 2b.
+
+- **Bracket `$1805` itself.** Read the bytes at `$1843` (its `rts`), then
+  stop at the next `$1805` and read the frame there. The registers have held
+  for a whole frame by then. Compare only `$D000`-`$D00F`, `$D027`-`$D02E`
+  and the pointers when checking they held; `$D012` and `$D019` always move.
+- **`$D015` moves during play.** `$142E` flickers a caught enemy's bit. Read
+  it at both stops, since a toggle can land between them.
+- **A lower-numbered sprite covers a higher one**, food included, though the
+  port cannot draw food yet. Leave out any sample with an overlap.
+- **Delete checkpoints in a `finally`.** A script that dies in
+  `wait_for_stop` leaves its checkpoint armed, and VICE then stops answering.
+- **The game plays on between runs**, and the player loses every life in a
+  minute or two. Run `selftest` before each capture and `start` again if it
+  shows the title screen.

@@ -68,6 +68,30 @@ public sealed class EntityTimersTests
         Assert.Equal(expected, objects.Type[Slot]);
     }
 
+    // $142E. A caught enemy flickers instead: its own slot's bit in $D015 flips, through $AB55, and
+    // back again the next even count. $18 is enemy 0 in slot 2; $23 is enemy 5 in slot 7.
+    [Theory]
+    [InlineData(0x18, 0xFB)]
+    [InlineData(0x1C, 0xEF)]
+    [InlineData(0x23, 0x7F)]
+    public void FlickersACaughtEnemy(byte type, byte enabled)
+    {
+        (ObjectTable objects, EntityTable entities, EntityTimers timers) = Table();
+        objects.Type[Slot] = type;
+        objects.Flags[Slot] = 0x0D;
+        entities.SpriteEnable = 0xFF;
+
+        timers.Update(Released);
+        Assert.Equal(enabled, entities.SpriteEnable);
+
+        timers.Update(Released);
+        Assert.Equal(enabled, entities.SpriteEnable);
+
+        timers.Update(Released);
+        Assert.Equal(0xFF, entities.SpriteEnable);
+        Assert.Equal(type, objects.Type[Slot]);
+    }
+
     // $1415 and $1419. An odd count does nothing, and neither does any count from $11 up - so the
     // wobble is half speed and only starts near the end.
     [Theory]
