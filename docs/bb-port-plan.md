@@ -219,7 +219,7 @@ Each item ends with how it is proved.
           (level 1's enemy drawn on the top platform). Still open: the
           Baron's pointers, and whether `$182F`'s store back to `$8520`
           matters (does any routine leave a frame above `$1F`?).
-      - [ ] **2c. Bubbles and pop frames**, drawn as software sprites. Each is a
+      - [x] **2c. Bubbles and pop frames**, drawn as software sprites. Each is a
         3×16 character-column graphic (12×16 multicolour pixels) and a mask,
         composed as `(background AND mask) OR graphic`, in the level's
         character colours (as `MulticolourSheet`).
@@ -238,8 +238,8 @@ Each item ends with how it is proved.
           every VICE sample. The first character row composed is screen row
           `$EE − 2` (`$AD22` is row 0) and the box builds upwards; the
           graphic's bottom row is at pixel `($A9D6 + 7) & 7` of that row.
-        - A screenshot shows the pass before: `$E90E` draws, then `$0CF2`
-          moves. Record bytes at `$0A4B` and screenshot at the next `$E90E`.
+        - The screen is double-buffered: record bytes at `$0A4B` and read the
+          frame at the `$E90E` after next (see the proof below).
         - Type `$48` (wobble) and `$4A` draw nothing, so a wobbling bubble
           flickers.
         - [x] **Compose `object-sprites.tga`.** Done in
@@ -293,19 +293,34 @@ Each item ends with how it is proved.
           `RenderLayer` between the playfield and the sidebar - the sidebar
           only ever touches the level's outermost two columns, so the order
           between it and the objects does not matter; the hardware sprites
-          (players, and item 2b's enemies) come after both. Position: left
-          edge `$AA0C - $14`; the bottom pixel row sits in character row `$EE
-          - 2` at sub-position `($A9D6 + 7) & 7`, and the sixteen-pixel cell
-          builds upward from there. Doubled horizontally through a
+          (players, and item 2b's enemies) come after both. Position: the
+          cell's left edge is `$DC × 8` (the entry is already shifted by
+          `$A9C4 × 2` inside it); the bottom pixel row sits in character row
+          `$EE - 2` at sub-position `($A9D6 + 7) & 7`, and the sixteen-pixel
+          cell builds upward from there. Doubled horizontally through a
           `MulticolourSheet`, as every other multicolour sheet is.
-          **Smoke-tested, not yet golden-framed:** driving the app with a
-          scripted blow shows a clean, correctly proportioned bubble that
-          rises and drifts through the level with no garbling - see
-          `.claude/skills/sdl-drive`. That is not the pixel-exact proof this
-          item's own verify step asks for, which still needs a VICE capture;
-          the position formula above is the one place this item did not
-          re-derive from first principles and could be wrong in a way a
-          smoke test would not catch (an off-by-one row, for instance).
+        - [x] **Proved against VICE.** `Views/Captures/objects-level-1.txt`
+          (level 1, no intervention: the stick blew bubbles and walked into
+          one) holds 19 cases: types `$00`, `$02` and `$04` in every `$A9C4`
+          and every `$A9D6` seen, and pop frame 4 (`$40`).
+          `ObjectView8BitGoldenTests` matches every visible pixel. The capture
+          found one bug: the port drew the cell at `$AA0C - $14`, which is
+          right only for `$A9C4` 0, and was `$A9C4 × 2` pixels too far right
+          otherwise. `ObjectsModel` now carries `$DC`, not `$AA0C`.
+          Two traps in the capture protocol, both now in the test header:
+          - **The screen is double-buffered** (`$D018` swaps `$41`/`$53`).
+            The frame on show at a pass's `$E90E` was drawn in the pass
+            before last, so pair the bytes at `$0A4B` with the frame at the
+            `$E90E` after next.
+          - **The picture starts at raster line 50, not 51** (`YSCROLL` is 2).
+            With 51, every object reads one pixel too low.
+          - Read the frame with the binary monitor's display command
+            (`0x84`, C64 colour numbers). The text monitor's `screenshot`
+            breaks the binary monitor's reply stream.
+
+          Not captured: pop frames other than 4, and `$A9C4` 3 with `$A9D6`
+          4 or 6. `$A9D6` is only ever even (`BubbleBlow` masks it with `$06`,
+          `EntityMover` steps by 2), so odd values need no proof.
       - [ ] **2d. The specials**: `$24`–`$32` and `$44`–`$4C` vectors
         (`$E758`, `$3E94`, `$3EFD`, `$E752`, `$3ED4`, `$E767` for the Baron,
         `$3E77`, `$3F28`, `$3F88`), with item 5.
@@ -330,8 +345,9 @@ Each item ends with how it is proved.
         Not captured: the special item, and the `$18` flash.
 
       Verify: golden frames compared pixel for pixel with VICE screenshots
-      (bytes at `$0A4B`, picture at the next `$E90E`), for a bubble in each
-      shift, each pop frame, a caught enemy, each enemy class and the food.
+      (bytes at `$0A4B`, picture at the `$E90E` after next, raster line 50 as
+      row 0), for a bubble in each shift, each pop frame, a caught enemy,
+      each enemy class and the food.
 - [ ] **3. Players and enemies meet.** `$0AAB` (a player pushing, riding or
       touching a bubble, and death on an enemy), the player states beyond 1
       (`$0E` dying, `$0F` dead, `$10` respawn, `$18` carried), lives, and game

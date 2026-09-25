@@ -368,3 +368,18 @@ Assert the PC anyway.
 **Writing memory** is `mon.set_mem(addr, [bytes])`, command `0x02`. It halts
 the machine like any command. It is an intervention on the game, so say so in
 whatever the capture supports.
+
+### Comparing pixels
+
+Found on 2026-09-25, proving item 2c. Each one moved every object by a
+pixel or a pass, and each still gave a plausible picture.
+
+- **Read the frame with the binary monitor, not the text one.** Command
+  `0x84` (display get), body `01 00`, returns the whole 504x312 frame as C64
+  colour numbers (mask with `& 15`). Sending `screenshot` to the text monitor
+  while the binary one holds the machine breaks the binary reply stream.
+- **The picture starts at raster line 50, not 51.** `YSCROLL` is 2. Column 0
+  is at x 136 in that frame.
+- **The screen is double-buffered** (`$D018` swaps `$41`/`$53`). The frame on
+  show at a pass's `$E90E` was drawn in the pass before last. Pair bytes read
+  at `$0A4B` with the frame read at the `$E90E` after next.

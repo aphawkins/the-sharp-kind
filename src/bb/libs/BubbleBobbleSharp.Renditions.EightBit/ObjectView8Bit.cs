@@ -19,12 +19,12 @@ namespace BubbleBobbleSharp.Renditions.EightBit;
 /// </para>
 /// <para>
 /// Position is not the row and column a hardware sprite would use. The
-/// graphic is pre-shifted by $A9C4 x2 inside its box, so the art's left edge
-/// is $AA0C minus $14, in every VICE sample taken so far. Vertically, $EE
-/// minus two is the character row the bottom of the cell sits in, and within
-/// that row the bottom pixel is at ($A9D6 + 7) and 7 - the box is sixteen
-/// pixels tall and builds upwards from there. Not yet proven against a VICE
-/// golden frame; see item 2c's verify step.
+/// cell's left edge is the character column $DC. The graphic is pre-shifted by
+/// $A9C4 x2 inside it, so the art's left edge lands on $AA0C minus $14.
+/// Vertically, $EE minus two is the character row the bottom of the cell sits
+/// in, and within that row the bottom pixel is at ($A9D6 + 7) and 7 - the box
+/// is sixteen pixels tall and builds upwards from there. Proved against VICE in
+/// ObjectView8BitGoldenTests.
 /// </para>
 /// </summary>
 internal sealed class ObjectView8Bit : IView<ObjectsModel>
@@ -33,9 +33,6 @@ internal sealed class ObjectView8Bit : IView<ObjectsModel>
     // sixteen rows tall either way.
     private const int SourceCellWidth = 12;
     private const int CellHeight = 16;
-
-    // The art's left edge, relative to $AA0C - see the class remarks.
-    private const int LeftOffset = 0x14;
 
     // $EE holds the character row the bottom of the cell sits in, two below the row this pass
     // composes into first.
@@ -77,7 +74,7 @@ internal sealed class ObjectView8Bit : IView<ObjectsModel>
 
     private void DrawSlot(ObjectsModel model, int slot)
     {
-        float left = model.X(slot) - LeftOffset;
+        float left = _layout.Playfield.Cell(model.Column(slot), 0).X;
 
         int bottomRow = model.Row(slot) - BottomRowOffset;
         float rowTop = _layout.Playfield.Cell(0, bottomRow).Y;

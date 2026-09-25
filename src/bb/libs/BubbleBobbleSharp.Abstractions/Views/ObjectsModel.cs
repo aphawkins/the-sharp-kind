@@ -20,7 +20,7 @@ namespace BubbleBobbleSharp.Abstractions.Views;
 public sealed class ObjectsModel
 {
     private readonly byte[] _drawn;
-    private readonly byte[] _x;
+    private readonly byte[] _column;
     private readonly byte[] _row;
     private readonly byte[] _subY;
 
@@ -31,24 +31,24 @@ public sealed class ObjectsModel
     /// Each slot's object-sprites.tga entry, as <c>BubblePop.Drawn</c> holds
     /// it.
     /// </param>
-    /// <param name="x">Each slot's pixel column, as $AA0C holds it.</param>
+    /// <param name="column">Each slot's character column, as $DC holds it.</param>
     /// <param name="row">Each slot's character row, as $EE holds it.</param>
     /// <param name="subY">Each slot's vertical sub-position, as $A9D6 holds it.</param>
     /// <param name="colours">The level's colour byte, as <see cref="PlayfieldModel.Colours"/> holds it.</param>
     public ObjectsModel(
         ReadOnlySpan<byte> drawn,
-        ReadOnlySpan<byte> x,
+        ReadOnlySpan<byte> column,
         ReadOnlySpan<byte> row,
         ReadOnlySpan<byte> subY,
         int colours)
     {
         Check(drawn, nameof(drawn));
-        Check(x, nameof(x));
+        Check(column, nameof(column));
         Check(row, nameof(row));
         Check(subY, nameof(subY));
 
         _drawn = drawn[..Capacity].ToArray();
-        _x = x[..Capacity].ToArray();
+        _column = column[..Capacity].ToArray();
         _row = row[..Capacity].ToArray();
         _subY = subY[..Capacity].ToArray();
         Colours = colours;
@@ -73,10 +73,10 @@ public sealed class ObjectsModel
     /// <returns>The entry index.</returns>
     public byte Entry(int slot) => _drawn[slot];
 
-    /// <summary>Gets a slot's pixel column, as $AA0C holds it.</summary>
+    /// <summary>Gets a slot's character column, as $DC holds it.</summary>
     /// <param name="slot">The object slot.</param>
-    /// <returns>The position byte.</returns>
-    public byte X(int slot) => _x[slot];
+    /// <returns>The column.</returns>
+    public byte Column(int slot) => _column[slot];
 
     /// <summary>Gets a slot's character row, as $EE holds it.</summary>
     /// <param name="slot">The object slot.</param>

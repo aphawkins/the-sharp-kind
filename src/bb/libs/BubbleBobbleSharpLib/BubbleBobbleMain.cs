@@ -220,7 +220,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     // $E90E, built fresh each frame: what BubblePop drew this pass, and where.
     private ObjectsModel Objects() => new(
         _loop.Pop.Drawn,
-        _loop.Objects.X,
+        _loop.Objects.Column,
         _loop.Objects.Row,
         _loop.Objects.SubY,
         _playfield.Colours);
