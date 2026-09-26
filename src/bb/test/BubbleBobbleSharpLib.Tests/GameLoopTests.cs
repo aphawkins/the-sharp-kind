@@ -4,6 +4,7 @@
 
 using BubbleBobbleSharpLib.Bubbles;
 using BubbleBobbleSharpLib.Levels;
+using BubbleBobbleSharpLib.Players;
 using SharpKind;
 using Xunit;
 
@@ -91,6 +92,59 @@ public sealed class GameLoopTests
         Assert.Equal(s_levels.Level(1).Enemies.Count, loop.Entities.EnemyCount);
         Assert.All(loop.Items.Type.ToArray(), t => Assert.True(t >= 0x80));
         Assert.All(loop.Objects.Type.ToArray(), t => Assert.Equal(ObjectTable.FreeType, t));
+    }
+
+    // $05F5 readies all eight slots, not just the players: no jump, no fall, on the ground, out of a
+    // bubble, with no leap, no climb and no flash for an enemy.
+    [Fact]
+    public void StartsEverySlotIdle()
+    {
+        GameLoop loop = Start(1, seed: 1);
+        EntityTable entities = loop.Entities;
+
+        for (int slot = 0; slot < EntityTable.Capacity; slot++)
+        {
+            Assert.Equal(0xFF, entities.RiseCounter[slot]);
+            Assert.Equal(0xFF, entities.FallCounter[slot]);
+            Assert.Equal(0xFF, entities.GroundState[slot]);
+            Assert.Equal(0xFF, entities.BubbleTimer[slot]);
+            Assert.Equal(0x00, entities.LeapFlag[slot]);
+            Assert.Equal(0x00, entities.ClimbFlag[slot]);
+            Assert.False(entities.ClimbNext[slot]);
+        }
+
+        for (int slot = PlayerTable.Capacity; slot < EntityTable.Capacity; slot++)
+        {
+            Assert.Equal(0x00, entities.FlashTimer[slot]);
+        }
+    }
+
+    // Level 1's enemies start at the top and fall onto the top platform, where VICE has them at $65.
+    // They need $17BE's drop target and $05F5's idle jump counters to stop there, not fall through.
+    [Fact]
+    public void Level1EnemiesLandOnTheTopPlatform()
+    {
+        const byte TopPlatform = 0x65;
+        const int LandingPasses = 95;
+
+        GameLoop loop = Start(1, seed: 1);
+        int last = 1 + s_levels.Level(1).Enemies.Count;
+
+        for (int pass = 0; pass < LandingPasses; pass++)
+        {
+            loop.Pass([Idle, Idle]);
+
+            for (int slot = 2; slot <= last; slot++)
+            {
+                Assert.InRange(loop.Entities.Y[slot], 0x15, TopPlatform);
+            }
+        }
+
+        for (int slot = 2; slot <= last; slot++)
+        {
+            Assert.Equal(TopPlatform, loop.Entities.Y[slot]);
+            Assert.Equal(0xFF, loop.Entities.GroundState[slot]);
+        }
     }
 
     // $1CBD runs in every pass, so a held stick moves the player a walk step a pass.

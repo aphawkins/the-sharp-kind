@@ -36,6 +36,10 @@ internal sealed class EnemyFrame
     // $1CA9. Two `inc` a frame.
     private const byte DropStep = 0x02;
 
+    // $17C8 and $17D1. The row the enemies come in at, and the frames they take.
+    private const byte EntryRow = 0x15;
+    private const int EntryFrames = 0x16;
+
     // $1CB5. What AttackTimer holds as the drop ends.
     private const byte FirstAttackDelay = 0x0A;
 
@@ -87,6 +91,44 @@ internal sealed class EnemyFrame
         _diagonal = diagonal;
         _runner = runner;
         _food = food;
+    }
+
+    // $17BE, from $09F7 in the level's start: the enemies come in from the top. Each one's row is kept
+    // as the drop's target, it is put at the top, and twenty-two frames move it down two pixels each
+    // and animate it. What is left of the drop, $1CA0 finishes in play.
+    //
+    // The loop does not look at the mode, so a thing that reaches its row before the last frame has
+    // its mode taken down once more on every frame left: $00 to $EA for one already there.
+    internal void Enter()
+    {
+        for (int slot = FirstEnemy; slot < EntityTable.Capacity; slot++)
+        {
+            _entities.AttackTimer[slot] = _entities.Y[slot];
+            _entities.Y[slot] = EntryRow;
+            _entities.Mode[slot] = 0;
+        }
+
+        for (int frame = 0; frame < EntryFrames; frame++)
+        {
+            for (int slot = EntityTable.Capacity - 1; slot >= FirstEnemy; slot--)
+            {
+                if (_entities.State[slot] == 0)
+                {
+                    continue;
+                }
+
+                Idle(slot);
+
+                if (_entities.Y[slot] == _entities.AttackTimer[slot])
+                {
+                    _entities.Mode[slot]--;
+                }
+                else
+                {
+                    _entities.Y[slot] = unchecked((byte)(_entities.Y[slot] + DropStep));
+                }
+            }
+        }
     }
 
     // $1CBD's loop, from slot 7 down. counter is $08, the frame counter the IRQ steps.

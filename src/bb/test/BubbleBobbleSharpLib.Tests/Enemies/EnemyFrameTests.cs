@@ -75,6 +75,51 @@ public sealed class EnemyFrameTests
         Assert.Equal(0x0A, entities.AttackTimer[Slot]);
     }
 
+    // $17BE. The spawned row becomes the drop's target, and twenty-two frames of two pixels take the
+    // thing from $15 to $41, short of a row further down. $1CA0 finishes the drop in play.
+    [Fact]
+    public void EntersFromTheTopTowardsItsRow()
+    {
+        (EntityTable entities, EnemyFrame frame) = Walker();
+
+        frame.Enter();
+
+        Assert.Equal(StandY, entities.AttackTimer[Slot]);
+        Assert.Equal(0x41, entities.Y[Slot]);
+        Assert.Equal(0x00, entities.Mode[Slot]);
+    }
+
+    // $17E7. The loop does not look at the mode, so a thing that reaches its row takes it down once
+    // on each frame left. $25 is eight frames from $15, which leaves fourteen.
+    [Theory]
+    [InlineData(0x25, 0xF2)]
+    [InlineData(0x15, 0xEA)]
+    public void TakesTheModeDownOnEveryFrameAtItsRow(byte row, byte mode)
+    {
+        (EntityTable entities, EnemyFrame frame) = Walker();
+        entities.Y[Slot] = row;
+
+        frame.Enter();
+
+        Assert.Equal(row, entities.Y[Slot]);
+        Assert.Equal(row, entities.AttackTimer[Slot]);
+        Assert.Equal(mode, entities.Mode[Slot]);
+    }
+
+    // $17C2. Every enemy slot is put at the top, but only a live one drops.
+    [Fact]
+    public void PutsAnEmptySlotAtTheTopWithoutMovingIt()
+    {
+        (EntityTable entities, EnemyFrame frame) = Walker();
+        entities.Y[Slot + 1] = 0x75;
+
+        frame.Enter();
+
+        Assert.Equal(0x75, entities.AttackTimer[Slot + 1]);
+        Assert.Equal(0x15, entities.Y[Slot + 1]);
+        Assert.Equal(0x00, entities.Mode[Slot + 1]);
+    }
+
     // $1D11. The spawn delay counts down, and the thing animates on the spot without walking.
     [Fact]
     public void HoldsTheThingWhileTheDelayRuns()

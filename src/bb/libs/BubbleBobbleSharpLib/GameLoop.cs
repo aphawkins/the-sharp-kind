@@ -134,6 +134,9 @@ internal sealed class GameLoop
             Items.Setup(level, _subflg);
         }
 
+        // $09F7, $17BE.
+        _enemies.Enter();
+
         // $09FD and $0A03.
         _passesToSecond = PassesPerSecond;
         _counter = FirstCounter;
@@ -203,6 +206,24 @@ internal sealed class GameLoop
         // $0620 and $062B. Every object slot back to free.
         Objects.Reset();
 
+        // $05F5, for all eight slots: the counters a thing standing still reads as idle, and a
+        // walker's leap and climb off. $8728 and $8729, the players' flash, are kept on the stack.
+        for (int slot = 0; slot < EntityTable.Capacity; slot++)
+        {
+            Entities.RiseCounter[slot] = 0xFF;
+            Entities.FallCounter[slot] = 0xFF;
+            Entities.GroundState[slot] = 0xFF;
+            Entities.BubbleTimer[slot] = 0xFF;
+            Entities.LeapFlag[slot] = 0;
+            Entities.ClimbFlag[slot] = 0;
+            Entities.ClimbNext[slot] = false;
+
+            if (slot >= PlayerTable.Capacity)
+            {
+                Entities.FlashTimer[slot] = 0;
+            }
+        }
+
         for (int player = 0; player < PlayerTable.Capacity; player++)
         {
             Entities.State[player] = player < _playing ? PlayerFrame.PlayingState : (byte)0;
@@ -211,12 +232,6 @@ internal sealed class GameLoop
             Entities.Frame[player] = s_spawnFrame[player];
             Entities.Colour[player] = s_spawnColour[player];
             Entities.SpriteBase[player] = PlayerSpriteBase;
-
-            // $04C4 to $04CB and $05F5: the counters a standing player reads as idle.
-            Entities.RiseCounter[player] = 0xFF;
-            Entities.FallCounter[player] = 0xFF;
-            Entities.GroundState[player] = 0xFF;
-            Entities.BubbleTimer[player] = 0xFF;
 
             // $0656. The rings last a level.
             PlayerTable.DriftRing[player] = 0;
