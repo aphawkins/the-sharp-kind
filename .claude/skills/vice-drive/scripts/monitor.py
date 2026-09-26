@@ -36,6 +36,7 @@ CMD_MEM_SET = 0x02
 CMD_CHECKPOINT_GET = 0x11
 CMD_CHECKPOINT_SET = 0x12
 CMD_CHECKPOINT_DELETE = 0x13
+CMD_CONDITION_SET = 0x22
 CMD_EXIT = 0xAA
 
 RESP_MEM_GET = 0x01
@@ -185,6 +186,14 @@ class Monitor:
         )
         payload = self.request(CMD_CHECKPOINT_SET, body, want=RESP_CHECKPOINT)
         return struct.unpack("<I", payload[:4])[0]
+
+    def set_condition(self, number, expression):
+        """Make a checkpoint stop only when expression holds, e.g. "X < 2". HALTS the machine.
+
+        Command 0x22: uint32 checkpoint, uint8 length, then the ASCII. Registers are A X Y PC SP FL.
+        """
+        text = expression.encode("ascii")
+        self.request(CMD_CONDITION_SET, struct.pack("<IB", number, len(text)) + text)
 
     def delete_checkpoint(self, number):
         self.request(CMD_CHECKPOINT_DELETE, struct.pack("<I", number),

@@ -19,9 +19,9 @@ namespace BubbleBobbleSharpLib;
 // runs at 25 passes a second and $1CBD runs once in each; this calls it at the end of the pass.
 //
 // **Gaps, named so they are not mistaken for finished work:** $0BED (bubbles from the corners),
-// $0AAB (a player against bubbles and enemies), $32C1 (EXTEND), the level timer and the hurry-up,
-// and level completion. Each is an item in bb-port-plan.md. The bonus level's items throw, so level
-// 100 starts without them.
+// the player states past 1 (a player dying, dead and respawning), $32C1 (EXTEND), the level timer
+// and the hurry-up, and level completion. Each is an item in bb-port-plan.md. The bonus level's
+// items throw, so level 100 starts without them.
 internal sealed class GameLoop
 {
     // $09FD. The IRQ counts fifty frames to a second, which is twenty-five passes.
@@ -56,7 +56,9 @@ internal sealed class GameLoop
     private readonly BubbleBlow _blow;
     private readonly PlayerFrame _players;
     private readonly EnemyFrame _enemies;
+    private readonly BubblePush _push;
     private readonly EnemyAiLoop _ai;
+    private readonly PlayerDeath _death;
     private readonly EntityTimers _timers;
     private readonly EnemySpawner _spawner;
     private readonly int _playing;
@@ -78,6 +80,8 @@ internal sealed class GameLoop
         _blow = new(PlayerTable, Entities, Objects, rings);
         _players = BuildPlayers(Entities, _blow, rings);
         _enemies = BuildEnemies(Entities, Objects, random, food);
+        _push = new(Entities, Objects);
+        _death = new(Entities);
         _ai = new(Objects, Entities, new(Objects, Entities, new(Objects, Entities)), new(Objects), random, new(Objects, Entities));
         _timers = new(Objects, Entities);
         Pop = new(Objects, Entities, PlayerTable, food, Scores);
@@ -143,6 +147,7 @@ internal sealed class GameLoop
         Items.Update();
         _blow.Tick();
         Pop.Update();
+        _push.Update(map);
         _ai.Update(map);
         _timers.Update(ReleasedState);
         Items.Collect(_subflg);
@@ -154,9 +159,10 @@ internal sealed class GameLoop
             Items.Tick();
         }
 
-        // $1CBD: slots 7 to 2, then 1 and 0.
+        // $1CBD: slots 7 to 2, then 1 and 0, then $1D32.
         _enemies.Step(_counter, map);
-        _players.Step(ports, map);
+        _players.Step(ports, _counter, map);
+        _death.Update();
         _counter += 2;
     }
 

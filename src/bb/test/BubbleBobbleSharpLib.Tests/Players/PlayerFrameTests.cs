@@ -44,21 +44,20 @@ public sealed class PlayerFrameTests
         entities.State[1] = 0x00;
         entities.X[1] = 0xEC;
 
-        frame.Step([Right, Right], Floor());
+        frame.Step([Right, Right], 0x01, Floor());
 
         Assert.Equal(0xEC, entities.X[1]);
     }
 
-    // And the same slot driven for itself, so that the skip is the state byte rather than the index.
+    // $1E6C. A state with no translated handler is a named gap, not a silent skip.
     [Fact]
-    public void LeavesASlotInAnUntranslatedStateAlone()
+    public void AnUntranslatedStateIsAGap()
     {
         (EntityTable entities, PlayerFrame frame) = Standing();
         entities.State[0] = 0x04;
 
-        frame.Step(0, Right, Floor());
-
-        Assert.Equal(StandX, entities.X[0]);
+        NotSupportedException gap = Assert.Throws<NotSupportedException>(() => frame.Step(0, Right, Floor()));
+        Assert.Contains("is not translated", gap.Message, StringComparison.Ordinal);
     }
 
     // $21EB into $220C. Standing on a floor with the stick pushed, the walk owns the frame - two
@@ -210,7 +209,7 @@ public sealed class PlayerFrameTests
         entities.X[1] = StandX;
         entities.Y[1] = StandY;
 
-        frame.Step([Right, Input.Idle], Floor());
+        frame.Step([Right, Input.Idle], 0x01, Floor());
 
         Assert.Equal(StandX + 2, entities.X[0]);
         Assert.Equal(StandX, entities.X[1]);

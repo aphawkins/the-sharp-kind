@@ -371,11 +371,81 @@ Each item ends with how it is proved.
       (bytes at `$0A4B`, picture at the `$E90E` after next, raster line 50 as
       row 0), for a bubble in each shift, each pop frame, a caught enemy,
       each enemy class and the food.
-- [ ] **3. Players and enemies meet.** `$0AAB` (a player pushing, riding or
-      touching a bubble, and death on an enemy), the player states beyond 1
-      (`$0E` dying, `$0F` dead, `$10` respawn, `$18` carried), lives, and game
-      over at `$0A64`. `$04BB` also clears the player's `$5B7F` bit.
-      Verify: VICE captures of a death and a respawn.
+- [ ] **3. Players and enemies meet.** Split into steps once read. The plan
+      had `$0AAB` as the death; it is not. `$0AAB` walks the eighteen object
+      slots and pushes bubbles. A player dies at `$1D32`, the tail of `$1CBD`.
+      - [x] **3a. `$0AAB`, a player pushing a bubble.** `BubblePush`, called
+        at `$0A4B` between `$E90E` and `$0CF2`. A player in state 1 with frame
+        0–3 nudges an object (state 0, type below `$24`) up to `$11` pixels to
+        their right 4 pixels right. Frames 4–7 nudge one up to `$13` pixels to
+        their left 4 pixels left. Both need Y within `$0D`. A bubble pushed
+        into a wall goes back a column and snaps to the grid. Proved by hand
+        in `BubblePushTests`. **Proved against VICE:**
+        `Bubbles/Captures/push-level-1.txt` (622 passes, 21 pushes: each way,
+        across a column, and a snap out of a wall each way, with `$A9D6` 0 to 6)
+        matches byte for byte in `BubblePushGoldenTests`. It is an
+        intervention: blowing into a wall pops the bubble at once, so every
+        twelfth pass a plain bubble was written beside the player at `$0A4B`.
+        Nothing outside the bytes compared changed but `$40`/`$41`, the
+        routine's own pointer.
+      - [x] **3a2. `$0AAB`'s lost player index.** The left arm, on an object
+        row outside `$04`–`$1C`, branches to the loop with the row in Y instead
+        of the player. `BubblePush` now keeps Y as the 6502 does and reads
+        through `Peek`, which maps `$B2`–`$FF` and `$8520`–`$8527` to
+        `EntityTable` and `ObjectTable`. So row 3 makes entity 3 the pusher for
+        the slots left, and `dey` then gives entities 2, 1 and 0 a turn: the
+        player can push one bubble several times in a pass. A read outside
+        those arrays still throws. **Proved against VICE:**
+        `Bubbles/Captures/push-offmap-level-1.txt` (896 passes, rows `$00`–`$03`,
+        up to four pushes a call, columns wrapping to 255, and entity 3
+        pushing) matches byte for byte. An intervention: see
+        `BubblePushGoldenTests`. Two findings:
+        - **`$08` does not catch the IRQ.** Four passes changed a player's
+          frame or Y inside `$0AAB` with `$08` still, so a line is now also
+          dropped if an entity byte changed, since `$0AAB` writes none.
+        - **Row `$1D` crashed the C64** to `$0000` a pass after it was
+          written, somewhere after `$0AAB`. The scene had the bubble at the
+          player's Y but row `$1D`, which the game may never make. Not
+          followed up; rows `$1D` and up are not captured.
+      - [x] **3b. `$1D32`, death.** `PlayerDeath`, called by `GameLoop` after
+        the players move, as the end of `$1CBD`. A player in state 1 with an
+        enemy (slots 2–7, state 1 to `$0A`) within `$0B` pixels in both axes
+        goes to state `$0E`. The point measured from is X + 2 and Y + 2, not
+        + 1: the `cmp #$01` leaves the carry set, and a wrapped X carries one
+        more into Y. `$5AFF` sends `$1CBD` to `$1D84` instead, which skips the
+        test on every level but 99; only untranslated code sets it (the
+        hurry-up at `$16CD`, `$370C`, `$F06D`, `$7EC1`), so the port always
+        runs it. Item 4 must bring `$5AFF` with the hurry-up. Proved by hand in
+        `PlayerDeathTests` and **against VICE**: `Players/Captures/death-level-1.txt`
+        (1,232 calls on level 1 to game over, no intervention, four deaths,
+        `$5AFF` zero throughout) matches byte for byte in
+        `PlayerDeathGoldenTests`. A dying player stays in `$0E` until 3c.
+      - [x] **3c. The dying and dead states.** `PlayerDying` (`$28A5`, state
+        `$0E`) and `$28E8` (state `$0F`, a bare `rts`), dispatched by
+        `PlayerFrame.Step`, which is `$1E6C`; any other state now throws there
+        instead of being skipped. The first call sets `$86D8` to `$12` and
+        `$8610` to `$20`. `$8610` counts down: `$1F`–`$00` spin (frame 0 or
+        `$0C`–`$0E`), dropping 3 px a call if the player was caught in the air
+        (`$87A0`/`$87F0` are not updated, so they fall through floors);
+        `$FF`–`$C8` lie still (frames `$0F`–`$12`); 88 calls in all, then
+        `$0F`. `$7F53`, called by `$045C`, clears `$86D8` again (3d).
+        `PlayerFrame.Slot` is now `$1CDB`–`$1D21` for a player: `$1D03`'s extra
+        call when `$8728` is set and bit 1 of `$08` is clear (item effect 0's
+        flash, and a death's first pass), and slot 1 before slot 0. `$8638` on a
+        player throws. Proved by hand in `PlayerDyingTests`, and **against
+        VICE**: `Players/Captures/dying-level-1.txt` (four deaths on level 1, 352
+        turns, no intervention, bracketed `$1CDB`–`$1D24` with `X < 2`) matches
+        byte for byte. No captured death had `$8728` set.
+      - [ ] **3d. Lives and respawn, `$045C`/`$04BB`.** A state `$0F` player
+        loses a life, goes back to the start with `$4A` passes of state `$10`
+        (`$290D`: colour EOR 5, and plays as state 1), or leaves the game at
+        zero lives. `$04BB` also clears the player's `$5B7F` bit, and calls
+        `$16E4` (item 4) when `$4A` is 2 or more. The lives on the HUD.
+      - [ ] **3e. Join and game over.** `$052A` (a player not in the game
+        presses fire), and `$0A64` (both states zero).
+      - Not yet placed: state `$18`, set by `$28FB`. Find its caller first.
+
+      Verify: a VICE capture of a respawn (the push and the death are done).
 - [ ] **4. Level flow.** The level timer (`$2A`, `$2B`, `$06C6`), the hurry-up
       and anger (`$16E4`), the Baron's spawn (`$1621`), `$1719` setting
       `LevelItems.FoodBase`, the freeze in `$67` (`$2F74`, `$1CFB`), the

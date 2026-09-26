@@ -15,10 +15,13 @@ namespace BubbleBobbleSharpLib.Players;
 // $25 and dispatches on the state byte; and for a live player - state 1 - the handler is $2162,
 // which is where the choice between walking, jumping and falling is actually made.
 //
-// **Only state 1 is translated.** The jump table at $1E3A has an entry per state, and the rest of
-// them are dying, being captured, being freed and the level-99 special - all of which belong to
-// phases that have not started. A slot in any other state is left alone here, and named as such
-// rather than silently skipped.
+// **States 1, $0E and $0F are translated.** The jump table at $1E3A has an entry per state: 1 is
+// $2162 below, $0E is PlayerDying ($28A5) and $0F is $28E8, a bare `rts`. Any other state reaching
+// $1E6C throws, by the loud-gap rule.
+//
+// **$1D03 can run $1E6C twice.** A slot whose $8728 is not zero gets an extra call on every other
+// pass, before the ordinary one. For a player that is item effect 0's flash, and it is also why the
+// first pass of a death can step the death twice: $28A5 clears $8728, but only once it is running.
 //
 // **Only the two player slots are driven.** $1CBD's loop covers eight, but slots 2 to 7 are enemies
 // and their handlers are Phase 6's.
@@ -34,6 +37,13 @@ internal sealed class PlayerFrame
     // $B2, and the only value the dispatch below knows what to do with. Settled by reading the byte
     // in a running game rather than by inferring it - see docs/bb-port-plan.md.
     internal const byte PlayingState = 0x01;
+
+    // $1D6F and $28F8. Dying, and dead.
+    internal const byte DyingState = 0x0E;
+    internal const byte DeadState = 0x0F;
+
+    // $1D0A. Bit 1 of $08.
+    private const byte AngerFrames = 0x02;
 
     // $21CD. The cells under a standing player: their own row has to be solid for them to have
     // something to stand on.
@@ -54,6 +64,7 @@ internal sealed class PlayerFrame
     private readonly PlayerJump _jump;
     private readonly PlayerFall _fall;
     private readonly BubbleBlow _blow;
+    private readonly PlayerDying _dying;
 
     internal PlayerFrame(
         EntityTable entities,
@@ -73,16 +84,17 @@ internal sealed class PlayerFrame
         _jump = jump;
         _fall = fall;
         _blow = blow;
+        _dying = new(entities);
     }
 
-    // $1CBD's loop, over the slots this phase owns. The ports were read before it - Input.Read fills
-    // the same two bytes $85E8 and $85E9 hold, indexed the same way, so a player number reaches the
-    // right stick without any translation in between.
-    internal void Step(ReadOnlySpan<byte> ports, SolidMap map)
+    // $1CBD's loop, over the two player slots. The ports were read before it - Input.Read fills the
+    // same two bytes $85E8 and $85E9 hold, indexed the same way, so a player number reaches the right
+    // stick without any translation in between. counter is $08, as EnemyFrame takes it.
+    internal void Step(ReadOnlySpan<byte> ports, byte counter, SolidMap map)
     {
-        for (int player = 0; player < PlayerTable.Capacity; player++)
+        for (int player = PlayerTable.Capacity - 1; player >= 0; player--)
         {
-            Step(player, ports[player], map);
+            Slot(player, ports[player], counter, map);
         }
     }
 
@@ -93,14 +105,50 @@ internal sealed class PlayerFrame
     {
         ArgumentNullException.ThrowIfNull(map);
 
+        switch (_entities.State[player])
+        {
+            case 0:
+                return;
+            case PlayingState:
+                Playing(player, port, PlayerCell.Of(_entities.X[player], _entities.Y[player]), map);
+                return;
+            case DyingState:
+                _dying.Step(player);
+                return;
+            case DeadState:
+                // $28E8.
+                return;
+            default:
+                throw new NotSupportedException(
+                    $"slot {player}'s state ${_entities.State[player]:X2} at $1E6C is not translated");
+        }
+    }
+
+    // $1CDB to $1D21, for a player slot. $85C0 is $FF for a player from the start, so the drop at
+    // $1CA0 is never taken, and the `SESSION` test at $1CF7 is for slots 2 upwards.
+    internal void Slot(int player, byte port, byte counter, SolidMap map)
+    {
         // $1CDB. A zero state byte is an empty slot - an unjoined second player, or one between
         // lives - and the loop skips it without calling $1E6C at all.
-        if (_entities.State[player] != PlayingState)
+        if (_entities.State[player] == 0)
         {
             return;
         }
 
-        Playing(player, port, PlayerCell.Of(_entities.X[player], _entities.Y[player]), map);
+        // $1D03. The flash's extra call, on the passes where bit 1 of $08 is clear.
+        if (_entities.FlashTimer[player] != 0 && (counter & AngerFrames) == 0)
+        {
+            Step(player, port, map);
+        }
+
+        // $1D11. Nothing translated sets a player's $8638, and $1E87 would send a player to $EB0F, the
+        // enemy walker.
+        if (_entities.HoldTimer[player] != 0)
+        {
+            throw new NotSupportedException($"slot {player} with $8638 set at $1D11 is not translated");
+        }
+
+        Step(player, port, map);
     }
 
     // Three cells of a row, the third only when the player straddles a column. $21CD asks it in the

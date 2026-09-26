@@ -401,3 +401,30 @@ Found proving item 2b.
 - **The game plays on between runs**, and the player loses every life in a
   minute or two. Run `selftest` before each capture and `start` again if it
   shows the title screen.
+
+### Two checkpoints armed at once - 2026-09-26
+
+Found capturing `$0AAB` between `$0A4B` and `$0A4E`, both left armed for the
+whole run.
+
+- **Do not wait for one of them by `pc`.** The first hit can be the other
+  one. `wait_for_stop(pc=0x0A4B)` then ignores a stop at `$0A4E` and waits for
+  ever on a halted machine. Take whichever stop comes and act on its PC.
+- **`wait_for_stop()` without `pc` throws away kept stops.** A hit that
+  landed while `resume()` waited for EXIT's reply sits in `mon._stops`, and
+  a call without `pc` clears the list. Take `mon._stops.pop(0)` first when it
+  is not empty, and only then call `wait_for_stop`.
+- **A run ends at game over,** usually 600 passes or so in. Then
+  `wait_for_stop` times out. Keep what was written, and `start` again for more.
+- **`$08` still is not proof the IRQ stayed out.** Bracketing `$0AAB`, four
+  passes in 900 had a player's frame or Y change between `$0A4B` and `$0A4E`
+  with `$08` unchanged. If the routine writes none of some bytes, drop a line
+  where they changed, as well as one where `$08` moved.
+- **After a run ends in a timeout, relaunch VICE.** A checkpoint left armed
+  wedges it: `start` may still work and the next command then hangs.
+- **An intervention can crash the C64.** PC at `$0000` and `$08` stopped means
+  it did. A bubble written on row `$1D` at a player's Y did that.
+- **Conditions work: `mon.set_condition(cp, "X < 2")`** (command `0x22`),
+  after `set_checkpoint`. Proved on 2026-09-26 bracketing one player slot's
+  turn in `$1CBD`: `$1CDB` to `$1D24`, both with `X < 2`, stopped only for
+  slots 0 and 1.

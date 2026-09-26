@@ -76,8 +76,8 @@ public sealed class GameLoopTests
             return;
         }
 
-        // Nothing translated can kill a player yet, so they are still playing.
-        Assert.Equal(1, loop.Entities.State[0]);
+        // $1D32 can kill the player, and nothing takes a dead player on from $0F yet.
+        Assert.Contains(loop.Entities.State[0], (byte[])[0x01, 0x0E, 0x0F]);
     }
 
     // A level starts with its enemies in slots 2 onwards, both items hidden, and the one player up.
