@@ -59,6 +59,12 @@ internal interface IEliteDraw : IViewSurface
     public bool ShadesPerVertex { get; }
 
     /// <summary>
+    /// Gets how many sides the docking and hyperspace rings have, from the
+    /// rendition; zero draws circles.
+    /// </summary>
+    public int RingSides { get; }
+
+    /// <summary>
     /// One face's colour as this rendition's lighting leaves it. Returns the
     /// colour untouched when the rendition does not shade, when the commander
     /// turned lighting off, or when the world is drawn as outlines - so a

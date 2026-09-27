@@ -7,6 +7,17 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Fixed (docking rings are polygons, 2026-09-27)
+
+- **Elite's break-pattern rings are octagons on the 8-bit rendition and
+  hexadecagons on the 16-bit**, as the original machines drew them, not
+  circles ([BreakPattern.cs](src/elite/libs/EliteSharpLib/BreakPattern.cs)).
+  A corner, not an edge, sits at the top, bottom, left and right.
+  - Each rendition states its count in `IRendition.RingSides`; zero, the
+    default, keeps circles for a future Modern rendition. The widest ring's
+    corners still reach the viewport's corners. The `launch-and-fly` golden
+    frames are regenerated.
+
 ### Fixed (docking rings reach the corners, 2026-09-27)
 
 - **Elite's break-pattern rings grow to the viewport's corners**, so the

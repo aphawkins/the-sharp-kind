@@ -48,6 +48,8 @@ internal class FakeEliteDraw : IEliteDraw
     // per-corner path turns this on.
     public bool ShadesPerVertex { get; set; }
 
+    public int RingSides { get; set; }
+
     public void DrawObject(IObject obj)
     {
     }

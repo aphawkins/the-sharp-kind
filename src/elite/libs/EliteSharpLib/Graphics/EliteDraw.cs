@@ -64,6 +64,7 @@ internal sealed class EliteDraw : IEliteDraw
             rendition.DesignScale);
         Palette = PaletteReader.Read(assetLocator.PalettePath);
         _shadesShips = rendition.ShadesShips;
+        RingSides = rendition.RingSides;
 
         // Shading invents colours the assets never carried, so it is bound by the same palette limits as the asset validator.
         _nearest = assetLocator.Colours.PaletteNamesEveryColour
@@ -92,6 +93,8 @@ internal sealed class EliteDraw : IEliteDraw
     public IPaletteCollection Palette { get; }
 
     public ShipColours Ships { get; }
+
+    public int RingSides { get; }
 
     // Gouraud is the only model whose colour varies within a face, and only where the rendition can show the difference.
     public bool ShadesPerVertex

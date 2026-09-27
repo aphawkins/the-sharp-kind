@@ -21,6 +21,7 @@
 #### Fixes
 
 - The launch, docking and hyperspace rings now spread out to fill the whole view, corners included
+- The launch, docking and hyperspace rings are octagons on the 8-bit rendition and sixteen-sided on the 16-bit, as the originals drew them
 - Explosions are round — the debris cloud was a square box
 - Explosion clouds are the same size relative to the ship on both renditions
 - 8-bit left and right screen border drawn one pixel wide instead of two

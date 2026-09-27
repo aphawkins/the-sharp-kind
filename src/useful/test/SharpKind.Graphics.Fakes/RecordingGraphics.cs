@@ -33,6 +33,8 @@ public sealed class RecordingGraphics(float screenWidth = 0, float screenHeight 
 
     public IList<(Vector2 Centre, float Radius, FastColor Colour)> Circles { get; } = [];
 
+    public IList<(Vector2[] Points, FastColor Colour)> Polygons { get; } = [];
+
     public IList<(Vector2 Position, float Width, float Height)> ClipRegions { get; } = [];
 
     public IDictionary<string, FastBitmap> Images { get; } = new Dictionary<string, FastBitmap>(StringComparer.Ordinal);
@@ -102,8 +104,7 @@ public sealed class RecordingGraphics(float screenWidth = 0, float screenHeight 
     }
 
     public void DrawPolygon(Vector2[] points, FastColor lineColor)
-    {
-    }
+        => Polygons.Add((points, lineColor));
 
     public void DrawPolygonFilled(Vector2[] points, FastColor faceColor)
         => DrawPolygonFilled(points, faceColor, dither: null);

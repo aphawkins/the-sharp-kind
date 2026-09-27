@@ -39,6 +39,9 @@ public sealed class EightBitRendition : IRendition
     // Shading snaps to the nearest of sixteen colours; the six greys give a real ramp, reds and blues far fewer steps.
     public bool ShadesShips => true;
 
+    // Octagons, as the 8-bit machines drew them.
+    public int RingSides => 8;
+
     public IBaseView CreateBaseView(IViewSurface surface) => new BaseView8Bit(surface);
 
     public IMissionBriefingView CreateMissionBriefingView(IViewSurface surface)

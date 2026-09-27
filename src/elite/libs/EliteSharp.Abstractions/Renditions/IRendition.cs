@@ -118,6 +118,13 @@ public interface IRendition
     public bool ShadesShips => false;
 
     /// <summary>
+    /// Gets how many sides the docking and hyperspace rings have. The
+    /// original machines drew them as polygons, not circles, so each tier
+    /// states its own count; zero draws true circles.
+    /// </summary>
+    public int RingSides => 0;
+
+    /// <summary>
     /// Builds the chrome every screen of this tier shares - the border, the
     /// header, the countdown, the word wrap.
     /// </summary>

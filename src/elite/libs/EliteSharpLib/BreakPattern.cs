@@ -36,7 +36,16 @@ internal sealed class BreakPattern
 
         for (int i = 0; i < (int)_breakPatternCount; i++)
         {
-            _draw.Graphics.DrawCircle(_draw.Layout.ViewportCentre, (i + 2) * step, _color);
+            float radius = (i + 2) * step;
+
+            if (_draw.RingSides > 0)
+            {
+                _draw.Graphics.DrawPolygon(Ring(radius), _color);
+            }
+            else
+            {
+                _draw.Graphics.DrawCircle(_draw.Layout.ViewportCentre, radius, _color);
+            }
         }
     }
 
@@ -55,5 +64,22 @@ internal sealed class BreakPattern
             _breakPatternCount = 0;
             IsComplete = true;
         }
+    }
+
+    // A regular polygon with its corners on the circle. The first corner is at
+    // the right, so with a side count divisible by four there is a corner at
+    // the top, bottom, left and right.
+    private Vector2[] Ring(float radius)
+    {
+        int sides = _draw.RingSides;
+        Vector2[] points = new Vector2[sides];
+
+        for (int i = 0; i < sides; i++)
+        {
+            float angle = i * MathF.Tau / sides;
+            points[i] = _draw.Layout.ViewportCentre + (radius * new Vector2(MathF.Cos(angle), MathF.Sin(angle)));
+        }
+
+        return points;
     }
 }

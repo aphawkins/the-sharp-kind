@@ -52,4 +52,44 @@ public class BreakPatternTests
         float widest = graphics.Circles.Max(c => c.Radius);
         Assert.Equal(Vector2.Distance(layout.ViewportCentre, corner), widest, 3);
     }
+
+    [Theory]
+    [InlineData(8)]
+    [InlineData(16)]
+    public void TheRingsHaveTheRenditionsSides(int sides)
+    {
+        ViewLayout layout = new(320, 256, 56, 1);
+        RecordingGraphics graphics = new(320, 256);
+        FakeEliteDraw draw = new() { Layout = layout, Graphics = graphics, RingSides = sides };
+        BreakPattern pattern = new(draw);
+
+        pattern.Reset();
+        for (int i = 0; i < 20; i++)
+        {
+            pattern.Update(1);
+            pattern.Draw();
+        }
+
+        Assert.Empty(graphics.Circles);
+        Assert.NotEmpty(graphics.Polygons);
+
+        foreach ((Vector2[] points, _) in graphics.Polygons)
+        {
+            Assert.Equal(sides, points.Length);
+
+            // Every corner is on the ring's circle, so the polygon is regular.
+            float radius = Vector2.Distance(layout.ViewportCentre, points[0]);
+            Assert.All(points, p => Assert.Equal(radius, Vector2.Distance(layout.ViewportCentre, p), 3));
+
+            // A corner, not an edge, at the right, bottom, left and top.
+            foreach (Vector2 d in (Vector2[])[Vector2.UnitX, Vector2.UnitY, -Vector2.UnitX, -Vector2.UnitY])
+            {
+                Assert.Contains(points, p => Vector2.Distance(p, layout.ViewportCentre + (radius * d)) < 0.001f);
+            }
+        }
+
+        Vector2 corner = new(layout.ViewportRight, layout.ViewportBottom);
+        float widest = graphics.Polygons.Max(p => Vector2.Distance(layout.ViewportCentre, p.Points[0]));
+        Assert.Equal(Vector2.Distance(layout.ViewportCentre, corner), widest, 3);
+    }
 }

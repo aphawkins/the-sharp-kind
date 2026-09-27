@@ -37,6 +37,9 @@ public sealed class SixteenBitRendition : IRendition
     // 4096-colour palette, so a lit face can take any tone the DAC reaches.
     public bool ShadesShips => true;
 
+    // Hexadecagons, as the 16-bit machines drew them.
+    public int RingSides => 16;
+
     public IBaseView CreateBaseView(IViewSurface surface) => new BaseView16Bit(surface);
 
     public IMissionBriefingView CreateMissionBriefingView(IViewSurface surface)
