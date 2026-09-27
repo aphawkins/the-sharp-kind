@@ -8,6 +8,15 @@ split on 2026-07-31 into defects and features, and merged back on
 reshapes or unblocks backlog items, those items are updated in the backlog
 to reference the decision here rather than restating it.
 
+## Resolved (2026-09-27) — docking rings reach the corners
+
+- **Extent of the widest ring**: still a circle (an ellipse was rejected), with
+  a radius that reaches the viewport's corners, so the rings fill the whole
+  view. The window clip trims what falls outside.
+- **Off-by-one**: fixed. The radius is measured to the bottom-right pixel
+  (`ViewportRight`, `ViewportBottom`), not one past it, and the moved golden
+  frames are accepted.
+
 ## Resolved (2026-09-18) — a rendition is an aesthetic tier, not a machine
 
 **8-bit means the look and feel of an 8-bit game.** Sixteen colours, a low

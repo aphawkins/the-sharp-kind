@@ -1,7 +1,7 @@
 # Elite: docking rings should be polygons per rendition
 
-**Bug.** Reported by the maintainer, 2026-09-18. Do after
-[the extent fix](elite-docking-rings-extent.md).
+**Bug.** Reported by the maintainer, 2026-09-18. The extent fix it followed
+landed 2026-09-27: the widest ring now reaches the viewport's corners.
 
 The rings should not be circles: octagons (8 sides) on the 8-bit rendition,
 hexadecagons (16 sides) on the 16-bit rendition, and circles only on a Modern

@@ -20,7 +20,7 @@
 
 #### Fixes
 
-- The launch, docking and hyperspace rings no longer run off the top and bottom of the screen
+- The launch, docking and hyperspace rings now spread out to fill the whole view, corners included
 - Explosions are round — the debris cloud was a square box
 - Explosion clouds are the same size relative to the ship on both renditions
 - 8-bit left and right screen border drawn one pixel wide instead of two

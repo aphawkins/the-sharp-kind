@@ -2,6 +2,7 @@
 // 'Elite - The New Kind' - C.J.Pinder 1999-2001.
 // Elite (C) I.Bell & D.Braben 1984.
 
+using System.Numerics;
 using EliteSharpLib.Graphics;
 using SharpKind;
 
@@ -22,10 +23,12 @@ internal sealed class BreakPattern
 
     internal bool IsComplete { get; private set; }
 
-    // Grows against the viewport's shorter half-extent, so the widest ring meets
-    // the near edges rather than running off the far ones.
+    // Grows to the distance from the centre to the bottom-right pixel, so the
+    // widest ring passes through the viewport's corners and the window clip
+    // trims the rest.
     private float RingStep
-        => MathF.Min(_draw.Layout.ViewportCentre.X, _draw.Layout.ViewportCentre.Y) / MaxRings;
+        => Vector2.Distance(_draw.Layout.ViewportCentre, new(_draw.Layout.ViewportRight, _draw.Layout.ViewportBottom))
+            / MaxRings;
 
     internal void Draw()
     {

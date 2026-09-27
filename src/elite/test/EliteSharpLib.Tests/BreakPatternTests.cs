@@ -1,4 +1,4 @@
-// 'Elite - The Sharp Kind' - Andy Hawkins 2023-2026.
+﻿// 'Elite - The Sharp Kind' - Andy Hawkins 2023-2026.
 // 'Elite - The New Kind' - C.J.Pinder 1999-2001.
 // Elite (C) I.Bell & D.Braben 1984.
 
@@ -11,7 +11,7 @@ namespace EliteSharpLib.Tests;
 
 public class BreakPatternTests
 {
-    // Both viewports are wider than tall; the rings must fit inside that.
+    // Both viewports are wider than tall; the widest ring reaches their corners.
     public static TheoryData<string, float, float, float, float> Renditions { get; } = new()
     {
         { "16-bit", 640, 512, 128, 2 },
@@ -20,7 +20,7 @@ public class BreakPatternTests
 
     [Theory]
     [MemberData(nameof(Renditions))]
-    public void EveryRingFitsTheViewport(
+    public void TheWidestRingReachesTheCorners(
         string rendition,
         float screenWidth,
         float screenHeight,
@@ -42,15 +42,14 @@ public class BreakPatternTests
 
         Assert.NotEmpty(graphics.Circles);
 
-        foreach ((Vector2 centre, float radius, _) in graphics.Circles)
+        foreach ((_, float radius, _) in graphics.Circles)
         {
             Assert.True(radius > 0, $"A ring has radius {radius}.");
-            Assert.True(
-                centre.Y >= radius && centre.Y + radius <= layout.ViewportHeight,
-                $"A ring of radius {radius} runs off a viewport {layout.ViewportHeight} tall.");
         }
 
-        // The widest ring fills the viewport's shorter axis.
-        Assert.Equal(layout.ViewportCentre.Y, graphics.Circles.Max(c => c.Radius), 3);
+        // The widest ring passes through the bottom-right pixel, so it fills the corners.
+        Vector2 corner = new(layout.ViewportRight, layout.ViewportBottom);
+        float widest = graphics.Circles.Max(c => c.Radius);
+        Assert.Equal(Vector2.Distance(layout.ViewportCentre, corner), widest, 3);
     }
 }

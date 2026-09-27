@@ -7,6 +7,16 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Fixed (docking rings reach the corners, 2026-09-27)
+
+- **Elite's break-pattern rings grow to the viewport's corners**, so the
+  widest ring fills the whole view and the window clip trims it
+  ([BreakPattern.cs](src/elite/libs/EliteSharpLib/BreakPattern.cs)). They grew
+  from the shorter half-extent and stopped well short of the sides.
+  - The widest radius is the distance from the centre to the bottom-right
+    pixel, not one past it. The `launch-and-fly` golden frames are
+    regenerated for the new sizes.
+
 ### Changed (the border is the ship's window frame, 2026-09-15)
 
 - **Elite's HUD art is now one full-screen overlay per tier, `hud.bmp`,

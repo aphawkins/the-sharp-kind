@@ -41,7 +41,6 @@ Every open work item, in priority order. Each line links to a file in
 
 ### Bugs
 
-- [ ] [Elite: docking rings don't reach the viewport's side edges](work-items/elite-docking-rings-extent.md)
 - [ ] [Elite: docking rings should be octagons/hexadecagons per rendition](work-items/elite-docking-rings-shape.md)
 - [ ] [Elite: universe not fully reset after the commander dies](work-items/elite-universe-reset-on-death.md)
 - [ ] [Elite 8-bit: move the hyperspace countdown two columns right](work-items/elite-8bit-hyperspace-countdown-position.md)
