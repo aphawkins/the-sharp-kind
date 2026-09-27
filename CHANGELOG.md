@@ -7,6 +7,20 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Fixed (a death mid-countdown no longer leaks into the next run, 2026-09-27)
+
+- **Elite forgets a hyperspace jump in progress when the commander dies**, so
+  the restarted game's flight status no longer reads "Hyperspace - <the dead
+  run's destination>" or "Galactic Hyperspace". The restart only cleared
+  `Space.IsHyperspaceReady`; the new `Space.CancelHyperspace` also clears the
+  countdown, its destination, name and distance, and the galactic flag
+  ([Space.cs](src/elite/libs/EliteSharpLib/Space.cs)).
+  - Driving two deaths through `HeadlessGameHarness` otherwise found the
+    restart clean: each one reloads the last saved commander, which without a
+    save is Jameson at Lave. Returning to where the commander last saved is
+    the original's behaviour, and may be the "previous universe" of the report.
+    `DeathRestartTests` covers both kinds of jump.
+
 ### Fixed (8-bit HUD at half width, scanner centred, 2026-09-27)
 
 - **Elite's 8-bit HUD art is 160x256, with pixels twice as wide as they are

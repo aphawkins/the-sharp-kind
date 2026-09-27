@@ -20,6 +20,7 @@
 
 #### Fixes
 
+- Dying during a hyperspace countdown no longer leaves the old destination on the status line after the restart
 - The launch, docking and hyperspace rings now spread out to fill the whole view, corners included
 - The launch, docking and hyperspace rings are octagons on the 8-bit rendition and sixteen-sided on the 16-bit, as the originals drew them
 - Explosions are round — the debris cloud was a square box

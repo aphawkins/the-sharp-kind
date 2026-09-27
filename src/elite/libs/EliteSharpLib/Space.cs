@@ -108,6 +108,22 @@ internal sealed class Space
 
     internal bool IsHyperspaceReady { get; set; }
 
+    /// <summary>
+    /// Forget any jump in progress: the countdown, where it was going and
+    /// what it was called. A commander who dies mid-countdown restarts with
+    /// none of it, or the new run would still show the dead run's
+    /// destination on the flight status line.
+    /// </summary>
+    internal void CancelHyperspace()
+    {
+        IsHyperspaceReady = false;
+        HyperCountdown = 0;
+        HyperGalactic = false;
+        HyperName = string.Empty;
+        _destinationPlanet = new();
+        _hyperDistance = 0;
+    }
+
     internal void CountdownHyperspace()
     {
         if (HyperCountdown == 0)

@@ -41,7 +41,6 @@ Every open work item, in priority order. Each line links to a file in
 
 ### Bugs
 
-- [ ] [Elite: universe not fully reset after the commander dies](work-items/elite-universe-reset-on-death.md)
 - [ ] [Elite 8-bit: move the hyperspace countdown two columns right](work-items/elite-8bit-hyperspace-countdown-position.md)
 - [ ] [Elite: allow hyperspace from the galactic and short-range charts](work-items/elite-hyperspace-from-charts.md)
 - [ ] [Elite: galaxy chart cursor movement is jerky](work-items/elite-chart-cursor-jerky.md)

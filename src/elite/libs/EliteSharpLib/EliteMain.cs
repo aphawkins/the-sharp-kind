@@ -439,7 +439,7 @@ public sealed class EliteMain : IGame, IGameApp
         _save.GetLastSave();
 
         _ship.Speed = 1;
-        _space.IsHyperspaceReady = false;
+        _space.CancelHyperspace();
         State.IsGamePaused = false;
 
         _stars.CreateNewStars();
