@@ -10,8 +10,8 @@ else.
 - `main` is green — check the [Build and Package](https://github.com/aphawkins/the-sharp-kind/actions/workflows/build-and-package.yml)
   workflow, or run `dotnet test` locally.
 - Both games have been smoke-tested live if anything in `src/useful/` or
-  either game loop changed (see each backlog file's "Definition of done").
-- [backlog-issues.md](backlog-issues.md) has no open **Must** items — both
+  either game loop changed (see the backlog's "Definition of done").
+- [backlog-roadmap.md](backlog-roadmap.md) has no open **Must** items — both
   games are expected to work before a tag goes out.
 - Decide the version number (see [Choosing the version](#choosing-the-version)
   below) and finish [release-notes.md](release-notes.md): rename its

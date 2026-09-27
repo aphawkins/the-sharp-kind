@@ -134,8 +134,7 @@ Diagnostic opt-ins read at runtime rather than compiled in, so they work in a Re
 ## Documentation
 
 - [Architecture principles](docs/architecture-principles.md)
-- [Backlog — issues](docs/backlog-issues.md) — open defects, fixed first
-- [Backlog and roadmap](docs/backlog-roadmap.md) — features, refactors and spikes
+- [Backlog](docs/backlog-roadmap.md) — every open work item, bugs first
 - [Changelog](CHANGELOG.md)
 - [Release notes](docs/release-notes.md) — a concise, categorised summary of the changelog, split at v1.0.0
 - [Release process](docs/release-process.md) — how to cut a tagged release

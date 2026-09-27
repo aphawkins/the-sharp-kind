@@ -161,6 +161,9 @@ Each line names the classes. Their header comments have the detail.
 
 ## 5. To do, in implementation order
 
+Each open step is also a line in [backlog-roadmap.md](backlog-roadmap.md);
+when a step lands, tick it here and delete its line and work-item file there.
+
 Each item ends with how it is proved.
 
 - [x] **1. Run the game loop.** `GameLoop` calls every translated routine in
@@ -462,9 +465,9 @@ Each item ends with how it is proved.
       `$7C37`/`$7C3C`. Verify: a capture per effect.
 - [ ] **7. Super mode, bonus rounds and level 100** (`SUBFLG` `$63`, whose
       items and food throw today, and the ending at `$A5B7`).
-- [ ] **8. Sound.** Check "Audio per rendition" in
-      [backlog-roadmap.md](backlog-roadmap.md) first: if a SID emulator
-      arrives, port the player. Otherwise list the trigger IDs in
+- [ ] **8. Sound.** Music plays through the own SID stack
+      ([audio-own-stack.md](work-items/audio-own-stack.md)); the effects stay
+      here. List the trigger IDs in
       `sid-wrapper.s`, record a `.wav` per effect and tune, and drive them
       through `ISound`/`AudioController` from the same call sites. Verify: a
       manifest test that every trigger has an asset.

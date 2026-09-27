@@ -3,9 +3,8 @@
 Consolidated log of maintainer decisions for the repository, split out of
 [backlog-roadmap.md](backlog-roadmap.md) so the backlog stays about work
 items and this file stays about the calls that shape them. The backlog was
-itself split on 2026-07-31 into [backlog-issues.md](backlog-issues.md)
-(defects) and backlog-roadmap.md (features, refactors, cleanups) — a
-decision may reshape items in either. Newest first. When a decision
+split on 2026-07-31 into defects and features, and merged back on
+2026-09-27 into one list with a file per item in [work-items/](work-items/). Newest first. When a decision
 reshapes or unblocks backlog items, those items are updated in the backlog
 to reference the decision here rather than restating it.
 
@@ -821,7 +820,7 @@ Consequences:
   512-wide tier they were authored at, on a tier that has been 640 wide
   since 2026-07-30. The fix is to re-lay-out those screens at 640, not to
   centre a 512 band inside it. Tracked in
-  [backlog-issues.md](backlog-issues.md).
+  the backlog (since resolved).
 - Widescreen layout for the modern tier is designed when that tier is,
   against vector chrome, and inherits nothing from these two.
 

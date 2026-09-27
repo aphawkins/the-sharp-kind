@@ -18,9 +18,7 @@
       href: release-notes.md
     - name: Release process
       href: release-process.md
-    - name: Backlog - issues
-      href: backlog-issues.md
-    - name: Backlog - roadmap
+    - name: Backlog
       href: backlog-roadmap.md
 - name: API
   href: api/

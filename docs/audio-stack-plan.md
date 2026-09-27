@@ -9,8 +9,7 @@
   (`SoftwareSound`, and the predecode in `SharpKind.SDL/SDLSound.cs`).
 - **OggVorbisEncoder** only builds `.ogg` test fixtures.
 
-The maintainer wants one audio format per visual tier (roadmap "Audio per
-rendition", `docs/backlog-roadmap.md`, and `docs/decisions.md` 2026-09-18):
+The maintainer wants one audio format per visual tier (`docs/work-items/audio-own-stack.md`, and `docs/decisions.md` 2026-09-18):
 
 | Tier | Audio |
 |---|---|
@@ -653,10 +652,9 @@ glitches; CPU use of the audio thread is modest.
   delay bug, no CIA timing), and that Elite's 8-bit effects are extracted
   from the C64 source by `tools/elite/export-c64-sfx.py`, with the
   `SoundEffect` → C64 routine table from 4.2.
-- `docs/backlog-roadmap.md` "Audio per rendition": tick the done items (the
-  manifest move, the synth voice, the chip choice: SID). Correct the claim
-  that 8-bit effects would be SN76489 data from the BBC `.SFX` table: they
-  are SID data from the C64 tables. Add follow-ups: per-laser sounds
+- `docs/backlog-roadmap.md` and `docs/work-items/audio-own-stack.md`: remove
+  the item and its file when the plan is complete. Add follow-ups as
+  new work items: per-laser sounds
   (`sfxblas`/`sfxalas`/`sfxmlas` need game-side keys), distance-scaled
   explosion volume (`EXNO`/`EXNO2` sustain 11-15), `NOISEOFF` when the ECM
   stops, the "sounds during music" toggle (`MUSILLY`), 8580 model and

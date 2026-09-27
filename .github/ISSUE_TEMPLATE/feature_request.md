@@ -17,4 +17,4 @@ Optional — how you'd expect this to work, or a pointer to how the original gam
 
 ---
 
-This is a personal project, and work is prioritised via [docs/backlog-roadmap.md](https://github.com/aphawkins/the-sharp-kind/blob/main/docs/backlog-roadmap.md) (features/refactors) and [docs/backlog-issues.md](https://github.com/aphawkins/the-sharp-kind/blob/main/docs/backlog-issues.md) (defects). A request here may be folded into one of those rather than actioned immediately.
+This is a personal project, and work is prioritised via [docs/backlog-roadmap.md](https://github.com/aphawkins/the-sharp-kind/blob/main/docs/backlog-roadmap.md) (bugs first, then features). A request here may be folded into it rather than actioned immediately.

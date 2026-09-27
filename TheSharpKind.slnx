@@ -2,7 +2,6 @@
   <Folder Name="/docs/">
     <File Path="docs/architecture-principles.md" />
     <File Path="docs/asset-structure.md" />
-    <File Path="docs/backlog-issues.md" />
     <File Path="docs/backlog-roadmap.md" />
     <File Path="docs/bb-port-plan.md" />
     <File Path="docs/Code Complete (2nd Edition) - Steve McConnell.md" />
