@@ -9,13 +9,7 @@ using SharpKind.Graphics;
 
 namespace BubbleBobbleSharpLib.Graphics;
 
-/// <summary>
-/// What the game hands a view: somewhere to draw, the metrics to lay out
-/// against, and the rendition's colours. Elite's equivalent is
-/// <c>EliteDraw</c>, which is this plus the drawing the game does for itself;
-/// this game has none of that yet, so the surface is only the three members
-/// the seam is made of.
-/// </summary>
+/// <summary>What the game hands a view.</summary>
 internal sealed class BbViewSurface : IViewSurface
 {
     internal BbViewSurface(IGraphics graphics, ScreenLayout screen, IAssetLocator assetLocator)
@@ -26,7 +20,6 @@ internal sealed class BbViewSurface : IViewSurface
 
         Graphics = graphics;
 
-        // The size the rendition says it draws at, which is the size the window was made at.
         Layout = new(screen.ScreenWidth, screen.ScreenHeight);
 
         Palette = PaletteReader.Read(assetLocator.PalettePath);

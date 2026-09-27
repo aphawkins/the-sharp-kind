@@ -4,9 +4,6 @@
 
 namespace BubbleBobbleSharpLib.Levels;
 
-//// JSON serializable
-
-// A tile position in the 32x23 playfield, as levels.txt writes one.
 public class LevelPoint
 {
     public int X { get; set; }

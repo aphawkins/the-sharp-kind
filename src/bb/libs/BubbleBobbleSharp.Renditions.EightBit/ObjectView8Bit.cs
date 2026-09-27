@@ -7,38 +7,14 @@ using SharpKind.Graphics;
 
 namespace BubbleBobbleSharp.Renditions.EightBit;
 
-/// <summary>
-/// Draws a bubble or a pop frame as a software sprite: object-sprites.tga's
-/// entries, composed and positioned the way $E779/$3CE5 and
-/// sprite-composer.s do. See docs/bb-port-plan.md, item 2c.
-/// <para>
-/// A cell is twelve multicolour pixels wide and sixteen rows tall, doubled to
-/// twenty-four on screen exactly as the playfield's characters are - see
-/// <see cref="SidebarView8Bit"/>. object-sprites.tga holds every cell in one
-/// row, so a slot's entry is also its column.
-/// </para>
-/// <para>
-/// Position is not the row and column a hardware sprite would use. The
-/// cell's left edge is the character column $DC. The graphic is pre-shifted by
-/// $A9C4 x2 inside it, so the art's left edge lands on $AA0C minus $14.
-/// Vertically, $EE minus two is the character row the bottom of the cell sits
-/// in, and within that row the bottom pixel is at ($A9D6 + 7) and 7 - the box
-/// is sixteen pixels tall and builds upwards from there. Proved against VICE in
-/// ObjectView8BitGoldenTests.
-/// </para>
-/// </summary>
+/// <summary>Draws the objects: bubbles, pops, shots and the Baron.</summary>
 internal sealed class ObjectView8Bit : IView<ObjectsModel>
 {
-    // A multicolour cell: twelve entry numbers across in the sheet, twenty-four pixels on screen,
-    // sixteen rows tall either way.
     private const int SourceCellWidth = 12;
     private const int CellHeight = 16;
 
-    // $EE holds the character row the bottom of the cell sits in, two below the row this pass
-    // composes into first.
     private const int BottomRowOffset = 2;
 
-    // A C64 character row is eight pixels; ($A9D6 + 7) & 7 finds the bottom pixel within it.
     private const int SubPositionMask = 0x07;
     private const int SubPositionBias = 7;
 

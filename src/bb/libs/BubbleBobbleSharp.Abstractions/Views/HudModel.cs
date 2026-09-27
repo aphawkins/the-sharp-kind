@@ -4,37 +4,17 @@
 
 namespace BubbleBobbleSharp.Abstractions.Views;
 
-/// <summary>
-/// What the eight columns beside the level hold: both players' scores, the
-/// high score, and how many lives each player has left.
-/// <para>
-/// A score is three bytes of packed BCD, which is six digits, because that is
-/// how the game keeps one: add_score at $7C24 adds in decimal mode and carries
-/// from one byte to the next. The model takes those bytes as they stand rather
-/// than a number, so the arithmetic Phase 7 translates stays the arithmetic the
-/// reference does.
-/// </para>
-/// <para>
-/// The digits arrive already blanked. display_score_digits at $E3D9 walks the
-/// six and hands each to $3FB0, which writes a space instead of a leading zero
-/// until it has seen a digit that is not one - and always writes the last digit,
-/// so a score of nothing reads as a single zero rather than an empty row. That
-/// is a rule about the score rather than about how a rendition draws it, so it
-/// is settled here.
-/// </para>
-/// </summary>
+/// <summary>The scores, the high score and the lives beside the level.</summary>
 public sealed class HudModel
 {
     private const char Blank = ' ';
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="HudModel"/> class.
-    /// </summary>
-    /// <param name="playerOneScore">Player one's score, as packed BCD at $0400.</param>
-    /// <param name="playerTwoScore">Player two's score, as packed BCD at $0403.</param>
-    /// <param name="highScore">The high score, as packed BCD at $0406.</param>
-    /// <param name="playerOneLives">Player one's lives, as $045A holds them.</param>
-    /// <param name="playerTwoLives">Player two's lives, as $045B holds them.</param>
+    /// <summary>Initializes a new instance of the <see cref="HudModel"/> class.</summary>
+    /// <param name="playerOneScore">Player one's score, as packed BCD.</param>
+    /// <param name="playerTwoScore">Player two's score, as packed BCD.</param>
+    /// <param name="highScore">The high score, as packed BCD.</param>
+    /// <param name="playerOneLives">Player one's lives.</param>
+    /// <param name="playerTwoLives">Player two's lives.</param>
     public HudModel(
         ReadOnlySpan<byte> playerOneScore,
         ReadOnlySpan<byte> playerTwoScore,
@@ -55,10 +35,7 @@ public sealed class HudModel
     /// <summary>Gets how many digits those bytes are drawn as.</summary>
     public static int ScoreDigits => ScoreBytes * 2;
 
-    /// <summary>
-    /// Gets how many cells a player's lives are drawn in. Seven: the routine at
-    /// $046C counts a row down from six to zero, filling from the right.
-    /// </summary>
+    /// <summary>Gets how many cells a player's lives are drawn in.</summary>
     public static int LifeCells => 7;
 
     /// <summary>Gets player one's score, six characters, leading zeros blanked.</summary>
@@ -70,36 +47,22 @@ public sealed class HudModel
     /// <summary>Gets the high score, six characters, leading zeros blanked.</summary>
     public string HighScore { get; }
 
-    /// <summary>
-    /// Gets player one's lives, as the byte at $045A holds them. It is signed,
-    /// and a negative count means the player is out - see
-    /// <see cref="IsPlaying(int)"/>.
-    /// </summary>
+    /// <summary>Gets player one's lives.</summary>
     public int PlayerOneLives { get; }
 
-    /// <summary>Gets player two's lives, as the byte at $045B holds them.</summary>
+    /// <summary>Gets player two's lives.</summary>
     public int PlayerTwoLives { get; }
 
-    /// <summary>
-    /// Whether a player's lives are drawn at all. $046C reads the count and
-    /// returns without writing anything when it is negative, which is how a
-    /// player who has run out gets an empty row rather than a row of spaces.
-    /// </summary>
+    /// <summary>Whether a player's lives are drawn at all.</summary>
     /// <param name="lives">The player's lives.</param>
     /// <returns>Whether the row is drawn.</returns>
     public static bool IsPlaying(int lives) => lives >= 0;
 
-    /// <summary>
-    /// How many life markers a count is drawn as. The row holds
-    /// <see cref="LifeCells"/> of them and $046C stops when it runs out of
-    /// cells, so a larger count draws no more than the row can hold.
-    /// </summary>
+    /// <summary>How many life markers a count is drawn as.</summary>
     /// <param name="lives">The player's lives.</param>
     /// <returns>The markers to draw, none of them if the player is out.</returns>
     public static int LifeMarkers(int lives) => IsPlaying(lives) ? Math.Min(lives, LifeCells) : 0;
 
-    // $3FB0. Each nibble is one digit, high first. A zero is blanked while nothing but zeros has
-    // been seen and this is not the last digit; after that every digit is written, zero or not.
     private static string Digits(ReadOnlySpan<byte> score, string name)
     {
         if (score.Length != ScoreBytes)

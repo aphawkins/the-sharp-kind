@@ -19,7 +19,7 @@ using Xunit;
 
 namespace BubbleBobbleSharpLib.Tests.Views;
 
-// Bubbles and a pop frame as $E779 and $3CE5 draw them, pixel for pixel against the C64.
+// The objects $E90E draws, pixel for pixel against the C64.
 //
 // Captures/objects-level-1.txt was read out of VICE running rebb64, on 2026-09-25, on level 1 with one
 // player and no intervention: the stick blew bubbles and walked into one. Every pass the game stopped
@@ -35,12 +35,18 @@ namespace BubbleBobbleSharpLib.Tests.Views;
 // under another bubble were left out.
 //
 // Not captured: pop frames other than 4 ($40 with $A9C4 0), and $A9C4 3 with $A9D6 4 or 6.
+//
+// Captures/shots-level-1.txt, read on 2026-09-27 the same way, is an intervention: at each case's
+// $E90E one slot was written with a shot or the Baron. Case 12 is a plain bubble, as a control. The
+// Baron cases also record $597F, and had $B4-$B9 cleared so no enemy covered them.
 [Trait("Level", "Integration")]
 public sealed class ObjectView8BitGoldenTests
 {
     private const int LevelColours = 0x21;
     private const int CellWidth = 24;
     private const int CellHeight = 16;
+    private const string Bubbles = "objects-level-1.txt";
+    private const string Shots = "shots-level-1.txt";
 
     private static readonly string s_rendition = Path.Combine(
         AppContext.BaseDirectory, "Renditions", "BubbleBobbleSharp.Renditions.EightBit");
@@ -48,7 +54,7 @@ public sealed class ObjectView8BitGoldenTests
     [Fact]
     public void TheCaptureCoversEveryShiftAndAPopFrame()
     {
-        List<Case> cases = Cases();
+        List<Case> cases = Cases(Bubbles);
 
         Assert.Equal(19, cases.Count);
         Assert.Equal([0, 1, 2, 3], cases.Select(c => (int)c.SubX).Distinct().Order());
@@ -57,9 +63,25 @@ public sealed class ObjectView8BitGoldenTests
     }
 
     [Fact]
-    public void DrawsEachBubblePixelForPixelAsTheC64Does()
+    public void TheShotCaptureCoversEveryTurnAndBothBarons()
     {
-        foreach (Case @case in Cases())
+        List<Case> cases = Cases(Shots);
+
+        Assert.Equal(18, cases.Count);
+        Assert.Equal(
+            [(0x00, 1), (0x28, 4), (0x2A, 2), (0x2C, 4), (0x2E, 3), (0x30, 3), (0x32, 1)],
+            cases.GroupBy(c => (int)c.Type).Select(g => (g.Key, g.Count())).Order());
+        Assert.Equal(
+            [(0, 0), (0, 1), (1, 0), (1, 1)],
+            cases.Where(c => c.Type is 0x2E or 0x30).Select(c => (c.Slot, (c.Counter >> 1) & 1)).Distinct().Order());
+    }
+
+    [Theory]
+    [InlineData(Bubbles)]
+    [InlineData(Shots)]
+    public void DrawsEachObjectPixelForPixelAsTheC64Does(string capture)
+    {
+        foreach (Case @case in Cases(capture))
         {
             RecordingGraphics graphics = new(320, 200);
             AssetSet assets = AssetSet.Load(AssetLocator.CreateFrom(s_rendition, "8-bit"));
@@ -103,9 +125,10 @@ public sealed class ObjectView8BitGoldenTests
         objects.SubY[@case.Slot] = @case.SubY;
         objects.X[@case.Slot] = @case.X;
         objects.Y[@case.Slot] = @case.Y;
+        pop.Counter = (byte)(@case.Counter - 1);
         pop.Update();
 
-        return new(pop.Drawn, objects.Column, objects.Row, objects.SubY, LevelColours);
+        return new(pop.Drawn, objects.Column, objects.Row, pop.DrawnSubY, LevelColours);
     }
 
     private static char Index(IPaletteCollection palette, uint argb)
@@ -121,10 +144,10 @@ public sealed class ObjectView8BitGoldenTests
         return '?';
     }
 
-    private static List<Case> Cases()
+    private static List<Case> Cases(string capture)
     {
         string[] lines = File.ReadAllLines(
-            Path.Combine(AppContext.BaseDirectory, "Views", "Captures", "objects-level-1.txt"));
+            Path.Combine(AppContext.BaseDirectory, "Views", "Captures", capture));
         List<Case> cases = [];
         for (int i = 0; i < lines.Length; i += 3 + CellHeight)
         {
@@ -141,6 +164,7 @@ public sealed class ObjectView8BitGoldenTests
                 Hex(bytes[9]),
                 Hex(bytes[11]),
                 Hex(bytes[13]),
+                bytes.Length > 15 ? Hex(bytes[15]) : (byte)0,
                 int.Parse(screen[0], CultureInfo.InvariantCulture),
                 int.Parse(screen[1], CultureInfo.InvariantCulture),
                 [.. lines[(i + 3)..(i + 3 + CellHeight)].Select(l => l.Trim())]));
@@ -161,6 +185,7 @@ public sealed class ObjectView8BitGoldenTests
         byte SubY,
         byte X,
         byte Y,
+        byte Counter,
         int Left,
         int Top,
         string[] Pixels);

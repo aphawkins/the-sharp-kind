@@ -8,48 +8,23 @@ using BubbleBobbleSharpLib.Players;
 
 namespace BubbleBobbleSharpLib.Enemies;
 
-// $1CBD's loop over slots 7 to 2, with $1CA0, $1E87 and $1E6C: what happens to an enemy between one
-// frame and the next.
-//
-// The 6502 runs one loop from slot 7 down to slot 0, so the enemies go before the players in the same
-// frame. PlayerFrame is slots 1 and 0. A caller runs this first and then PlayerFrame.
-//
-// Four things decide what an enemy does with its frame, in this order:
-//
-//   * **Mode not negative** is an enemy still dropping into the level. $1CA0 moves it two pixels down
-//     until it reaches the row AttackTimer holds, and $1E87 animates it.
-//   * **FlashTimer not zero** is an angry enemy, let out of a bubble. It takes an extra $1E6C on every
-//     frame whose counter has bit 1 clear, so it moves one and a half times as fast.
-//   * **HoldTimer not zero** is the spawn delay. The enemy only animates, through $1E87.
-//   * Otherwise $1E6C dispatches on the state, through the $1E3A table.
-//
-// **Not here:** $1CFB's test of $67. While that byte is not zero, an enemy in a state below $0B is
-// skipped for the whole frame. $2F74 sets it, and that is an item's effect, so Phase 7's.
 internal sealed class EnemyFrame
 {
-    // $1CF5. Slots 0 and 1 are the players.
     private const int FirstEnemy = 2;
 
-    // $1CDB's `lda D_85C0,x` / `bpl`. A player's is $FF from the start.
     private const byte Entered = 0x80;
 
-    // $1CA9. Two `inc` a frame.
     private const byte DropStep = 0x02;
 
-    // $17C8 and $17D1. The row the enemies come in at, and the frames they take.
     private const byte EntryRow = 0x15;
     private const int EntryFrames = 0x16;
 
-    // $1CB5. What AttackTimer holds as the drop ends.
     private const byte FirstAttackDelay = 0x0A;
 
-    // $1D0A. An angry enemy's extra step is on the frames with this bit of the counter clear.
     private const byte AngerFrames = 0x02;
 
-    // $1CEB. A live player, and the one an enemy follows if it can.
     private const byte PlayingState = 0x01;
 
-    // The $1E3A table's entries this port has translated.
     private const byte WalkerState = 0x02;
     private const byte ClassOneState = 0x03;
     private const byte HopperState = 0x04;
@@ -93,12 +68,6 @@ internal sealed class EnemyFrame
         _food = food;
     }
 
-    // $17BE, from $09F7 in the level's start: the enemies come in from the top. Each one's row is kept
-    // as the drop's target, it is put at the top, and twenty-two frames move it down two pixels each
-    // and animate it. What is left of the drop, $1CA0 finishes in play.
-    //
-    // The loop does not look at the mode, so a thing that reaches its row before the last frame has
-    // its mode taken down once more on every frame left: $00 to $EA for one already there.
     internal void Enter()
     {
         for (int slot = FirstEnemy; slot < EntityTable.Capacity; slot++)
@@ -131,7 +100,6 @@ internal sealed class EnemyFrame
         }
     }
 
-    // $1CBD's loop, from slot 7 down. counter is $08, the frame counter the IRQ steps.
     internal void Step(byte counter, SolidMap map)
     {
         ArgumentNullException.ThrowIfNull(map);
@@ -144,7 +112,6 @@ internal sealed class EnemyFrame
         }
     }
 
-    // $1CDB to $1D21, for one enemy slot.
     internal void Step(int slot, byte counter, SolidMap map)
     {
         ArgumentNullException.ThrowIfNull(map);
@@ -178,8 +145,6 @@ internal sealed class EnemyFrame
         Dispatch(slot, target, map);
     }
 
-    // $1CE3 to $1CF3. The player on the enemy's own side of the slot numbers if they are playing, and
-    // the other one if not. Nothing asks whether the other one is playing.
     private int Target(int slot)
     {
         int player = slot & 0x01;
@@ -187,8 +152,6 @@ internal sealed class EnemyFrame
         return _entities.State[player] == PlayingState ? player : player ^ 0x01;
     }
 
-    // $1CA0. The drop into the level. The `inc` pair is not a compare, so a drop that steps over its
-    // row goes on round the byte until it meets it.
     private void Drop(int slot)
     {
         if (_entities.Y[slot] != _entities.AttackTimer[slot])
@@ -202,8 +165,6 @@ internal sealed class EnemyFrame
         _entities.AttackTimer[slot] = FirstAttackDelay;
     }
 
-    // $1E87. An enemy that is not free to move still animates: state 4 by $214A and state 9 by $EE4A,
-    // which are the same toggle, state 5 by $EFEA, and the rest by $EB0F.
     private void Idle(int slot)
     {
         switch (_entities.State[slot])
@@ -221,9 +182,6 @@ internal sealed class EnemyFrame
         }
     }
 
-    // $1E6C. The cell first, then the state, through the $1E3A table. States 2 to 9 are the eight
-    // enemy classes, and $0B, $0C, $11 and $12 are a killed enemy on its way to being food. The
-    // others belong to things this class does not drive.
     private void Dispatch(int slot, int target, SolidMap map)
     {
         PlayerCell cell = PlayerCell.Of(_entities.X[slot], _entities.Y[slot]);
@@ -265,7 +223,6 @@ internal sealed class EnemyFrame
         }
     }
 
-    // $E9FD. The shot first, then the walk unless a shot is counting down.
     private void Shooter(int slot, int target, in PlayerCell cell, SolidMap map)
     {
         _shot.Aim(slot, target);

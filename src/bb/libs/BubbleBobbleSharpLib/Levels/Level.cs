@@ -6,14 +6,10 @@ using System.Text.Json.Serialization;
 
 namespace BubbleBobbleSharpLib.Levels;
 
-//// JSON serializable
-
-// One of the hundred levels, as rebb64's levels.txt describes it.
 public class Level
 {
     public int Number { get; set; }
 
-    // Spelled "colors" in levels.txt and in the export, so the name is pinned rather than renamed.
     [JsonPropertyName("colors")]
     public int Colours { get; set; }
 
@@ -31,7 +27,5 @@ public class Level
 
     public IList<EnemySpawn> Enemies { get; init; } = [];
 
-    // 23 rows of 32 characters, '#' solid and '.' open - the same shape levels.txt draws them in,
-    // which is worth keeping: a level is readable in the asset file and in a failing test's output.
     public IList<string> Bitmap { get; init; } = [];
 }

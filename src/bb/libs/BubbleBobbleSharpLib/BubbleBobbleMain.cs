@@ -22,31 +22,17 @@ using SharpKind.Input;
 
 namespace BubbleBobbleSharpLib;
 
-/// <summary>
-/// The game, as the host and the composition root see it. It puts a level on
-/// the screen, steps to the next one on N, and closes on Escape; see
-/// docs/bb-port-plan.md for what comes next.
-/// </summary>
+/// <summary>The game, as the host and the composition root see it.</summary>
 public sealed class BubbleBobbleMain : IGame, IGameApp
 {
-    // One tick is one pass of the game loop, which waits for two of the PAL raster interrupt's 50
-    // frames each time round - see GameLoop.
     internal const int TickRate = 25;
 
-    // The level the game opens on. There is no front end yet to choose another.
     private const int FirstLevel = 1;
 
-    // $0956, game-loop.s: both players start a game with three lives.
     private const int StartingLives = 3;
 
-    // There is no front end to choose two players with, so the game starts the one it can name.
-    // Player two's slot stays empty, which is what an unjoined second player looks like.
     private const int PlayingPlayers = 1;
 
-    // Steps to the next level, for looking at levels there is no way yet to reach: nothing advances
-    // a level until Phase 7 translates the progression, and a hundred levels are of no use if only
-    // the first can be seen. It goes when the front end arrives. F12 is the host's frame dump, so
-    // the two together photograph any level asked for.
     private const ConsoleKey NextLevelKey = ConsoleKey.N;
 
     private readonly IAbstraction _abstraction;
@@ -59,17 +45,13 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     private readonly IView<ObjectsModel> _objectView;
     private readonly IView<ItemsModel> _itemView;
 
-    // Everything that moves, and the routines that move it, in the reference's order.
     private readonly GameLoop _loop;
 
     private readonly Input _input;
     private readonly LayerRunner _layers;
 
-    // $0969 clears the high score when a game starts. Nothing translated sets it yet.
     private readonly byte[] _highScore = new byte[HudModel.ScoreBytes];
 
-    // What the level in play looks like, rebuilt when the level changes rather than per frame: a
-    // level's characters are settled the moment setup_level_screen has run.
     private PlayfieldModel _playfield;
     private SidebarModel _sidebar;
 
@@ -122,10 +104,6 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
 
         ShowLevel(FirstLevel);
 
-        // Three bands, in the order the reference draws them: the level, the decoration written
-        // over its outermost columns, and the HUD in the columns the level does not reach. The
-        // level is trimmed to what survives the decoration, which is why the playfield view can
-        // draw all 32 columns without knowing the sidebar exists.
         (Vector2 interior, float interiorWidth, float height) = surface.Layout.PlayfieldInterior;
         (Vector2 whole, float wholeWidth, _) = surface.Layout.PlayfieldArea;
         (Vector2 hud, float hudWidth, _) = surface.Layout.HudArea;
@@ -154,7 +132,6 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
 
     internal AudioOptions AudioOptions { get; }
 
-    // Which level is on screen, counted the way the game counts them.
     internal int CurrentLevel { get; private set; }
 
     public void Run() => GameHost.Run(_abstraction, this, TickRate, TickRate);
@@ -166,8 +143,6 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
             IsRunning = false;
         }
 
-        // Wraps, because the hundredth level's neighbour has to be something and the first is the
-        // only level this game can name without a progression to ask.
         if (Keyboard.IsPressed(NextLevelKey))
         {
             ShowLevel(CurrentLevel == LevelStore.Count ? FirstLevel : CurrentLevel + 1);
@@ -183,8 +158,6 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         Graphics.ScreenUpdate();
     }
 
-    // setup_level_screen, as far as this port has translated it: what the level's screen holds, and
-    // what its border is decorated with. Both are settled once and then drawn every frame.
     [MemberNotNull(nameof(_playfield), nameof(_sidebar))]
     internal void ShowLevel(int number)
     {
@@ -197,9 +170,6 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         _loop.Start(level, _zones.Zones(number), number);
     }
 
-    // $1805, built fresh each frame rather than held. A level's characters are settled the moment it
-    // is drawn, but a sprite's bytes are the ones that change every frame, so there is nothing here
-    // to cache.
     private SpriteModel Sprites() => new(
         _loop.Entities.State,
         _loop.Entities.X,
@@ -210,7 +180,6 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         _loop.Entities.FlashTimer,
         _loop.Entities.SpriteEnable);
 
-    // $E3A7 and $046C: both scores from $0400, the high score and the lives.
     private HudModel Hud() => new(
         _loop.Scores.Bytes[..HudModel.ScoreBytes],
         _loop.Scores.Bytes[HudModel.ScoreBytes..],
@@ -218,15 +187,13 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         StartingLives,
         StartingLives);
 
-    // $E90E, built fresh each frame: what BubblePop drew this pass, and where.
     private ObjectsModel Objects() => new(
         _loop.Pop.Drawn,
         _loop.Objects.Column,
         _loop.Objects.Row,
-        _loop.Objects.SubY,
+        _loop.Pop.DrawnSubY,
         _playfield.Colours);
 
-    // $1844's L_1934: the level's two items, as characters, with their colour RAM from L_186B.
     private ItemsModel Items() => new(
         _loop.Items.Type,
         _loop.Items.Column,
@@ -235,40 +202,31 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         _loop.Items.Colour,
         _playfield.Colours);
 
-    // Layer 0, the level itself, trimmed to the columns the decoration does not cover.
     private sealed class PlayfieldLayer(BubbleBobbleMain game) : ILayerDrawer
     {
         public void Draw() => game._playfieldView.Draw(game._playfield);
     }
 
-    // Layer 0 still, $1844: the food and the special item are characters of the level, so they sit
-    // in it, under the bubbles - see docs/bb-port-plan.md, item 2e.
     private sealed class ItemLayer(BubbleBobbleMain game) : ILayerDrawer
     {
         public void Draw() => game._itemView.Draw(game.Items());
     }
 
-    // Layer 1, $E90E: the bubbles and the pop animation, over the level and under everything else -
-    // see docs/bb-port-plan.md, item 2c.
     private sealed class ObjectLayer(BubbleBobbleMain game) : ILayerDrawer
     {
         public void Draw() => game._objectView.Draw(game.Objects());
     }
 
-    // Layer 2, draw_border: the decoration down both edges, over the level already on the screen.
     private sealed class SidebarLayer(BubbleBobbleMain game) : ILayerDrawer
     {
         public void Draw() => game._sidebarView.Draw(game._sidebar);
     }
 
-    // Layer 3, $1805: the players and the enemies, over the level and the decoration both. A C64
-    // sprite is in front of the characters it passes, which is what this order stands in for.
     private sealed class SpriteLayer(BubbleBobbleMain game) : ILayerDrawer
     {
         public void Draw() => game._spriteView.Draw(game.Sprites());
     }
 
-    // Layer 4, $E3A7 and $046C: the scores and lives, in the columns the level never reaches.
     private sealed class HudLayer(BubbleBobbleMain game) : ILayerDrawer
     {
         public void Draw() => game._hudView.Draw(game.Hud());

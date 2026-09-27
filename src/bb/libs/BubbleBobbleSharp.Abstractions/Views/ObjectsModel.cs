@@ -4,19 +4,7 @@
 
 namespace BubbleBobbleSharp.Abstractions.Views;
 
-/// <summary>
-/// What the eighteen object slots look like on screen: bubbles, the pop
-/// animation, and nothing else yet - see docs/bb-port-plan.md, item 2c.
-/// <para>
-/// A slot's picture is not read off its type directly. <c>BubblePop</c>'s
-/// <c>Drawn</c> already turns a slot's type into the entry object-sprites.tga
-/// holds it at, or <see cref="NotDrawn"/> - because the screen shows what that
-/// pass drew before the AI loop moves anything, and by the time a view runs a
-/// slot's type may have moved on from what was actually drawn. This model
-/// just carries that record, and the position to draw it at, out to a
-/// rendition.
-/// </para>
-/// </summary>
+/// <summary>What was drawn in each object slot this pass.</summary>
 public sealed class ObjectsModel
 {
     private readonly byte[] _drawn;
@@ -24,17 +12,12 @@ public sealed class ObjectsModel
     private readonly byte[] _row;
     private readonly byte[] _subY;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="ObjectsModel"/> class.
-    /// </summary>
-    /// <param name="drawn">
-    /// Each slot's object-sprites.tga entry, as <c>BubblePop.Drawn</c> holds
-    /// it.
-    /// </param>
-    /// <param name="column">Each slot's character column, as $DC holds it.</param>
-    /// <param name="row">Each slot's character row, as $EE holds it.</param>
-    /// <param name="subY">Each slot's vertical sub-position, as $A9D6 holds it.</param>
-    /// <param name="colours">The level's colour byte, as <see cref="PlayfieldModel.Colours"/> holds it.</param>
+    /// <summary>Initializes a new instance of the <see cref="ObjectsModel"/> class.</summary>
+    /// <param name="drawn">Each slot's object-sprites.tga entry.</param>
+    /// <param name="column">Each slot's character column.</param>
+    /// <param name="row">Each slot's character row.</param>
+    /// <param name="subY">Each slot's line within its character row.</param>
+    /// <param name="colours">The level's colour byte.</param>
     public ObjectsModel(
         ReadOnlySpan<byte> drawn,
         ReadOnlySpan<byte> column,
@@ -54,36 +37,36 @@ public sealed class ObjectsModel
         Colours = colours;
     }
 
-    /// <summary>Gets how many object slots there are - the same count <c>ObjectTable</c> holds.</summary>
+    /// <summary>Gets how many object slots there are.</summary>
     public static int Capacity => 18;
 
-    /// <summary>Gets the value a slot with nothing to draw this pass carries.</summary>
+    /// <summary>Gets the entry of a slot with nothing drawn.</summary>
     public static byte NotDrawn => 0xFF;
 
-    /// <summary>Gets the level's colour byte, painted the same as the playfield's.</summary>
+    /// <summary>Gets the level's colour byte.</summary>
     public int Colours { get; }
 
-    /// <summary>Gets a value indicating whether a slot has anything to draw this pass.</summary>
+    /// <summary>Gets a value indicating whether a slot was drawn.</summary>
     /// <param name="slot">The object slot.</param>
     /// <returns>Whether the slot was drawn.</returns>
     public bool IsDrawn(int slot) => _drawn[slot] != NotDrawn;
 
-    /// <summary>Gets a slot's entry into object-sprites.tga. Only meaningful when <see cref="IsDrawn"/> is true.</summary>
+    /// <summary>Gets a slot's object-sprites.tga entry.</summary>
     /// <param name="slot">The object slot.</param>
     /// <returns>The entry index.</returns>
     public byte Entry(int slot) => _drawn[slot];
 
-    /// <summary>Gets a slot's character column, as $DC holds it.</summary>
+    /// <summary>Gets a slot's character column.</summary>
     /// <param name="slot">The object slot.</param>
     /// <returns>The column.</returns>
     public byte Column(int slot) => _column[slot];
 
-    /// <summary>Gets a slot's character row, as $EE holds it.</summary>
+    /// <summary>Gets a slot's character row.</summary>
     /// <param name="slot">The object slot.</param>
     /// <returns>The row.</returns>
     public byte Row(int slot) => _row[slot];
 
-    /// <summary>Gets a slot's vertical sub-position, as $A9D6 holds it.</summary>
+    /// <summary>Gets a slot's line within its character row.</summary>
     /// <param name="slot">The object slot.</param>
     /// <returns>The sub-position byte.</returns>
     public byte SubY(int slot) => _subY[slot];

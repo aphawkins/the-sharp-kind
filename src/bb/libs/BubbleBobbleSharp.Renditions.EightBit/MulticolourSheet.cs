@@ -10,37 +10,13 @@ using SharpKind.Graphics;
 
 namespace BubbleBobbleSharp.Renditions.EightBit;
 
-/// <summary>
-/// One of the playfield's multicolour sheets, painted in the colours the level
-/// wears.
-/// <para>
-/// A multicolour character is four two-bit entry numbers a row, not four
-/// colours: 00 is the background, 01 and 10 are the two background registers
-/// the VIC-II holds for the whole screen, and 11 is the character's own colour
-/// RAM nibble. The sheets are exported with the entry number written as
-/// palette colour 0, 1, 2 or 3, so a sheet as committed is the level's shapes
-/// in the wrong colours - and the right ones are whatever the level's colour
-/// byte points those entries at.
-/// </para>
-/// <para>
-/// So the sheet is repainted once a level and the repainted copy is held under
-/// a name of its own for as long as the level lasts. That beats exporting a
-/// copy per colour combination, and it beats resolving an entry per pixel at
-/// draw time, which is the thing a byte-per-pixel sheet would cost every
-/// frame.
-/// </para>
-/// </summary>
+/// <summary>One of the playfield's multicolour sheets, painted in the colours the level wears.</summary>
 internal sealed class MulticolourSheet
 {
-    // $09B8, game-loop.s: colour RAM is filled with $0D before the level is drawn. Bit 3 of that is
-    // what puts the cell in multicolour mode, and only the low three bits are left to be a colour -
-    // so entry 11 is colour 5 on every cell of the playfield. The level's items write their own.
     internal const int PlayfieldColourRam = 0x0D;
 
-    // Where a repainted sheet lives, beside the one it was painted from.
     private const string Suffix = ".Recoloured";
 
-    // No level's colour byte is negative, so the first draw always repaints.
     private const int NotPainted = -1;
 
     private readonly IGraphics _graphics;
@@ -59,16 +35,10 @@ internal sealed class MulticolourSheet
         Name = (name ?? source) + Suffix;
     }
 
-    /// <summary>
-    /// Gets the name the repainted sheet is drawn by. It holds nothing until
-    /// <see cref="Paint"/> has been called once.
-    /// </summary>
+    /// <summary>Gets the name the repainted sheet is drawn by.</summary>
     internal string Name { get; }
 
-    /// <summary>
-    /// Repaints the sheet for a level's colour byte, unless it is already
-    /// wearing it.
-    /// </summary>
+    /// <summary>Repaints the sheet for a level's colour byte, unless it is already wearing it.</summary>
     /// <param name="colours">The level's colour byte.</param>
     /// <param name="colourRam">The cells' colour RAM byte, whose low three bits are entry 11.</param>
     internal void Paint(int colours, int colourRam = PlayfieldColourRam)
@@ -83,9 +53,6 @@ internal sealed class MulticolourSheet
         _colourRam = colourRam;
     }
 
-    // $E0CE, level-renderer.s: the high nibble goes to $1D and the low to $1F, and the split-screen
-    // IRQ at $072E writes those to the two background registers in that order. Entry 00 is the
-    // screen's own background, which the sheets carry as a transparent pixel and nothing repaints.
     private Dictionary<uint, FastColor> Entries(int colours, int colourRam) => new()
     {
         [Colour(1).Argb] = Colour((colours >> 4) & 0x0F),

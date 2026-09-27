@@ -7,11 +7,6 @@ using SharpKind;
 
 namespace BubbleBobbleSharpLib.Levels;
 
-// The hundred levels, read once from the export of rebb64's levels.txt.
-//
-// Levels are asked for by the number the game counts in - 1 to 100 - rather than by index, because every
-// routine that reaches for one is holding a level number. The count is checked at load: a short file means a
-// broken export, and finding that out at level 87 is worse than finding it out at startup.
 public sealed class LevelStore
 {
     private static readonly JsonSerializerOptions s_options = new() { PropertyNameCaseInsensitive = true };

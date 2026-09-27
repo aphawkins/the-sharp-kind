@@ -95,7 +95,8 @@ src/bb/test/BubbleBobbleSharpLib.Tests/
 
 ## 4. Done
 
-Each line names the classes. Their header comments have the detail.
+Each line names the classes. [bb-conversion-notes.md](bb-conversion-notes.md)
+has the detail.
 
 **Scaffolding, assets and the static screen**
 
@@ -347,9 +348,17 @@ Each item ends with how it is proved.
           Not captured: pop frames other than 4, and `$A9C4` 3 with `$A9D6`
           4 or 6. `$A9D6` is only ever even (`BubbleBlow` masks it with `$06`,
           `EntityMover` steps by 2), so odd values need no proof.
-      - [ ] **2d. The specials**: `$24`–`$32` and `$44`–`$4C` vectors
-        (`$E758`, `$3E94`, `$3EFD`, `$E752`, `$3ED4`, `$E767` for the Baron,
-        `$3E77`, `$3F28`, `$3F88`), with item 5.
+      - [x] **2d(i). The enemy shots and the Baron**, `$28`–`$32`, through
+        their `$040C` vectors: `$3EFD`, `$E752`, `$3ED4`, `$E767` (the Baron)
+        and `$3E77`. Their cells follow the pop frames in
+        `object-sprites.tga`.
+        - Every shot vector clears OLDTXT, so `BubblePop.DrawnSubY` is zero
+          for a shot and `$A9D6` otherwise.
+        - The Baron's picture takes bit 1 of `$597F`, which `$E90E` counts up
+          every pass (`BubblePop.Counter`).
+        - Proved against VICE: `Views/Captures/shots-level-1.txt`, an
+          intervention (nothing on level 1 fires), matched pixel for pixel
+          by `ObjectView8BitGoldenTests`.
       - [x] **2e. The level's items**, `$52`/`$53`, drawn in characters.
         `$2B31` copies each item's 32 bytes from `sprites_rom` (`$9AE0` +
         index × 32; `$A892` food, `$A8C1` special) into characters
@@ -459,6 +468,9 @@ Each item ends with how it is proved.
       the special bubbles' own pop arms at `$3E02` (`$06` level-end fruit
       positions and `OPMASK`, `$08`, `$0A`), `$32C1` and `extend-bonus.s`.
       Verify: six letters award a life, against a VICE capture.
+- [ ] **2d(ii). Draw the special bubbles**, with item 5: the vectors for
+      `$24` (`$E758`), `$26` (`$3E94`) and `$44`–`$4C` (`$3EFD`, `$3F28`,
+      `$E968`, `$3F88`). Only the special bubbles make these types.
 - [ ] **6. The other special-item effects:** 1, 2, 6–8, 11 and 15–34 in
       `$2D65`. They are level skips (`$2F7D`–`$2F89`, `$2ECC`), the freeze,
       screen effects, and handlers at `$348A`–`$3621`, `$7FA4`/`$7FA7` and

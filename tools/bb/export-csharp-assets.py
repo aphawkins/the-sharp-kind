@@ -370,10 +370,38 @@ def decode_pop_frame_cell(graphic48):
     return pixels
 
 
+# The enemy shots and the Baron (bb-port-plan.md, item 2d(i)), after the pop
+# frames. A vector's third column is $8020 through $8260, as $3EB6 sets it.
+_THIRD_GRAPHIC = 0x8020
+_THIRD_MASK = 0x8260
+
+# $E767 (the Baron, $2E/$30) and $E752 ($2A): entries of $AA54/$AAC8.
+_SHOT_TABLE_ENTRIES = (48, 49, 50, 51, 56, 57)
+_SHOT_TABLE_GRAPHICS = {48: 0x8F00, 49: 0x8F30, 50: 0x8F60, 51: 0x8F90, 56: 0x9840, 57: 0x9870}
+_SHOT_TABLE_MASKS = {48: 0x8FC0, 49: 0x8FF0, 50: 0x9020, 51: 0x9050, 56: 0x93C0, 57: 0x9420}
+
+# $3EFD ($28), $3ED4 ($2C), each by $A9C4 0-3, then $3E77 ($32).
+_SHOT_COLUMNS = (
+    [(0x99E0 + 0x20 * y, 0x99F0 + 0x20 * y, 0x9A60 + 0x20 * y, 0x9A70 + 0x20 * y) for y in range(4)]
+    + [(0x98A0 + 0x20 * y, 0x98B0 + 0x20 * y, 0x9940 + 0x20 * y, 0x9950 + 0x20 * y) for y in range(4)]
+    + [(0x9920, 0x9930, 0x99C0, 0x99D0)]
+)
+
+
+def _column_bytes(addr, bubble_masks, software_sprites):
+    """The 16 bytes (one column, one byte a row) at a graphic/mask address."""
+    if BUBBLE_MASKS_BASE <= addr < BUBBLE_MASKS_BASE + len(bubble_masks):
+        return _read_bytes(bubble_masks, addr, BUBBLE_MASKS_BASE, 16)
+    if SOFTWARE_SPRITES_BASE <= addr < SOFTWARE_SPRITES_BASE + len(software_sprites):
+        return _read_bytes(software_sprites, addr, SOFTWARE_SPRITES_BASE, 16)
+    raise SystemExit(f"address {addr:#06x} is in neither known ROM block.")
+
+
 def export_object_sprites(out_dir, canonical):
     """
-    Compose object-sprites.tga: entries 0-43 (bubbles and lightning), then the
-    eight pop-animation frames, one 12x16 cell each, laid out in a single row.
+    Compose object-sprites.tga: entries 0-43 (bubbles and lightning), the
+    eight pop-animation frames, then the shots and the Baron, one 12x16 cell
+    each, laid out in a single row.
     """
     bubble_masks_image = tga_mod.parse_tga(os.path.join(DATA, "bubble-masks.tga"))
     software_sprites_image = tga_mod.parse_tga(os.path.join(DATA, "software-sprites.tga"))
@@ -397,6 +425,20 @@ def export_object_sprites(out_dir, canonical):
         block_start = (0x20 + 0x30 * frame) // 16
         graphic48 = anim_masks[block_start * 16 : block_start * 16 + 48]
         cells.append(decode_pop_frame_cell(graphic48))
+
+    for entry in _SHOT_TABLE_ENTRIES:
+        graphic48 = _block_bytes(_SHOT_TABLE_GRAPHICS[entry], bubble_masks, software_sprites)
+        mask48 = _block_bytes(_SHOT_TABLE_MASKS[entry], bubble_masks, software_sprites)
+        cells.append(decode_object_cell(graphic48, mask48, report))
+
+    for g1, g2, m1, m2 in _SHOT_COLUMNS:
+        graphic48 = b"".join(
+            _column_bytes(a, bubble_masks, software_sprites) for a in (g1, g2, _THIRD_GRAPHIC)
+        )
+        mask48 = b"".join(
+            _column_bytes(a, bubble_masks, software_sprites) for a in (m1, m2, _THIRD_MASK)
+        )
+        cells.append(decode_object_cell(graphic48, mask48, report))
 
     if report["mixed_mask"]:
         raise SystemExit(

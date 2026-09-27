@@ -7,17 +7,7 @@ using SharpKind.Graphics;
 
 namespace BubbleBobbleSharp.Renditions.EightBit;
 
-/// <summary>
-/// Draws the level's two items as $1844 does: a 2x2 block of characters at the
-/// item's level cell, out of item-chars.tga. See docs/bb-port-plan.md, item 2e.
-/// <para>
-/// A block is two multicolour characters wide and two tall: eight entry
-/// numbers across in the sheet, sixteen pixels on screen. Entry 11 is the
-/// item's own colour RAM byte, so each item has a sheet of its own, painted in
-/// its colour. Entry 00 is the screen's background, opaque in the sheet,
-/// because the item's characters replace whatever the cell held.
-/// </para>
-/// </summary>
+/// <summary>Draws the level's two items.</summary>
 internal sealed class ItemView8Bit : IView<ItemsModel>
 {
     private const int SourceBlockWidth = 8;
@@ -42,7 +32,6 @@ internal sealed class ItemView8Bit : IView<ItemsModel>
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        // $1934 draws the special item first, then the food.
         for (int item = ItemsModel.Capacity - 1; item >= 0; item--)
         {
             if (!model.Shows(item))

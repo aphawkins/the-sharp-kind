@@ -7,25 +7,15 @@ using SharpKind.Graphics;
 
 namespace BubbleBobbleSharp.Abstractions.Views;
 
-/// <summary>
-/// Everything a view is given to draw with: somewhere to draw, the metrics to
-/// lay out against, and the rendition's colours. This is the whole of it - a
-/// view sees no more of the game than these three members.
-/// </summary>
+/// <summary>Everything a view is given to draw with.</summary>
 public interface IViewSurface
 {
-    /// <summary>
-    /// Gets the surface to draw on.
-    /// </summary>
+    /// <summary>Gets the surface to draw on.</summary>
     public IGraphics Graphics { get; }
 
-    /// <summary>
-    /// Gets the rendition's screen metrics to lay out against.
-    /// </summary>
+    /// <summary>Gets the rendition's screen metrics to lay out against.</summary>
     public BbViewLayout Layout { get; }
 
-    /// <summary>
-    /// Gets the rendition's palette.
-    /// </summary>
+    /// <summary>Gets the rendition's palette.</summary>
     public IPaletteCollection Palette { get; }
 }

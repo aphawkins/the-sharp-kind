@@ -6,14 +6,8 @@ using BubbleBobbleSharpLib.Players;
 
 namespace BubbleBobbleSharpLib.Enemies;
 
-// $EE62 in entity-system.s: what an enemy may try, from where its player is.
-//
-// The walker at $EA08 and the hopper at $1F2E both call it first. The player's row against the
-// enemy's decides it: level, and the enemy may leap; below, and it may do nothing; above, and the leap
-// and the climb take turns, each for as long as the turn timer runs.
 internal sealed class EnemyChase
 {
-    // $EE70 and $EE8A. $EE62 keeps bits 0, 1 and 3 of the heading and clears bit 2, the jump up.
     private const byte ChaseMask = 0x0B;
 
     private readonly EntityTable _entities;
@@ -25,7 +19,6 @@ internal sealed class EnemyChase
         _entities = entities;
     }
 
-    // $EE62. target is the slot $1CF3 put in $4B.
     internal void Step(int slot, int target)
     {
         byte player = _entities.Y[target];
@@ -42,7 +35,6 @@ internal sealed class EnemyChase
         _entities.Heading[slot] &= ChaseMask;
     }
 
-    // $EE91. The player is above. Each time the turn timer runs out, the leap and the climb swap.
     private void Alternate(int slot)
     {
         _entities.TurnTimer[slot]--;

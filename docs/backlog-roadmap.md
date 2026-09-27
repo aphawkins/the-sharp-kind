@@ -43,11 +43,11 @@ Every open work item, in priority order. Each line links to a file in
 
 Steps from section 5 of [bb-port-plan.md](bb-port-plan.md), in order.
 
-- [ ] [2d: draw the special bubbles](work-items/bb-2d-draw-specials.md)
 - [ ] [3d: lives and respawn](work-items/bb-3d-lives-respawn.md)
 - [ ] [3e: join and game over](work-items/bb-3e-join-game-over.md)
 - [ ] [4: level flow](work-items/bb-4-level-flow.md)
 - [ ] [5: special bubbles and EXTEND](work-items/bb-5-special-bubbles-extend.md)
+- [ ] [2d(ii): draw the special bubbles](work-items/bb-2d-ii-draw-special-bubbles.md)
 - [ ] [6: the other special-item effects](work-items/bb-6-special-item-effects.md)
 - [ ] [7: super mode, bonus rounds and level 100](work-items/bb-7-super-mode-bonus-level-100.md)
 - [ ] [8: sound effects](work-items/bb-8-sound-effects.md)

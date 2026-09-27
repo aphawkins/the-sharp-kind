@@ -224,6 +224,73 @@ public sealed class BubblePopTests
         Assert.Throws<NotSupportedException>(rig.Pop.Update);
     }
 
+    // $3EFD, $E752, $3ED4 and $3E77 pick a cell by $A9C4, and clear OLDTXT.
+    [Theory]
+    [InlineData(0x28, 0, 58)]
+    [InlineData(0x28, 3, 61)]
+    [InlineData(0x2A, 0, 56)]
+    [InlineData(0x2A, 1, 57)]
+    [InlineData(0x2C, 0, 62)]
+    [InlineData(0x2C, 3, 65)]
+    [InlineData(0x32, 2, 66)]
+    public void AShotIsDrawnByItsOwnVector(byte type, byte subX, byte cell)
+    {
+        Rig rig = new();
+        Place(rig, Slot, type);
+        rig.Objects.SubX[Slot] = subX;
+        rig.Objects.SubY[Slot] = 0x04;
+
+        rig.Pop.Update();
+
+        Assert.Equal(cell, rig.Pop.Drawn[Slot]);
+        Assert.Equal(0, rig.Pop.DrawnSubY[Slot]);
+        Assert.Equal(type, rig.Objects.Type[Slot]);
+    }
+
+    // $E767. $30 | $E765 by slot | bit 1 of $597F, after $E90E counts it up.
+    [Theory]
+    [InlineData(0, 0x2E, 0x00, 54)]
+    [InlineData(1, 0x30, 0x00, 52)]
+    [InlineData(0, 0x2E, 0x01, 55)]
+    [InlineData(1, 0x30, 0x02, 53)]
+    [InlineData(1, 0x30, 0x03, 52)]
+    public void TheBaronIsDrawnBySlotAndCounter(int slot, byte type, byte counter, byte cell)
+    {
+        Rig rig = new();
+        Place(rig, slot, type);
+        rig.Pop.Counter = counter;
+
+        rig.Pop.Update();
+
+        Assert.Equal(cell, rig.Pop.Drawn[slot]);
+    }
+
+    // $E779 draws at $A9D6.
+    [Fact]
+    public void ABubbleIsDrawnOnItsOwnSubRow()
+    {
+        Rig rig = new();
+        Place(rig, Slot, 0x02);
+        rig.Objects.SubY[Slot] = 0x04;
+
+        rig.Pop.Update();
+
+        Assert.Equal(0x04, rig.Pop.DrawnSubY[Slot]);
+    }
+
+    // Past its table, a shot's vector would read the next table.
+    [Theory]
+    [InlineData(0x2A, 2)]
+    [InlineData(0x28, 4)]
+    public void AShotTurnedPastItsTableThrows(byte type, byte subX)
+    {
+        Rig rig = new();
+        Place(rig, Slot, type);
+        rig.Objects.SubX[Slot] = subX;
+
+        Assert.Throws<NotSupportedException>(rig.Pop.Update);
+    }
+
     private static void Touched(Rig rig, int slot, byte held, int player)
     {
         Place(rig, slot, 0x34);

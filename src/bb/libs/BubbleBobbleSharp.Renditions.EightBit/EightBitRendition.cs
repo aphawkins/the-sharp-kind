@@ -8,21 +8,15 @@ using SharpKind.Abstraction.Renditions;
 
 namespace BubbleBobbleSharp.Renditions.EightBit;
 
-/// <summary>
-/// The 8-bit tier, which for this game is the Commodore 64: 40x25 cells of
-/// 8x8 pixels, a fixed 8x8 font and sixteen colours.
-/// </summary>
+/// <summary>The 8-bit tier: the Commodore 64.</summary>
 public sealed class EightBitRendition : IBbRendition
 {
     public Rendition Rendition => Rendition.EightBit;
 
-    // Forty columns of eight pixels. The level takes the leftmost 32 of them, with its sidebar
-    // decoration inside that rather than beside it - see BbViewLayout.
     public int ScreenWidth => 320;
 
     public int ScreenHeight => 200;
 
-    // Quadrupled is 1280x800, which every common display still shows whole.
     public IReadOnlyList<int> WindowScales => [1, 2, 3, 4];
 
     public int DefaultWindowScale => 4;

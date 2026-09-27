@@ -4,16 +4,7 @@
 
 namespace BubbleBobbleSharp.Abstractions.Views;
 
-/// <summary>
-/// What the level's two items look like on screen: the bonus food and the
-/// special item - see docs/bb-port-plan.md, item 2e.
-/// <para>
-/// $1844 draws each item that shows as a 2x2 block of characters at its level
-/// cell, the art $2B31 copied in, with one colour RAM byte on all four cells.
-/// An item that does not show draws nothing: $1578 has already put back what
-/// the cell held.
-/// </para>
-/// </summary>
+/// <summary>The level's two items: the bonus food and the special item.</summary>
 public sealed class ItemsModel
 {
     private readonly byte[] _type;
@@ -22,15 +13,13 @@ public sealed class ItemsModel
     private readonly byte[] _art;
     private readonly byte[] _colour;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="ItemsModel"/> class.
-    /// </summary>
-    /// <param name="type">Each item's type, as $52/$53 hold it. Bit 7 set does not show.</param>
+    /// <summary>Initializes a new instance of the <see cref="ItemsModel"/> class.</summary>
+    /// <param name="type">Each item's type.</param>
     /// <param name="column">Each item's level column.</param>
     /// <param name="row">Each item's level row.</param>
     /// <param name="art">Each item's block of item art.</param>
-    /// <param name="colour">Each item's colour RAM byte, as $5F/$60 hold it.</param>
-    /// <param name="colours">The level's colour byte, as <see cref="PlayfieldModel.Colours"/> holds it.</param>
+    /// <param name="colour">Each item's colour RAM byte.</param>
+    /// <param name="colours">The level's colour byte.</param>
     public ItemsModel(
         ReadOnlySpan<byte> type,
         ReadOnlySpan<byte> column,
@@ -61,7 +50,7 @@ public sealed class ItemsModel
 
     /// <summary>Gets a value indicating whether an item shows.</summary>
     /// <param name="item">The item: 0 the food, 1 the special item.</param>
-    /// <returns>Whether $1844 draws it.</returns>
+    /// <returns>Whether it shows.</returns>
     public bool Shows(int item) => (_type[item] & 0x80) == 0;
 
     /// <summary>Gets the level column of an item's top-left character.</summary>

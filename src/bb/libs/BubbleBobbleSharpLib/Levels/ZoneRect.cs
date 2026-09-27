@@ -4,14 +4,6 @@
 
 namespace BubbleBobbleSharpLib.Levels;
 
-//// JSON serializable
-
-// One rectangle out of zone-data.txt: a block of the collision map that carries a current, rather
-// than whatever its row would otherwise default to. `Type` is the two-bit direction $E23 masks a
-// cell's byte down to - 0 up, 1 right, 2 down, 3 left - the same field SolidMap keeps alongside
-// solidity. The export has already resolved the reference's own mirroring into a second rectangle
-// where one applies, so this side reads rectangles and nothing else - see docs/bb-port-plan.md,
-// Phase 2 and the "direction field" item in Phase 6.
 public class ZoneRect
 {
     public int X { get; set; }

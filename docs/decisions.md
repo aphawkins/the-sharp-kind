@@ -8,6 +8,11 @@ split on 2026-07-31 into defects and features, and merged back on
 reshapes or unblocks backlog items, those items are updated in the backlog
 to reference the decision here rather than restating it.
 
+## Resolved (2026-09-27) — Bubble Bobble item 2d is split
+
+- **2d(i)**, the enemy shots and the Baron, can be proved now.
+- **2d(ii)**, the special bubbles, follows item 5, which first makes them.
+
 ## Resolved (2026-09-27) — docking rings reach the corners
 
 - **Extent of the widest ring**: still a circle (an ellipse was rejected), with

@@ -7,24 +7,7 @@ using SharpKind.Graphics;
 
 namespace BubbleBobbleSharp.Abstractions.Views;
 
-/// <summary>
-/// The rendition's screen metrics, in one place, for the views to lay out
-/// against.
-/// <para>
-/// The C64's screen is 40 columns by 25 rows of 8x8 characters. The level
-/// occupies the leftmost 32 of those columns, because that is where
-/// setup_level_screen writes it: it starts each row at the screen pointer's
-/// own offset 0 and stops after 32 columns, and draw_border then clears
-/// column 32 as the first column past it. The eight columns to the right of
-/// that are not the level's.
-/// </para>
-/// <para>
-/// The metrics are settable rather than fixed. A rendition of another tier
-/// would have a cell size of its own, and this type is handed to every
-/// rendition, so baking the C64's numbers in would decide for renditions that
-/// do not exist yet.
-/// </para>
-/// </summary>
+/// <summary>The rendition's screen metrics, in one place, for the views to lay out against.</summary>
 /// <param name="ScreenWidth">The render width in pixels.</param>
 /// <param name="ScreenHeight">The render height in pixels.</param>
 public sealed record BbViewLayout(float ScreenWidth, float ScreenHeight)
@@ -42,72 +25,40 @@ public sealed record BbViewLayout(float ScreenWidth, float ScreenHeight)
     /// <summary>Gets the rows the level is drawn in - the whole screen's worth.</summary>
     public int PlayfieldRows { get; init; } = 25;
 
-    /// <summary>
-    /// Gets the screen column the level starts at. Zero: the level renderer
-    /// writes from the start of each screen row, so the level is hard against
-    /// the left edge rather than centred.
-    /// </summary>
+    /// <summary>Gets the screen column the level starts at.</summary>
     public int PlayfieldColumn { get; init; }
 
     /// <summary>Gets the screen row the level starts at.</summary>
     public int PlayfieldRow { get; init; }
 
-    /// <summary>
-    /// Gets how many columns of the level each edge's decoration covers.
-    /// draw_border writes a two-character block down the level's leftmost two
-    /// columns and its rightmost two.
-    /// </summary>
+    /// <summary>Gets how many columns of the level each edge's decoration covers.</summary>
     public int SidebarColumns { get; init; } = 2;
 
-    /// <summary>
-    /// Gets the columns the HUD is drawn in - the eight the level leaves at the
-    /// right of the screen. The scores and lives are written straight into
-    /// screen memory past the level's last column, which is what puts them
-    /// there.
-    /// </summary>
+    /// <summary>Gets the columns the HUD is drawn in.</summary>
     public int HudColumns { get; init; } = 8;
 
-    /// <summary>
-    /// Gets the whole screen's character grid, counted from its top-left
-    /// corner - the forty by twenty-five the hardware addresses.
-    /// </summary>
+    /// <summary>Gets the whole screen's character grid.</summary>
     public CharacterGrid Screen => new(CellWidth, CellHeight);
 
-    /// <summary>
-    /// Gets the level's character grid, counted from the level's own top-left
-    /// corner rather than the screen's, so a view says which column of the
-    /// level it means and nothing has to add the offset back on.
-    /// </summary>
+    /// <summary>Gets the level's character grid, counted from the level's top-left corner.</summary>
     public CharacterGrid Playfield => new(
         CellWidth,
         CellHeight,
         new(Screen.Column(PlayfieldColumn), Screen.Row(PlayfieldRow)));
 
-    /// <summary>
-    /// Gets the whole of the level as a rectangle on the screen - what the
-    /// decoration is composed into, since it is drawn over the level's own
-    /// outermost columns.
-    /// </summary>
+    /// <summary>Gets the whole level as a rectangle on the screen.</summary>
     public (Vector2 Position, float Width, float Height) PlayfieldArea => (
         Playfield.Cell(0, 0),
         PlayfieldColumns * CellWidth,
         PlayfieldRows * CellHeight);
 
-    /// <summary>
-    /// Gets the level between its two edges of decoration. The level renderer
-    /// draws across all 32 columns and draw_border then writes over the outer
-    /// two each side, so trimming the level to what survives that is the
-    /// composition's job rather than the view's.
-    /// </summary>
+    /// <summary>Gets the level between its two edges of decoration.</summary>
     public (Vector2 Position, float Width, float Height) PlayfieldInterior => (
         Playfield.Cell(SidebarColumns, 0),
         (PlayfieldColumns - (2 * SidebarColumns)) * CellWidth,
         PlayfieldRows * CellHeight);
 
-    /// <summary>
-    /// Gets the HUD as a rectangle on the screen: the columns past the level's
-    /// last, for the whole of the screen's height.
-    /// </summary>
+    /// <summary>Gets the HUD as a rectangle on the screen.</summary>
     public (Vector2 Position, float Width, float Height) HudArea => (
         Screen.Cell(PlayfieldColumn + PlayfieldColumns, PlayfieldRow),
         HudColumns * CellWidth,

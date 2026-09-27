@@ -8,36 +8,15 @@ using SharpKind.Graphics;
 
 namespace BubbleBobbleSharp.Renditions.EightBit;
 
-/// <summary>
-/// Draws the decoration running down both edges of the level: draw_border's
-/// two-by-two block of characters, repeated from the top of the screen to the
-/// bottom, at the level's leftmost two columns and its rightmost two.
-/// <para>
-/// The characters are C64 multicolour, so a character is four pixels wide in
-/// the sheet and eight on screen - a multicolour pixel is two pixels wide.
-/// The sheets are copied out of rebb64 as they stand, which is why the
-/// doubling happens here rather than having been baked in: what is committed
-/// stays byte for byte what the reference holds.
-/// </para>
-/// <para>
-/// The decoration is inside the level rather than beside it, so it is painted
-/// out of the same two background registers the level's own tiles are. Both
-/// sheets are repainted in the level's colours before anything is drawn from
-/// them - see <see cref="MulticolourSheet"/>.
-/// </para>
-/// </summary>
+/// <summary>Draws the decoration down both edges of the level.</summary>
 internal sealed class SidebarView8Bit : IView<SidebarModel>
 {
-    // A multicolour character: four pixels in the sheet, eight rows tall.
     private const int SourceCharacterWidth = 4;
     private const int CharacterHeight = 8;
 
-    // Two characters across and two down, drawn at screen width, so sixteen by sixteen.
     private const int BlockColumns = 2;
     private const int BlockRows = 2;
 
-    // The level tile sheet is a hundred characters in reading order, ten to the row - one per level,
-    // which is what a level with no sidebar design repeats into all four of its characters.
     private const int TileSheetColumns = 10;
 
     private const string SidebarSheet = "Sidebars";
@@ -58,8 +37,6 @@ internal sealed class SidebarView8Bit : IView<SidebarModel>
         _tiles = new(surface, TileSheet);
     }
 
-    // $E10C. draw_border walks twelve two-row blocks down both edges and then writes the block's top
-    // half once more on the last row, which is how twenty-five rows are covered by a block two rows tall.
     public void Draw(SidebarModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
@@ -69,12 +46,8 @@ internal sealed class SidebarView8Bit : IView<SidebarModel>
 
         for (int row = 0; row < _layout.PlayfieldRows; row += BlockRows)
         {
-            // The last row of the screen has no room for the block's lower half.
             int rows = Math.Min(BlockRows, _layout.PlayfieldRows - row);
 
-            // The level's leftmost two columns and its rightmost two. init_level_renderer forces
-            // the bitmap solid there - it ors the top two bits into the first byte of every row -
-            // so the decoration always has wall beneath it rather than sitting over open space.
             DrawBlock(model, 0, row, rows);
             DrawBlock(model, _layout.PlayfieldColumns - BlockColumns, row, rows);
         }
@@ -94,9 +67,6 @@ internal sealed class SidebarView8Bit : IView<SidebarModel>
         }
     }
 
-    // A level with a design of its own takes one of that design's four characters, copied by the
-    // routine at $E051; a level without repeats its header tile, which $E060 copies into all four
-    // of the slots instead.
     private void DrawCharacter(SidebarModel model, int character, Vector2 position)
     {
         (string sheet, int index) = model.HasDesign
@@ -107,8 +77,6 @@ internal sealed class SidebarView8Bit : IView<SidebarModel>
         int sheetColumn = index % columns;
         int sheetRow = index / columns;
 
-        // A multicolour pixel is two pixels wide, so the character is drawn at twice the width it
-        // occupies in the sheet. The height is its own.
         _graphics.DrawImagePart(
             sheet,
             position,

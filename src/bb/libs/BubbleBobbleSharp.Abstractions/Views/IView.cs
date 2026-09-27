@@ -4,11 +4,7 @@
 
 namespace BubbleBobbleSharp.Abstractions.Views;
 
-/// <summary>
-/// The drawing half of one part of the screen. Everything it needs arrives in
-/// <typeparamref name="TModel"/>, so it holds no state and derives nothing:
-/// one implementation per rendition, differing only in how it draws.
-/// </summary>
+/// <summary>The drawing half of one part of the screen.</summary>
 /// <typeparam name="TModel">The view model, computed on the game's side.</typeparam>
 public interface IView<in TModel>
 {

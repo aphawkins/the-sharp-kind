@@ -11,36 +11,21 @@ using Microsoft.Extensions.Logging;
 
 namespace BubbleBobbleSharpLib.Renditions;
 
-/// <summary>
-/// Finds the renditions in the plugin folder and picks the one the player
-/// configured. Everything MEF touches is finished with by the time this
-/// returns. A missing rendition is fatal at startup, naming what it could not
-/// find, rather than starting a game that cannot show itself.
-/// </summary>
+/// <summary>Finds the renditions in the plugin folder and picks the one the player configured.</summary>
 internal static class RenditionLoader
 {
-    /// <summary>
-    /// The folder plugin assemblies are dropped into, beside the executable.
-    /// </summary>
+    /// <summary>The folder plugin assemblies are dropped into, beside the executable.</summary>
     internal const string FolderName = "Renditions";
 
-    /// <summary>
-    /// By convention rather than attribute, so a plugin references the
-    /// contracts assembly and says nothing about MEF.
-    /// </summary>
+    /// <summary>The MEF conventions a plugin is found by.</summary>
     private static readonly ConventionBuilder s_conventions = BuildConventions();
 
-    /// <summary>
-    /// Loads the rendition for one name.
-    /// </summary>
+    /// <summary>Loads the rendition for one name.</summary>
     /// <param name="baseDirectory">The folder the plugin folder sits in.</param>
     /// <param name="name">The name the player configured.</param>
     /// <param name="logger">Where skipped files and the count found are reported.</param>
     /// <returns>The rendition chosen, and everything installed.</returns>
-    /// <exception cref="InvalidOperationException">
-    /// Nothing in the folder goes by this name, which the game cannot start
-    /// without.
-    /// </exception>
+    /// <exception cref="InvalidOperationException">No rendition has this name.</exception>
     public static InstalledRenditions LoadFrom(string baseDirectory, string name, ILogger logger)
     {
         string renditionsFolder = Path.Combine(baseDirectory, FolderName);
@@ -48,11 +33,8 @@ internal static class RenditionLoader
 
         if (Directory.Exists(renditionsFolder))
         {
-            // A folder rather than a loose file, because a rendition brings its own assets and
-            // two renditions' would collide. Loose DLLs are still read, for one shipping none.
             foreach (string file in Directory.EnumerateFiles(renditionsFolder, "*.dll", SearchOption.AllDirectories))
             {
-                // Only fatal if it was the one asked for, so the search below decides.
                 try
                 {
                     assemblies.Add(AssemblyLoadContext.Default.LoadFromAssemblyPath(Path.GetFullPath(file)));
@@ -81,8 +63,6 @@ internal static class RenditionLoader
             ?? throw new InvalidOperationException(
                 $"Nothing in '{renditionsFolder}' is called '{name}', so there is nothing to draw the game with.");
 
-        // Where the game looks for the artwork it brought. A loose DLL gets the Renditions
-        // folder itself, which is right for one shipping no assets.
         string folder = Path.GetDirectoryName(chosen.GetType().Assembly.Location) ?? renditionsFolder;
 
         return new(chosen, folder, [.. renditions.OrderBy(r => r.Name, StringComparer.Ordinal)]);
