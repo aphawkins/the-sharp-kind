@@ -7,6 +7,17 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Fixed (8-bit HUD at half width, scanner centred, 2026-09-27)
+
+- **Elite's 8-bit HUD art is 160x256, with pixels twice as wide as they are
+  tall, as the 8-bit machines drew it**, and is stretched to fill the 320x256
+  screen. `ScannerViewBase.DrawHud` now stretches whatever art a tier has to
+  the screen, which leaves the 16-bit tier's full-size art unchanged.
+  - The scanner in the new art is centred, so the lollipops' origin,
+    `ScannerView8Bit.ScannerCentre`, moves from 2 pixels left of the viewport's
+    centre to the centre itself. The compass, dials and indicators did not
+    move in the art and still line up.
+
 ### Fixed (docking rings are polygons, 2026-09-27)
 
 - **Elite's break-pattern rings are octagons on the 8-bit rendition and

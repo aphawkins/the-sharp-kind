@@ -134,9 +134,16 @@ public abstract class ScannerViewBase : IView<ScannerModel>
     /// overlay rather than a strip along the bottom: the frame around the
     /// viewport is the cockpit window the universe is seen through, so it is
     /// part of the same artwork as the console below it, and everything it
-    /// does not ink is transparent.
+    /// does not ink is transparent. It is stretched to the screen, so art
+    /// authored at a lower resolution (the 8-bit tier's 160-wide pixels, twice
+    /// as wide as tall) fills it.
     /// </summary>
-    public void DrawHud() => Surface.Graphics.DrawImage(nameof(ImageType.Hud), new(0, 0));
+    public void DrawHud() => Surface.Graphics.DrawImagePart(
+        nameof(ImageType.Hud),
+        new(0, 0),
+        new(Surface.Layout.ScreenWidth, Surface.Layout.ScreenHeight),
+        new(0, 0),
+        Surface.Graphics.ImageSize(nameof(ImageType.Hud)));
 
     public void Draw(ScannerModel model)
     {

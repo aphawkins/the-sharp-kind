@@ -26,7 +26,7 @@ internal sealed class ScannerView8Bit : ScannerViewBase
         SpeedWarningColor = surface.Palette["Red"];
     }
 
-    protected override Vector2 ScannerCentre => new(Surface.Layout.ViewportCentre.X - 2, Surface.Layout.ViewportHeight + 28);
+    protected override Vector2 ScannerCentre => new(Surface.Layout.ViewportCentre.X, Surface.Layout.ViewportHeight + 28);
 
     protected override (float Y, float X) ScannerExtent => (14, 25);
 
