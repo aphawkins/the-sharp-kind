@@ -4,7 +4,7 @@ Consolidated log of maintainer decisions for the repository, split out of
 [backlog-roadmap.md](backlog-roadmap.md) so the backlog stays about work
 items and this file stays about the calls that shape them. The backlog was
 split on 2026-07-31 into defects and features, and merged back on
-2026-09-27 into one list with a file per item in [work-items/](work-items/). Newest first. When a decision
+2026-09-27 into one list with a file per item in `work-items/`. Newest first. When a decision
 reshapes or unblocks backlog items, those items are updated in the backlog
 to reference the decision here rather than restating it.
 

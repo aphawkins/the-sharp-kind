@@ -1,7 +1,7 @@
 # Backlog — The Sharp Kind
 
 Every open work item, in priority order. Each line links to a file in
-[work-items/](work-items/) holding the detail.
+`work-items/` holding the detail.
 
 ## Rules
 
