@@ -181,6 +181,12 @@ internal sealed class PilotController : IScreenController
             _gameState.DrawLasers = _combat.FireLaser();
         }
 
+        // As on the C64, the docking computer owns the flight controls until it's switched off.
+        if (_pilot.IsAutoPilotOn)
+        {
+            return;
+        }
+
         HandlePitchControls();
         HandleRollControls();
         HandleYawControls();

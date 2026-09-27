@@ -295,6 +295,40 @@ public class PilotControllerTests
         Assert.False(pilot.IsAutoPilotOn);
     }
 
+    // As on the C64, the docking computer flies the ship until it's switched
+    // off; a stick left anywhere must not steer or throttle against it.
+    [Fact]
+    public void TheStickIsIgnoredWhileTheDockingComputerFlies()
+    {
+        PilotController controller = CreateController(
+            PilotDirection.Front,
+            out PlayerShip ship,
+            out _,
+            out GameState gameState,
+            out FakeGamepad gamepad,
+            out _,
+            out Pilot pilot);
+        gameState.IsDocked = false;
+        gameState.Config.Game.InstantDock = false;
+        ship.HasDockingComputer = true;
+        gamepad.Connected("Microsoft SideWinder Precision 2 Joystick");
+        gamepad.ButtonDown(GamepadButton.Back);
+        controller.HandleInput();
+        gamepad.ButtonUp(GamepadButton.Back);
+        Assert.True(pilot.IsAutoPilotOn);
+
+        float speed = ship.Speed;
+        gamepad.AxisMoved(GamepadAxis.Throttle, 0.3f);
+        gamepad.AxisMoved(GamepadAxis.Throttle, -1f);
+        gamepad.AxisMoved(GamepadAxis.LeftX, 1f);
+        gamepad.AxisMoved(GamepadAxis.LeftY, 1f);
+        controller.HandleInput();
+
+        Assert.Equal(speed, ship.Speed, 3);
+        Assert.Equal(0f, ship.Roll, 3);
+        Assert.Equal(0f, ship.Pitch, 3);
+    }
+
     // Without a docking computer fitted the button does nothing, the same
     // as the C key.
     [Fact]
