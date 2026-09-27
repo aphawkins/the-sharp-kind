@@ -31,6 +31,7 @@ internal sealed class ShortRangeChartController : IScreenController
 
     private readonly IEliteDraw _draw;
     private readonly GameState _gameState;
+    private readonly HyperspaceCommand _hyperspace;
     private readonly IKeyboard _keyboard;
     private readonly List<ShortRangeChartLabel> _labels = [];
     private readonly List<ShortRangeChartPlanet> _planets = [];
@@ -47,6 +48,7 @@ internal sealed class ShortRangeChartController : IScreenController
         GameState gameState,
         IEliteDraw draw,
         IKeyboard keyboard,
+        HyperspaceCommand hyperspace,
         PlanetController planet,
         PlayerShip ship,
         IView<ShortRangeChartModel> view)
@@ -54,6 +56,7 @@ internal sealed class ShortRangeChartController : IScreenController
         _gameState = gameState;
         _draw = draw;
         _keyboard = keyboard;
+        _hyperspace = hyperspace;
         _planet = planet;
         _ship = ship;
         _view = view;
@@ -80,6 +83,8 @@ internal sealed class ShortRangeChartController : IScreenController
             HandleFindInput();
             return;
         }
+
+        _hyperspace.HandleInput();
 
         if (_keyboard.IsPressed(ConsoleKey.O))
         {

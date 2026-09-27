@@ -11,7 +11,6 @@ using EliteSharpLib.Controls;
 using EliteSharpLib.Graphics;
 using EliteSharpLib.Ships;
 using SharpKind.Graphics.Rendering;
-using SharpKind.Input;
 
 namespace EliteSharpLib.Views;
 
@@ -31,8 +30,7 @@ internal sealed class PilotController : IScreenController
     private readonly GameState _gameState;
     private readonly EliteControlMap _controls;
 
-    // Only for the Ctrl that turns hyperspace galactic; a modifier has no place in the bindings file.
-    private readonly IKeyboard _keyboard;
+    private readonly HyperspaceCommand _hyperspace;
     private readonly Pilot _pilot;
     private readonly PlayerShip _ship;
     private readonly Stars _stars;
@@ -50,7 +48,6 @@ internal sealed class PilotController : IScreenController
     private readonly Edge _ecm = new();
     private readonly Edge _warpJump = new();
     private readonly Edge _dockingComputer = new();
-    private readonly Edge _hyperspace = new();
 
     // In the game's own ticks, not updates, or the beam would flicker differently at different frame rates.
     private float _drawLaserTicks;
@@ -58,7 +55,7 @@ internal sealed class PilotController : IScreenController
     internal PilotController(
         GameState gameState,
         EliteControlMap controls,
-        IKeyboard keyboard,
+        HyperspaceCommand hyperspace,
         Pilot pilot,
         PlayerShip ship,
         Stars stars,
@@ -70,7 +67,7 @@ internal sealed class PilotController : IScreenController
     {
         _gameState = gameState;
         _controls = controls;
-        _keyboard = keyboard;
+        _hyperspace = hyperspace;
         _pilot = pilot;
         _ship = ship;
         _stars = stars;
@@ -171,8 +168,6 @@ internal sealed class PilotController : IScreenController
     private bool WantsEcm() => WasPressed(EliteAction.Ecm, _ecm);
 
     private bool WantsWarpJump() => WasPressed(EliteAction.WarpJump, _warpJump);
-
-    private bool WantsHyperspace() => WasPressed(EliteAction.Hyperspace, _hyperspace);
 
     private void HandleFlightControls()
     {
@@ -383,18 +378,7 @@ internal sealed class PilotController : IScreenController
 
         HandleDockingComputerButton();
 
-        if (WantsHyperspace() && (!_gameState.IsDocked))
-        {
-            // Held, not pressed: consuming Ctrl would take it from any other Ctrl combination read later this tick.
-            if (_keyboard.IsHeld(ConsoleModifiers.Control))
-            {
-                _space.StartGalacticHyperspace();
-            }
-            else
-            {
-                _space.StartHyperspace();
-            }
-        }
+        _hyperspace.HandleInput();
 
         if (WantsWarpJump() &&
             (!_gameState.IsDocked)
@@ -489,21 +473,6 @@ internal sealed class PilotController : IScreenController
             && (!_gameState.InWitchspace))
         {
             _gameState.SetView(Screen.EscapeCapsule);
-        }
-    }
-
-    // A control that must act once per press, from a source that only says
-    // whether it is down. Held, it fires on the first update and no other.
-    private sealed class Edge
-    {
-        private bool _wasHeld;
-
-        internal bool Pressed(bool held)
-        {
-            bool pressed = held && !_wasHeld;
-            _wasHeld = held;
-
-            return pressed;
         }
     }
 }

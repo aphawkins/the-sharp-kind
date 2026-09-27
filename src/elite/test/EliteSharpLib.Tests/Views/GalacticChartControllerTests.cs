@@ -4,6 +4,7 @@
 
 using System.Numerics;
 using EliteSharp.Abstractions.Views;
+using EliteSharpLib.Controls;
 using EliteSharpLib.Ships;
 using EliteSharpLib.Tests.Missions;
 using EliteSharpLib.Views;
@@ -187,6 +188,11 @@ public class GalacticChartControllerTests
         return new GalacticChartController(
             gameState,
             keyboard,
+            new HyperspaceCommand(
+                gameState,
+                new EliteControlMap(EliteControlDefaults.Create(), keyboard, new FakeGamepad()),
+                keyboard,
+                SettingsControllerFixture.CreateSpace(out _, out _, out _, out _)),
             new PlanetController(gameState),
             new PlayerShip(gameState),
             new FakeGalacticChartView());

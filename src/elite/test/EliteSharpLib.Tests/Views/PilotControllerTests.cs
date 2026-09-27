@@ -450,7 +450,7 @@ public class PilotControllerTests
         => new(
             gameState,
             controls,
-            keyboard,
+            new HyperspaceCommand(gameState, controls, keyboard, space),
             pilot,
             ship,
             stars,

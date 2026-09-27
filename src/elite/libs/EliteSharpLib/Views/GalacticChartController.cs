@@ -24,6 +24,7 @@ internal sealed class GalacticChartController : IScreenController
     private const float MaxCrossY = 256;
 
     private readonly GameState _gameState;
+    private readonly HyperspaceCommand _hyperspace;
     private readonly IKeyboard _keyboard;
     private readonly PlanetController _planet;
     private readonly PlayerShip _ship;
@@ -38,12 +39,14 @@ internal sealed class GalacticChartController : IScreenController
     internal GalacticChartController(
         GameState gameState,
         IKeyboard keyboard,
+        HyperspaceCommand hyperspace,
         PlanetController planet,
         PlayerShip ship,
         IView<GalacticChartModel> view)
     {
         _gameState = gameState;
         _keyboard = keyboard;
+        _hyperspace = hyperspace;
         _planet = planet;
         _ship = ship;
         _view = view;
@@ -61,6 +64,8 @@ internal sealed class GalacticChartController : IScreenController
             HandleFindInput();
             return;
         }
+
+        _hyperspace.HandleInput();
 
         if (_keyboard.IsPressed(ConsoleKey.O))
         {

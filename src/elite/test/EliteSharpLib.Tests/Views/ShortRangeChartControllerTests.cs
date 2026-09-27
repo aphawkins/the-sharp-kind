@@ -1,9 +1,10 @@
-// 'Elite - The Sharp Kind' - Andy Hawkins 2023-2026.
+﻿// 'Elite - The Sharp Kind' - Andy Hawkins 2023-2026.
 // 'Elite - The New Kind' - C.J.Pinder 1999-2001.
 // Elite (C) I.Bell & D.Braben 1984.
 
 using System.Numerics;
 using EliteSharp.Abstractions.Views;
+using EliteSharpLib.Controls;
 using EliteSharpLib.Fakes;
 using EliteSharpLib.Ships;
 using EliteSharpLib.Tests.Missions;
@@ -368,6 +369,11 @@ public class ShortRangeChartControllerTests
             gameState,
             draw,
             keyboard,
+            new HyperspaceCommand(
+                gameState,
+                new EliteControlMap(EliteControlDefaults.Create(), keyboard, new FakeGamepad()),
+                keyboard,
+                SettingsControllerFixture.CreateSpace(out _, out _, out _, out _)),
             planet,
             new PlayerShip(gameState),
             view);

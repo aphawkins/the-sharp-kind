@@ -226,10 +226,10 @@ public static class EliteServiceCollectionExtensions
         views.Add(Screen.PlanetData, sp.GetRequiredService<PlanetDataController>());
         views.Add(Screen.MarketPrices, sp.GetRequiredService<MarketController>());
         views.Add(Screen.CommanderStatus, sp.GetRequiredService<CommanderStatusController>());
-        views.Add(Screen.FrontView, CreatePilotController(sp, PilotDirection.Front));
-        views.Add(Screen.RearView, CreatePilotController(sp, PilotDirection.Rear));
-        views.Add(Screen.LeftView, CreatePilotController(sp, PilotDirection.Left));
-        views.Add(Screen.RightView, CreatePilotController(sp, PilotDirection.Right));
+        views.Add(Screen.FrontView, EliteSplitScreensServiceCollectionExtensions.CreatePilotController(sp, PilotDirection.Front));
+        views.Add(Screen.RearView, EliteSplitScreensServiceCollectionExtensions.CreatePilotController(sp, PilotDirection.Rear));
+        views.Add(Screen.LeftView, EliteSplitScreensServiceCollectionExtensions.CreatePilotController(sp, PilotDirection.Left));
+        views.Add(Screen.RightView, EliteSplitScreensServiceCollectionExtensions.CreatePilotController(sp, PilotDirection.Right));
         views.Add(Screen.Docking, sp.GetRequiredService<DockingView>());
         views.Add(Screen.Undocking, sp.GetRequiredService<LaunchView>());
         views.Add(Screen.Hyperspace, sp.GetRequiredService<HyperspaceView>());
@@ -246,20 +246,6 @@ public static class EliteServiceCollectionExtensions
         views.Add(Screen.EscapeCapsule, sp.GetRequiredService<EscapeCapsuleController>());
         views.Add(Screen.GameOver, sp.GetRequiredService<GameOverController>());
     }
-
-    // The four cockpit windows share one PilotController, differing only in facing, so PopulateScreens constructs each directly.
-    private static PilotController CreatePilotController(IServiceProvider sp, PilotDirection direction) => new(
-        sp.GetRequiredService<GameState>(),
-        sp.GetRequiredService<EliteControlMap>(),
-        sp.GetRequiredService<IKeyboard>(),
-        sp.GetRequiredService<Pilot>(),
-        sp.GetRequiredService<PlayerShip>(),
-        sp.GetRequiredService<Stars>(),
-        sp.GetRequiredService<Space>(),
-        sp.GetRequiredService<Combat>(),
-        direction,
-        sp.GetRequiredService<IEliteDraw>(),
-        sp.GetRequiredService<IView<PilotModel>>());
 
     // The ~25 views EliteMain used to construct itself, now registered so
     // AddEliteMain's screen-map factory above can resolve them.

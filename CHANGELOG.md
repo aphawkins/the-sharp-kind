@@ -7,6 +7,17 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Fixed (hyperspace from the charts, 2026-09-27)
+
+- **Elite's hyperspace key works from the galactic and short-range charts** in
+  flight, as in the original, and Ctrl-H still makes it galactic. The key's
+  handling moved out of `PilotController` into a shared `HyperspaceCommand`
+  that the cockpit windows and both chart controllers call
+  ([HyperspaceCommand.cs](src/elite/libs/EliteSharpLib/Views/HyperspaceCommand.cs)).
+  One instance serves every screen, so a held stick button still fires once
+  across a view change. `HyperspaceFromChartTests` covers both charts, in
+  flight and docked.
+
 ### Fixed (8-bit hyperspace countdown position, 2026-09-27)
 
 - **The 8-bit hyperspace countdown sits two columns further right**: it now

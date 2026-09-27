@@ -5,6 +5,7 @@
 using EliteSharp.Abstractions.Views;
 using EliteSharpLib.Config;
 using EliteSharpLib.Conflict;
+using EliteSharpLib.Controls;
 using EliteSharpLib.Graphics;
 using EliteSharpLib.Missions;
 using EliteSharpLib.Renditions;
@@ -33,13 +34,35 @@ internal static class EliteSplitScreensServiceCollectionExtensions
         services.AddSplitAnimatedScreens();
     }
 
+    // The four cockpit windows share one PilotController, differing only in facing, so PopulateScreens calls this for each directly.
+    internal static PilotController CreatePilotController(IServiceProvider sp, PilotDirection direction) => new(
+        sp.GetRequiredService<GameState>(),
+        sp.GetRequiredService<EliteControlMap>(),
+        sp.GetRequiredService<HyperspaceCommand>(),
+        sp.GetRequiredService<Pilot>(),
+        sp.GetRequiredService<PlayerShip>(),
+        sp.GetRequiredService<Stars>(),
+        sp.GetRequiredService<Space>(),
+        sp.GetRequiredService<Combat>(),
+        direction,
+        sp.GetRequiredService<IEliteDraw>(),
+        sp.GetRequiredService<IView<PilotModel>>());
+
     // The screens the commander drives: charts, status, and the menus.
     private static void AddSplitConsoleScreens(this IServiceCollection services)
     {
+        // Shared by the cockpit windows and both charts: each reads the hyperspace key.
+        services.AddSingleton(sp => new HyperspaceCommand(
+            sp.GetRequiredService<GameState>(),
+            sp.GetRequiredService<EliteControlMap>(),
+            sp.GetRequiredService<IKeyboard>(),
+            sp.GetRequiredService<Space>()));
+
         services.AddSingleton(sp => sp.GetRequiredService<RenditionRegistry>().View<GalacticChartModel>());
         services.AddSingleton(sp => new GalacticChartController(
             sp.GetRequiredService<GameState>(),
             sp.GetRequiredService<IKeyboard>(),
+            sp.GetRequiredService<HyperspaceCommand>(),
             sp.GetRequiredService<PlanetController>(),
             sp.GetRequiredService<PlayerShip>(),
             sp.GetRequiredService<IView<GalacticChartModel>>()));
@@ -49,6 +72,7 @@ internal static class EliteSplitScreensServiceCollectionExtensions
             sp.GetRequiredService<GameState>(),
             sp.GetRequiredService<IEliteDraw>(),
             sp.GetRequiredService<IKeyboard>(),
+            sp.GetRequiredService<HyperspaceCommand>(),
             sp.GetRequiredService<PlanetController>(),
             sp.GetRequiredService<PlayerShip>(),
             sp.GetRequiredService<IView<ShortRangeChartModel>>()));
