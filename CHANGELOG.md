@@ -7,6 +7,19 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Fixed (smooth chart cursor that follows the stick, 2026-09-27)
+
+- **Elite's chart cross-hairs glide smoothly and follow the joystick.** Both
+  chart controllers read the cross's movement as a one-shot key press, so a
+  held key moved it only on the OS key repeat, and never read the stick. They
+  now ask `EliteControlMap` whether `PitchUp`/`PitchDown`/`RollLeft`/`RollRight`
+  is held, and scale each step (and the pause before the cross snaps to a
+  planet) by `GameClock.Ticks`, so the original's speed holds at any frame rate
+  ([GalacticChartController.cs](src/elite/libs/EliteSharpLib/Views/GalacticChartController.cs),
+  [ShortRangeChartController.cs](src/elite/libs/EliteSharpLib/Views/ShortRangeChartController.cs)).
+  `GalacticChartControllerTests` covers a held key, the stick and a doubled
+  frame rate.
+
 ### Fixed (hyperspace from the charts, 2026-09-27)
 
 - **Elite's hyperspace key works from the galactic and short-range charts** in

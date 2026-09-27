@@ -4,6 +4,7 @@
 
 using System.Numerics;
 using EliteSharp.Abstractions.Views;
+using EliteSharpLib.Controls;
 using EliteSharpLib.Ships;
 using EliteSharpLib.Types;
 using SharpKind.Input;
@@ -23,6 +24,7 @@ internal sealed class GalacticChartController : IScreenController
     private const float MinCrossY = 0;
     private const float MaxCrossY = 256;
 
+    private readonly EliteControlMap _controls;
     private readonly GameState _gameState;
     private readonly HyperspaceCommand _hyperspace;
     private readonly IKeyboard _keyboard;
@@ -32,13 +34,16 @@ internal sealed class GalacticChartController : IScreenController
     private readonly IView<GalacticChartModel> _view;
 
     private Vector2 _cross;
-    private int _crossTimer;
+
+    // Counted in the game's own ticks, so the pause before the cross snaps to a planet lasts as long at any frame rate.
+    private float _crossTimer;
     private string _findName = string.Empty;
     private bool _isFind;
 
     internal GalacticChartController(
         GameState gameState,
         IKeyboard keyboard,
+        EliteControlMap controls,
         HyperspaceCommand hyperspace,
         PlanetController planet,
         PlayerShip ship,
@@ -46,6 +51,7 @@ internal sealed class GalacticChartController : IScreenController
     {
         _gameState = gameState;
         _keyboard = keyboard;
+        _controls = controls;
         _hyperspace = hyperspace;
         _planet = planet;
         _ship = ship;
@@ -78,22 +84,23 @@ internal sealed class GalacticChartController : IScreenController
             CalculateDistanceToPlanet();
         }
 
-        if (_keyboard.IsPressed(ConsoleKey.S) || _keyboard.IsPressed(ConsoleKey.UpArrow))
+        // Held, not pressed, and through the bindings: the cross glides while any bound key or stick direction is held.
+        if (_controls.IsHeld(EliteAction.PitchUp))
         {
             MoveCross(0, -1);
         }
 
-        if (_keyboard.IsPressed(ConsoleKey.X) || _keyboard.IsPressed(ConsoleKey.DownArrow))
+        if (_controls.IsHeld(EliteAction.PitchDown))
         {
             MoveCross(0, 1);
         }
 
-        if (_keyboard.IsPressed(ConsoleKey.OemComma) || _keyboard.IsPressed(ConsoleKey.LeftArrow))
+        if (_controls.IsHeld(EliteAction.RollLeft))
         {
             MoveCross(-1, 0);
         }
 
-        if (_keyboard.IsPressed(ConsoleKey.OemPeriod) || _keyboard.IsPressed(ConsoleKey.RightArrow))
+        if (_controls.IsHeld(EliteAction.RollRight))
         {
             MoveCross(1, 0);
         }
@@ -132,7 +139,7 @@ internal sealed class GalacticChartController : IScreenController
     {
         if (_crossTimer > 0)
         {
-            _crossTimer--;
+            _crossTimer = MathF.Max(_crossTimer - _gameState.Clock.Ticks, 0);
             if (_crossTimer == 0)
             {
                 CalculateDistanceToPlanet();
@@ -217,13 +224,15 @@ internal sealed class GalacticChartController : IScreenController
         => _cross = new(_gameState.HyperspacePlanet.D, _gameState.HyperspacePlanet.B);
 
     /// <summary>
-    /// Move the planet chart cross hairs to specified position.
+    /// Move the planet chart cross hairs one tick's worth in the given direction.
     /// </summary>
     private void MoveCross(int dx, int dy)
     {
+        // One step a tick, as the original polled a held key, scaled so the speed is the same at any frame rate.
+        float ticks = _gameState.Clock.Ticks;
         _crossTimer = 5;
         _cross = new(
-            Math.Clamp(_cross.X + dx, MinCrossX, MaxCrossX),
-            Math.Clamp(_cross.Y + (dy * 2), MinCrossY, MaxCrossY));
+            Math.Clamp(_cross.X + (dx * ticks), MinCrossX, MaxCrossX),
+            Math.Clamp(_cross.Y + (dy * 2 * ticks), MinCrossY, MaxCrossY));
     }
 }

@@ -10,6 +10,7 @@ using EliteSharpLib.Tests.Missions;
 using EliteSharpLib.Views;
 using SharpKind.Abstraction;
 using SharpKind.Fakes.Input;
+using SharpKind.Input;
 
 namespace EliteSharpLib.Tests.Views;
 
@@ -59,6 +60,60 @@ public class GalacticChartControllerTests
         controller.HandleInput();
 
         Assert.Equal(before + new Vector2(dx, dy), controller.Cross);
+    }
+
+    // A held key must keep the cross moving every update, not wait on the OS's key repeat.
+    [Fact]
+    public void AHeldKeyMovesTheCrossEveryUpdate()
+    {
+        GalacticChartController controller = CreateController(out FakeKeyboard keyboard, out _);
+        controller.Reset();
+        MoveToInterior(controller, keyboard);
+        Vector2 before = controller.Cross;
+
+        keyboard.KeyDown(ConsoleKey.RightArrow, default);
+        controller.HandleInput();
+        controller.HandleInput();
+        controller.HandleInput();
+
+        Assert.Equal(before + new Vector2(3, 0), controller.Cross);
+    }
+
+    // The stick's pitch and roll move the cross as the keys bound to them do.
+    [Theory]
+    [InlineData(GamepadAxis.LeftX, 1f, 1, 0)]
+    [InlineData(GamepadAxis.LeftX, -1f, -1, 0)]
+    [InlineData(GamepadAxis.LeftY, -1f, 0, -2)]
+    [InlineData(GamepadAxis.LeftY, 1f, 0, 2)]
+    public void TheStickMovesTheCross(GamepadAxis axis, float value, float dx, float dy)
+    {
+        FakeGamepad gamepad = new();
+        GalacticChartController controller = CreateController(out FakeKeyboard keyboard, out _, gamepad);
+        controller.Reset();
+        MoveToInterior(controller, keyboard);
+        Vector2 before = controller.Cross;
+        gamepad.Connected("Stick");
+
+        gamepad.AxisMoved(axis, value);
+        controller.HandleInput();
+
+        Assert.Equal(before + new Vector2(dx, dy), controller.Cross);
+    }
+
+    // At twice the original's rate each update is worth half a tick, so the cross moves half as far and keeps its speed.
+    [Fact]
+    public void TheCrossKeepsItsSpeedAtAHigherFrameRate()
+    {
+        GalacticChartController controller = CreateController(out FakeKeyboard keyboard, out GameState gameState);
+        controller.Reset();
+        MoveToInterior(controller, keyboard);
+        Vector2 before = controller.Cross;
+        gameState.Clock.BeginUpdate(1f / (GameClock.StepsPerSecond * 2));
+
+        keyboard.KeyDown(ConsoleKey.DownArrow, default);
+        controller.HandleInput();
+
+        Assert.Equal(before + new Vector2(0, 1), controller.Cross);
     }
 
     [Fact]
@@ -180,17 +235,25 @@ public class GalacticChartControllerTests
     }
 
     private static GalacticChartController CreateController(out FakeKeyboard keyboard, out GameState gameState)
+        => CreateController(out keyboard, out gameState, new FakeGamepad());
+
+    private static GalacticChartController CreateController(
+        out FakeKeyboard keyboard,
+        out GameState gameState,
+        FakeGamepad gamepad)
     {
         keyboard = new FakeKeyboard();
+        EliteControlMap controls = new(EliteControlDefaults.Create(), keyboard, gamepad);
         ScreenManager<Screen, IScreenController> views = new(keyboard);
         gameState = new(views, TestMissions.Registry());
 
         return new GalacticChartController(
             gameState,
             keyboard,
+            controls,
             new HyperspaceCommand(
                 gameState,
-                new EliteControlMap(EliteControlDefaults.Create(), keyboard, new FakeGamepad()),
+                controls,
                 keyboard,
                 SettingsControllerFixture.CreateSpace(out _, out _, out _, out _)),
             new PlanetController(gameState),

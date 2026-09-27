@@ -62,6 +62,7 @@ internal static class EliteSplitScreensServiceCollectionExtensions
         services.AddSingleton(sp => new GalacticChartController(
             sp.GetRequiredService<GameState>(),
             sp.GetRequiredService<IKeyboard>(),
+            sp.GetRequiredService<EliteControlMap>(),
             sp.GetRequiredService<HyperspaceCommand>(),
             sp.GetRequiredService<PlanetController>(),
             sp.GetRequiredService<PlayerShip>(),
@@ -72,6 +73,7 @@ internal static class EliteSplitScreensServiceCollectionExtensions
             sp.GetRequiredService<GameState>(),
             sp.GetRequiredService<IEliteDraw>(),
             sp.GetRequiredService<IKeyboard>(),
+            sp.GetRequiredService<EliteControlMap>(),
             sp.GetRequiredService<HyperspaceCommand>(),
             sp.GetRequiredService<PlanetController>(),
             sp.GetRequiredService<PlayerShip>(),

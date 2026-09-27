@@ -365,13 +365,16 @@ public class ShortRangeChartControllerTests
         gameState.DockedPlanet = planet.FindPlanet(gameState.Cmdr.Galaxy, new Vector2(0x60, 0x60));
         gameState.HyperspacePlanet = new GalaxySeed(gameState.DockedPlanet);
 
+        EliteControlMap controls = new(EliteControlDefaults.Create(), keyboard, new FakeGamepad());
+
         return new ShortRangeChartController(
             gameState,
             draw,
             keyboard,
+            controls,
             new HyperspaceCommand(
                 gameState,
-                new EliteControlMap(EliteControlDefaults.Create(), keyboard, new FakeGamepad()),
+                controls,
                 keyboard,
                 SettingsControllerFixture.CreateSpace(out _, out _, out _, out _)),
             planet,
