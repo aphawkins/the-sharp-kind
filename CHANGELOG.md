@@ -7,6 +7,13 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Fixed (8-bit hyperspace countdown position, 2026-09-27)
+
+- **The 8-bit hyperspace countdown sits two columns further right**: it now
+  ends at column 4, not column 2
+  ([BaseView8Bit.cs](src/elite/libs/EliteSharp.Renditions.EightBit/BaseView8Bit.cs)).
+  `BaseView8BitTests` covers the placement.
+
 ### Fixed (a death mid-countdown no longer leaks into the next run, 2026-09-27)
 
 - **Elite forgets a hyperspace jump in progress when the commander dies**, so

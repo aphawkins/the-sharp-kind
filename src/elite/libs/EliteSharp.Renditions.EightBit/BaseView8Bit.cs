@@ -68,7 +68,7 @@ internal class BaseView8Bit : IBaseView
 
     public void DrawHyperspaceCountdown(int countdown)
         => Graphics.DrawTextRight(
-            new(Column(2), Row(ChromeRow)),
+            new(Column(4), Row(ChromeRow)),
             $"{countdown}",
             nameof(FontType.Small),
             _colorWhite);
