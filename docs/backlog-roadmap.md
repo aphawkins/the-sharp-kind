@@ -42,7 +42,7 @@ Every open work item, in priority order. Each line links to a file in
 ### Bugs
 
 - [ ] [Elite: allow hyperspace from the galactic and short-range charts](work-items/elite-hyperspace-from-charts.md)
-- [ ] [Elite: galaxy chart cursor movement is jerky](work-items/elite-chart-cursor-jerky.md)
+- [ ] [Elite: chart cursor is jerky and ignores the joystick](work-items/elite-chart-cursor-jerky.md)
 
 ### Bubble Bobble
 
