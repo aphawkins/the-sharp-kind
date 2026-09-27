@@ -7,6 +7,18 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Fixed (8-bit galactic chart scale and fuel circle, 2026-09-27)
+
+- **The 8-bit galactic chart plots galaxy space at the same scale in light
+  years both ways**, so the fuel circle covers the planets in range. A light
+  year is 2.5 units of D but 5 of B, so B must be plotted at half D's scale;
+  the view used 1.2 across and 0.55 down, and sized the circle for neither.
+  It now uses 1.1 and 0.55, centres the plot across the viewport, and sizes
+  the circle from the same scale
+  ([GalacticChartView8Bit.cs](src/elite/libs/EliteSharp.Renditions.EightBit/GalacticChartView8Bit.cs)).
+  `GalacticChartView8BitTests` covers a planet at the edge of the range on
+  both axes.
+
 ### Fixed (smooth chart cursor that follows the stick, 2026-09-27)
 
 - **Elite's chart cross-hairs glide smoothly and follow the joystick.** Both

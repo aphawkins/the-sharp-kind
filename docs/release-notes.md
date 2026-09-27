@@ -20,6 +20,7 @@
 
 #### Fixes
 
+- On the 8-bit galactic chart, the fuel ring now covers every planet in range
 - The chart cross-hairs move smoothly while a key is held, and the joystick moves them too
 - Hyperspace can be started from the galactic and short-range charts, as in the original
 - Dying during a hyperspace countdown no longer leaves the old destination on the status line after the restart

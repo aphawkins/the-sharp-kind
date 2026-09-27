@@ -18,12 +18,20 @@ namespace EliteSharp.Renditions.EightBit;
 /// </summary>
 internal sealed class GalacticChartView8Bit : BaseView8Bit, IView<GalacticChartModel>
 {
-    // Closes the plot off below its last row: galaxy y=255 maps to (255 * 0.6) + ViewportTop + 12 at Scale 1.
+    // Closes the plot off below its last row: galaxy y=255 maps to (255 * 0.55) + ViewportTop + 24 at Scale 1.
     private const float DividerY = 172;
     private const float CrossSize = 5;
     private const int CaptionColumn = 1;
     private const int CaptionRow = 22;
     private const int DetailRow = 23;
+
+    // Screen pixels per galaxy unit of D. B is plotted at half this, as a light year is
+    // 2.5 units of D but 5 of B: the chart's scale in light years is then the same both
+    // ways, so the fuel range is a true circle. Set so galaxy y=255 clears the divider.
+    private const float ChartScale = 1.1f;
+
+    // One light year in D units (PlanetController.CalculateDistanceToPlanet).
+    private const float UnitsPerLightYear = 2.5f;
 
     private readonly IViewSurface _surface;
     private readonly FastColor _colorGreen;
@@ -40,6 +48,10 @@ internal sealed class GalacticChartView8Bit : BaseView8Bit, IView<GalacticChartM
         _colorWhite = surface.Palette["White"];
     }
 
+    // Where galaxy x=0 lands, so the 256-unit-wide plot is centred across the viewport.
+    private float ChartLeft
+        => _surface.Layout.ViewportLeft + ((_surface.Layout.ViewportWidth - (256 * ChartScale * _surface.Layout.DesignScale)) / 2);
+
     public void Draw(GalacticChartModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
@@ -50,7 +62,7 @@ internal sealed class GalacticChartView8Bit : BaseView8Bit, IView<GalacticChartM
 
         // Fuel radius
         Vector2 centre = ToScreen(model.DockedPlanet);
-        float radius = model.FuelLightYears * 2.5f * _surface.Layout.DesignScale;
+        float radius = model.FuelLightYears * UnitsPerLightYear * ChartScale * _surface.Layout.DesignScale;
         float fuelCrossSize = 7 * _surface.Layout.DesignScale;
         _surface.Graphics.DrawCircle(centre, radius, _colorGreen);
         _surface.Graphics.DrawLine(new(centre.X, centre.Y - fuelCrossSize), new(centre.X, centre.Y + fuelCrossSize), _colorWhite);
@@ -89,6 +101,6 @@ internal sealed class GalacticChartView8Bit : BaseView8Bit, IView<GalacticChartM
 
     // Galaxy space (D, B) to this tier's screen coordinates.
     private Vector2 ToScreen(Vector2 galaxy) => new(
-        (galaxy.X * _surface.Layout.DesignScale * 1.2f) + _surface.Layout.ViewportLeft + 8,
-        (galaxy.Y * _surface.Layout.DesignScale * 0.55f) + _surface.Layout.ViewportTop + 24);
+        (galaxy.X * _surface.Layout.DesignScale * ChartScale) + ChartLeft,
+        (galaxy.Y * _surface.Layout.DesignScale * ChartScale / 2) + _surface.Layout.ViewportTop + 24);
 }
