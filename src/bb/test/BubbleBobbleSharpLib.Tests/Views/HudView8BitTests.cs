@@ -16,8 +16,8 @@ namespace BubbleBobbleSharpLib.Tests.Views;
 // and the arguments in $046C work out to, and the colours are the ones $AB93 leaves in colour RAM.
 public sealed class HudView8BitTests
 {
-    // Three labels, three scores and a row of lives each.
-    private const int ExpectedRows = 8;
+    // Three labels, three scores and a row of lives each, and the credits: a label and a digit.
+    private const int ExpectedRows = 10;
 
     private const int Cell = 8;
 
@@ -57,7 +57,7 @@ public sealed class HudView8BitTests
     public void PutsEachScoreWhereItsPointerLands()
     {
         RecordingGraphics graphics = Draw(
-            new([0x00, 0x11, 0x11], [0x00, 0x22, 0x22], [0x00, 0x33, 0x33], 3, 3));
+            new([0x00, 0x11, 0x11], [0x00, 0x22, 0x22], [0x00, 0x33, 0x33], 3, 3, 9));
 
         Assert.Equal(
             [("  1111", new Vector2(Column, 5 * Cell), TestSurface.Colour(5)),
@@ -106,9 +106,48 @@ public sealed class HudView8BitTests
             [(3, new Vector2(Column + (4 * Cell), 7 * Cell), TestSurface.Colour(5))],
             Markers(graphics));
 
-        // The label and the score are not the lives, and both are still drawn.
-        Assert.Equal(ExpectedRows - 1, graphics.LeftTexts.Count);
+        // The label and the score are not the lives, and both are still drawn. GAME OVER takes two rows.
+        Assert.Equal(ExpectedRows + 1, graphics.LeftTexts.Count);
         Assert.Contains(graphics.LeftTexts, x => x.Text == "2UP");
+    }
+
+    // $7BE8: "GAME" and "OVER" in white, on the player's row of lives and the one below it, at column 35.
+    // $A739 gives the row: 7 for player one, $0E for player two.
+    [Theory]
+    [InlineData(-1, 3, 7)]
+    [InlineData(3, -1, 14)]
+    public void SaysGameOverWhereAPlayerOutHadTheirLives(int playerOneLives, int playerTwoLives, int row)
+    {
+        RecordingGraphics graphics = Draw(Hud(playerOneLives, playerTwoLives));
+
+        Assert.Equal(
+            [("GAME", new Vector2(LabelColumn, row * Cell), TestSurface.Colour(1)),
+             ("OVER", new Vector2(LabelColumn, (row + 1) * Cell), TestSurface.Colour(1))],
+            graphics.LeftTexts
+                .Where(x => x.Text is "GAME" or "OVER")
+                .Select(x => (x.Text, x.Position, x.Colour)));
+    }
+
+    [Fact]
+    public void SaysNothingWhileBothPlayersAreIn()
+    {
+        RecordingGraphics graphics = Draw(Hud(3, 0));
+
+        Assert.DoesNotContain(graphics.LeftTexts, x => x.Text is "GAME" or "OVER");
+    }
+
+    // $7B53: "CREDITS" at column 33, row 23, and the count at column 36, row 24, both in colour 3.
+    [Fact]
+    public void ShowsTheCreditsInTheBottomCorner()
+    {
+        RecordingGraphics graphics = Draw(Hud(3, 3));
+
+        Assert.Equal(
+            [("CREDITS", new Vector2(Column, 23 * Cell), TestSurface.Colour(3)),
+             ("9", new Vector2(36 * Cell, 24 * Cell), TestSurface.Colour(3))],
+            graphics.LeftTexts
+                .Where(x => x.Position.Y >= 23 * Cell)
+                .Select(x => (x.Text, x.Position, x.Colour)));
     }
 
     // The HUD is drawn in hires rather than multicolour: none of the four colour bytes $AB93 writes
@@ -135,7 +174,8 @@ public sealed class HudView8BitTests
         new byte[HudModel.ScoreBytes],
         new byte[HudModel.ScoreBytes],
         playerOneLives,
-        playerTwoLives);
+        playerTwoLives,
+        9);
 
     private static RecordingGraphics Draw(HudModel model)
     {

@@ -64,21 +64,33 @@ internal sealed class PlayerRespawn
 
         if ((sbyte)--_players.Lives[player] < 0)
         {
-            throw new NotSupportedException($"slot {player}'s game over at $04F0 ($0409, $7BE8) is not translated");
+            GameOver(player, subflg);
         }
+        else
+        {
+            _entities.Y[player] = SpawnY;
+            _entities.X[player] = SpawnX[player];
+            _entities.TurnInterval[player] = RespawnPasses;
 
-        _entities.Y[player] = SpawnY;
-        _entities.X[player] = SpawnX[player];
-        _entities.TurnInterval[player] = RespawnPasses;
-
-        // $04EB: in a bonus round ($5A7F) the player goes to state 0 instead; bonus rounds are step 7.
-        _entities.State[player] = RespawningState;
+            // $04EB: in a bonus round ($5A7F) the player goes to state 0 instead; bonus rounds are step 7.
+            _entities.State[player] = RespawningState;
+        }
 
         // $0504-$0512 restart the level timer ($2A-$2D), which is step 4's and not modelled yet.
         if (_entities.EnemyCount >= AngerFrom)
         {
             Calm();
         }
+    }
+
+    // $04F0: the level reached is kept, and the player leaves the game at (0, 0) in state 0. $7BE8 writes
+    // GAME OVER over the player's lives, which the HUD does for any count below zero.
+    private void GameOver(int player, byte subflg)
+    {
+        _players.Round[player] = subflg;
+        _entities.X[player] = 0;
+        _entities.Y[player] = 0;
+        _entities.State[player] = 0;
     }
 
     // $7F53.

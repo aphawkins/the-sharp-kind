@@ -26,6 +26,10 @@ internal sealed class GameLoop
     private const byte FirstFoodBase = 0x0A;
 
     private const byte StartingLives = 3;
+    private const byte TwoPlayerCredits = 7;
+
+    // $0AA3: the game over waits $96 IRQ frames, and a pass is two of them.
+    private const int GameOverPasses = 0x96 / 2;
 
     private const byte PlayerSpriteBase = 0x60;
     private static readonly byte[] s_spawnColour = [0x05, 0x03];
@@ -39,11 +43,13 @@ internal sealed class GameLoop
     private readonly EntityTimers _timers;
     private readonly EnemySpawner _spawner;
     private readonly PlayerRespawn _respawn;
+    private readonly PlayerJoin _join;
     private readonly int _playing;
 
     private SolidMap? _map;
     private byte _subflg;
     private int _passesToSecond;
+    private int _overPasses;
     private byte _counter;
 
     internal GameLoop(BbRandom random, int playing)
@@ -72,12 +78,20 @@ internal sealed class GameLoop
         };
 
         _respawn = new(Entities, PlayerTable, Items);
+        _join = new(Entities, PlayerTable, Scores);
 
-        // $0956.
+        // $0956-$0977.
         PlayerTable.Lives.Fill(StartingLives);
+        PlayerTable.Credits = playing == PlayerTable.Capacity ? TwoPlayerCredits : (byte)(TwoPlayerCredits + 1);
     }
 
     internal EntityTable Entities { get; } = new();
+
+    // $0A64: both players out of the game.
+    internal bool IsOver => (Entities.State[0] | Entities.State[1]) == 0;
+
+    // $0A99-$0AA5: the game over has waited its time, and the game goes back to the front end (step 9).
+    internal bool Finished => _overPasses >= GameOverPasses;
 
     internal ObjectTable Objects { get; } = new();
 
@@ -113,11 +127,19 @@ internal sealed class GameLoop
 
         _passesToSecond = PassesPerSecond;
         _counter = FirstCounter;
+        _overPasses = 0;
     }
 
     internal void Pass(ReadOnlySpan<byte> ports)
     {
         SolidMap map = _map ?? throw new InvalidOperationException("Start a level before the first pass.");
+
+        // $0A99: the pause flag ($37) stops the players and the game waits. The tune (step 8) is not modelled.
+        if (IsOver)
+        {
+            _overPasses++;
+            return;
+        }
 
         Items.Update();
         _blow.Tick();
@@ -127,6 +149,7 @@ internal sealed class GameLoop
         _timers.Update(ReleasedState);
         Items.Collect(_subflg);
         _respawn.Update(_subflg);
+        _join.Update(ports);
 
         if (--_passesToSecond == 0)
         {

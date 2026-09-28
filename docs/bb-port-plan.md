@@ -466,19 +466,69 @@ Each item ends with how it is proved.
         `$04A0`-`$0A1F`, their 222 state `$10` turns `$1CDB`-`$1D24` with
         `X < 2`, and the fourth death's game over) matches byte for byte.
         `$8818` was not captured; the test holds it at `$FF`.
-      - [ ] **3e. Join and game over.** `$052A` (a player not in the game
-        presses fire), `$0A64` (both states zero), and the game over that
-        `PlayerRespawn` throws at `$04F0` (`$0409`, `$7BE8`).
-      - Not yet placed: state `$18`, set by `$28FB`. Find its caller first.
+      - [x] **3e. Join and game over.**
+        - [x] **Join, `$052A`.** `PlayerJoin`, straight after
+          `PlayerRespawn`: a state 0 player with fire down gets four lives,
+          state `$0F`, no score, and costs a credit (`PlayerTable.Credits`,
+          `$AB`); the credits going negative shuts it (`$049D`). Player 2
+          joins on Q. Proved **against VICE**: `Players/Captures/join-level-1.txt`
+          (24 calls, an intervention: enemies zeroed, fire forced down at
+          `$0530`, players put back to state 0 with junk in what the join
+          writes) matches byte for byte in `PlayerJoinGoldenTests`, except
+          the three calls where junk left the credits negative with the jump
+          in place, which the game never does. `$AC`-`$AF` are held
+          (`ExtraLifeStep`, `ExtraLifeByte`) for `$F1AC`, which the port does
+          not have (see below). The screen is not compared: the C64 blanks
+          the joiner's lives row for one pass.
+        - [x] **Game over for one player, `$04F0`/`$7BE8`.**
+          `PlayerRespawn` ends a player whose lives go negative: `Round`
+          (`$0409`), X and Y zero, state 0. The HUD says GAME OVER for lives
+          below zero (`HudModel.IsPlaying`), and draws the credits (`$7B53`).
+          Proved **against VICE**: `Players/Captures/gameover-level-1.txt`
+          (eight calls, an intervention: dying players made, enemies zeroed,
+          junk in SUBFLG, `$0409`) matches byte for byte in
+          `PlayerGameOverGoldenTests`, which also checks where `$7BE8`
+          wrote the text; the earlier respawn capture's fourth death now
+          replays too. `HudView8BitTests` proves the text and the credits
+          (positions from the capture, colours from the string data; colour
+          RAM was not read).
+        - [x] **Both states zero, `$0A64`.** `GameLoop.IsOver` (both player
+          states zero) stops the passes and counts `$96` frames, 75 passes
+          (`$0A99`-`$0AA5`); then `GameLoop.Finished`, and `BubbleBobbleMain`
+          stops, since the front end (step 9) is what the C64 returns to.
+          The check is after `$045C` in the pass, so a player who holds fire
+          as the last life goes rejoins first. No VICE capture: the check and
+          the constant are read from the byte-exact image
+          (`a5 b2 05 b3 f0 2f` at `$0A64`, `a9 96 4c c8 7b` at `$0AA3`) and
+          proved by hand in `GameLoopTests` and `BubbleBobbleMainTests`. The
+          tune (`$05AD`, step 8) and the pause flag (`$37`, which stops
+          `$1CBD`) are not modelled: nothing runs after the game over.
+        - State `$18`: `$28FA`, set only by `$34D3` (the bonus-round entry).
+          It moves to step 6.
+        - `$F1AC` (extra lives from the score, `$0A10`) is untranslated and
+          not on any step. `PlayerJoin` writes its state.
 
-      Verify: a VICE capture of a respawn (the push and the death are done).
-- [ ] **4. Level flow.** The level timer (`$2A`, `$2B`, `$06C6`, and
-      `$0504`'s restart of `$2A`-`$2D` on a respawn), the hurry-up
-      and anger (`$16E4`), the Baron's spawn (`$1621`), `$1719` setting
-      `LevelItems.FoodBase`, the freeze in `$67` (`$2F74`, `$1CFB`), the
-      level-complete flag `$21`, and the next level (`$0A6E`, `$09A5`).
-      Verify: a scripted playthrough of level 1 to level 2 scores what the C64
-      does.
+      Verify: a VICE capture of a respawn, a join and a game over (all done).
+- [ ] **4. Level flow.** Split into steps, each a work item in
+      `work-items/`. The level clock and the hurry-up are both in `$1578`
+      (its first half, `LevelItems.Update`, is done) and the IRQ at `$06AB`.
+      - [ ] **4a. Level timer.** `$2A`-`$2D`, `$A9B1`: start value (`$392A`),
+        the IRQ tick (`$06AB`), the restart on a respawn (`$0504`).
+      - [ ] **4b. The freeze.** `$67`'s consumer: the count and colour toggle
+        (`$15C9`) and the enemies skipping a turn (`$1CF5`). Its setter
+        (`$2F74`) is step 6.
+      - [ ] **4c. Level clear.** No enemies left (`$16F7`-`$1772`): the food
+        seed (`$1719`), the objects popped, `$2D` to `$FF`, `$2A` to 9.
+      - [ ] **4d. Level complete and the next level.** The players back to
+        state 1 and `$21` set (`$15FB`), then `$0A6E` (`$2E79`, SUBFLG,
+        `$0409`) and `$09A5`'s round intro. Ends the step: a playthrough of
+        level 1 to level 2, against VICE.
+      - [ ] **4e. The hurry-up.** The first expiry (`$15E1`, `$3AB8`, the
+        banner at `$1694`) and the anger (`$16E4`, done as `Calm`).
+      - [ ] **4f. The Baron.** The second expiry (`$1621`, `$1AE8`, `$1B02`).
+
+      Not in step 4: level 99's `$5AFF` and the ending (step 7); the bonus
+      round's `$3517` and `$68` (step 7).
 - [ ] **5. Special bubbles and EXTEND.** `$0BED` (bubbles from the corners),
       the special bubbles' own pop arms at `$3E02` (`$06` level-end fruit
       positions and `OPMASK`, `$08`, `$0A`), `$32C1` and `extend-bonus.s`.
@@ -489,7 +539,9 @@ Each item ends with how it is proved.
 - [ ] **6. The other special-item effects:** 1, 2, 6–8, 11 and 15–34 in
       `$2D65`. They are level skips (`$2F7D`–`$2F89`, `$2ECC`), the freeze,
       screen effects, and handlers at `$348A`–`$3621`, `$7FA4`/`$7FA7` and
-      `$7C37`/`$7C3C`. Verify: a capture per effect.
+      `$7C37`/`$7C3C`. The bonus-round entry at `$34D3` puts players in state
+      `$18` (`$28FA`, colour EOR 5 and play as state 1). Verify: a capture per
+      effect.
 - [ ] **7. Super mode, bonus rounds and level 100** (`SUBFLG` `$63`, whose
       items and food throw today, and the ending at `$A5B7`).
 - [ ] **8. Sound.** Music plays through the own SID stack

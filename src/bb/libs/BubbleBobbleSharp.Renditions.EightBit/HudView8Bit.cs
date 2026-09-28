@@ -27,15 +27,23 @@ internal sealed class HudView8Bit : IView<HudModel>
     private const int PlayerTwoLivesRow = 14;
     private const int HighScoreLabelRow = 18;
     private const int HighScoreRow = 20;
+    private const int CreditsLabelRow = 23;
+    private const int CreditsDigitRow = 24;
+    private const int CreditsDigitColumn = 36;
 
     private const string PlayerOneLabel = "1UP";
     private const string PlayerTwoLabel = "2UP";
     private const string HighScoreLabel = "TOP";
+    private const string CreditsLabel = "CREDITS";
+    private const string GameLabel = "GAME";
+    private const string OverLabel = "OVER";
 
     private const int LabelColour = 7;
     private const int PlayerOneColour = 5;
     private const int PlayerTwoColour = 3;
     private const int HighScoreColour = 1;
+    private const int CreditsColour = 3;
+    private const int GameOverColour = 1;
 
     private readonly IGraphics _graphics;
     private readonly BbViewLayout _layout;
@@ -43,6 +51,8 @@ internal sealed class HudView8Bit : IView<HudModel>
     private readonly FastColor _playerOne;
     private readonly FastColor _playerTwo;
     private readonly FastColor _highScore;
+    private readonly FastColor _credits;
+    private readonly FastColor _gameOver;
 
     internal HudView8Bit(IViewSurface surface)
     {
@@ -55,6 +65,8 @@ internal sealed class HudView8Bit : IView<HudModel>
         _playerOne = Colour(surface, PlayerOneColour);
         _playerTwo = Colour(surface, PlayerTwoColour);
         _highScore = Colour(surface, HighScoreColour);
+        _credits = Colour(surface, CreditsColour);
+        _gameOver = Colour(surface, GameOverColour);
     }
 
     public void Draw(HudModel model)
@@ -71,6 +83,10 @@ internal sealed class HudView8Bit : IView<HudModel>
 
         Text(LabelColumn, HighScoreLabelRow, HighScoreLabel, _label);
         Text(Column, HighScoreRow, model.HighScore, _highScore);
+
+        // $7B53.
+        Text(Column, CreditsLabelRow, CreditsLabel, _credits);
+        Text(CreditsDigitColumn, CreditsDigitRow, model.Credits.ToString(CultureInfo.InvariantCulture), _credits);
     }
 
     private static FastColor Colour(IViewSurface surface, int index)
@@ -78,6 +94,14 @@ internal sealed class HudView8Bit : IView<HudModel>
 
     private void Lives(int row, int lives, in FastColor colour)
     {
+        if (!HudModel.IsPlaying(lives))
+        {
+            // $7BE8, drawn over the empty row and the one below it.
+            Text(LabelColumn, row, GameLabel, _gameOver);
+            Text(LabelColumn, row + 1, OverLabel, _gameOver);
+            return;
+        }
+
         int markers = HudModel.LifeMarkers(lives);
 
         if (markers == 0)

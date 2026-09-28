@@ -61,12 +61,6 @@ public sealed class PlayerRespawnGoldenTests
 
         Rig rig = new(before);
 
-        if ((sbyte)after[Lives] < 0)
-        {
-            Assert.Throws<NotSupportedException>(() => rig.Respawn.Update(0));
-            return;
-        }
-
         rig.Respawn.Update(0);
 
         Assert.Equal(Convert.ToHexString(after[States..]), Convert.ToHexString(rig.Save()[States..]));

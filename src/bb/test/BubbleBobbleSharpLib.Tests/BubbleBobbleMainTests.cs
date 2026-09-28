@@ -61,6 +61,25 @@ public sealed class BubbleBobbleMainTests
         Assert.False(game.IsRunning);
     }
 
+    // $0A64, $0A99: with both players out the game holds for $96 frames, seventy-five updates, and then
+    // stops, since there is no front end (step 9) to go back to.
+    [Fact]
+    public void StopsSeventyFiveUpdatesAfterBothPlayersAreOut()
+    {
+        BubbleBobbleMain game = Game(new FakeAbstraction());
+        game.Loop.Entities.State[0] = 0;
+
+        for (int update = 1; update < 75; update++)
+        {
+            game.Update();
+            Assert.True(game.IsRunning);
+        }
+
+        game.Update();
+
+        Assert.False(game.IsRunning);
+    }
+
     // There is no front end yet, so the game opens on the first level rather than being asked for one.
     [Fact]
     public void OpensOnTheFirstLevel()

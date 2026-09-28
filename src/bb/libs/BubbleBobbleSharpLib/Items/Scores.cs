@@ -14,6 +14,9 @@ internal sealed class Scores
 
     internal static int Last(int player) => s_last[player];
 
+    // $0540-$054F: a player's three bytes.
+    internal void Clear(int player) => _bytes.AsSpan(s_last[player] - 2, 3).Clear();
+
     internal void Add(int index, byte value)
     {
         byte add = value;

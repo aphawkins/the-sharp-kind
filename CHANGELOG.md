@@ -7,13 +7,33 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Added (Bubble Bobble join and game over, 2026-09-28)
+
+- **A Bubble Bobble player who is not in the game joins it by pressing fire**
+  (`$052A`): four lives, a score of zero, and a credit spent, then the
+  ordinary respawn (Q joins player 2 with the keyboard)
+  ([PlayerJoin.cs](src/bb/libs/BubbleBobbleSharpLib/Players/PlayerJoin.cs)).
+  `PlayerJoinGoldenTests` matches 21 joins read out of VICE byte for byte.
+- **A Bubble Bobble player with no lives left is out**: the level they
+  reached is kept, they leave the game at (0, 0), and the HUD writes GAME
+  OVER over their lives (`$04F0`, `$7BE8`), and shows the credits left at the
+  bottom right (`$7B53`)
+  ([PlayerRespawn.cs](src/bb/libs/BubbleBobbleSharpLib/Players/PlayerRespawn.cs),
+  [HudView8Bit.cs](src/bb/libs/BubbleBobbleSharp.Renditions.EightBit/HudView8Bit.cs)).
+  `PlayerGameOverGoldenTests` matches eight game overs read out of VICE
+  byte for byte.
+- **When both Bubble Bobble players are out the game holds for three
+  seconds and then stops** (`$0A64`, `$0A99`), where the C64 goes back to
+  its front end (step 9)
+  ([GameLoop.cs](src/bb/libs/BubbleBobbleSharpLib/GameLoop.cs)). A player who
+  holds fire as the last life goes rejoins before the game is judged over.
+
 ### Added (Bubble Bobble lives and respawn, 2026-09-28)
 
 - **A Bubble Bobble player who dies loses a life and comes back**, flashing
   at the start for 74 passes (`$045C`, `$04BB`, `$7F53`, `$290D`), and the
   HUD shows the lives left
   ([PlayerRespawn.cs](src/bb/libs/BubbleBobbleSharpLib/Players/PlayerRespawn.cs)).
-  Losing the last life throws until game over is ported (step 3e).
   `PlayerRespawnGoldenTests` matches a VICE capture of three respawns and
   a game over byte for byte.
 

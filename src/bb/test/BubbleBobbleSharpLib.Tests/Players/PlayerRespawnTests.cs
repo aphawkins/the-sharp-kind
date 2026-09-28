@@ -83,15 +83,47 @@ public sealed class PlayerRespawnTests
         Assert.Equal(state, rig.Entities.State[0]);
     }
 
-    // $04E0: the last life goes negative, the game over, which is 3e's.
+    // $04E0, $04F0: the last life goes negative, and the player is out: the level reached is kept, and
+    // the player is at (0, 0) in state 0 with no respawn to wait for.
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    public void TheLastLifeIsTheGameOver(int player)
+    {
+        Rig rig = new();
+        rig.Dead(player);
+        rig.Players.Lives[player] = 0;
+        rig.Entities.X[player] = 0x80;
+        rig.Entities.Y[player] = 0x70;
+        rig.Entities.TurnInterval[player] = 0x12;
+
+        rig.Respawn.Update(0x2F);
+
+        Assert.Equal(0xFF, rig.Players.Lives[player]);
+        Assert.Equal(0, rig.Entities.State[player]);
+        Assert.Equal(0, rig.Entities.X[player]);
+        Assert.Equal(0, rig.Entities.Y[player]);
+        Assert.Equal(0x2F, rig.Players.Round[player]);
+        Assert.Equal(0x12, rig.Entities.TurnInterval[player]);
+    }
+
+    // $04F0: the other player's Round, lives and place are not touched.
     [Fact]
-    public void TheLastLifeIsNotTranslated()
+    public void AGameOverLeavesTheOtherPlayerAlone()
     {
         Rig rig = new();
         rig.Dead(0);
         rig.Players.Lives[0] = 0;
+        rig.Entities.State[1] = PlayerFrame.PlayingState;
+        rig.Entities.X[1] = 0x40;
+        rig.Players.Lives[1] = 2;
 
-        Assert.Throws<NotSupportedException>(() => rig.Respawn.Update(0));
+        rig.Respawn.Update(0x10);
+
+        Assert.Equal(PlayerFrame.PlayingState, rig.Entities.State[1]);
+        Assert.Equal(0x40, rig.Entities.X[1]);
+        Assert.Equal(2, rig.Players.Lives[1]);
+        Assert.Equal(0, rig.Players.Round[1]);
     }
 
     // $7F77: the bonus level's own setup is step 7's.

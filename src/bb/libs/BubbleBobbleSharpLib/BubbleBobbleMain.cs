@@ -43,8 +43,6 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     private readonly IView<ObjectsModel> _objectView;
     private readonly IView<ItemsModel> _itemView;
 
-    private readonly GameLoop _loop;
-
     private readonly Input _input;
     private readonly LayerRunner _layers;
 
@@ -90,7 +88,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
 
         _input = new Input(Keyboard, Gamepad);
 
-        _loop = new GameLoop(new BbRandom(new RandomSource(Random.Shared)), PlayingPlayers);
+        Loop = new GameLoop(new BbRandom(new RandomSource(Random.Shared)), PlayingPlayers);
 
         BbViewSurface surface = new(Graphics, Layout, assetLocator);
         _playfieldView = rendition.CreatePlayfieldView(surface);
@@ -132,6 +130,8 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
 
     internal int CurrentLevel { get; private set; }
 
+    internal GameLoop Loop { get; }
+
     public void Run() => GameHost.Run(_abstraction, this, TickRate, TickRate);
 
     public void Update()
@@ -146,7 +146,12 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
             ShowLevel(CurrentLevel == LevelStore.Count ? FirstLevel : CurrentLevel + 1);
         }
 
-        _loop.Pass(_input.Read());
+        Loop.Pass(_input.Read());
+
+        if (Loop.Finished)
+        {
+            IsRunning = false;
+        }
     }
 
     public void Draw()
@@ -165,39 +170,40 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         _sidebar = Sidebars.Select(level);
         CurrentLevel = number;
 
-        _loop.Start(level, _zones.Zones(number), number);
+        Loop.Start(level, _zones.Zones(number), number);
     }
 
     private SpriteModel Sprites() => new(
-        _loop.Entities.State,
-        _loop.Entities.X,
-        _loop.Entities.Y,
-        _loop.Entities.Frame,
-        _loop.Entities.SpriteBase,
-        _loop.Entities.Colour,
-        _loop.Entities.FlashTimer,
-        _loop.Entities.SpriteEnable);
+        Loop.Entities.State,
+        Loop.Entities.X,
+        Loop.Entities.Y,
+        Loop.Entities.Frame,
+        Loop.Entities.SpriteBase,
+        Loop.Entities.Colour,
+        Loop.Entities.FlashTimer,
+        Loop.Entities.SpriteEnable);
 
     private HudModel Hud() => new(
-        _loop.Scores.Bytes[..HudModel.ScoreBytes],
-        _loop.Scores.Bytes[HudModel.ScoreBytes..],
+        Loop.Scores.Bytes[..HudModel.ScoreBytes],
+        Loop.Scores.Bytes[HudModel.ScoreBytes..],
         _highScore,
-        (sbyte)_loop.PlayerTable.Lives[0],
-        (sbyte)_loop.PlayerTable.Lives[1]);
+        (sbyte)Loop.PlayerTable.Lives[0],
+        (sbyte)Loop.PlayerTable.Lives[1],
+        (sbyte)Loop.PlayerTable.Credits + 1);
 
     private ObjectsModel Objects() => new(
-        _loop.Pop.Drawn,
-        _loop.Objects.Column,
-        _loop.Objects.Row,
-        _loop.Pop.DrawnSubY,
+        Loop.Pop.Drawn,
+        Loop.Objects.Column,
+        Loop.Objects.Row,
+        Loop.Pop.DrawnSubY,
         _playfield.Colours);
 
     private ItemsModel Items() => new(
-        _loop.Items.Type,
-        _loop.Items.Column,
-        _loop.Items.Row,
-        _loop.Items.Art,
-        _loop.Items.Colour,
+        Loop.Items.Type,
+        Loop.Items.Column,
+        Loop.Items.Row,
+        Loop.Items.Art,
+        Loop.Items.Colour,
         _playfield.Colours);
 
     private sealed class PlayfieldLayer(BubbleBobbleMain game) : ILayerDrawer

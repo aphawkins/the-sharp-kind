@@ -38,7 +38,7 @@ public sealed class HudModelTests
     [Fact]
     public void KeepsTheThreeScoresApart()
     {
-        HudModel model = new([0x00, 0x01, 0x11], [0x00, 0x02, 0x22], [0x00, 0x03, 0x33], 3, 3);
+        HudModel model = new([0x00, 0x01, 0x11], [0x00, 0x02, 0x22], [0x00, 0x03, 0x33], 3, 3, 9);
 
         Assert.Equal("   111", model.PlayerOneScore);
         Assert.Equal("   222", model.PlayerTwoScore);
@@ -61,7 +61,7 @@ public sealed class HudModelTests
         byte[] score = new byte[bytes];
 
         Assert.Throws<ArgumentException>(
-            () => new HudModel(score, new byte[HudModel.ScoreBytes], new byte[HudModel.ScoreBytes], 3, 3));
+            () => new HudModel(score, new byte[HudModel.ScoreBytes], new byte[HudModel.ScoreBytes], 3, 3, 9));
     }
 
     [Theory]
@@ -85,6 +85,24 @@ public sealed class HudModelTests
     public void APlayerIsOutOnlyOnceTheCountGoesNegative(int lives, bool expected)
         => Assert.Equal(expected, HudModel.IsPlaying(lives));
 
+    // $7B53 prints the credits left, one digit, and never a negative one.
+    [Theory]
+    [InlineData(9, 9)]
+    [InlineData(0, 0)]
+    [InlineData(-1, 0)]
+    public void ShowsTheCreditsAsOneNonNegativeDigit(int credits, int expected)
+    {
+        HudModel model = new(
+            new byte[HudModel.ScoreBytes],
+            new byte[HudModel.ScoreBytes],
+            new byte[HudModel.ScoreBytes],
+            3,
+            3,
+            credits);
+
+        Assert.Equal(expected, model.Credits);
+    }
+
     [Fact]
     public void KeepsTheTwoPlayersLivesApart()
     {
@@ -93,12 +111,13 @@ public sealed class HudModelTests
             new byte[HudModel.ScoreBytes],
             new byte[HudModel.ScoreBytes],
             3,
-            -1);
+            -1,
+            9);
 
         Assert.Equal(3, model.PlayerOneLives);
         Assert.Equal(-1, model.PlayerTwoLives);
     }
 
     private static HudModel Score(byte[] score)
-        => new(score, new byte[HudModel.ScoreBytes], new byte[HudModel.ScoreBytes], 3, 3);
+        => new(score, new byte[HudModel.ScoreBytes], new byte[HudModel.ScoreBytes], 3, 3, 9);
 }

@@ -768,11 +768,52 @@ comes back. Player 2 first; the loop carries on after one.
   `$87C8`, `$87F0` to `$FF`, then `dec $045A,x`. Negative is the game over
   (`$04F0`, throws). Otherwise Y `$DD`, X `$A735`, `$8688` `$4A`, state
   `$10`, or 0 while `$5A7F` is set (a bonus round; not modelled).
+- `$04F0`, the game over (a negative count): `$0409,x` takes SUBFLG (the
+  level reached, kept in `PlayerTable.Round` for the front end), `$7BE8`
+  writes the text, X and Y go to zero and the state to 0. `$0514` then runs
+  as for a respawn. `$7BE8`: colour 1, "GAME" at column 35 on the lives row
+  (`$A739,x`: 7 or `$0E`) and "OVER" on the row under it. `$046C` skips a
+  negative count, so the text stays until a join blanks it. The port's HUD
+  draws it for any count below zero.
 - `$0514`: with `$4A` two or more, `$16E4` runs with `$16EF` raised, so its
   `lda #$FF` stores zero: every enemy in state 1-`$0A` loses its anger.
 - `$290D`, state `$10`: `$8688` counts down to state 1, the colour EORs 5
   every turn (74 turns, so it ends as it began), and `$2162` plays the turn
   as state 1.
+
+### The HUD's other text
+
+`$7B53` (`credits_display`), at each level start: "CREDITS" in colour 3 at
+column 33, row 23, and `$AB` + 1 as one digit at column 36, row 24. A join
+counts the digit down in place (`dec $53E4`), so the HUD draws it from
+`PlayerTable.Credits`. `display_text_string` (`$E42A`): a byte below `$10`
+is a colour, `$10` ends the string (the reference's comments say `$00`),
+`$1F` is followed by column and row, and any other byte less `$20` is a
+screen code (A is `$21`, digits are their value).
+
+### PlayerJoin
+
+`$052A` (`player-state.s`), the tail of `$045C` through the jump at `$049D`:
+a player in state 0 whose fire bit is clear (`$DC00,x`) joins. Player 2
+first, then player 1, in the same call.
+
+- Lives `$04` (`$045A,x`), state `$0F`: the next `$045C` takes one life and
+  respawns the player, so the join shows three.
+- The score's three bytes go to zero (`$AB51,x` is the last byte).
+  `$AC,x` (`RIDBS`) goes to zero and `$AE,x` (`RODBE`) to the score's last
+  byte less one: `$F1AC`'s extra-life progress, which is not ported.
+- `$AB` (`RIDBE`) is the credits less one: 7 in a two-player game, 8 in a
+  one-player game (`$0977`-`$0982`). Each join does `dec`, and so do the
+  credit digit on both screens (`$53E4`, `$57E4`). A join that leaves it
+  negative writes `rts` over the jump at `$049D`, so no one joins again
+  until a new game (`$0997`). The rest of that call still runs.
+- The 6502 also blanks 7 cells of two rows on both screens, the player's
+  lives row (`$0584`-`$05A5`), and `$046C` draws it again one pass on. The
+  port's HUD comes from the lives, so it shows four for that one pass.
+- The reference calls `$28FA` "`$28FB`". Its table entry for state `$18`
+  is `$28FA` (`FA 28` at `$1E6A`): colour EOR 5, then play as state 1,
+  the `$290D` tail. Its lines after `jsr $2916` never run, since that ends
+  in a jump. Only `$34D3` sets state `$18` (the bonus-round entry, step 6).
 
 ### PlayerFall
 
@@ -1152,6 +1193,7 @@ reference's order.
   one-player game (only player 1 has not died). `$0942`, `$0944`: the first
   level's food quality starts in `$0A`–`$28` (`$093F`–`$0946`). SUBFLG `$63`
   is the bonus level, whose items throw, so level 100 starts without them.
+- `$052A` (`PlayerJoin`) runs straight after `$045C`, with the ports. `$0A64` (`IsOver`) is judged after the pass, and holds 75 passes.
 - Gaps: `$0BED` (corner bubbles), `$32C1`
   (EXTEND), the level timer and hurry-up, and level completion.
 

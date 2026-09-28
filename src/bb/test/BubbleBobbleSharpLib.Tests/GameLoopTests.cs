@@ -77,8 +77,8 @@ public sealed class GameLoopTests
             return;
         }
 
-        // $1D32 can kill the player, and nothing takes a dead player on from $0F yet.
-        Assert.Contains(loop.Entities.State[0], (byte[])[0x01, 0x0E, 0x0F]);
+        // $1D32 can kill the player, who dies, respawns, or is out and joins again with the fire button.
+        Assert.Contains(loop.Entities.State[0], (byte[])[0x00, 0x01, 0x0E, 0x0F, 0x10]);
     }
 
     // A level starts with its enemies in slots 2 onwards, both items hidden, and the one player up.
@@ -158,6 +158,97 @@ public sealed class GameLoopTests
         loop.Pass([PushRight, Idle]);
 
         Assert.NotEqual(x, loop.Entities.X[0]);
+    }
+
+    // $052A, then $045C: player 2 presses fire and joins with four lives, and the next pass takes one and
+    // starts the respawn.
+    [Fact]
+    public void ASecondPlayerJoinsOnFire()
+    {
+        GameLoop loop = Start(1, seed: 1);
+
+        loop.Pass([Idle, PushFire]);
+
+        Assert.Equal(PlayerFrame.DeadState, loop.Entities.State[1]);
+        Assert.Equal(4, loop.PlayerTable.Lives[1]);
+
+        loop.Pass([Idle, Idle]);
+
+        Assert.Equal(PlayerRespawn.RespawningState, loop.Entities.State[1]);
+        Assert.Equal(3, loop.PlayerTable.Lives[1]);
+        Assert.Equal(PlayerRespawn.SpawnX[1], loop.Entities.X[1]);
+    }
+
+    // $0A64: only both players out ends the game. A player in any state, dying or waiting to respawn, is in it.
+    [Theory]
+    [InlineData(0x00, 0x00, true)]
+    [InlineData(0x01, 0x00, false)]
+    [InlineData(0x00, 0x01, false)]
+    [InlineData(0x0F, 0x00, false)]
+    [InlineData(0x00, 0x10, false)]
+    public void TheGameIsOverOnlyWhenBothPlayersAreOut(byte one, byte two, bool over)
+    {
+        GameLoop loop = Start(1, seed: 1);
+        loop.Entities.State[0] = one;
+        loop.Entities.State[1] = two;
+
+        Assert.Equal(over, loop.IsOver);
+    }
+
+    // $0A99-$0AA5: the game over holds for $96 frames, seventy-five passes, and nothing moves in them.
+    [Fact]
+    public void ARunOutOfPlayersHoldsForSeventyFivePassesThenFinishes()
+    {
+        GameLoop loop = Start(1, seed: 1);
+        loop.Entities.State[0] = 0;
+        byte enemy = loop.Entities.X[2];
+
+        for (int pass = 1; pass < 75; pass++)
+        {
+            loop.Pass([Idle, Idle]);
+            Assert.False(loop.Finished);
+        }
+
+        loop.Pass([Idle, Idle]);
+
+        Assert.True(loop.Finished);
+        Assert.Equal(enemy, loop.Entities.X[2]);
+    }
+
+    // $0A64 comes after $045C, whose $052A lets a player who holds fire as the last life goes join again
+    // before the game is judged over; without fire, that pass is the last.
+    [Theory]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    public void TheLastLifeGoingLeavesTheGameOverUnlessFireIsDown(bool fire, bool over)
+    {
+        GameLoop loop = Start(1, seed: 1);
+        loop.Entities.State[0] = PlayerFrame.DeadState;
+        loop.PlayerTable.Lives[0] = 0;
+
+        loop.Pass([fire ? PushFire : Idle, Idle]);
+
+        Assert.Equal(over, loop.IsOver);
+    }
+
+    // A new level starts the wait again.
+    [Fact]
+    public void AGameStartsNotFinished()
+    {
+        GameLoop loop = Start(1, seed: 1);
+        loop.Entities.State[0] = 0;
+
+        for (int pass = 0; pass < 80; pass++)
+        {
+            loop.Pass([Idle, Idle]);
+        }
+
+        Assert.True(loop.Finished);
+
+        loop = Start(1, seed: 1);
+
+        Assert.False(loop.Finished);
+        Assert.False(loop.IsOver);
     }
 
     // Fire makes a bubble three passes later, and the loop then carries it away from the player.

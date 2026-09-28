@@ -4,7 +4,7 @@
 
 namespace BubbleBobbleSharp.Abstractions.Views;
 
-/// <summary>The scores, the high score and the lives beside the level.</summary>
+/// <summary>The scores, the high score, the lives and the credits beside the level.</summary>
 public sealed class HudModel
 {
     private const char Blank = ' ';
@@ -15,18 +15,21 @@ public sealed class HudModel
     /// <param name="highScore">The high score, as packed BCD.</param>
     /// <param name="playerOneLives">Player one's lives.</param>
     /// <param name="playerTwoLives">Player two's lives.</param>
+    /// <param name="credits">The credits shown, none below zero.</param>
     public HudModel(
         ReadOnlySpan<byte> playerOneScore,
         ReadOnlySpan<byte> playerTwoScore,
         ReadOnlySpan<byte> highScore,
         int playerOneLives,
-        int playerTwoLives)
+        int playerTwoLives,
+        int credits)
     {
         PlayerOneScore = Digits(playerOneScore, nameof(playerOneScore));
         PlayerTwoScore = Digits(playerTwoScore, nameof(playerTwoScore));
         HighScore = Digits(highScore, nameof(highScore));
         PlayerOneLives = playerOneLives;
         PlayerTwoLives = playerTwoLives;
+        Credits = Math.Max(0, credits);
     }
 
     /// <summary>Gets how many bytes of packed BCD one score is.</summary>
@@ -53,9 +56,12 @@ public sealed class HudModel
     /// <summary>Gets player two's lives.</summary>
     public int PlayerTwoLives { get; }
 
+    /// <summary>Gets the credits, as the one digit the game shows.</summary>
+    public int Credits { get; }
+
     /// <summary>Whether a player's lives are drawn at all.</summary>
     /// <param name="lives">The player's lives.</param>
-    /// <returns>Whether the row is drawn.</returns>
+    /// <returns>Whether the row is drawn; if not, the player is out and the row says GAME OVER.</returns>
     public static bool IsPlaying(int lives) => lives >= 0;
 
     /// <summary>How many life markers a count is drawn as.</summary>
