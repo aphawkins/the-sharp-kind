@@ -18,7 +18,6 @@ internal sealed class PlayerRespawn
     private const byte BonusLevel = 0x63;
 
     private const byte AngerFrom = 2;
-    private const byte CaughtState = 0x0B;
 
     private readonly EntityTable _entities;
     private readonly PlayerTable _players;
@@ -84,7 +83,7 @@ internal sealed class PlayerRespawn
 
         if (_entities.EnemyCount >= AngerFrom)
         {
-            Calm();
+            _entities.SetAnger(0);
         }
     }
 
@@ -116,20 +115,6 @@ internal sealed class PlayerRespawn
         if (subflg == BonusLevel)
         {
             throw new NotSupportedException($"slot {player}'s death on the bonus level at $7F7F is not translated");
-        }
-    }
-
-    // $16E4 with $16EF raised: the enemies not caught in a bubble lose their anger.
-    private void Calm()
-    {
-        for (int slot = EntityTable.Capacity - 1; slot >= PlayerTable.Capacity; slot--)
-        {
-            byte state = _entities.State[slot];
-
-            if (state is not 0 and < CaughtState)
-            {
-                _entities.FlashTimer[slot] = 0;
-            }
         }
     }
 }

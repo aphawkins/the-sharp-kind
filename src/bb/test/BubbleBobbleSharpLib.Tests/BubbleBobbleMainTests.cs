@@ -80,6 +80,39 @@ public sealed class BubbleBobbleMainTests
         Assert.False(game.IsRunning);
     }
 
+    // $0A6A-$0A96: a cleared level whose clock has run out goes on to the next, with the players it had and the
+    // level they reached kept.
+    [Fact]
+    public void AClearedLevelWhoseTimeIsUpGoesOnToTheNext()
+    {
+        BubbleBobbleMain game = Game(new FakeAbstraction());
+        game.Loop.Timer.Seconds = 0;
+        game.Loop.Timer.Hurry = 0xFF;
+        game.Loop.PlayerTable.Lives[0] = 2;
+
+        game.Update();
+
+        Assert.Equal(2, game.CurrentLevel);
+        Assert.Equal(1, game.Loop.PlayerTable.Round[0]);
+        Assert.Equal(0, game.Loop.PlayerTable.Round[1]);
+        Assert.Equal(2, game.Loop.PlayerTable.Lives[0]);
+        Assert.Equal(1, game.Loop.Entities.State[0]);
+        Assert.Equal(0, game.Loop.Entities.State[1]);
+        Assert.False(game.Loop.IsComplete);
+    }
+
+    // $0A8B: level 100's end is the ending, which is not translated.
+    [Fact]
+    public void TheLastLevelEndsInTheEndingWhichIsNotTranslated()
+    {
+        BubbleBobbleMain game = Game(new FakeAbstraction());
+        game.ShowLevel(LevelStore.Count);
+        game.Loop.Timer.Seconds = 0;
+        game.Loop.Timer.Hurry = 0xFF;
+
+        Assert.Throws<NotSupportedException>(game.Update);
+    }
+
     // There is no front end yet, so the game opens on the first level rather than being asked for one.
     [Fact]
     public void OpensOnTheFirstLevel()

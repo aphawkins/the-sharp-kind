@@ -509,7 +509,7 @@ Each item ends with how it is proved.
           not on any step. `PlayerJoin` writes its state.
 
       Verify: a VICE capture of a respawn, a join and a game over (all done).
-- [ ] **4. Level flow.** Split into steps, each a work item in
+- [x] **4. Level flow.** Split into steps, each a work item in
       `work-items/`. The level clock and the hurry-up are both in `$1578`
       (its first half, `LevelItems.Update`, is done) and the IRQ at `$06AB`.
       - [x] **4a. Level timer.** `LevelTimer`: `$2A`-`$2D` and `$A9B1`, the
@@ -526,18 +526,82 @@ Each item ends with how it is proved.
         `LevelTimerRestartGoldenTests`. `$A9B1` at zero is not compared:
         `$1694` (4e) makes it `$FF`. The round intro that sets `$A9B1` to 2
         is 4d's.
-      - [ ] **4b. The freeze.** `$67`'s consumer: the count and colour toggle
-        (`$15C9`) and the enemies skipping a turn (`$1CF5`). Its setter
-        (`$2F74`) is step 6.
-      - [ ] **4c. Level clear.** No enemies left (`$16F7`-`$1772`): the food
-        seed (`$1719`), the objects popped, `$2D` to `$FF`, `$2A` to 9.
-      - [ ] **4d. Level complete and the next level.** The players back to
-        state 1 and `$21` set (`$15FB`), then `$0A6E` (`$2E79`, SUBFLG,
-        `$0409`) and `$09A5`'s round intro. Ends the step: a playthrough of
-        level 1 to level 2, against VICE.
-      - [ ] **4e. The hurry-up.** The first expiry (`$15E1`, `$3AB8`, the
-        banner at `$1694`) and the anger (`$16E4`, done as `Calm`).
-      - [ ] **4f. The Baron.** The second expiry (`$1621`, `$1AE8`, `$1B02`).
+      - [x] **4b. The freeze.** `LevelFlow` (the second half of `$1578`, from
+        `$15C9`): `$67` counts down a pass, the pass it reaches zero swaps the
+        level's two background colours (`$1C`, `$1E`: EOR 7) and starts the
+        clock at `$32`, and until then the pass stops short of the clock's
+        tests. `EnemyFrame` skips an entered enemy in state 1 to `$0A`
+        (`$1CF5`). The playfield, sidebar, bubbles and items are drawn in the
+        live colours (`BubbleBobbleMain.ShowColours`, not tested). The setter
+        (`$2F68`-`$2F7C`, which also stops the clock) is step 6. Proved
+        **against VICE**: `Levels/Captures/freeze-level-1.txt` (130 passes, an
+        intervention: the setter's writes at passes 10, 60 and 100) in
+        `LevelFlowGoldenTests`, for the count, the colours, the clock and the
+        enemies standing still.
+      - [x] **4c. Level clear.** `LevelClear` (`$16DA`-`$1772`), run each pass
+        while `$2A` is above zero. One enemy left makes it angry (`$16E4` with
+        `$FF`, `EntityTable.SetAnger`). None left: the special item is called
+        off (`$16FB`), the food seed `$58` becomes the roll (when it is
+        negative) or `$2A` + 8 (`$1719`), every object but `$44`/`$46`/`$4A`
+        is kept in `$AA42` and made a pop, `$2D` goes to `$FF`, `$2B` to `$32`
+        and `$2A` to 9. `$68`, the bonus round due after the level (level 1,
+        then 5, 10, 16 and 23: `$59BF`/`$59FF`, `$0688`), makes `$04`/`$38`-`$41`
+        objects `$4C` and ends in `$3517`, which throws until step 7. The carry
+        into the `$58` add is `$F1AC`'s last compare; it was clear in all 16
+        VICE clears, and is taken as clear. Not modelled: `$58FF` (cleared)
+        and `$69` (`$1E2E`'s wave, set only by the bonus round). Proved
+        **against VICE**: `Levels/Captures/clear-level-1.txt` (17 clears, an
+        intervention: `$4A` written 0 and the state junked) in
+        `LevelClearGoldenTests`, with `$E9EA`'s timer byte recovered.
+      - [x] **4d. Level complete and the next level.** `LevelEnd` (`$15E4`):
+        on a cleared level (`$2D` negative) whose clock has run out, each
+        player in the game, player 2 first, has to be playing or flashing from
+        a respawn (state `$10`, which goes to 1 with the colour `$8570` and
+        the flash saved at `$A813`); any other state holds it up a pass.
+        Then `$21` is set, and `BubbleBobbleMain` takes the game on
+        (`$0A6E`-`$0A96`, `GameLoop.EndLevel`): SUBFLG + 1, the round reached
+        (`$0409`) for the players in the game, and the next `Start(next:
+        true)`, which keeps the players' states, lives and scores. Level 100
+        throws (`$A5B7`, step 7). Proved **against VICE**:
+        `Levels/Captures/spawn-level-1.txt` (11 calls, an intervention: the
+        clock and `$2D` written, the players' states, colours and flashes
+        junked) in `LevelEndGoldenTests`; and `nextlevel-level-1.txt`
+        (`$0A6E`, `$09DC` and the next first pass of a level 1 whose enemy
+        count and bonus type were written 0) in `GameLoopTests`, for SUBFLG,
+        the round and the players. Not done, and the reason step 4 does not
+        carry a level 1 to 2 playthrough against VICE: the ROUND and READY!!
+        screens and the level scroll (`$09A5`, `$37C9`, `$3AB8`) are drawing;
+        the players are back at the start point when the level ends (a routine
+        that moves them in the nine seconds was not found); and level 1's
+        bonus round (`$3517`, step 7) comes first on the C64 (SUBFLG 0, 4, 9,
+        15, 22).
+      - [x] **4e. The hurry-up.** `LevelEnd.HurryUp` (`$15E8`-`$15F4`, `$3AB8`):
+        the first time the clock runs out, every enemy in state 1 to `$0A` is
+        angry (`$16E4`), `$2D` becomes 1 and `$2A` 10. The scroll, the tune and
+        the pause are not modelled, and the clock goes on in them on the C64.
+        `LevelClear` also takes the READY!! text off (`$A9B1` 0 to `$FF`,
+        `$1694`; the drawing is not modelled). Proved **against VICE**: three
+        of the eight lines of `Levels/Captures/hurry-level-1.txt`
+        (`LevelHurryGoldenTests`; an intervention: `$2A`, `$2D` and the
+        enemies written).
+      - [x] **4f. The Baron.** `LevelEnd.SpawnBarons` (`$1621`-`$1693`): with
+        `$2D` above 0 the second time, the two object slots pop and the game
+        waits for them (`$1AE8`, `$1B02`: `BubblePop.Update` until both are
+        free); `$58` becomes `$FF`; each slot, player 2 first, gets `$A9D6`,
+        `$A9C4`, `$AA30` and `$AA42` cleared and a column (`$A777`: 2 or 27)
+        and row (`$A779`: 5 or 25) from two rolls; a player in the game has
+        the slot popped again, and then a Baron there (`$2E`, `$30`);
+        the clock stops (`$2B` `$FF`) with `$2A` from `$2C`, `$2D` 0. The last
+        Baron to go (`$1490`, `Baron.Go`) starts the clock again at `$32`.
+        Proved **against VICE**: the other five lines of the same capture,
+        with the four rolls (`$1643`, `$1650`) and `$26`/`$27` replayed
+        through `ScriptedRandomSource`; `$1490` by hand.
+
+      Step 4 as a whole is proved piece by piece, not as one playthrough: a
+      level 1 that ends with a bonus round on the C64 (`$68`) cannot be taken
+      to level 2 until step 7, and the ROUND and READY!! screens and the
+      HURRY UP! scroll are drawing. Nothing the routines keep in `$37` (the
+      pause flag), `$58FF` or `$69` is modelled.
 
       Not in step 4: level 99's `$5AFF` and the ending (step 7); the bonus
       round's `$3517` and `$68` (step 7).

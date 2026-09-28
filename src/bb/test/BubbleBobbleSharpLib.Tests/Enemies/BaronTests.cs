@@ -4,6 +4,7 @@
 
 using BubbleBobbleSharpLib.Bubbles;
 using BubbleBobbleSharpLib.Enemies;
+using BubbleBobbleSharpLib.Levels;
 using BubbleBobbleSharpLib.Players;
 using Xunit;
 
@@ -44,6 +45,27 @@ public sealed class BaronTests
 
         Assert.Equal(0x3A, objects.Type[Slot]);
         Assert.Equal(0x3A, objects.EnemyType[Slot]);
+    }
+
+    // $1481-$148F, $1490: when the last Baron goes the clock, which stopped for him, runs again from a full second.
+    [Theory]
+    [InlineData(0xFF, 0x32)]
+    [InlineData(0x2E, 0xFF)]
+    [InlineData(0x30, 0xFF)]
+    public void TheClockRunsAgainWhenTheLastBaronGoes(byte otherType, byte frames)
+    {
+        ObjectTable objects = new();
+        EntityTable entities = new();
+        LevelTimer timer = new();
+        Baron baron = new(objects, entities, timer);
+        timer.Frames = LevelTimer.Stopped;
+        objects.Type[Slot] = 0x2E;
+        objects.Type[Slot ^ 1] = otherType;
+        entities.State[Slot] = 0x0E;
+
+        baron.Step(Slot);
+
+        Assert.Equal(frames, timer.Frames);
     }
 
     // $152B. Within fifteen pixels of his corner in both axes, and the player dies and he goes.
@@ -177,7 +199,7 @@ public sealed class BaronTests
     {
         ObjectTable objects = new();
         EntityTable entities = new();
-        Baron baron = new(objects, entities);
+        Baron baron = new(objects, entities, new());
 
         objects.Type[Slot] = 0x2E;
         objects.EnemyType[Slot] = 0x05;

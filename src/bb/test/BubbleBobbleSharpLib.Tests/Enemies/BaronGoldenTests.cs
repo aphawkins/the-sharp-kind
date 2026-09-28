@@ -56,7 +56,7 @@ public sealed class BaronGoldenTests
 
         ObjectTable objects = new();
         EntityTable entities = new();
-        Baron baron = new(objects, entities);
+        Baron baron = new(objects, entities, new());
         Load(objects, entities, baron, before);
 
         baron.Step(Slot);

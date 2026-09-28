@@ -5,6 +5,7 @@
 using BubbleBobbleSharpLib.Bubbles;
 using BubbleBobbleSharpLib.Enemies;
 using BubbleBobbleSharpLib.Items;
+using BubbleBobbleSharpLib.Levels;
 using BubbleBobbleSharpLib.Players;
 
 namespace BubbleBobbleSharpLib.Tests.Enemies;
@@ -16,6 +17,9 @@ internal static class TestEnemies
         => Frame(entities, objects, random, new());
 
     internal static EnemyFrame Frame(EntityTable entities, ObjectTable objects, BbRandom random, Scores scores)
+        => Frame(entities, objects, random, scores, new(new()));
+
+    internal static EnemyFrame Frame(EntityTable entities, ObjectTable objects, BbRandom random, Scores scores, LevelFlow flow)
     {
         EnemyChase chase = new(entities);
         PlayerDescent descent = new(entities);
@@ -27,6 +31,7 @@ internal static class TestEnemies
             new(entities, chase, descent, random),
             new(entities),
             new(entities, objects, descent, random),
-            new(entities, scores, random));
+            new(entities, scores, random),
+            flow);
     }
 }

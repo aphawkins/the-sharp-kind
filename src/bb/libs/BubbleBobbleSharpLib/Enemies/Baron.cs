@@ -3,6 +3,7 @@
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
 using BubbleBobbleSharpLib.Bubbles;
+using BubbleBobbleSharpLib.Levels;
 using BubbleBobbleSharpLib.Players;
 
 namespace BubbleBobbleSharpLib.Enemies;
@@ -34,17 +35,20 @@ internal sealed class Baron
 
     private readonly ObjectTable _objects;
     private readonly EntityTable _entities;
+    private readonly LevelTimer _timer;
 
     private readonly byte[] _pause = [0x16, 0x00];
     private readonly byte[] _facing = [0x02, 0x00];
 
-    internal Baron(ObjectTable objects, EntityTable entities)
+    internal Baron(ObjectTable objects, EntityTable entities, LevelTimer timer)
     {
         ArgumentNullException.ThrowIfNull(objects);
         ArgumentNullException.ThrowIfNull(entities);
+        ArgumentNullException.ThrowIfNull(timer);
 
         _objects = objects;
         _entities = entities;
+        _timer = timer;
     }
 
     internal Span<byte> Waiting => _pause;
@@ -143,9 +147,15 @@ internal sealed class Baron
         return false;
     }
 
+    // $1479-$1494. When it is the last Baron to go, the clock, which stopped for him, runs again.
     private void Go(int slot)
     {
         _objects.Type[slot] = GoneType;
         _objects.EnemyType[slot] = GoneType;
+
+        if (!Is(_objects.Type[slot ^ 1]))
+        {
+            _timer.Frames = LevelTimer.FramesPerSecond;
+        }
     }
 }

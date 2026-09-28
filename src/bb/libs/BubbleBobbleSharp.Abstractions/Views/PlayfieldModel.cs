@@ -51,6 +51,11 @@ public sealed class PlayfieldModel
     /// <summary>Gets the level's colour byte.</summary>
     public int Colours { get; }
 
+    /// <summary>Gets the same level in other colours.</summary>
+    /// <param name="colours">The level's colour byte.</param>
+    /// <returns>The new model.</returns>
+    public PlayfieldModel WithColours(int colours) => new(Tile, colours, _characters);
+
     /// <summary>Gets the screen code at one cell of the level.</summary>
     /// <param name="column">The column, 0 being the level's leftmost.</param>
     /// <param name="row">The row, 0 being the topmost.</param>

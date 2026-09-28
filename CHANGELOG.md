@@ -7,6 +7,41 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Added (Bubble Bobble hurry-up and Baron, 2026-09-28)
+
+- **A Bubble Bobble level that takes too long turns its enemies angry, and
+  then sends a Baron after each player** (`$15E4`, `$1621`, `$1490`)
+  ([LevelEnd.cs](src/bb/libs/BubbleBobbleSharpLib/Levels/LevelEnd.cs)). The
+  clock stops for the Barons and starts again when the last one goes.
+  `LevelHurryGoldenTests` matches 8 VICE expiries, with the rolls that place
+  the Barons. The HURRY UP! scroll and the tunes are not drawn or played.
+
+### Added (Bubble Bobble next level, 2026-09-28)
+
+- **A cleared Bubble Bobble level ends when its nine seconds are up, and the
+  game goes on to the next level** with the players it had, their lives and
+  scores, and the round they have reached (`$15FA`, `$0A6E`)
+  ([LevelEnd.cs](src/bb/libs/BubbleBobbleSharpLib/Levels/LevelEnd.cs)).
+  The last level, and any level with a bonus round after it, stop at the
+  parts not yet translated. `LevelEndGoldenTests` matches 11 VICE calls.
+
+### Added (Bubble Bobble level clear, 2026-09-28)
+
+- **A Bubble Bobble level with no enemies left is cleared**: the special
+  item is called off, the objects pop, and nine seconds go on the clock; with
+  one enemy left, it is angry (`$16DA`-`$1772`)
+  ([LevelClear.cs](src/bb/libs/BubbleBobbleSharpLib/Levels/LevelClear.cs)).
+  A level with a bonus round after it stops at the round's entry, which is not
+  translated (step 7). `LevelClearGoldenTests` matches 17 VICE clears.
+
+### Added (Bubble Bobble freeze, 2026-09-28)
+
+- **A Bubble Bobble freeze holds the enemies still and swaps the level's
+  colours until it runs out** (`$15C9`, `$1CF5`)
+  ([LevelFlow.cs](src/bb/libs/BubbleBobbleSharpLib/Levels/LevelFlow.cs)).
+  Nothing starts one yet: the time-stop item is step 6's.
+  `LevelFlowGoldenTests` matches 130 VICE passes.
+
 ### Added (Bubble Bobble level timer, 2026-09-28)
 
 - **A Bubble Bobble level has a clock**: thirty seconds (ten on one level,

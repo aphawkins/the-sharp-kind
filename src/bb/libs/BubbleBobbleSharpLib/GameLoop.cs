@@ -21,6 +21,7 @@ internal sealed class GameLoop
     private const byte OnePlayer = 0x01;
 
     private const byte BonusLevel = 0x63;
+    private const byte LastLevel = 0x64;
 
     private const byte FirstFoodMask = 0x1E;
     private const byte FirstFoodBase = 0x0A;
@@ -32,8 +33,6 @@ internal sealed class GameLoop
     private const int GameOverPasses = 0x96 / 2;
 
     private const byte PlayerSpriteBase = 0x60;
-    private static readonly byte[] s_spawnColour = [0x05, 0x03];
-
     private readonly BubbleBlow _blow;
     private readonly PlayerFrame _players;
     private readonly EnemyFrame _enemies;
@@ -57,15 +56,16 @@ internal sealed class GameLoop
 
         _playing = playing;
 
+        Flow = new(Timer);
         Rings rings = new(PlayerTable, Scores);
         FoodDrop food = new(Entities, Scores, random);
 
         _blow = new(PlayerTable, Entities, Objects, rings);
         _players = BuildPlayers(Entities, _blow, rings);
-        _enemies = BuildEnemies(Entities, Objects, random, food);
+        _enemies = BuildEnemies(Entities, Objects, random, food, Flow);
         _push = new(Entities, Objects);
         _death = new(Entities);
-        _ai = new(Objects, Entities, new(Objects, Entities, new(Objects, Entities)), new(Objects), random, new(Objects, Entities));
+        _ai = new(Objects, Entities, new(Objects, Entities, new(Objects, Entities)), new(Objects), random, new(Objects, Entities, Timer));
         _timers = new(Objects, Entities);
         Pop = new(Objects, Entities, PlayerTable, food, Scores);
         _spawner = new(Entities, random);
@@ -78,6 +78,8 @@ internal sealed class GameLoop
 
         _respawn = new(Entities, PlayerTable, Items, Timer);
         _join = new(Entities, PlayerTable, Scores);
+        Clear = new(Timer, Entities, Objects, Items, random);
+        End = new(Timer, Entities, Objects, Pop, Items, random);
 
         // $0956-$0977.
         PlayerTable.Lives.Fill(StartingLives);
@@ -104,7 +106,36 @@ internal sealed class GameLoop
 
     internal LevelTimer Timer { get; } = new();
 
-    internal void Start(Level level, IReadOnlyList<ZoneRect> zones, int number)
+    internal LevelFlow Flow { get; }
+
+    internal LevelClear Clear { get; }
+
+    internal LevelEnd End { get; }
+
+    // $0A6A: the level's clock has run out on a cleared level, and the game goes on to the next.
+    internal bool IsComplete => End.Complete != 0;
+
+    // $0A6E-$0A8B: the next level's number is kept for each player in the game, as the round they have reached.
+    // Level 100's end is $A5B7's ending, which is step 7's. Returns the number of the level to start.
+    internal int EndLevel()
+    {
+        _subflg++;
+
+        for (int player = 0; player < PlayerTable.Capacity; player++)
+        {
+            if (Entities.State[player] != 0)
+            {
+                PlayerTable.Round[player] = _subflg;
+            }
+        }
+
+        return _subflg == LastLevel
+            ? throw new NotSupportedException("the ending at $A5B7 is not translated")
+            : _subflg + 1;
+    }
+
+    // $09DC-$0A05. A level that follows another ($0A96) keeps the players it has in the game.
+    internal void Start(Level level, IReadOnlyList<ZoneRect> zones, int number, bool next = false)
     {
         ArgumentNullException.ThrowIfNull(level);
         ArgumentNullException.ThrowIfNull(zones);
@@ -115,7 +146,7 @@ internal sealed class GameLoop
 
         _spawner.Spawn(level.Enemies);
 
-        StartPlayers();
+        StartPlayers(next);
 
         _subflg = (byte)(number - 1);
 
@@ -127,6 +158,9 @@ internal sealed class GameLoop
         _enemies.Enter();
 
         Timer.Begin(_subflg);
+        Flow.Begin(level.Colours);
+        Clear.Begin(_subflg);
+        End.Begin();
         _counter = FirstCounter;
         _overPasses = 0;
     }
@@ -143,6 +177,20 @@ internal sealed class GameLoop
         }
 
         Items.Update();
+
+        // $15E1: with time on the clock the level is checked for its last enemy.
+        if (Flow.Update())
+        {
+            if (Timer.Seconds != 0)
+            {
+                Clear.Update();
+            }
+            else
+            {
+                End.Update();
+            }
+        }
+
         _blow.Tick();
         Pop.Update();
         _push.Update(map);
@@ -180,7 +228,7 @@ internal sealed class GameLoop
             blow);
     }
 
-    private static EnemyFrame BuildEnemies(EntityTable entities, ObjectTable objects, BbRandom random, FoodDrop food)
+    private static EnemyFrame BuildEnemies(EntityTable entities, ObjectTable objects, BbRandom random, FoodDrop food, LevelFlow flow)
     {
         EnemyChase chase = new(entities);
         PlayerDescent descent = new(entities);
@@ -192,10 +240,11 @@ internal sealed class GameLoop
             new(entities, chase, descent, random),
             new(entities),
             new(entities, objects, descent, random),
-            food);
+            food,
+            flow);
     }
 
-    private void StartPlayers()
+    private void StartPlayers(bool next)
     {
         Objects.Reset();
 
@@ -217,11 +266,15 @@ internal sealed class GameLoop
 
         for (int player = 0; player < PlayerTable.Capacity; player++)
         {
-            Entities.State[player] = player < _playing ? PlayerFrame.PlayingState : (byte)0;
+            if (!next)
+            {
+                Entities.State[player] = player < _playing ? PlayerFrame.PlayingState : (byte)0;
+            }
+
             Entities.X[player] = PlayerRespawn.SpawnX[player];
             Entities.Y[player] = PlayerRespawn.SpawnY;
             Entities.Frame[player] = PlayerRespawn.SpawnFrame[player];
-            Entities.Colour[player] = s_spawnColour[player];
+            Entities.Colour[player] = LevelEnd.SpawnColour[player];
             Entities.SpriteBase[player] = PlayerSpriteBase;
 
             PlayerTable.DriftRing[player] = 0;

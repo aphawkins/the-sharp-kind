@@ -10,6 +10,9 @@ internal sealed class EntityTable : IRowTails
 {
     internal const int Capacity = 8;
 
+    private const int FirstEnemy = 2;
+    private const byte CaughtState = 0x0B;
+
     private readonly byte[] _state = new byte[Capacity];
     private readonly byte[] _x = new byte[Capacity];
     private readonly byte[] _y = new byte[Capacity];
@@ -91,6 +94,21 @@ internal sealed class EntityTable : IRowTails
     internal byte SpriteEnable { get; set; }
 
     public bool Solid(int row, int index) => (Tail(row, index) & 0x80) != 0;
+
+    // $16E4: the enemies not yet out of their bubbles ($01 to $0A) take an anger. $16EF is its operand: $FF makes
+    // them angry (when one is left), and 0 calms them (a respawn).
+    internal void SetAnger(byte anger)
+    {
+        for (int slot = Capacity - 1; slot >= FirstEnemy; slot--)
+        {
+            byte state = _state[slot];
+
+            if (state is not 0 and < CaughtState)
+            {
+                _flashTimer[slot] = anger;
+            }
+        }
+    }
 
     private byte Tail(int row, int index) => row switch
     {

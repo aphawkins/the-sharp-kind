@@ -134,6 +134,23 @@ internal sealed class LevelItems
 
     internal byte Milestone { get; set; } = 0x12;
 
+    // $A8E4.
+    internal static byte FoodColour(int food) => s_foodColours[food];
+
+    // $16FB-$170B: a level cleared calls its special item off. One showing has its timer run out; one not yet
+    // shown is never shown.
+    internal void CancelSpecial()
+    {
+        if ((sbyte)_type[1] >= 0)
+        {
+            _timer[1] = 0xFF;
+        }
+        else
+        {
+            _type[1] = 0xFF;
+        }
+    }
+
     internal void Setup(Level level, byte number)
     {
         ArgumentNullException.ThrowIfNull(level);

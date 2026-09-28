@@ -424,7 +424,7 @@ public sealed class EnemyAiLoopTests
             Dispatcher(objects, entities),
             new EntityMover(objects),
             new BbRandom(new FakeRandomSource { RandomValue = timer }),
-            new Baron(objects, entities));
+            new Baron(objects, entities, new LevelTimer()));
 
         return (objects, entities, loop);
     }

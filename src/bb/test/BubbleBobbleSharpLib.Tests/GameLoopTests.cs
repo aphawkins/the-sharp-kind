@@ -272,6 +272,48 @@ public sealed class GameLoopTests
         Assert.False(loop.IsOver);
     }
 
+    // $0A6E-$0A96 against VICE: Captures/nextlevel-level-1.txt holds the game at $0A6E, at $09DC and at the next
+    // level's first pass, from a level 1 whose last enemy was written away ($4A) and whose bonus round was ($68).
+    // The dump is: $10, $21, $37, $4A, $2A-$2D, $A9B1, $B2-$B3, $BA-$BB, $C2-$C3, $8520-$8521, $8548-$8549, and more.
+    [Fact]
+    public void GoesOnToTheNextLevelWithTheRoundAndThePlayersOfTheOneBefore()
+    {
+        const int Subflg = 0;
+        const int States = 9;
+        const int X = 11;
+        const int Y = 13;
+        const int Frame = 15;
+        const int Colour = 17;
+        const int Round = 39;
+
+        string path = Path.Combine(AppContext.BaseDirectory, "Levels", "Captures", "nextlevel-level-1.txt");
+        Dictionary<string, byte[]> dumps = File.ReadAllLines(path)
+            .Select(line => line.Split(' '))
+            .ToDictionary(parts => parts[0], parts => Convert.FromHexString(parts[1]));
+        byte[] complete = dumps["complete"];
+        byte[] init = dumps["level-init"];
+        byte[] first = dumps["first-pass"];
+
+        GameLoop loop = Start(complete[Subflg] + 1, seed: 1);
+        loop.Entities.State[0] = complete[States];
+        loop.Entities.State[1] = complete[States + 1];
+
+        int number = loop.EndLevel();
+
+        Assert.Equal(init[Subflg] + 1, number);
+        Assert.Equal(init[Round], loop.PlayerTable.Round[0]);
+        Assert.Equal(init[Round + 1], loop.PlayerTable.Round[1]);
+
+        loop.Start(s_levels.Level(number), s_zones.Zones(number), number, next: true);
+
+        Assert.Equal(first[States], loop.Entities.State[0]);
+        Assert.Equal(first[States + 1], loop.Entities.State[1]);
+        Assert.Equal(first[X], loop.Entities.X[0]);
+        Assert.Equal(first[Y], loop.Entities.Y[0]);
+        Assert.Equal(first[Frame], loop.Entities.Frame[0]);
+        Assert.Equal(first[Colour], loop.Entities.Colour[0]);
+    }
+
     // Fire makes a bubble three passes later, and the loop then carries it away from the player.
     [Fact]
     public void BlowsAndMovesABubble()

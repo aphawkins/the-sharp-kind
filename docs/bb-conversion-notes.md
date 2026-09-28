@@ -196,8 +196,8 @@ player who takes too long.
 - `$A775` (pause) and `$E765` (the facing the composer draws), two bytes
   each, start at `$16`,`$00` and `$02`,`$00` and are never reset, so a Baron
   takes over what the last one in his slot left.
-- Not translated: `$1621`, which puts him in play, and `$1490`'s store of
-  `$32` in `$2B`. Both are the level timer's.
+- `$1621` puts him in play (`LevelEnd`); `$1490`'s store of `$32` in `$2B`
+  runs when the last Baron goes (`Baron.Go`).
 
 ### BubbleCollision
 
@@ -790,6 +790,78 @@ counts the digit down in place (`dec $53E4`), so the HUD draws it from
 is a colour, `$10` ends the string (the reference's comments say `$00`),
 `$1F` is followed by column and row, and any other byte less `$20` is a
 screen code (A is `$21`, digits are their value).
+
+### LevelEnd
+
+`$15E1`: `$2A` at zero. `$15E4`: `inc $37` (the pause flag: `$FF` in play), then
+`$2D` zero: the hurry-up; positive: the Baron; negative (a cleared level):
+`$15FA`.
+
+- `$15FA`-`$1620`, players 1 then 0: state 0 or 1 is left; a state other
+  than `$5A7F` (`$10`) leaves the routine at `$161E` (`dec $37`), with the
+  players before it done and `$21` not set; state `$10` goes to 1, `$8728,x`
+  takes `$A813,x` and `$8548,x` takes `$8570,x`. Past both, `inc $21`.
+- `$0A6A`: `$21` set: `$0A6E` clears `$37` and `$5AFF`, waits a frame,
+  `$2E79` (the objects), `inc SUBFLG`, `$0409,x` from it for a player not
+  in state 0, `cmp #$64` (level 100: `$A5B7`), `$0A8F`, and `$09A5` with the
+  carry clear (`$21` is under `$7F`), which is `L_09D3`: the level's screen
+  (`$37C9`), then `$09DC`, the level start `GameLoop.Start` has.
+- `$15E8`-`$15F4`, the first expiry (`$2D` 0): `$3AB8` (the HURRY UP!
+  scroll, a wait of many frames with the clock running, the tune) opens
+  with `$16E4` at its `$FF` operand, so every enemy in state 1 to `$0A` is
+  angry; then `inc $2D` and `$2A` = 10.
+- `$1621`-`$1693`, the second (`$2D` above 0): `$1AE8` keeps the type of
+  anything in object slots 0 and 1 in `$AA42` (only for types `$18`-`$23`, else 0)
+  and makes it `$3A`; `$1B02` runs `$E90E` (`BubblePop.Update`) until both
+  slots are free. `$58` = `$FF`, `$58FF` = 0. For slot 1 then 0: `$A9D6`,
+  `$A9C4`, `$AA30`, `$AA42` = 0; two rolls choose `$A777` (2, 27) for the
+  column and `$A779` (5, 25) for the row (also copied to `$02,x`/`$04,x`,
+  which the wait after it does not disturb, in VICE); a player in the game
+  makes the slot `$3A` again. `$1B02` again; then for a player in the game the
+  column and row come back from `$02`/`$04` and the type is `$2E` + twice
+  the slot. `$2B` = `$FF` (the clock stops), `$2D` = 0, `$2A` = `$2C`. The
+  tune wait at `$1687` (`$A4`) is a music loop, not modelled.
+- The reference's `$2E79` turns any object of type `$18`-`$23` into an
+  enemy again; a clear leaves none, so the port does nothing there.
+
+### LevelClear
+
+The tail of `$1578`, run each pass while `$2A` is not zero (`$15E1`).
+
+- `$16DA`: `$2D` negative (already cleared): only `$16E0`. Otherwise
+  `$4A` (the enemies left) nonzero: only `$16E0`; zero: the clear at `$16F7`.
+  The reference's labels are one byte early here (`$16D9`, `$1751`).
+- `$16E0`: exactly one enemy left, `$16E4` with its operand `$FF`
+  (`D_16EF`): every enemy in state 1 to `$0A` gets a flash timer of `$FF`
+  (angry). A respawn does the same with the operand made 0.
+- `$16F7`: `$58FF` is cleared. The special item (`$53`, `$5E`): showing (type
+  positive), its timer is made `$FF`; else its type is made `$FF`. `$58` (the
+  food seed): negative (a Baron came), a roll and 3; else `$2A` + 8 (+ the
+  carry, clear). Then `$171B`, for the 18 objects: free, `$44`, `$46` and
+  `$4A` stay; the rest save their type in `$AA42` and become `$3A`, or, for
+  type 4 and `$38`-`$41` when `$68` is set, `$4C` with `$A9E8` from
+  `$A8E4,$68`. `$1E2E` if `$69`. Then `$2B` = `$32`, `$2D` = `$FF`, `$2A` = 9,
+  and `jmp $3517` if `$68` is set.
+- `$68` is set at each level's start (`$0688`): 0, unless `$59BF` (0 at a new
+  game) is the level, when `$59BF` gains `$59FF` + 1 (3 at a new game, +1
+  each time) and `$68` is twice the level + 9, less 46 while over. So bonus
+  rounds follow SUBFLG 0, 4, 9, 15, 22.
+
+### LevelFlow
+
+The second half of `$1578` (the first is `LevelItems.Update`), from `$15C9`.
+
+- `$67` (`SESSION`, the freeze): zero, and the pass goes on to the clock's
+  tests. Otherwise `dec $67`; still above zero, `$1578` returns. At zero
+  `$1C` and `$1E` (the VIC's background colours 1 and 2, copied from the
+  level's colour byte at `$3971`) are EOR 7, `$2B` goes to `$32`, and the
+  pass goes on. `$2F68`-`$2F7C` (the time-stop effect) does the same swap,
+  sets `$67` to `$87` and `$2B` to `$FF`.
+- `$1CF5`-`$1D01`, in `$1CBD`'s loop: a slot from 2 with `$67` set and a
+  state below `$0B` skips its turn. It is after the drop-in test, so an
+  enemy still entering is not held.
+- The enemies move in the IRQ, between `$0A1C` samples: a freeze at
+  zero in the pass's `$1578` frees them for the frames after it.
 
 ### LevelTimer
 

@@ -221,6 +221,82 @@ public sealed class EnemyFrameTests
         Assert.Equal(0x07, entities.Frame[Slot]);
     }
 
+    // $1CF5-$1D01: while $67 is set, an enemy not yet out of its bubble (state 1 to $0A) takes no turn.
+    [Theory]
+    [InlineData(0x02)]
+    [InlineData(0x0A)]
+    public void AFrozenEnemyDoesNotMove(byte state)
+    {
+        LevelFlow flow = new(new()) { Freeze = 0x40 };
+        EntityTable entities = new();
+        Place(entities, Slot);
+        entities.State[Slot] = state;
+        EnemyFrame frame = TestEnemies.Frame(entities, new(), new(new FakeRandomSource()), new(), flow);
+
+        frame.Step(Slot, 0, s_map);
+
+        Assert.Equal(StandX, entities.X[Slot]);
+        Assert.Equal(0, entities.AnimationTimer[Slot]);
+    }
+
+    // The same enemy moves once the freeze has run out.
+    [Fact]
+    public void ANotFrozenEnemyWalks()
+    {
+        LevelFlow flow = new(new()) { Freeze = 0 };
+        EntityTable entities = new();
+        Place(entities, Slot);
+        EnemyFrame frame = TestEnemies.Frame(entities, new(), new(new FakeRandomSource()), new(), flow);
+
+        frame.Step(Slot, 0, s_map);
+
+        Assert.NotEqual(StandX, entities.X[Slot]);
+    }
+
+    // $1CF5-$1D01: an enemy from state $0B up (in its bubble, popped, food) is not held by the freeze.
+    [Theory]
+    [InlineData(0x0B)]
+    [InlineData(0x0C)]
+    public void TheFreezeLeavesAnEnemyPastStateTenAlone(byte state)
+    {
+        byte[] frozen = Run(state, 0x40);
+        byte[] free = Run(state, 0);
+
+        Assert.Equal(Convert.ToHexString(free), Convert.ToHexString(frozen));
+        Assert.NotEqual(Convert.ToHexString(Run(state, 0)), Convert.ToHexString(new byte[free.Length]));
+    }
+
+    // $1CDB-$1CF3: an enemy still dropping in is not held by the freeze either.
+    [Fact]
+    public void TheFreezeDoesNotStopAnEnemyDroppingIn()
+    {
+        LevelFlow flow = new(new()) { Freeze = 0x40 };
+        EntityTable entities = new();
+        Place(entities, Slot);
+        entities.Mode[Slot] = 0x00;
+        entities.Y[Slot] = 0x15;
+        entities.AttackTimer[Slot] = 0x19;
+        EnemyFrame frame = TestEnemies.Frame(entities, new(), new(new FakeRandomSource()), new(), flow);
+
+        frame.Step(Slot, 0, s_map);
+
+        Assert.Equal(0x17, entities.Y[Slot]);
+    }
+
+    private static byte[] Run(byte state, byte freeze)
+    {
+        LevelFlow flow = new(new()) { Freeze = freeze };
+        EntityTable entities = new();
+        Place(entities, Slot);
+        entities.State[Slot] = state;
+        entities.Y[Slot] = 0x80;
+        EnemyFrame frame = TestEnemies.Frame(entities, new(), new(new FakeRandomSource()), new(), flow);
+
+        frame.Step(Slot, 0, s_map);
+
+        return [entities.X[Slot], entities.Y[Slot], entities.Frame[Slot], entities.State[Slot]];
+    }
+
     private static (EntityTable Entities, EnemyFrame Frame) Walker(int slot = Slot)
     {
         EntityTable entities = new();

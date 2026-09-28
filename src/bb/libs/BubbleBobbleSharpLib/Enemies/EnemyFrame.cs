@@ -25,6 +25,8 @@ internal sealed class EnemyFrame
 
     private const byte PlayingState = 0x01;
 
+    private const byte CaughtState = 0x0B;
+
     private const byte WalkerState = 0x02;
     private const byte ClassOneState = 0x03;
     private const byte HopperState = 0x04;
@@ -41,6 +43,7 @@ internal sealed class EnemyFrame
     private readonly DiagonalMover _diagonal;
     private readonly EnemyRunner _runner;
     private readonly FoodDrop _food;
+    private readonly LevelFlow _flow;
 
     internal EnemyFrame(
         EntityTable entities,
@@ -49,7 +52,8 @@ internal sealed class EnemyFrame
         EnemyHopper hopper,
         DiagonalMover diagonal,
         EnemyRunner runner,
-        FoodDrop food)
+        FoodDrop food,
+        LevelFlow flow)
     {
         ArgumentNullException.ThrowIfNull(entities);
         ArgumentNullException.ThrowIfNull(walker);
@@ -58,6 +62,7 @@ internal sealed class EnemyFrame
         ArgumentNullException.ThrowIfNull(diagonal);
         ArgumentNullException.ThrowIfNull(runner);
         ArgumentNullException.ThrowIfNull(food);
+        ArgumentNullException.ThrowIfNull(flow);
 
         _entities = entities;
         _walker = walker;
@@ -66,6 +71,7 @@ internal sealed class EnemyFrame
         _diagonal = diagonal;
         _runner = runner;
         _food = food;
+        _flow = flow;
     }
 
     internal void Enter()
@@ -125,6 +131,12 @@ internal sealed class EnemyFrame
         {
             Drop(slot);
             Idle(slot);
+            return;
+        }
+
+        // $1CF5-$1D01: a frozen level keeps every enemy that is not out of its bubble still.
+        if (_flow.Freeze != 0 && _entities.State[slot] < CaughtState)
+        {
             return;
         }
 

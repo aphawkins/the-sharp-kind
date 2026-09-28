@@ -148,6 +148,14 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
 
         Loop.Pass(_input.Read());
 
+        // $0A6A: a cleared level whose clock has run out goes on to the next.
+        if (Loop.IsComplete)
+        {
+            ShowLevel(Loop.EndLevel(), next: true);
+        }
+
+        ShowColours();
+
         if (Loop.Finished)
         {
             IsRunning = false;
@@ -162,7 +170,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     }
 
     [MemberNotNull(nameof(_playfield), nameof(_sidebar))]
-    internal void ShowLevel(int number)
+    internal void ShowLevel(int number, bool next = false)
     {
         Level level = _levels.Level(number);
 
@@ -170,7 +178,19 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         _sidebar = Sidebars.Select(level);
         CurrentLevel = number;
 
-        Loop.Start(level, _zones.Zones(number), number);
+        Loop.Start(level, _zones.Zones(number), number, next);
+    }
+
+    // $1C and $1E are the level's background colours, and the freeze swaps them ($15CF, $2F68).
+    private void ShowColours()
+    {
+        int colours = Loop.Flow.Colours;
+
+        if (colours != _playfield.Colours)
+        {
+            _playfield = _playfield.WithColours(colours);
+            _sidebar = _sidebar with { Colours = colours };
+        }
     }
 
     private SpriteModel Sprites() => new(
