@@ -448,17 +448,32 @@ Each item ends with how it is proved.
         VICE**: `Players/Captures/dying-level-1.txt` (four deaths on level 1, 352
         turns, no intervention, bracketed `$1CDB`–`$1D24` with `X < 2`) matches
         byte for byte. No captured death had `$8728` set.
-      - [ ] **3d. Lives and respawn, `$045C`/`$04BB`.** A state `$0F` player
-        loses a life, goes back to the start with `$4A` passes of state `$10`
-        (`$290D`: colour EOR 5, and plays as state 1), or leaves the game at
-        zero lives. `$04BB` also clears the player's `$5B7F` bit, and calls
-        `$16E4` (item 4) when `$4A` is 2 or more. The lives on the HUD.
+      - [x] **3d. Lives and respawn, `$045C`/`$04BB`.** `PlayerRespawn`, called
+        in the pass after `LevelItems.Collect` (`$0A1C`). A state `$0F` player,
+        player 2 first, has `$7F53` reset the blow and rings, loses its
+        `$5B7F` bit, and loses a life; with lives left it goes back to the
+        start (`$A735`, Y `$DD`, frame `$A737`) with `$4A` passes of state
+        `$10` in `$8688` (`TurnInterval`). `$290D` in `PlayerFrame`: colour
+        EOR 5 and plays as state 1. `$16E4` with `$16EF` raised clears the
+        anger of every free enemy when `$4A` is 2 or more. The HUD reads
+        `PlayerTable.Lives`, three from `$0956`. Throws: the game over
+        (`$04F0`: `$0409`, `$7BE8`, 3e) and a death on level `$63` (`$7F77`,
+        7). Not modelled, since the port has no state for them yet: the music
+        restart (`$04A3`, 8), the bonus round's state 0 (`$5A7F`, 7), the
+        level timer's `$2A`-`$2D` (`$0504`, 4), and `$A783`, `$37C7`, `$A813`.
+        Proved **against VICE**: `Players/Captures/respawn-level-1.txt` (level
+        1, one idle player, no intervention; three respawns bracketed
+        `$04A0`-`$0A1F`, their 222 state `$10` turns `$1CDB`-`$1D24` with
+        `X < 2`, and the fourth death's game over) matches byte for byte.
+        `$8818` was not captured; the test holds it at `$FF`.
       - [ ] **3e. Join and game over.** `$052A` (a player not in the game
-        presses fire), and `$0A64` (both states zero).
+        presses fire), `$0A64` (both states zero), and the game over that
+        `PlayerRespawn` throws at `$04F0` (`$0409`, `$7BE8`).
       - Not yet placed: state `$18`, set by `$28FB`. Find its caller first.
 
       Verify: a VICE capture of a respawn (the push and the death are done).
-- [ ] **4. Level flow.** The level timer (`$2A`, `$2B`, `$06C6`), the hurry-up
+- [ ] **4. Level flow.** The level timer (`$2A`, `$2B`, `$06C6`, and
+      `$0504`'s restart of `$2A`-`$2D` on a respawn), the hurry-up
       and anger (`$16E4`), the Baron's spawn (`$1621`), `$1719` setting
       `LevelItems.FoodBase`, the freeze in `$67` (`$2F74`, `$1CFB`), the
       level-complete flag `$21`, and the next level (`$0A6E`, `$09A5`).

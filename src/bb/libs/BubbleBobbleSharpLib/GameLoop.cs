@@ -25,11 +25,9 @@ internal sealed class GameLoop
     private const byte FirstFoodMask = 0x1E;
     private const byte FirstFoodBase = 0x0A;
 
-    private const byte SpawnY = 0xDD;
+    private const byte StartingLives = 3;
 
     private const byte PlayerSpriteBase = 0x60;
-    private static readonly byte[] s_spawnX = [0x2C, 0xEC];
-    private static readonly byte[] s_spawnFrame = [0x00, 0x04];
     private static readonly byte[] s_spawnColour = [0x05, 0x03];
 
     private readonly BubbleBlow _blow;
@@ -40,6 +38,7 @@ internal sealed class GameLoop
     private readonly PlayerDeath _death;
     private readonly EntityTimers _timers;
     private readonly EnemySpawner _spawner;
+    private readonly PlayerRespawn _respawn;
     private readonly int _playing;
 
     private SolidMap? _map;
@@ -71,6 +70,11 @@ internal sealed class GameLoop
             FoodBase = (byte)((random.Next() & FirstFoodMask) + FirstFoodBase + (random.Carry ? 1 : 0)),
             Undying = OnePlayer,
         };
+
+        _respawn = new(Entities, PlayerTable, Items);
+
+        // $0956.
+        PlayerTable.Lives.Fill(StartingLives);
     }
 
     internal EntityTable Entities { get; } = new();
@@ -122,6 +126,7 @@ internal sealed class GameLoop
         _ai.Update(map);
         _timers.Update(ReleasedState);
         Items.Collect(_subflg);
+        _respawn.Update(_subflg);
 
         if (--_passesToSecond == 0)
         {
@@ -187,9 +192,9 @@ internal sealed class GameLoop
         for (int player = 0; player < PlayerTable.Capacity; player++)
         {
             Entities.State[player] = player < _playing ? PlayerFrame.PlayingState : (byte)0;
-            Entities.X[player] = s_spawnX[player];
-            Entities.Y[player] = SpawnY;
-            Entities.Frame[player] = s_spawnFrame[player];
+            Entities.X[player] = PlayerRespawn.SpawnX[player];
+            Entities.Y[player] = PlayerRespawn.SpawnY;
+            Entities.Frame[player] = PlayerRespawn.SpawnFrame[player];
             Entities.Colour[player] = s_spawnColour[player];
             Entities.SpriteBase[player] = PlayerSpriteBase;
 

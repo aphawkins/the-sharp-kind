@@ -29,8 +29,6 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
 
     private const int FirstLevel = 1;
 
-    private const int StartingLives = 3;
-
     private const int PlayingPlayers = 1;
 
     private const ConsoleKey NextLevelKey = ConsoleKey.N;
@@ -184,8 +182,8 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         _loop.Scores.Bytes[..HudModel.ScoreBytes],
         _loop.Scores.Bytes[HudModel.ScoreBytes..],
         _highScore,
-        StartingLives,
-        StartingLives);
+        (sbyte)_loop.PlayerTable.Lives[0],
+        (sbyte)_loop.PlayerTable.Lives[1]);
 
     private ObjectsModel Objects() => new(
         _loop.Pop.Drawn,

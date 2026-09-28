@@ -25,6 +25,8 @@ internal sealed class PlayerFrame
 
     private const byte IdlePeriod = 0x07;
 
+    private const byte RespawnFlash = 0x05;
+
     private readonly EntityTable _entities;
     private readonly PlayerMovement _movement;
     private readonly PlayerJump _jump;
@@ -76,6 +78,9 @@ internal sealed class PlayerFrame
                 _dying.Step(player);
                 return;
             case DeadState:
+                return;
+            case PlayerRespawn.RespawningState:
+                Respawning(player, port, map);
                 return;
             default:
                 throw new NotSupportedException(
@@ -143,6 +148,18 @@ internal sealed class PlayerFrame
         }
 
         Idle(player, port, map);
+    }
+
+    // $290D: counts down to state 1, flashing, and plays as state 1 meanwhile.
+    private void Respawning(int player, byte port, SolidMap map)
+    {
+        if (--_entities.TurnInterval[player] == 0)
+        {
+            _entities.State[player] = PlayingState;
+        }
+
+        _entities.Colour[player] ^= RespawnFlash;
+        Playing(player, port, PlayerCell.Of(_entities.X[player], _entities.Y[player]), map);
     }
 
     private void Idle(int player, byte port, SolidMap map)

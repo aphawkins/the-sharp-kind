@@ -7,6 +7,16 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Added (Bubble Bobble lives and respawn, 2026-09-28)
+
+- **A Bubble Bobble player who dies loses a life and comes back**, flashing
+  at the start for 74 passes (`$045C`, `$04BB`, `$7F53`, `$290D`), and the
+  HUD shows the lives left
+  ([PlayerRespawn.cs](src/bb/libs/BubbleBobbleSharpLib/Players/PlayerRespawn.cs)).
+  Losing the last life throws until game over is ported (step 3e).
+  `PlayerRespawnGoldenTests` matches a VICE capture of three respawns and
+  a game over byte for byte.
+
 ### Fixed (8-bit galactic chart scale and fuel circle, 2026-09-27)
 
 - **The 8-bit galactic chart plots galaxy space at the same scale in light

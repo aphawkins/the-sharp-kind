@@ -747,7 +747,7 @@ bare `rts`; the dead player waits for `$045C`.
 
 - `$28AD`: the first call finds `$86D8` not `$12`, sets it, and starts
   `$8610` at `$20` (`$28B6`). `$7F53` (`player_death_respawn`) clears it
-  (item 3d); VICE shows every death starting from zero.
+  (`PlayerRespawn`); VICE shows every death starting from zero.
 - `$8610` counts down. `$1F` to `$00`: the spin, frame 0 or `$0C`–`$0E` from
   bits 1 and 2 (`$28C4`–`$28CE`). A player caught mid-jump or mid-fall
   drops three pixels a call (`$28D1`–`$28D9`), wrapping `$F5` to `$15`
@@ -755,6 +755,24 @@ bare `rts`; the dead player waits for `$045C`.
   the air falls through floors. `$28C3`'s `bmi` to `$28E9`: `$FF` to `$C8`,
   lying still, frames `$0F`–`$12` (`$28EE`). At `$C8` (`$28F5`) the state
   goes to `$0F`.
+
+### PlayerRespawn
+
+`$045C` (`player-state.s`), once a pass at `$0A1C`: a dead (`$0F`) player
+comes back. Player 2 first; the loop carries on after one.
+
+- `$7F53` first: `$A77B`-`$A782` back to `$08`, `$88`, `$04`, `$04`, the
+  rings and `$8728` cleared, `$86D8` zeroed so the next death starts from
+  `$20`. Level `$63` has its own setup at `$7F77` (throws).
+- `$04BB`: the player's `$AB53` bit off `$5B7F`, frame `$A737`, `$87A0`,
+  `$87C8`, `$87F0` to `$FF`, then `dec $045A,x`. Negative is the game over
+  (`$04F0`, throws). Otherwise Y `$DD`, X `$A735`, `$8688` `$4A`, state
+  `$10`, or 0 while `$5A7F` is set (a bonus round; not modelled).
+- `$0514`: with `$4A` two or more, `$16E4` runs with `$16EF` raised, so its
+  `lda #$FF` stores zero: every enemy in state 1-`$0A` loses its anger.
+- `$290D`, state `$10`: `$8688` counts down to state 1, the colour EORs 5
+  every turn (74 turns, so it ends as it began), and `$2162` plays the turn
+  as state 1.
 
 ### PlayerFall
 
@@ -1134,7 +1152,7 @@ reference's order.
   one-player game (only player 1 has not died). `$0942`, `$0944`: the first
   level's food quality starts in `$0A`–`$28` (`$093F`–`$0946`). SUBFLG `$63`
   is the bonus level, whose items throw, so level 100 starts without them.
-- Gaps: `$0BED` (corner bubbles), player states past 1 (respawn), `$32C1`
+- Gaps: `$0BED` (corner bubbles), `$32C1`
   (EXTEND), the level timer and hurry-up, and level completion.
 
 ### BbRandom

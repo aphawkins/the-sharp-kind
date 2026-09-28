@@ -43,7 +43,6 @@ Every open work item, in priority order. Each line links to a file in
 
 Steps from section 5 of [bb-port-plan.md](bb-port-plan.md), in order.
 
-- [ ] [3d: lives and respawn](work-items/bb-3d-lives-respawn.md)
 - [ ] [3e: join and game over](work-items/bb-3e-join-game-over.md)
 - [ ] [4: level flow](work-items/bb-4-level-flow.md)
 - [ ] [5: special bubbles and EXTEND](work-items/bb-5-special-bubbles-extend.md)
