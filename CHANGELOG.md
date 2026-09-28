@@ -7,6 +7,17 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Added (Bubble Bobble level timer, 2026-09-28)
+
+- **A Bubble Bobble level has a clock**: thirty seconds (ten on one level,
+  twenty from level 57), counted down by the frame interrupt, stopped by
+  `$2B` of `$FF`, and started again when a player respawns or is out
+  (`$392A`, `$06AB`, `$0504`)
+  ([LevelTimer.cs](src/bb/libs/BubbleBobbleSharpLib/Levels/LevelTimer.cs)).
+  The item timers now tick from it. `LevelTimerGoldenTests` replays 260
+  passes read out of VICE, frame by frame. Nothing happens when it reaches
+  zero yet (steps 4c to 4f).
+
 ### Added (Bubble Bobble join and game over, 2026-09-28)
 
 - **A Bubble Bobble player who is not in the game joins it by pressing fire**

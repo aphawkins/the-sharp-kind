@@ -512,8 +512,20 @@ Each item ends with how it is proved.
 - [ ] **4. Level flow.** Split into steps, each a work item in
       `work-items/`. The level clock and the hurry-up are both in `$1578`
       (its first half, `LevelItems.Update`, is done) and the IRQ at `$06AB`.
-      - [ ] **4a. Level timer.** `$2A`-`$2D`, `$A9B1`: start value (`$392A`),
-        the IRQ tick (`$06AB`), the restart on a respawn (`$0504`).
+      - [x] **4a. Level timer.** `LevelTimer`: `$2A`-`$2D` and `$A9B1`, the
+        start value (`$392A`: 30 s, 10 s at SUBFLG `$37`, 20 s from `$38`),
+        the IRQ frame (`$06AB`: 50 frames a second, stopped by `$2B` of
+        `$FF`, which stops the item timers too, and counting `$A9B1` down to
+        zero) and the restart on a respawn or a game over (`$0504`, skipped
+        when stopped or when `$2D` is negative). `GameLoop` runs two frames a
+        pass. Proved **against VICE**: `Levels/Captures/timer-level-1.txt`
+        (260 passes, replayed frame by frame, with `$A9B1`, `$2B` and `$2D`
+        written by hand to reach the other runs of the clock) in
+        `LevelTimerGoldenTests`, which also holds one natural respawn; and
+        `restart-level-1.txt` (ten calls with `$2A`, `$2B`, `$2D` written) in
+        `LevelTimerRestartGoldenTests`. `$A9B1` at zero is not compared:
+        `$1694` (4e) makes it `$FF`. The round intro that sets `$A9B1` to 2
+        is 4d's.
       - [ ] **4b. The freeze.** `$67`'s consumer: the count and colour toggle
         (`$15C9`) and the enemies skipping a turn (`$1CF5`). Its setter
         (`$2F74`) is step 6.
@@ -572,6 +584,13 @@ Each item ends with how it is proved.
 
 ## 6. Open questions
 
+- **The main loop runs a pass every three IRQ frames in VICE (level 1, 260
+  passes, always 3), not two.** The port runs a pass at 25 a second and
+  `LevelTimer` two frames a pass, so the clock keeps wall time; but the
+  routines that count in main-loop passes (`$13BE`'s `$A9FA`, the bubble
+  timers, anything that counts passes rather than seconds) would then run a
+  half faster than the C64's. The IRQ's own work (`$1CBD`, the players) is
+  at 25 a second. Check which counters matter before step 4d's playthrough.
 - `hud-font.tga` and `digit-font.tga` are not exported. The HUD does not use
   them; what does is unknown until something draws them.
 - Under the ceiling, the port moves a bubble between Y `$45` and `$47`; a

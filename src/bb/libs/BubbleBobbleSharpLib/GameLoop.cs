@@ -12,7 +12,7 @@ namespace BubbleBobbleSharpLib;
 
 internal sealed class GameLoop
 {
-    private const int PassesPerSecond = 25;
+    private const int FramesPerPass = 2;
 
     private const byte FirstCounter = 0x01;
 
@@ -48,7 +48,6 @@ internal sealed class GameLoop
 
     private SolidMap? _map;
     private byte _subflg;
-    private int _passesToSecond;
     private int _overPasses;
     private byte _counter;
 
@@ -77,7 +76,7 @@ internal sealed class GameLoop
             Undying = OnePlayer,
         };
 
-        _respawn = new(Entities, PlayerTable, Items);
+        _respawn = new(Entities, PlayerTable, Items, Timer);
         _join = new(Entities, PlayerTable, Scores);
 
         // $0956-$0977.
@@ -103,6 +102,8 @@ internal sealed class GameLoop
 
     internal LevelItems Items { get; }
 
+    internal LevelTimer Timer { get; } = new();
+
     internal void Start(Level level, IReadOnlyList<ZoneRect> zones, int number)
     {
         ArgumentNullException.ThrowIfNull(level);
@@ -125,7 +126,7 @@ internal sealed class GameLoop
 
         _enemies.Enter();
 
-        _passesToSecond = PassesPerSecond;
+        Timer.Begin(_subflg);
         _counter = FirstCounter;
         _overPasses = 0;
     }
@@ -151,10 +152,12 @@ internal sealed class GameLoop
         _respawn.Update(_subflg);
         _join.Update(ports);
 
-        if (--_passesToSecond == 0)
+        for (int frame = 0; frame < FramesPerPass; frame++)
         {
-            _passesToSecond = PassesPerSecond;
-            Items.Tick();
+            if (Timer.Advance())
+            {
+                Items.Tick();
+            }
         }
 
         _enemies.Step(_counter, map);

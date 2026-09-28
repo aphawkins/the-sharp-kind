@@ -179,6 +179,27 @@ public sealed class GameLoopTests
         Assert.Equal(PlayerRespawn.SpawnX[1], loop.Entities.X[1]);
     }
 
+    // $392A, $09FD, $06AB: a level starts with thirty seconds, and a second is fifty IRQ frames, twenty-five passes.
+    [Fact]
+    public void TheLevelClockRunsASecondEveryTwentyFivePasses()
+    {
+        GameLoop loop = Start(1, seed: 1);
+
+        Assert.Equal(0x1E, loop.Timer.Seconds);
+
+        for (int pass = 0; pass < 24; pass++)
+        {
+            loop.Pass([Idle, Idle]);
+        }
+
+        Assert.Equal(0x1E, loop.Timer.Seconds);
+
+        loop.Pass([Idle, Idle]);
+
+        Assert.Equal(0x1D, loop.Timer.Seconds);
+        Assert.Equal(0x32, loop.Timer.Frames);
+    }
+
     // $0A64: only both players out ends the game. A player in any state, dying or waiting to respawn, is in it.
     [Theory]
     [InlineData(0x00, 0x00, true)]

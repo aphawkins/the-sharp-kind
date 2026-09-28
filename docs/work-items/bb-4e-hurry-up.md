@@ -13,5 +13,5 @@ The timer running out with enemies left, `$15E1`-`$15FA`, `$3AB8`.
   `PlayerRespawn.Calm` is the same routine with `$16EF` raised.
 - The level 99 special (`$16C5`-`$16D8`, `$5AFF`) is step 7's; `PlayerDeath` needs `$5AFF`.
 
-Blocked by 4a. Verify: a VICE capture of the expiry, and the angry flash on
+Verify: a VICE capture of the expiry, and the angry flash on
 each enemy.

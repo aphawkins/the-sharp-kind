@@ -16,5 +16,5 @@ The last enemy gone, `$16F7`-`$1772`, the tail of `$1578`.
 - `$1751`-`$1772`: `$1E2E` if `$69`, then `$2B` to `$32`, `$2D` to `$FF`, `$2A` to 9.
   `$3517` if `$68` is set (the bonus round: step 7).
 
-Blocked by 4a. Verify: a VICE capture with `$4A` written to zero (an
+Verify: a VICE capture with `$4A` written to zero (an
 intervention; the enemies gone by hand do not end a level, `$4A` does).

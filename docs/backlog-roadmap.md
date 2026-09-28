@@ -43,11 +43,10 @@ Every open work item, in priority order. Each line links to a file in
 
 Steps from section 5 of [bb-port-plan.md](bb-port-plan.md), in order.
 
-- [ ] [4a: level timer](work-items/bb-4a-level-timer.md)
 - [ ] [4b: the freeze](work-items/bb-4b-freeze.md)
-- [ ] [4c: level clear](work-items/bb-4c-level-clear.md) — blocked by 4a
+- [ ] [4c: level clear](work-items/bb-4c-level-clear.md)
 - [ ] [4d: level complete and the next level](work-items/bb-4d-level-complete.md) — blocked by 4c
-- [ ] [4e: the hurry-up](work-items/bb-4e-hurry-up.md) — blocked by 4a
+- [ ] [4e: the hurry-up](work-items/bb-4e-hurry-up.md)
 - [ ] [4f: the Baron](work-items/bb-4f-baron.md) — blocked by 4e
 - [ ] [5: special bubbles and EXTEND](work-items/bb-5-special-bubbles-extend.md)
 - [ ] [2d(ii): draw the special bubbles](work-items/bb-2d-ii-draw-special-bubbles.md)

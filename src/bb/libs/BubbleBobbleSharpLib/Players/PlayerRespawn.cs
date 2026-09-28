@@ -3,6 +3,7 @@
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
 using BubbleBobbleSharpLib.Items;
+using BubbleBobbleSharpLib.Levels;
 
 namespace BubbleBobbleSharpLib.Players;
 
@@ -22,16 +23,19 @@ internal sealed class PlayerRespawn
     private readonly EntityTable _entities;
     private readonly PlayerTable _players;
     private readonly LevelItems _items;
+    private readonly LevelTimer _timer;
 
-    internal PlayerRespawn(EntityTable entities, PlayerTable players, LevelItems items)
+    internal PlayerRespawn(EntityTable entities, PlayerTable players, LevelItems items, LevelTimer timer)
     {
         ArgumentNullException.ThrowIfNull(entities);
         ArgumentNullException.ThrowIfNull(players);
         ArgumentNullException.ThrowIfNull(items);
+        ArgumentNullException.ThrowIfNull(timer);
 
         _entities = entities;
         _players = players;
         _items = items;
+        _timer = timer;
     }
 
     internal static ReadOnlySpan<byte> SpawnX => [0x2C, 0xEC];
@@ -76,7 +80,8 @@ internal sealed class PlayerRespawn
             _entities.State[player] = RespawningState;
         }
 
-        // $0504-$0512 restart the level timer ($2A-$2D), which is step 4's and not modelled yet.
+        _timer.Restart();
+
         if (_entities.EnemyCount >= AngerFrom)
         {
             Calm();

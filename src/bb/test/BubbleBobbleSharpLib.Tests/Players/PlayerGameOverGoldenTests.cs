@@ -3,6 +3,7 @@
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
 using BubbleBobbleSharpLib.Items;
+using BubbleBobbleSharpLib.Levels;
 using BubbleBobbleSharpLib.Players;
 using SharpKind.Fakes;
 using Xunit;
@@ -114,7 +115,7 @@ public sealed class PlayerGameOverGoldenTests
         internal Rig(byte[] b)
         {
             Items = new(Entities, new Scores(), new(Players, Entities), new(new FakeRandomSource()));
-            Respawn = new(Entities, Players, Items);
+            Respawn = new(Entities, Players, Items, Timer);
 
             b.AsSpan(Round, PlayerTable.Capacity).CopyTo(Players.Round);
             b.AsSpan(Lives, PlayerTable.Capacity).CopyTo(Players.Lives);
@@ -130,6 +131,8 @@ public sealed class PlayerGameOverGoldenTests
         internal PlayerTable Players { get; } = new();
 
         internal LevelItems Items { get; }
+
+        internal LevelTimer Timer { get; } = new();
 
         internal PlayerRespawn Respawn { get; }
 

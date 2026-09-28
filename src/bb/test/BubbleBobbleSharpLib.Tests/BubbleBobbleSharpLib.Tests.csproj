@@ -33,6 +33,7 @@
     <None Include="Bubbles\Captures\*.txt" CopyToOutputDirectory="PreserveNewest" />
     <None Include="Views\Captures\*.txt" CopyToOutputDirectory="PreserveNewest" />
     <None Include="Players\Captures\*.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Levels\Captures\*.txt" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

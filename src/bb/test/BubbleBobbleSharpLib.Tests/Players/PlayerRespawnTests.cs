@@ -214,7 +214,7 @@ public sealed class PlayerRespawnTests
         internal Rig()
         {
             Items = new(Entities, new Scores(), new(Players, Entities), new(new FakeRandomSource()));
-            Respawn = new(Entities, Players, Items);
+            Respawn = new(Entities, Players, Items, Timer);
         }
 
         internal EntityTable Entities { get; } = new();
@@ -222,6 +222,8 @@ public sealed class PlayerRespawnTests
         internal PlayerTable Players { get; } = new();
 
         internal LevelItems Items { get; }
+
+        internal LevelTimer Timer { get; } = new();
 
         internal PlayerRespawn Respawn { get; }
 

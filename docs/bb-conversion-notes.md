@@ -791,6 +791,25 @@ is a colour, `$10` ends the string (the reference's comments say `$00`),
 `$1F` is followed by column and row, and any other byte less `$20` is a
 screen code (A is `$21`, digits are their value).
 
+### LevelTimer
+
+`$2A` seconds left, `$2B` IRQ frames to the next second (`$32`, or `$FF`
+when the clock is stopped), `$2C` the level's start value, `$2D` the
+hurry-up state (0, positive once begun, `$FF` when the level is cleared),
+`$A9B1` the READY!! text's seconds (`$FF` when gone).
+
+- `$392A`: 30 seconds; 10 when SUBFLG is `$37`; 20 from `$38`. `$09FD`
+  loads `$2B` with `$32` and `$E07E` clears `$2D`.
+- `$06AB`, every frame whatever the pass is doing: with `$2B` negative
+  nothing runs. Otherwise `dec $2B`, and at zero `$32` back, `dec $2A`
+  (a byte, so it wraps), `dec $A9B1` while above zero, then `$06C6`, which
+  counts `$5D`/`$5E` (`LevelItems.Tick`). So a stopped clock stops the
+  item timers.
+- `$0504`-`$0512`, at the end of a respawn or a game over: unless `$2B` or
+  `$2D` is negative, `$2D` goes to 0 and `$2A` to `$2C`.
+- VICE runs the main loop a pass every three frames on level 1. The port
+  runs two frames a pass, to keep time by the wall clock.
+
 ### PlayerJoin
 
 `$052A` (`player-state.s`), the tail of `$045C` through the jump at `$049D`:

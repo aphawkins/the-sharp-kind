@@ -132,7 +132,7 @@ public sealed class PlayerRespawnGoldenTests
         internal Rig(byte[] b)
         {
             Items = new(Entities, new Scores(), new(Players, Entities), new(new FakeRandomSource()));
-            Respawn = new(Entities, Players, Items);
+            Respawn = new(Entities, Players, Items, Timer);
 
             b.AsSpan(States, EntityTable.Capacity).CopyTo(Entities.State);
             b.AsSpan(Xs, EntityTable.Capacity).CopyTo(Entities.X);
@@ -160,6 +160,8 @@ public sealed class PlayerRespawnGoldenTests
         internal PlayerTable Players { get; } = new();
 
         internal LevelItems Items { get; }
+
+        internal LevelTimer Timer { get; } = new();
 
         internal PlayerRespawn Respawn { get; }
 
