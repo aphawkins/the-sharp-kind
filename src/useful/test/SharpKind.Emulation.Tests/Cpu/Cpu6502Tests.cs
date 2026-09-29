@@ -504,6 +504,44 @@ public class Cpu6502Tests
         Assert.Contains("$0200", exception.Message, StringComparison.Ordinal);
     }
 
+    // The no-operations that take an operand: the operand is skipped and nothing else changes. `bit $3FAD` landing on
+    // the `$5C` behind it is how Bubble Bobble's level-start code chooses between two values.
+    [Theory]
+    [InlineData(0x1A, 1, 2)]
+    [InlineData(0x80, 2, 2)]
+    [InlineData(0x04, 2, 3)]
+    [InlineData(0x14, 2, 4)]
+    [InlineData(0x0C, 3, 4)]
+    [InlineData(0x5C, 3, 4)]
+    public void AnUndocumentedNoOperationSkipsItsOperand(int code, int length, int cycles)
+    {
+        // Arrange
+        (Cpu6502 cpu, _) = Load(code, 0x12, 0x34);
+        cpu.A = 0x55;
+
+        // Act
+        int taken = cpu.Step();
+
+        // Assert
+        Assert.Equal(Origin + length, cpu.PC);
+        Assert.Equal(cycles, taken);
+        Assert.Equal(0x55, cpu.A);
+    }
+
+    [Fact]
+    public void AnAbsoluteIndexedNoOperationPaysACycleForACrossedPage()
+    {
+        // Arrange: LDX #$FF, then NOP $0201,X crosses to $0300.
+        (Cpu6502 cpu, _) = Load(0xA2, 0xFF, 0x5C, 0x01, 0x02);
+        cpu.Step();
+
+        // Act
+        int cycles = cpu.Step();
+
+        // Assert
+        Assert.Equal(5, cycles);
+    }
+
     [Fact]
     public void StackPointerWrapsWithinPageOne()
     {

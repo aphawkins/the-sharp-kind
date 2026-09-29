@@ -3,8 +3,9 @@
 namespace SharpKind.Emulation.Cpu;
 
 /// <summary>
-/// The documented instruction set of the NMOS 6502 (the 6510 in a C64), one <see cref="Step"/> at a time. Bytes wrap
-/// where the chip wraps: the zero page, the stack page and the indirect jump's page. Decimal mode follows the NMOS part.
+/// The documented instruction set of the NMOS 6502 (the 6510 in a C64) and its undocumented no-operations, one
+/// <see cref="Step"/> at a time. Bytes wrap where the chip wraps: the zero page, the stack page and the indirect jump's page.
+/// Decimal mode follows the NMOS part.
 /// </summary>
 public sealed partial class Cpu6502(IBus bus)
 {

@@ -214,12 +214,42 @@ public sealed partial class Cpu6502
         Implied(Operation.Inx, 0xE8);
         Implied(Operation.Iny, 0xC8);
         Implied(Operation.Nop, 0xEA);
+
         Implied(Operation.Tax, 0xAA);
         Implied(Operation.Tay, 0xA8);
         Implied(Operation.Tsx, 0xBA);
         Implied(Operation.Txa, 0x8A);
         Implied(Operation.Txs, 0x9A);
         Implied(Operation.Tya, 0x98);
+
+        // The undocumented no-operations, which take an operand and do nothing with it: programs use them to skip
+        // over the operand of an instruction ("bit $xxxx" tricks land on them), as Bubble Bobble's `$05E4` does.
+        foreach (int code in (int[])[0x1A, 0x3A, 0x5A, 0x7A, 0xDA, 0xFA])
+        {
+            Implied(Operation.Nop, code);
+        }
+
+        foreach (int code in (int[])[0x80, 0x82, 0x89, 0xC2, 0xE2])
+        {
+            Add(code, Operation.Nop, Mode.Immediate, 2);
+        }
+
+        foreach (int code in (int[])[0x04, 0x44, 0x64])
+        {
+            Add(code, Operation.Nop, Mode.ZeroPage, 3);
+        }
+
+        foreach (int code in (int[])[0x14, 0x34, 0x54, 0x74, 0xD4, 0xF4])
+        {
+            Add(code, Operation.Nop, Mode.ZeroPageX, 4);
+        }
+
+        Add(0x0C, Operation.Nop, Mode.Absolute, 4);
+
+        foreach (int code in (int[])[0x1C, 0x3C, 0x5C, 0x7C, 0xDC, 0xFC])
+        {
+            Add(code, Operation.Nop, Mode.AbsoluteX, 4, true);
+        }
 
         return table;
     }

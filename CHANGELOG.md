@@ -13,6 +13,8 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
   read-modify-write double write), a SID chip (three voices, ADSR, the filter, a 44.1 kHz renderer) and a PSID player
   ([src/useful/libs/SharpKind.Emulation](src/useful/libs/SharpKind.Emulation)). The shipped Bubble Bobble tune runs on it.
   `SoftwareSound` and `SDLSound` play SID songs (`file.sid#N`).
+- **The 6502 runs the undocumented no-operations** (`$1A`, `$80`, `$04`, `$0C`, `$5C` and the rest that skip an operand), as
+  Bubble Bobble's level-100 start needs.
 - **Bubble Bobble's giant bonus drops**: a level cleared after a bonus item shows a cake, a melon or a diamond falling from the
   top, which a player scores by touching ([SuperBonus.cs](src/bb/libs/BubbleBobbleSharpLib/Levels/SuperBonus.cs)); proved against
   the real game.
