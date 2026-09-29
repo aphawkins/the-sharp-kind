@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>SharpKind.Emulation</PackageId>
+    <Description>Software emulation of the MOS 6502 CPU and the C64 SID sound chip for SharpKind-based games.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SharpKind\SharpKind.csproj" />
+  </ItemGroup>
+
+</Project>

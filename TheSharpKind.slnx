@@ -118,6 +118,7 @@
     <Project Path="src/useful/libs/SharpKind.App/SharpKind.App.csproj" />
     <Project Path="src/useful/libs/SharpKind.Assets/SharpKind.Assets.csproj" />
     <Project Path="src/useful/libs/SharpKind.Audio/SharpKind.Audio.csproj" Id="f905b754-5b15-4e1e-95a5-0ae5c0543175" />
+    <Project Path="src/useful/libs/SharpKind.Emulation/SharpKind.Emulation.csproj" />
     <Project Path="src/useful/libs/SharpKind.Graphics/SharpKind.Graphics.csproj" />
     <Project Path="src/useful/libs/SharpKind.Input/SharpKind.Input.csproj" Id="06eb8143-9b04-4f33-ba8e-d1ec9357c9ea" />
     <Project Path="src/useful/libs/SharpKind.SDL/SharpKind.SDL.csproj" />
@@ -134,6 +135,7 @@
     <Project Path="src/useful/test/SharpKind.App.Tests/SharpKind.App.Tests.csproj" />
     <Project Path="src/useful/test/SharpKind.Assets.Tests/SharpKind.Assets.Tests.csproj" />
     <Project Path="src/useful/test/SharpKind.Audio.Tests/SharpKind.Audio.Tests.csproj" />
+    <Project Path="src/useful/test/SharpKind.Emulation.Tests/SharpKind.Emulation.Tests.csproj" />
     <Project Path="src/useful/test/SharpKind.Fakes/SharpKind.Fakes.csproj" />
     <Project Path="src/useful/test/SharpKind.GoldenFrames/SharpKind.GoldenFrames.csproj" />
     <Project Path="src/useful/test/SharpKind.Graphics.Fakes/SharpKind.Graphics.Fakes.csproj" />
