@@ -15,6 +15,10 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
   `SoftwareSound` and `SDLSound` play SID songs (`file.sid#N`).
 - **The 6502 runs the undocumented no-operations** (`$1A`, `$80`, `$04`, `$0C`, `$5C` and the rest that skip an operand), as
   Bubble Bobble's level-100 start needs.
+- **Bubble Bobble has golden frames for all 100 levels**: each is composed at three moments against committed signatures
+  ([FrameCheckTests.cs](src/bb/test/BubbleBobbleSharpLib.Tests/GoldenFrames/FrameCheckTests.cs)). They showed at once that a
+  player who is not in the game was drawn at the starting place, the second dragon on a one-player level, and it is now kept
+  off the screen as the game keeps it.
 - **Bubble Bobble's giant bonus drops**: a level cleared after a bonus item shows a cake, a melon or a diamond falling from the
   top, which a player scores by touching ([SuperBonus.cs](src/bb/libs/BubbleBobbleSharpLib/Levels/SuperBonus.cs)); proved against
   the real game.

@@ -390,8 +390,12 @@ internal sealed class GameLoop
                 Entities.State[player] = player < _playing ? PlayerFrame.PlayingState : (byte)0;
             }
 
-            Entities.X[player] = PlayerRespawn.SpawnX[player];
-            Entities.Y[player] = PlayerRespawn.SpawnY;
+            // $E56D-$E58F: only a player in the game is brought to its starting place; the other stays where it was, which
+            // is (0, 0) ($0986, $0988, $04F0), off the screen.
+            bool inGame = Entities.State[player] != 0;
+
+            Entities.X[player] = inGame ? PlayerRespawn.SpawnX[player] : (byte)0;
+            Entities.Y[player] = inGame ? PlayerRespawn.SpawnY : (byte)0;
             Entities.Frame[player] = PlayerRespawn.SpawnFrame[player];
             Entities.Colour[player] = LevelEnd.SpawnColour[player];
             Entities.SpriteBase[player] = PlayerSpriteBase;

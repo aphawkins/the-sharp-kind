@@ -693,8 +693,12 @@ Each item ends with how it is proved.
       `BannerHeight` moves the screen grid down, rather than `PlayfieldRow`, and
       `SpriteView8Bit` adds it), `decisions.md`, `bb-readme.md`,
       `reference-sources.md`, `index.md`, `toc.yml`, `README.md`, a screenshot
-      and the CHANGELOG. Left: golden frames for all 100 levels, and a
-      zero-warning full-solution build with every test green.
+      and the CHANGELOG, and golden frames for all 100 levels
+      (`GoldenFrames/FrameCheckTests`: each level at ticks 2, 60 and 200 of a
+      scripted stick, on the shipped artwork and a seeded random, against
+      committed 32 by 32 brightness grids; regenerate with
+      `BB_REGENERATE_FRAMES=1`). The zero-warning full-solution build with every
+      test green is checked at each stage.
       - 320x256 with a 56-line banner on top, the repo's 8-bit tier (Elite's
         size). `EightBitRendition.ScreenHeight` to 256, `PlayfieldRow` to 7,
         and a `BannerModel` drawing `Assets/Images/banner.png` (already
@@ -702,7 +706,6 @@ Each item ends with how it is proved.
         comparisons then crop to the 200 lines below the banner. Record in
         [decisions.md](decisions.md) that the banner is house chrome outside
         the fidelity rule.
-      - Then golden frames for all 100 levels.
       - `bb-readme.md`, a section in [reference-sources.md](reference-sources.md),
         three games in `docs/index.md`, `docs/toc.yml` and `README.md`, a
         screenshot, and a `CHANGELOG.md` line.

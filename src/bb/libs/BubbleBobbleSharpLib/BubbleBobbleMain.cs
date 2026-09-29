@@ -47,6 +47,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     private readonly ScreenManager<BbScreen, IGameScreen> _screens;
 
     private readonly Input _input;
+    private readonly Random _random;
 
     private readonly byte[] _highScore = new byte[HudModel.ScoreBytes];
 
@@ -70,6 +71,19 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         LevelStore levels,
         ZoneStore zones,
         AudioOptions audioOptions)
+        : this(abstraction, assetLocator, rendition, levels, zones, audioOptions, Random.Shared)
+    {
+    }
+
+    // The random the game rolls from, which a test seeds to have every run play the same.
+    internal BubbleBobbleMain(
+        IAbstraction abstraction,
+        IAssetLocator assetLocator,
+        IBbRendition rendition,
+        LevelStore levels,
+        ZoneStore zones,
+        AudioOptions audioOptions,
+        Random random)
     {
         ArgumentNullException.ThrowIfNull(abstraction);
         ArgumentNullException.ThrowIfNull(assetLocator);
@@ -77,8 +91,10 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         ArgumentNullException.ThrowIfNull(levels);
         ArgumentNullException.ThrowIfNull(zones);
         ArgumentNullException.ThrowIfNull(audioOptions);
+        ArgumentNullException.ThrowIfNull(random);
 
         _abstraction = abstraction;
+        _random = random;
         Graphics = abstraction.Graphics;
         Layout = abstraction.Layout;
         Keyboard = abstraction.Keyboard;
@@ -90,7 +106,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
 
         _input = new Input(Keyboard, Gamepad);
 
-        Loop = new GameLoop(new BbRandom(new RandomSource(Random.Shared)), PlayingPlayers);
+        Loop = new GameLoop(new BbRandom(new RandomSource(random)), PlayingPlayers);
 
         BbViewSurface surface = new(Graphics, Layout, assetLocator);
         _playfieldView = rendition.CreatePlayfieldView(surface);
@@ -153,7 +169,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     // $F005: a new game, from the first level. The title's tune stops when the game's theme starts.
     internal void StartGame()
     {
-        Loop = new GameLoop(new BbRandom(new RandomSource(Random.Shared)), PlayingPlayers);
+        Loop = new GameLoop(new BbRandom(new RandomSource(_random)), PlayingPlayers);
         ShowLevel(FirstLevel);
         _screens.Set(BbScreen.Play);
     }
