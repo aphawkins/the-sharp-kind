@@ -576,6 +576,57 @@ def export_item_chars(out_dir, canonical):
     return ITEM_BLOCK_COUNT
 
 
+GIANT_IMAGE = 0xA220
+GIANT_MASK = 0xA270
+GIANT_BLOCKS = 10
+
+# `$A82E`: where each of the giant bubble's ten characters goes in its four by four cells, as the screen offset (40 to a row)
+# from the cell its object is in (the object's row less two). `$3F28` fills the table from the last: block 0 is the last entry.
+GIANT_CELLS = [0x79, 0x78, 0x53, 0x52, 0x51, 0x2A, 0x29, 0x28, 0x03, 0x02]
+GIANT_SIDE = 4
+
+
+def export_giant_bubble(out_dir, canonical):
+    """
+    Write giant-bubble.tga: the item of type 7's picture, four cells by four of 4 by 8 multicolour pixels. `$3F28` draws
+    it as `(screen AND mask) OR graphic` over ten of the cells, so where the mask keeps the screen the pixel is
+    transparent (index 0) and the level shows through, and the six cells it does not touch are transparent throughout.
+    """
+    image = tga_mod.parse_tga(os.path.join(DATA, "software-sprites.tga"))
+    software_sprites = tga_mod.convert_software_sprites(image, 4, 16, 0)
+
+    graphic = _read_bytes(software_sprites, GIANT_IMAGE, SOFTWARE_SPRITES_BASE, GIANT_BLOCKS * 8)
+    mask = _read_bytes(software_sprites, GIANT_MASK, SOFTWARE_SPRITES_BASE, GIANT_BLOCKS * 8)
+
+    width = GIANT_SIDE * 4
+    height = GIANT_SIDE * 8
+    pixels = bytearray(width * height)
+
+    for block in range(GIANT_BLOCKS):
+        offset = GIANT_CELLS[GIANT_BLOCKS - 1 - block]
+        cell_x, cell_y = offset % 40, offset // 40
+
+        for row in range(8):
+            for i, (value, keep) in enumerate(
+                zip(_bit_pairs(graphic[block * 8 + row]), _bit_pairs(mask[block * 8 + row]))
+            ):
+                if keep not in (0, 3):
+                    raise SystemExit(f"giant bubble block {block} row {row} has a mask of {keep}, not all or none.")
+
+                x = cell_x * 4 + i
+                y = cell_y * 8 + row
+                pixels[y * width + x] = 0 if keep == 3 else (value if value != 0 else 4)
+
+    write_tga(
+        os.path.join(out_dir, "Images", "giant-bubble.tga"),
+        {"width": width, "height": height, "pixels": pixels, "palette": [None] * 5},
+        0,
+        list(canonical[:4]) + [canonical[0]],
+    )
+
+    return GIANT_BLOCKS
+
+
 # =============================================================================
 # Font
 # =============================================================================
@@ -1010,6 +1061,12 @@ def main():
     print(
         f"Wrote {count} item blocks -> "
         f"{os.path.join(args.out, 'Images', 'item-chars.tga')}"
+    )
+
+    count = export_giant_bubble(args.out, canonical)
+    print(
+        f"Wrote {count} giant bubble characters -> "
+        f"{os.path.join(args.out, 'Images', 'giant-bubble.tga')}"
     )
 
     count = export_effect_chars(args.out, canonical)

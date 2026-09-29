@@ -81,6 +81,33 @@ public sealed class EffectsView8BitTests
         Assert.Equal(TestSurface.Colour(5), graphics.Image("EffectChars.Fire.Recoloured").GetPixel(3, 0));
     }
 
+    // $3F28's ten characters, in their four by four cells from the one two rows above the object's: all of the picture at once.
+    [Fact]
+    public void DrawsTheGiantBubbleAsOnePictureAtItsCell()
+    {
+        RecordingGraphics graphics = new(320, 200);
+        BbViewLayout layout = new(320, 200);
+
+        new EightBitRendition().CreateEffectsView(new TestSurface(graphics, "EffectChars", "GiantBubble"))
+            .Draw(new EffectsModel(false, s_columns, s_rows, s_none, s_none, s_none, s_none, Colours)
+            {
+                ShowsGiant = true,
+                GiantColumn = 12,
+                GiantRow = 7,
+            });
+
+        (string imageType, Vector2 position, Vector2 size, _, Vector2 sourceSize) = Assert.Single(graphics.ImageParts);
+
+        Assert.Equal("GiantBubble.Recoloured", imageType);
+        Assert.Equal(layout.Playfield.Cell(12, 7), position);
+        Assert.Equal(new Vector2(32, 32), size);
+        Assert.Equal(new Vector2(16, 32), sourceSize);
+    }
+
+    [Fact]
+    public void DrawsNoGiantBubbleUnlessItIsSweeping()
+        => Assert.Empty(Draw(false, s_none, s_none, s_none, s_none).ImageParts);
+
     private static RecordingGraphics Draw(bool water, byte[] columns, byte[] rows, byte[] lengths, byte[] characters)
         => Draw(water, columns, rows, lengths, characters, s_rows);
 

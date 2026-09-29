@@ -7,7 +7,7 @@ using SharpKind.Graphics;
 
 namespace BubbleBobbleSharp.Renditions.EightBit;
 
-/// <summary>Draws the water and the fire, which the game draws as characters.</summary>
+/// <summary>Draws the water, the fire and the giant bubble, which the game draws as characters.</summary>
 internal sealed class EffectsView8Bit : IView<EffectsModel>
 {
     // effect-chars.tga: $1C, $1F, $40 and $41, in that order.
@@ -19,12 +19,18 @@ internal sealed class EffectsView8Bit : IView<EffectsModel>
 
     private const string Sheet = "EffectChars";
 
+    // giant-bubble.tga: the ten characters of `$3F28`, in their four by four cells, over whatever the level has there.
+    private const string GiantSheet = "GiantBubble";
+    private const int GiantWidth = 16;
+    private const int GiantHeight = 32;
+
     private static readonly int[] s_codes = [0x1C, 0x1F, 0x40, 0x41];
 
     private readonly IGraphics _graphics;
     private readonly BbViewLayout _layout;
     private readonly MulticolourSheet _water;
     private readonly MulticolourSheet _fire;
+    private readonly MulticolourSheet _giant;
 
     internal EffectsView8Bit(IViewSurface surface)
     {
@@ -34,6 +40,7 @@ internal sealed class EffectsView8Bit : IView<EffectsModel>
         _layout = surface.Layout;
         _water = new(surface, Sheet, Sheet + ".Water");
         _fire = new(surface, Sheet, Sheet + ".Fire");
+        _giant = new(surface, GiantSheet);
     }
 
     public void Draw(EffectsModel model)
@@ -55,6 +62,23 @@ internal sealed class EffectsView8Bit : IView<EffectsModel>
         {
             DrawStrip(model, strip);
         }
+
+        if (model.ShowsGiant)
+        {
+            DrawGiant(model);
+        }
+    }
+
+    private void DrawGiant(EffectsModel model)
+    {
+        _giant.Paint(model.Colours);
+
+        _graphics.DrawImagePart(
+            _giant.Name,
+            _layout.Playfield.Cell(model.GiantColumn, model.GiantRow),
+            new(GiantWidth * 2, GiantHeight),
+            new(0, 0),
+            new(GiantWidth, GiantHeight));
     }
 
     private void DrawStrip(EffectsModel model, int strip)

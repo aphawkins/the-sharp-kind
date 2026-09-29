@@ -665,9 +665,10 @@ Each item ends with how it is proved.
         frames, the clock and the players. Proved against the game: `ItemRoomOracleTests` (every level's placement bar the
         level 43, the taking, the results and the text). Drawn by `RoomView8Bit` (the items from three new blocks of
         `item-chars.tga`, the clock and counts, the results' window).
-      - [ ] **Not translated, so they do nothing** (`ItemEffects.Untranslated` is told, and the game goes on): 7 (`$A653`, which
-        sets `$58FF` for `$1AB6`, a diagonal flight of a giant bubble down the level that kills what it passes; drawn by
-        `$3F28` from characters), 29 (`$35B0`) and 32 (`$3621`, the super bonus room).
+      - [x] 7 (`$A653`, `GiantBubble`): sets `$58FF` for `$1AB6`, a diagonal flight of a giant bubble down the level that turns what it
+        passes to food. Proved against the game (`GiantBubbleOracleTests`); drawn from `giant-bubble.tga`, the ten characters of `$3F28`.
+      - [ ] **Not translated, so they do nothing** (`ItemEffects.Untranslated` is told, and the game goes on): 29 (`$35B0`) and 32
+        (`$3621`, the super bonus room).
       - [x] 33 (`$7C37`, the last milestone's item at level 50: to level `$45`, counting up a byte at a time as `$7FD4` does) and
         34 (`$7C3C`, the last level's crystal: the taker's `$37C7` goes negative).
 - [ ] **7. Super mode, bonus rounds and level 100** (`SUBFLG` `$63`).

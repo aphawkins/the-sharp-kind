@@ -7,6 +7,15 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Added (Bubble Bobble's giant bubble, 2026-09-29)
+
+- **The special item of type 7 sweeps the level with a giant bubble** ([GiantBubble.cs](src/bb/libs/BubbleBobbleSharpLib/Levels/GiantBubble.cs)):
+  two to five times, the players' bubbles pop and the game waits, then a giant bubble comes in from the top right, a cell left and a
+  cell down a pass, and turns every enemy it passes, caught or free, to food. A cleared level, the Barons' call and a level's
+  start put the sweeps away. It is drawn from `giant-bubble.tga` (exported from the game's own `$3F28` characters by `tools/bb`).
+  The start and each pass are proved against the real game (`GiantBubbleOracleTests`); the border's flash is not shown. The
+  game's slot-popping wait is shared with the Barons' call (`SlotPop`).
+
 ### Fixed (Bubble Bobble's level maps are the game's for all 99 levels, 2026-09-29)
 
 - **`SolidMapOracleTests` compares every level and skips none.** Four things were wrong: a level whose zone data redirects

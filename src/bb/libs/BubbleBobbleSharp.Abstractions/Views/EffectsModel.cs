@@ -4,7 +4,7 @@
 
 namespace BubbleBobbleSharp.Abstractions.Views;
 
-/// <summary>The characters the water and the fire draw into the level.</summary>
+/// <summary>The characters the water, the fire and the giant bubble draw into the level.</summary>
 public sealed class EffectsModel
 {
     private readonly byte[] _waterColumns;
@@ -57,6 +57,15 @@ public sealed class EffectsModel
 
     /// <summary>Gets the level's colour byte, painted the same as the playfield's.</summary>
     public int Colours { get; }
+
+    /// <summary>Gets a value indicating whether the giant bubble of the special item of type 7 is sweeping the level.</summary>
+    public bool ShowsGiant { get; init; }
+
+    /// <summary>Gets the screen column of the giant bubble's top-left cell, of its four by four.</summary>
+    public int GiantColumn { get; init; }
+
+    /// <summary>Gets the screen row of the giant bubble's top-left cell.</summary>
+    public int GiantRow { get; init; }
 
     /// <summary>Gets a value indicating whether a water cell is drawn: not the tail, and only within the level.</summary>
     /// <param name="cell">The cell, 0 the tail to 10 the head.</param>

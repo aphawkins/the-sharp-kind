@@ -80,6 +80,9 @@ internal sealed class LevelClear
     // The block a cleared level drops when `$69` is set.
     internal SuperBonus? SuperBonus { get; set; }
 
+    // `$58FF`, which a cleared level puts to nothing.
+    internal GiantBubble? Giant { get; set; }
+
     // $59BF: the level a bonus round is due after, and $59FF: how far to the next one ($092A, $095E).
     internal byte BonusLevel { get; set; } = FirstBonusLevel;
 
@@ -158,11 +161,12 @@ internal sealed class LevelClear
         }
     }
 
-    // $16F7-$1750. $58FF (the boss flag) is cleared here too, and is not modelled; nor is $69 ($1E2E's wave),
+    // $16F7-$1750. $58FF (the giant bubble's sweeps) is cleared here too; $69 ($1E2E's wave),
     // which only the bonus round sets.
     private void Clear()
     {
         _items.CancelSpecial();
+        Giant?.Cancel();
 
         // The C flag into the add is $F1AC's last compare, which VICE showed clear in every one of sixteen clears.
         _items.FoodBase = (sbyte)_items.FoodBase < 0

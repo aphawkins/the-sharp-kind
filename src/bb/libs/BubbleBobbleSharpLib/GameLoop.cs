@@ -2,6 +2,7 @@
 // 'rebb64' - github.com/zaidka/rebb64.
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
+using System.Diagnostics.CodeAnalysis;
 using BubbleBobbleSharpLib.Bubbles;
 using BubbleBobbleSharpLib.Enemies;
 using BubbleBobbleSharpLib.Items;
@@ -102,7 +103,7 @@ internal sealed class GameLoop
         Clear.ReadyEnded = AppearBoss;
         Bonus = new(Entities, Round, End.SavedFlash);
         _extend = new(PlayerTable, End);
-        _world = new(Clear, Flow, Timer, Entities, Objects, food, Items, Bonus);
+        _world = BuildWorld(random, food);
         effects.World = _world.Apply;
         Room = new(Entities, Scores, Timer, Items, _world.ResetObjects);
         _world.Room = StartRoom;
@@ -141,6 +142,8 @@ internal sealed class GameLoop
     internal GameEnding Ending { get; }
 
     internal BonusRound Bonus { get; }
+
+    internal GiantBubble Giant { get; private set; }
 
     internal RoundState Round { get; } = new();
 
@@ -229,6 +232,7 @@ internal sealed class GameLoop
 
         Items.Setup(level, _subflg);
         Boss.Begin(_subflg);
+        Giant.Reset();
 
         _enemies.Enter();
 
@@ -306,6 +310,9 @@ internal sealed class GameLoop
 
         _blow.Tick();
 
+        // $198A: the giant bubble's sweep is in the render, which is the first thing a pass does.
+        Giant.Sweep();
+
         if (_subflg == BossFight.Level)
         {
             Boss.Hit();
@@ -314,6 +321,9 @@ internal sealed class GameLoop
         {
             _bubbles.Update(map);
         }
+
+        // $0A3B: a sweep of the giant bubble starts, with the pause flag up and the clock on.
+        RunFrames(Giant.Start());
 
         Pop.FruitArt = LevelItems.FoodArt(Clear.BonusType);
         Pop.Update();
@@ -412,6 +422,29 @@ internal sealed class GameLoop
             food,
             flow,
             water);
+    }
+
+    // The frames a routine of the game waits in, which the IRQ goes on through: the clock.
+    private void RunFrames(int frames)
+    {
+        for (int frame = 0; frame < frames; frame++)
+        {
+            if (Timer.Advance())
+            {
+                Items.Tick();
+            }
+        }
+    }
+
+    // The effects that act on the level, with the giant bubble the effect of type 7 orders and a cleared level cancels.
+    [MemberNotNull(nameof(Giant))]
+    private WorldEffects BuildWorld(BbRandom random, FoodDrop food)
+    {
+        Giant = new(Entities, Objects, Pop, food, random);
+        Clear.Giant = Giant;
+        End.Giant = Giant;
+
+        return new(Clear, Flow, Timer, Entities, Objects, food, Items, Bonus, Giant);
     }
 
     // The item's routine waits for the room, and the IRQ goes on without it: the clock, and the players when it is

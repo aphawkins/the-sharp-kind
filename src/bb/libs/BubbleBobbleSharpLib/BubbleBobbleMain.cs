@@ -394,7 +394,12 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         Loop.Fire.Rows,
         Loop.Fire.Lengths,
         Loop.Fire.Characters,
-        _playfield.Colours);
+        _playfield.Colours)
+    {
+        ShowsGiant = Loop.Giant.Shown,
+        GiantColumn = Loop.Giant.Column,
+        GiantRow = Loop.Giant.Row - GiantBubble.TopRows,
+    };
 
     // A room clears the screen and the render pass that draws the level's items is not run while it lasts.
     private ItemsModel Items() => new(

@@ -21,6 +21,7 @@
     "ObjectSprites": "object-sprites.tga",
     "ItemChars": "item-chars.tga",
     "EffectChars": "effect-chars.tga",
+    "GiantBubble": "giant-bubble.tga",
     "Banner": "banner.png"
   },
   "Music": {

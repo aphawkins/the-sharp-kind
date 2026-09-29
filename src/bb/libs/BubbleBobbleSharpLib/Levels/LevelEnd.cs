@@ -20,12 +20,8 @@ internal sealed class LevelEnd
     private const byte AngryFully = 0xFF;
 
     private const byte PopType = 0x3A;
-    private const byte FirstMovableType = 0x18;
-    private const byte AfterMovableType = 0x24;
     private const byte FirstBaronType = 0x2E;
     private const byte BaronFoodSeed = 0xFF;
-
-    private const int WaitLimit = 0x4000;
 
     private static readonly byte[] s_spawnColour = [0x05, 0x03];
 
@@ -35,7 +31,7 @@ internal sealed class LevelEnd
     private readonly LevelTimer _timer;
     private readonly EntityTable _entities;
     private readonly ObjectTable _objects;
-    private readonly BubblePop _pop;
+    private readonly SlotPop _slots;
     private readonly LevelItems _items;
     private readonly BbRandom _random;
     private readonly RoundState _round;
@@ -59,7 +55,7 @@ internal sealed class LevelEnd
         _timer = timer;
         _entities = entities;
         _objects = objects;
-        _pop = pop;
+        _slots = new(objects, pop);
         _items = items;
         _random = random;
         _round = round ?? new();
@@ -73,6 +69,9 @@ internal sealed class LevelEnd
     // $A813, $A814: the flash a player had when a bonus round began, and has again after it. The bonus
     // round (step 7) is what sets them.
     internal byte[] SavedFlash { get; } = new byte[PlayerTable.Capacity];
+
+    // `$1621`: the Barons' call puts the giant bubble's sweeps (`$58FF`) to nothing.
+    internal GiantBubble? Giant { get; set; }
 
     // How many times the Barons have been called, for the song ($1621's `ldy #$43`, the round start's).
     internal int BaronCalls { get; private set; }
@@ -114,8 +113,9 @@ internal sealed class LevelEnd
     private void SpawnBarons()
     {
         BaronCalls++;
-        PopSlots();
-        WaitForSlots();
+        _slots.Pop();
+        _slots.Wait();
+        Giant?.Cancel();
 
         _items.FoodBase = BaronFoodSeed;
 
@@ -140,7 +140,7 @@ internal sealed class LevelEnd
             }
         }
 
-        WaitForSlots();
+        _slots.Wait();
 
         for (int slot = PlayerTable.Capacity - 1; slot >= 0; slot--)
         {
@@ -155,53 +155,6 @@ internal sealed class LevelEnd
         _timer.Frames = LevelTimer.Stopped;
         _timer.Hurry = 0;
         _timer.Seconds = _timer.Start;
-    }
-
-    // $1AE8-$1B01: whatever is in the two slots is kept, unless it is not one of the movable types, and is popped.
-    private void PopSlots()
-    {
-        for (int slot = PlayerTable.Capacity - 1; slot >= 0; slot--)
-        {
-            byte type = _objects.Type[slot];
-
-            if ((sbyte)type < 0)
-            {
-                continue;
-            }
-
-            _objects.EnemyType[slot] = type is >= FirstMovableType and < AfterMovableType ? type : (byte)0;
-            _objects.Type[slot] = PopType;
-        }
-    }
-
-    // $1B02-$1B18: the objects go on being updated, at least once, until both slots are free.
-    private void WaitForSlots()
-    {
-        int passes = 0;
-
-        do
-        {
-            _pop.Update();
-        }
-        while (!SlotsFree() && ++passes < WaitLimit);
-
-        if (!SlotsFree())
-        {
-            throw new InvalidOperationException("the Barons' object slots never freed at $1B02");
-        }
-    }
-
-    private bool SlotsFree()
-    {
-        for (int slot = PlayerTable.Capacity - 1; slot >= 0; slot--)
-        {
-            if ((sbyte)_objects.Type[slot] >= 0)
-            {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     // $15FA-$1620. Each player in the game, player 2 first, has to be playing or still flashing from a respawn, and
