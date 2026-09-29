@@ -674,7 +674,10 @@ Each item ends with how it is proved.
 - [ ] **7. Super mode, bonus rounds and level 100** (`SUBFLG` `$63`).
       - [x] The last level's items, food and player reset, and the giant (`BossFight`, `$1134`, `$1D84`), with the crystal's
         thunder bubbles (`RoundState.ThunderBlow`). Proved against the game in `BossFightOracleTests`.
-      - [ ] The ending (`$A5B7`), which `GameLoop.EndLevel` still throws at.
+      - [x] The ending (`$A5B7`, `GameEnding`): the winner paid a million (`$10` a frame for a hundred frames, `$7C26`), fifty
+        frames more, then the blank screen with `$1773`'s text, the song (12) and the giant walking (`$0840`) until fire is
+        pressed and let go. Timed from the real game run on `SharpKind.Emulation` (score climbs frames 6-105, blank at 156, the
+        walk from 169); a step is two frames. No oracle for the waits.
 - [x] **8. Sound.** Music plays through the own SID stack
       ([audio-own-stack.md](work-items/audio-own-stack.md)). The C64 game has
       music only (`sound.s` is the SID player), so the "effects" of this step

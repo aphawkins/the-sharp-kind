@@ -32,6 +32,9 @@ internal sealed class BossFight
     private const byte AppearY = 0x65;
     private const byte AppearDirection = 0x06;
     private const byte AppearColour = 0x05;
+    private const byte PresentX = 0x8D;
+    private const byte PresentY = 0xB3;
+    private const byte ParadeLimit = 0x23;
     private const byte AngryColour = 0x0A;
 
     private const byte LeftLimit = 0x28;
@@ -152,6 +155,43 @@ internal sealed class BossFight
         _timer.Frames = LevelTimer.Stopped;
     }
 
+    // `$A5FD`-`$A61A`: the giant of the ending, on the blank screen.
+    internal void Present()
+    {
+        X = PresentX;
+        Y = PresentY;
+        Frame = 0;
+        Direction = 0;
+        Colour = AppearColour;
+        Active = true;
+        Shown = true;
+    }
+
+    // `$0840`-`$0866`, at each IRQ of the ending (SUBFLG `$64`): the giant walks left to `$23`, and right to the edge, a pixel at a
+    // time, turning about there.
+    internal void Parade()
+    {
+        if ((Direction & 0x01) == 0)
+        {
+            X--;
+
+            if (X == ParadeLimit)
+            {
+                Reverse();
+            }
+
+            return;
+        }
+
+        X++;
+
+        if (X == 0)
+        {
+            X--;
+            Reverse();
+        }
+    }
+
     // `$0A38`'s `jsr $1134`, in place of the special bubbles' corner spawner: the bolts that reach the giant, and what a stun does.
     internal void Hit()
     {
@@ -269,6 +309,12 @@ internal sealed class BossFight
         {
             Direction ^= 0x0C;
         }
+    }
+
+    private void Reverse()
+    {
+        Direction ^= 0x01;
+        Frame ^= FlipFrame;
     }
 
     // `$1DEA`-`$1E2D`: a player in play, player 2 first, within a box of the giant is killed, or, if the giant is stunned, wins.

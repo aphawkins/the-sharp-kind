@@ -298,7 +298,7 @@ public sealed class GameLoopTests
         loop.Entities.State[0] = complete[States];
         loop.Entities.State[1] = complete[States + 1];
 
-        int number = loop.EndLevel();
+        int number = loop.EndLevel()!.Value;
 
         Assert.Equal(init[Subflg] + 1, number);
         Assert.Equal(init[Round], loop.PlayerTable.Round[0]);

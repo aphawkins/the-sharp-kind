@@ -104,16 +104,18 @@ public sealed class BubbleBobbleMainTests
         Assert.False(game.Loop.IsComplete);
     }
 
-    // $0A8B: level 100's end is the ending, which is not translated.
+    // $0A8B: level 100's end is the ending.
     [Fact]
-    public void TheLastLevelEndsInTheEndingWhichIsNotTranslated()
+    public void TheLastLevelEndsInTheEnding()
     {
         BubbleBobbleMain game = Game(new FakeAbstraction());
         game.ShowLevel(LevelStore.Count);
         game.Loop.Timer.Seconds = 0;
         game.Loop.Timer.Hurry = 0xFF;
 
-        Assert.Throws<NotSupportedException>(game.Update);
+        game.Update();
+
+        Assert.True(game.Loop.Ending.Active);
     }
 
     // The game opens on the title, and the level under it is the first.

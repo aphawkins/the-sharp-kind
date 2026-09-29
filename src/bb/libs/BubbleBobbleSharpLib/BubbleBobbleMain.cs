@@ -136,7 +136,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
 
         ShowLevel(FirstLevel);
 
-        _screens = CreateScreens(rendition.CreateTitleView(surface), CreateLayers(surface));
+        _screens = CreateScreens(rendition.CreateTitleView(surface), CreateLayers(surface), CreateEndingLayers(surface));
     }
 
     public bool IsRunning { get; private set; } = true;
@@ -214,13 +214,28 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
 
     private void UpdateGame()
     {
+        // $0AA8: the game is won, and nothing but the ending goes on.
+        if (Loop.Ending.Active)
+        {
+            Loop.Ending.Step(_input.Read());
+            KeepHighScore();
+            PlaySongs();
+
+            if (Loop.Ending.Finished)
+            {
+                _screens.Set(BbScreen.Title);
+            }
+
+            return;
+        }
+
         Loop.Pass(_input.Read());
         KeepHighScore();
 
         // $0A6A: a cleared level whose clock has run out goes on to the next.
-        if (Loop.IsComplete)
+        if (Loop.IsComplete && Loop.EndLevel() is int next)
         {
-            ShowLevel(Loop.EndLevel(), next: true);
+            ShowLevel(next, next: true);
         }
 
         // $7FB2: an item has skipped levels.
@@ -239,15 +254,26 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         }
     }
 
-    private ScreenManager<BbScreen, IGameScreen> CreateScreens(IView<TitleModel> titleView, LayerRunner layers)
+    private ScreenManager<BbScreen, IGameScreen> CreateScreens(IView<TitleModel> titleView, LayerRunner layers, LayerRunner endingLayers)
     {
         ScreenManager<BbScreen, IGameScreen> screens = new(Keyboard);
 
         screens.Add(BbScreen.Title, new TitleScreen(TitleFire, SuperKeys, StartGame, PlaySong, titleView.Draw));
-        screens.Add(BbScreen.Play, new PlayScreen(UpdateGame, layers.Draw));
+        screens.Add(BbScreen.Play, new PlayScreen(UpdateGame, () => (Loop.Ending.Blank ? endingLayers : layers).Draw()));
         screens.Set(BbScreen.Title);
 
         return screens;
+    }
+
+    // $A5B7: the ending's screen is blank but for its text and the giant.
+    private LayerRunner CreateEndingLayers(BbViewSurface surface)
+    {
+        (Vector2 whole, float wholeWidth, float height) = surface.Layout.PlayfieldArea;
+
+        return new LayerRunner(
+            Graphics,
+            new RenderLayer(whole, wholeWidth, height, new RoomLayer(this)),
+            new RenderLayer(whole, wholeWidth, height, new SpriteLayer(this)));
     }
 
     private LayerRunner CreateLayers(BbViewSurface surface)
@@ -383,6 +409,11 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     private RoomModel Room()
     {
         ItemRoom room = Loop.Room;
+
+        if (Loop.Ending.Blank)
+        {
+            return new([], 0, 0, _playfield.Colours, _playfield.Tile, Loop.Ending.Lines, false);
+        }
 
         if (!room.Active)
         {

@@ -14,6 +14,10 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
   to thunder; fifty bolts stun the giant, and a player who touches it then wins (the ending itself is not in yet). A stunned
   giant flickers and gets up angry, moving twice a pass. The level's items and a player's coming back no longer throw.
   Its moves, hits and recovery are proved against the real game (`BossFightOracleTests`).
+- **Bubble Bobble has its ending** ([GameEnding.cs](src/bb/libs/BubbleBobbleSharpLib/Levels/GameEnding.cs)): the player who
+  touched the stunned giant is paid a million, the level stays up a moment, and the screen goes blank but for
+  CONGRATULATIONS, the ending's song and the giant walking the screen, until fire is pressed and let go. Then it is the title
+  again. Timed from the real game's own frames; the waits have no oracle.
 - **The READY!! counter starts at each level** (`$A9B1` is 2), so what waits for it, the giant, comes.
 
 ### Added (SharpKind.Emulation and Bubble Bobble's special bubbles, 2026-09-29)

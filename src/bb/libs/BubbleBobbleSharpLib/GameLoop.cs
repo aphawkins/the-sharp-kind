@@ -97,6 +97,7 @@ internal sealed class GameLoop
         _enemies.SuperBonus = Clear.SuperBonus;
         End = new(Timer, Entities, Objects, Pop, Items, random, Round);
         Boss = new(Entities, Objects, PlayerTable, Items, Round, Timer, End);
+        Ending = BuildEnding();
         _respawn.Boss = Boss;
         Clear.ReadyEnded = AppearBoss;
         Bonus = new(Entities, Round, End.SavedFlash);
@@ -137,6 +138,8 @@ internal sealed class GameLoop
 
     internal BossFight Boss { get; }
 
+    internal GameEnding Ending { get; }
+
     internal BonusRound Bonus { get; }
 
     internal RoundState Round { get; } = new();
@@ -159,8 +162,8 @@ internal sealed class GameLoop
     internal Song? TakeSong() => _songs.TryDequeue(out Song song) ? song : null;
 
     // $0A6E-$0A8B: the next level's number is kept for each player in the game, as the round they have reached.
-    // Level 100's end is $A5B7's ending, which is step 7's. Returns the number of the level to start.
-    internal int EndLevel()
+    // Level 100's end is $A5B7's ending, which starts and returns nothing. Otherwise returns the number of the level to start.
+    internal int? EndLevel()
     {
         _subflg++;
 
@@ -172,9 +175,13 @@ internal sealed class GameLoop
             }
         }
 
-        return _subflg == LastLevel
-            ? throw new NotSupportedException("the ending at $A5B7 is not translated")
-            : _subflg + 1;
+        if (_subflg == LastLevel)
+        {
+            Ending.Begin();
+            return null;
+        }
+
+        return _subflg + 1;
     }
 
     // $7FB2-$7FDD: an item that skips levels has taken the game on. Returns the number of the level to start, having set
@@ -481,6 +488,8 @@ internal sealed class GameLoop
 
     // $05C5 and $0491: a level's tune, and the one that comes back after a death; the last level has its own.
     // $16C1: the READY!! has gone, and on the last level the giant comes.
+    private GameEnding BuildEnding() => new(Entities, Scores, Boss, _songs.Enqueue);
+
     private void AppearBoss()
     {
         if (_subflg == BossFight.Level)
