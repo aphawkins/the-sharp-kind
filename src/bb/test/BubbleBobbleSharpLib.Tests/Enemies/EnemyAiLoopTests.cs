@@ -418,13 +418,17 @@ public sealed class EnemyAiLoopTests
         entities.X[1] = PlayerX;
         entities.Y[1] = PlayerY;
 
+        BbRandom random = new(new FakeRandomSource { RandomValue = timer });
+
         EnemyAiLoop loop = new(
             objects,
             entities,
             Dispatcher(objects, entities),
             new EntityMover(objects),
-            new BbRandom(new FakeRandomSource { RandomValue = timer }),
-            new Baron(objects, entities, new LevelTimer()));
+            random,
+            new Baron(objects, entities, new LevelTimer()),
+            TestEnemies.Ai(objects, entities, random),
+            new(new()));
 
         return (objects, entities, loop);
     }

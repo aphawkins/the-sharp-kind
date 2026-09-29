@@ -114,13 +114,17 @@ public sealed class BubbleTravelTests
     {
         ObjectTable objects = new();
         EntityTable entities = new();
+        BbRandom random = new(new FakeRandomSource());
+
         EnemyAiLoop loop = new(
             objects,
             entities,
             new EnemyDispatcher(objects, entities, new BubbleCollision(objects, entities)),
             new EntityMover(objects),
-            new BbRandom(new FakeRandomSource()),
-            new Baron(objects, entities, new LevelTimer()));
+            random,
+            new Baron(objects, entities, new LevelTimer()),
+            TestEnemies.Ai(objects, entities, random),
+            new(new()));
         EntityTimers timers = new(objects, entities);
 
         objects.Type[Slot] = BubbleBlow.BubbleType;

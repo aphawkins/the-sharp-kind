@@ -14,6 +14,14 @@ namespace BubbleBobbleSharpLib.Tests.Enemies;
 // $1CBD's enemy arm with every handler behind it, wired the one way the game wires them.
 internal static class TestEnemies
 {
+    // The AI of the objects of types $24 to $32, on a food drop and fire strips of their own.
+    internal static ObjectAi Ai(ObjectTable objects, EntityTable entities, BbRandom random)
+    {
+        FoodDrop food = new(entities, new Scores(), random);
+
+        return new(objects, entities, random, new(entities, food), new(objects, entities), food);
+    }
+
     internal static EnemyFrame Frame(EntityTable entities, ObjectTable objects, BbRandom random)
         => Frame(entities, objects, random, new());
 

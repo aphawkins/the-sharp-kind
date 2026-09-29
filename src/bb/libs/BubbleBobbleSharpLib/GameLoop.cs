@@ -68,7 +68,18 @@ internal sealed class GameLoop
         _enemies = BuildEnemies(Entities, Objects, random, food, Flow, Water);
         _push = new(Entities, Objects);
         _death = new(Entities);
-        _ai = new(Objects, Entities, new(Objects, Entities, new(Objects, Entities)), new(Objects), random, new(Objects, Entities, Timer));
+        BubbleCollision collision = new(Objects, Entities);
+
+        Fire = new(Entities, food);
+        _ai = new(
+            Objects,
+            Entities,
+            new(Objects, Entities, collision),
+            new(Objects),
+            random,
+            new(Objects, Entities, Timer),
+            new(Objects, Entities, random, Fire, collision, food),
+            Flow);
         _timers = new(Objects, Entities);
         Pop = new(Objects, Entities, PlayerTable, food, Scores, Water);
         _spawner = new(Entities, random);
@@ -105,6 +116,8 @@ internal sealed class GameLoop
     internal BubblePop Pop { get; }
 
     internal WaterFlow Water { get; }
+
+    internal FireStrips Fire { get; }
 
     internal Scores Scores { get; } = new();
 
@@ -197,6 +210,9 @@ internal sealed class GameLoop
                 End.Update();
             }
         }
+
+        // $0A19: the fire on the platforms burns.
+        Fire.Update(Pop.Counter);
 
         _blow.Tick();
         _bubbles.Update(map);

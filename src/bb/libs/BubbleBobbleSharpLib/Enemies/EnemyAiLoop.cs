@@ -5,12 +5,14 @@
 using BubbleBobbleSharpLib.Bubbles;
 using BubbleBobbleSharpLib.Levels;
 using BubbleBobbleSharpLib.Players;
+using BubbleBobbleSharpLib.Specials;
 
 namespace BubbleBobbleSharpLib.Enemies;
 
 internal sealed class EnemyAiLoop
 {
     private const byte SpecialType = 0x24;
+    private const byte TableEnd = 0x34;
 
     private const byte CaughtType = 0x34;
 
@@ -47,6 +49,8 @@ internal sealed class EnemyAiLoop
     private readonly EntityMover _mover;
     private readonly BbRandom _random;
     private readonly Baron _baron;
+    private readonly ObjectAi _objectAi;
+    private readonly LevelFlow _flow;
 
     internal EnemyAiLoop(
         ObjectTable objects,
@@ -54,7 +58,9 @@ internal sealed class EnemyAiLoop
         EnemyDispatcher dispatcher,
         EntityMover mover,
         BbRandom random,
-        Baron baron)
+        Baron baron,
+        ObjectAi objectAi,
+        LevelFlow flow)
     {
         ArgumentNullException.ThrowIfNull(objects);
         ArgumentNullException.ThrowIfNull(entities);
@@ -62,6 +68,8 @@ internal sealed class EnemyAiLoop
         ArgumentNullException.ThrowIfNull(mover);
         ArgumentNullException.ThrowIfNull(random);
         ArgumentNullException.ThrowIfNull(baron);
+        ArgumentNullException.ThrowIfNull(objectAi);
+        ArgumentNullException.ThrowIfNull(flow);
 
         _objects = objects;
         _entities = entities;
@@ -69,6 +77,8 @@ internal sealed class EnemyAiLoop
         _mover = mover;
         _random = random;
         _baron = baron;
+        _objectAi = objectAi;
+        _flow = flow;
     }
 
     internal void Update(SolidMap map)
@@ -85,11 +95,7 @@ internal sealed class EnemyAiLoop
 
         if (type >= SpecialType)
         {
-            if (Baron.Is(type))
-            {
-                _baron.Step(slot);
-            }
-
+            Special(slot, type, map);
             return;
         }
 
@@ -102,6 +108,25 @@ internal sealed class EnemyAiLoop
         if (!Caught(slot))
         {
             Wander(slot, map);
+        }
+    }
+
+    // $0D4E: the types $24 to $33 go through a table of routines, and `$67` (a frozen level) stops the table. Types $34
+    // and up, except the $44 and $4C the plan has not got to, do nothing here.
+    private void Special(int slot, byte type, SolidMap map)
+    {
+        if (type >= TableEnd || _flow.Freeze != 0)
+        {
+            return;
+        }
+
+        if (Baron.Is(type))
+        {
+            _baron.Step(slot);
+        }
+        else if (ObjectAi.Handles(type))
+        {
+            _objectAi.Step(slot, map);
         }
     }
 
