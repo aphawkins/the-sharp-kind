@@ -7,6 +7,7 @@ using System.Numerics;
 using BubbleBobbleSharp.Renditions.EightBit;
 using BubbleBobbleSharpLib.Fakes;
 using BubbleBobbleSharpLib.Levels;
+using BubbleBobbleSharpLib.Screens;
 using SharpKind.Fakes.Assets;
 using SharpKind.Fakes.Input;
 using SharpKind.Graphics;
@@ -63,9 +64,9 @@ public sealed class BubbleBobbleMainTests
     }
 
     // $0A64, $0A99: with both players out the game holds for $96 frames, seventy-five updates, and then
-    // stops, since there is no front end (step 9) to go back to.
+    // goes back to the title.
     [Fact]
-    public void StopsSeventyFiveUpdatesAfterBothPlayersAreOut()
+    public void ReturnsToTheTitleSeventyFiveUpdatesAfterBothPlayersAreOut()
     {
         BubbleBobbleMain game = Game(new FakeAbstraction());
         game.Loop.Entities.State[0] = 0;
@@ -73,12 +74,13 @@ public sealed class BubbleBobbleMainTests
         for (int update = 1; update < 75; update++)
         {
             game.Update();
-            Assert.True(game.IsRunning);
+            Assert.Equal(BbScreen.Play, game.Screen);
         }
 
         game.Update();
 
-        Assert.False(game.IsRunning);
+        Assert.Equal(BbScreen.Title, game.Screen);
+        Assert.True(game.IsRunning);
     }
 
     // $0A6A-$0A96: a cleared level whose clock has run out goes on to the next, with the players it had and the
@@ -114,54 +116,14 @@ public sealed class BubbleBobbleMainTests
         Assert.Throws<NotSupportedException>(game.Update);
     }
 
-    // There is no front end yet, so the game opens on the first level rather than being asked for one.
+    // The game opens on the title, and the level under it is the first.
     [Fact]
-    public void OpensOnTheFirstLevel()
+    public void OpensOnTheTitleOverTheFirstLevel()
     {
-        BubbleBobbleMain game = Game(new FakeAbstraction());
+        BubbleBobbleMain game = new(new FakeAbstraction(), new FakeAssetLocator(), new EightBitRendition(), s_levels, s_zones);
 
+        Assert.Equal(BbScreen.Title, game.Screen);
         Assert.Equal(1, game.CurrentLevel);
-    }
-
-    // There is no progression until Phase 7, so N is the only way to see a level past the first.
-    [Fact]
-    public void NStepsToTheNextLevel()
-    {
-        FakeAbstraction abstraction = new();
-        BubbleBobbleMain game = Game(abstraction);
-        ((FakeKeyboard)abstraction.Keyboard).KeyDown(ConsoleKey.N, ConsoleModifiers.None);
-
-        game.Update();
-
-        Assert.Equal(2, game.CurrentLevel);
-    }
-
-    // The hundredth level's neighbour is the first, because there is no level 101 to ask for.
-    [Fact]
-    public void NWrapsFromTheLastLevelToTheFirst()
-    {
-        FakeAbstraction abstraction = new();
-        BubbleBobbleMain game = Game(abstraction);
-        game.ShowLevel(LevelStore.Count);
-        ((FakeKeyboard)abstraction.Keyboard).KeyDown(ConsoleKey.N, ConsoleModifiers.None);
-
-        game.Update();
-
-        Assert.Equal(1, game.CurrentLevel);
-    }
-
-    // The step is one level per press, not one per tick the key is held down.
-    [Fact]
-    public void HoldingNStepsOneLevelOnly()
-    {
-        FakeAbstraction abstraction = new();
-        BubbleBobbleMain game = Game(abstraction);
-        ((FakeKeyboard)abstraction.Keyboard).KeyDown(ConsoleKey.N, ConsoleModifiers.None);
-
-        game.Update();
-        game.Update();
-
-        Assert.Equal(2, game.CurrentLevel);
     }
 
     // The level and its items trimmed to the 28 columns the decoration leaves, the bubbles and the
@@ -243,5 +205,11 @@ public sealed class BubbleBobbleMainTests
     }
 
     private static BubbleBobbleMain Game(FakeAbstraction abstraction)
-        => new(abstraction, new FakeAssetLocator(), new EightBitRendition(), s_levels, s_zones);
+    {
+        BubbleBobbleMain game = new(abstraction, new FakeAssetLocator(), new EightBitRendition(), s_levels, s_zones);
+
+        game.Play();
+
+        return game;
+    }
 }

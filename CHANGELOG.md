@@ -16,6 +16,8 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 - **Bubble Bobble has its music**: the 12 songs of `bubble-bobble.sid` are manifest entries, and the game plays the theme,
   the level tunes, hurry-up, level complete, EXTEND and game over as the C64 game does
   ([Song.cs](src/bb/libs/BubbleBobbleSharpLib/Song.cs)).
+- **Bubble Bobble has a title screen**: the logo and credits, fire to start, and back to the title when the game is over
+  ([TitleScreen.cs](src/bb/libs/BubbleBobbleSharpLib/Screens/TitleScreen.cs)). The debug `N` key is gone.
 - **Fruit rains at the end of a bonus level, and most special items have their effect** (the rest do nothing until
   step 6 and 7 finish them).
 - **The real Bubble Bobble runs headless as a test oracle** (`Rebb64Machine`), so a routine can be bracketed and its RAM

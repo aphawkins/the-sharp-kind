@@ -614,6 +614,11 @@ def charset_source_cells():
 
     cells[ord(LIFE_ICON) - ord(" ")] = LIFE_ICON_CELL
 
+    # The title screen's credits end a line with screen code $3B and wrap the last in $3C, which are a full stop
+    # and an exclamation mark.
+    cells[ord(".") - ord(" ")] = 0x3B
+    cells[ord("!") - ord(" ")] = 0x3C
+
     return cells
 
 
@@ -649,6 +654,44 @@ def export_font(out_dir, canonical):
     write_tga(os.path.join(out_dir, "Fonts", "charset.tga"), font, None, canonical)
 
     return len(cells)
+
+
+# The title screen's logo is 44 characters of the charset, screen codes $60 to $8B, which the title's text codes
+# ($80 to $AB, less $20) name. They take a font of their own, so the view draws a line of the logo as a string in
+# the colour RAM's colour: the glyph for screen code $60 + n is the character ' ' + n.
+LOGO_FIRST_CELL = 0x60
+LOGO_GLYPHS = 44
+
+
+def export_logo_font(out_dir, canonical):
+    """charset.tga's screen codes $60-$8B -> a grid font sheet of the title's logo."""
+    source = tga_mod.parse_tga(os.path.join(DATA, "charset.tga"))
+
+    width = FONT_COLUMNS * CELL
+    height = ((LOGO_GLYPHS + FONT_COLUMNS - 1) // FONT_COLUMNS) * CELL
+    pixels = bytearray(width * height)
+
+    for index in range(LOGO_GLYPHS):
+        cell = LOGO_FIRST_CELL + index
+        src_x = (cell % CHARSET_COLUMNS) * CELL
+        src_y = (cell // CHARSET_COLUMNS) * CELL
+        dst_x = (index % FONT_COLUMNS) * CELL
+        dst_y = (index // FONT_COLUMNS) * CELL
+
+        for y in range(CELL):
+            for x in range(CELL):
+                pixels[(dst_y + y) * width + dst_x + x] = tga_mod.get_pixel(source, src_x + x, src_y + y)
+
+    font = {
+        "width": width,
+        "height": height,
+        "pixels": pixels,
+        "palette": source["palette"],
+    }
+
+    write_tga(os.path.join(out_dir, "Fonts", "logo.tga"), font, None, canonical)
+
+    return LOGO_GLYPHS
 
 
 # =============================================================================
@@ -953,6 +996,9 @@ def main():
 
     count = export_font(args.out, canonical)
     print(f"Wrote a {count}-glyph font -> {os.path.join(args.out, 'Fonts', 'charset.tga')}")
+
+    count = export_logo_font(args.out, canonical)
+    print(f"Wrote a {count}-glyph logo font -> {os.path.join(args.out, 'Fonts', 'logo.tga')}")
 
     count = export_tile_edges(args.out, canonical)
     print(

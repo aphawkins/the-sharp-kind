@@ -43,6 +43,12 @@
         "CellWidth": 8,
         "CellHeight": 8,
         "Columns": 16
+      },
+      "Logo": {
+        "File": "logo.tga",
+        "CellWidth": 8,
+        "CellHeight": 8,
+        "Columns": 16
       }
     }
   }

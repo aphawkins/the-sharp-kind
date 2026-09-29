@@ -10,6 +10,7 @@ using BubbleBobbleSharp.Abstractions.Views;
 using BubbleBobbleSharpLib.Graphics;
 using BubbleBobbleSharpLib.Levels;
 using BubbleBobbleSharpLib.Players;
+using BubbleBobbleSharpLib.Screens;
 using SharpKind;
 using SharpKind.Abstraction;
 using SharpKind.Assets;
@@ -31,8 +32,6 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
 
     private const int PlayingPlayers = 1;
 
-    private const ConsoleKey NextLevelKey = ConsoleKey.N;
-
     private readonly IAbstraction _abstraction;
     private readonly LevelStore _levels;
     private readonly ZoneStore _zones;
@@ -43,9 +42,9 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     private readonly IView<ObjectsModel> _objectView;
     private readonly IView<ItemsModel> _itemView;
     private readonly IView<EffectsModel> _effectsView;
+    private readonly ScreenManager<BbScreen, IGameScreen> _screens;
 
     private readonly Input _input;
-    private readonly LayerRunner _layers;
 
     private readonly byte[] _highScore = new byte[HudModel.ScoreBytes];
 
@@ -99,10 +98,16 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         _objectView = rendition.CreateObjectView(surface);
         _itemView = rendition.CreateItemView(surface);
         _effectsView = rendition.CreateEffectsView(surface);
+        IView<TitleModel> titleView = rendition.CreateTitleView(surface);
 
         ShowLevel(FirstLevel);
 
-        _layers = CreateLayers(surface);
+        LayerRunner layers = CreateLayers(surface);
+
+        _screens = new(Keyboard);
+        _screens.Add(BbScreen.Title, new TitleScreen(TitleFire, StartGame, PlaySong, titleView.Draw));
+        _screens.Add(BbScreen.Play, new PlayScreen(UpdateGame, layers.Draw));
+        _screens.Set(BbScreen.Title);
     }
 
     public bool IsRunning { get; private set; } = true;
@@ -121,7 +126,11 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
 
     internal int CurrentLevel { get; private set; }
 
-    internal GameLoop Loop { get; }
+    internal GameLoop Loop { get; private set; }
+
+    internal BbScreen Screen => _screens.CurrentId;
+
+    internal ReadOnlySpan<byte> HighScore => _highScore;
 
     public void Run() => GameHost.Run(_abstraction, this, TickRate, TickRate);
 
@@ -132,12 +141,43 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
             IsRunning = false;
         }
 
-        if (Keyboard.IsPressed(NextLevelKey))
-        {
-            ShowLevel(CurrentLevel == LevelStore.Count ? FirstLevel : CurrentLevel + 1);
-        }
+        _screens.Current.Update();
+    }
 
+    public void Draw()
+    {
+        Graphics.Clear();
+        _screens.Current.Draw();
+        Graphics.ScreenUpdate();
+    }
+
+    // $F005: a new game, from the first level. The title's tune stops when the game's theme starts.
+    internal void StartGame()
+    {
+        Loop = new GameLoop(new BbRandom(new RandomSource(Random.Shared)), PlayingPlayers);
+        ShowLevel(FirstLevel);
+        _screens.Set(BbScreen.Play);
+    }
+
+    // Goes to the game with the level it has, which is how a test sets one up.
+    internal void Play() => _screens.Set(BbScreen.Play);
+
+    [MemberNotNull(nameof(_playfield), nameof(_sidebar))]
+    internal void ShowLevel(int number, bool next = false)
+    {
+        Level level = _levels.Level(number);
+
+        _playfield = Playfield.Build(level);
+        _sidebar = Sidebars.Select(level);
+        CurrentLevel = number;
+
+        Loop.Start(level, _zones.Zones(number), number, next);
+    }
+
+    private void UpdateGame()
+    {
         Loop.Pass(_input.Read());
+        KeepHighScore();
 
         // $0A6A: a cleared level whose clock has run out goes on to the next.
         if (Loop.IsComplete)
@@ -154,29 +194,11 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         ShowColours();
         PlaySongs();
 
+        // $0AA3: with both players out and the wait over the game goes back to the title.
         if (Loop.Finished)
         {
-            IsRunning = false;
+            _screens.Set(BbScreen.Title);
         }
-    }
-
-    public void Draw()
-    {
-        Graphics.Clear();
-        _layers.Draw();
-        Graphics.ScreenUpdate();
-    }
-
-    [MemberNotNull(nameof(_playfield), nameof(_sidebar))]
-    internal void ShowLevel(int number, bool next = false)
-    {
-        Level level = _levels.Level(number);
-
-        _playfield = Playfield.Build(level);
-        _sidebar = Sidebars.Select(level);
-        CurrentLevel = number;
-
-        Loop.Start(level, _zones.Zones(number), number, next);
     }
 
     private LayerRunner CreateLayers(BbViewSurface surface)
@@ -194,6 +216,38 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
             new RenderLayer(whole, wholeWidth, height, new SidebarLayer(this)),
             new RenderLayer(whole, wholeWidth, height, new SpriteLayer(this)),
             new RenderLayer(hud, hudWidth, height, new HudLayer(this)));
+    }
+
+    // $E3F5: a score above the high score becomes it. The scores are packed BCD, most significant byte first.
+    private void KeepHighScore()
+    {
+        ReadOnlySpan<byte> scores = Loop.Scores.Bytes;
+
+        for (int player = 0; player < 2; player++)
+        {
+            ReadOnlySpan<byte> score = scores.Slice(player * HudModel.ScoreBytes, HudModel.ScoreBytes);
+
+            if (score.SequenceCompareTo(_highScore) > 0)
+            {
+                score.CopyTo(_highScore);
+            }
+        }
+    }
+
+    // Fire on either joystick: a port reads with the bit clear.
+    private byte TitleFire()
+    {
+        ReadOnlySpan<byte> ports = _input.Read();
+
+        return (byte)(ports[0] & ports[1]);
+    }
+
+    private void PlaySong(Song song)
+    {
+        if (AudioOptions.MusicOn)
+        {
+            Sound.Play(song.ToString(), repeat: true);
+        }
     }
 
     // The songs the game has asked for. The level's own tunes go round again; the others play once.

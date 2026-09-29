@@ -62,4 +62,9 @@ public interface IBbRendition
     /// <param name="surface">Everything the view draws with.</param>
     /// <returns>The view.</returns>
     public IView<EffectsModel> CreateEffectsView(IViewSurface surface);
+
+    /// <summary>Creates the view that draws the title screen.</summary>
+    /// <param name="surface">Everything the view draws with.</param>
+    /// <returns>The view.</returns>
+    public IView<TitleModel> CreateTitleView(IViewSurface surface);
 }

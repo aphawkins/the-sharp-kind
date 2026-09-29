@@ -1,0 +1,131 @@
+// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
+// 'rebb64' - github.com/zaidka/rebb64.
+// Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
+
+using BubbleBobbleSharp.Abstractions.Views;
+using BubbleBobbleSharp.Renditions.EightBit;
+using BubbleBobbleSharpLib.Fakes;
+using BubbleBobbleSharpLib.Levels;
+using BubbleBobbleSharpLib.Screens;
+using SharpKind.Audio;
+using SharpKind.Fakes.Assets;
+using SharpKind.Fakes.Audio;
+using SharpKind.Fakes.Input;
+using SharpKind.Graphics.Fakes;
+using Xunit;
+
+namespace BubbleBobbleSharpLib.Tests.Screens;
+
+// $4556-$4590: the title screen, and the way the game goes to it and from it.
+public sealed class TitleScreenTests
+{
+    private static readonly string s_assets = Path.Combine(
+        AppContext.BaseDirectory,
+        "Renditions",
+        "BubbleBobbleSharp.Renditions.EightBit",
+        "Assets",
+        "Levels");
+
+    private static readonly LevelStore s_levels = LevelStore.Read(Path.Combine(s_assets, "levels.json"));
+    private static readonly ZoneStore s_zones = ZoneStore.Read(Path.Combine(s_assets, "zones.json"));
+
+    [Fact]
+    public void TheLogoIsFourRowsOfFortyCharacters()
+    {
+        Assert.Equal(4, TitleScreen.Model.LogoRows.Count);
+        Assert.All(TitleScreen.Model.LogoRows, row => Assert.Equal(40, row.Length));
+    }
+
+    // $80 to $AB are the glyphs, less $20 for the screen code; $40 is a blank.
+    [Fact]
+    public void ALogoCharacterNamesItsGlyphAndABlankHasNone()
+    {
+        string first = TitleScreen.Model.LogoRows[0];
+
+        Assert.Equal(' ', first[0]);
+        Assert.Equal((char)(' ' + 1), first[1]);
+        Assert.Equal(TitleModel.LogoBlank, first[3]);
+        Assert.Equal((char)(' ' + 0x22), TitleScreen.Model.LogoRows[3][17]);
+    }
+
+    [Fact]
+    public void OpensOnTheTitleAndFireStartsTheGame()
+    {
+        FakeAbstraction abstraction = new();
+        BubbleBobbleMain game = Game(abstraction);
+
+        Assert.Equal(BbScreen.Title, game.Screen);
+
+        game.Update();
+        Assert.Equal(BbScreen.Title, game.Screen);
+
+        ((FakeKeyboard)abstraction.Keyboard).KeyDown(ConsoleKey.Spacebar, ConsoleModifiers.None);
+        game.Update();
+
+        Assert.Equal(BbScreen.Play, game.Screen);
+        Assert.Equal(1, game.CurrentLevel);
+    }
+
+    [Fact]
+    public void TheSecondPlayersFireStartsItToo()
+    {
+        FakeAbstraction abstraction = new();
+        BubbleBobbleMain game = Game(abstraction);
+        ((FakeKeyboard)abstraction.Keyboard).KeyDown(ConsoleKey.Q, ConsoleModifiers.None);
+
+        game.Update();
+
+        Assert.Equal(BbScreen.Play, game.Screen);
+    }
+
+    [Fact]
+    public void ANewGameStartsFromScratch()
+    {
+        FakeAbstraction abstraction = new();
+        BubbleBobbleMain game = Game(abstraction);
+        GameLoop before = game.Loop;
+        ((FakeKeyboard)abstraction.Keyboard).KeyDown(ConsoleKey.Spacebar, ConsoleModifiers.None);
+
+        game.Update();
+
+        Assert.NotSame(before, game.Loop);
+    }
+
+    [Fact]
+    public void ATitleTunePlaysWhenTheTitleIsShown()
+    {
+        FakeAbstraction abstraction = new();
+
+        _ = Game(abstraction);
+
+        Assert.Equal(1, ((FakeSound)abstraction.Sound).PlayMusicCount);
+    }
+
+    [Fact]
+    public void ScoreAboveTheHighScoreBecomesIt()
+    {
+        BubbleBobbleMain game = Game(new FakeAbstraction());
+        game.Play();
+        game.Loop.Scores.Add(2, 0x30);
+        game.Loop.Scores.Add(1, 0x12);
+
+        game.Update();
+
+        Assert.Equal([0x00, 0x12, 0x30], game.HighScore.ToArray());
+    }
+
+    [Fact]
+    public void TheTitleDrawsItsText()
+    {
+        RecordingGraphics graphics = new(320, 200);
+        BubbleBobbleMain game = Game(new FakeAbstraction(graphics, new(320, 200)));
+
+        game.Draw();
+
+        Assert.Contains(graphics.LeftTexts, x => x.Text == "! PRESS FIRE FOR BUBBLE BOBBLE !");
+        Assert.Contains(graphics.LeftTexts, x => x.Text == "WRITTEN BY  STEPHEN RUDDY.");
+    }
+
+    private static BubbleBobbleMain Game(FakeAbstraction abstraction)
+        => new(abstraction, new FakeAssetLocator(), new EightBitRendition(), s_levels, s_zones, new AudioOptions { MusicOn = true });
+}

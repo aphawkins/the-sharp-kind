@@ -671,10 +671,16 @@ Each item ends with how it is proved.
       order against song 2 is not clear), bonus round (4) and super bonus
       (11), which are step 7, and title (7) and ending (12), which are step 9
       and step 7.
-- [ ] **9. Front end.** Title and attract mode, one or two players, game over
-      and high score, as `IGameScreen`s in a `ScreenManager`. Remove the `N`
-      key. Stop offering `16-bit` and `Modern`, which this game has no art
-      for. Verify: every screen is reachable and returns to the title.
+- [x] **9. Front end.** `ScreenManager<BbScreen, IGameScreen>` with a
+      `TitleScreen` (rebb64's `$4556`: the logo of charset characters `$60`-`$8B`,
+      exported as the `Logo` font, and the credits; fire on either joystick starts
+      a new game; the title tune plays) and a `PlayScreen`. Both players out for
+      `$96` frames returns to the title. The `N` key is gone. The high score
+      follows `$E3F5`. `IBbRendition.CreateTitleView` draws it. Only the 8-bit
+      rendition is installed, so no other is offered. Verified by
+      `TitleScreenTests`, and by running the app.
+      Not done: the cheat key sequence at `$45A7`, and a table of scores (the
+      reference keeps one high score only).
 - [ ] **10. Join the repo.**
       - 320x256 with a 56-line banner on top, the repo's 8-bit tier (Elite's
         size). `EightBitRendition.ScreenHeight` to 256, `PlayfieldRow` to 7,
