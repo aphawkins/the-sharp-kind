@@ -76,15 +76,19 @@ public sealed class ItemEffectsTests
     }
 
     [Theory]
-    [InlineData(1)]
-    [InlineData(8)]
-    [InlineData(20)]
-    [InlineData(34)]
-    public void ThrowsForAnEffectNotTranslated(int type)
+    [InlineData(7, 0xA653)]
+    [InlineData(16, 0x2F7D)]
+    [InlineData(24, 0x34A0)]
+    [InlineData(34, 0x7C3C)]
+    public void ReportsAnEffectNotTranslatedAndDoesNothing(int type, int address)
     {
         (_, ItemEffects effects) = Create();
+        List<(int Type, ushort Address)> reported = [];
+        effects.Untranslated = (t, a) => reported.Add((t, a));
 
-        Assert.Throws<NotSupportedException>(() => effects.Apply(type, 0));
+        effects.Apply(type, 0);
+
+        Assert.Equal([(type, (ushort)address)], reported);
     }
 
     private static (PlayerTable Players, ItemEffects Effects) Create()

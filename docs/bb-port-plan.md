@@ -639,12 +639,21 @@ Each item ends with how it is proved.
       `effect-chars.tga` holds the water's and the fire's characters (`$1C`, `$1F`, `$40`, `$41`), drawn by `EffectsView8Bit`
       in a layer above the items. Types `$44`-`$4C` are made by steps 6 and 7 and are drawn with them. Not compared with
       VICE screenshots.
-- [ ] **6. The other special-item effects:** 1, 2, 6–8, 11 and 15–34 in
-      `$2D65`. They are level skips (`$2F7D`–`$2F89`, `$2ECC`), the freeze,
-      screen effects, and handlers at `$348A`–`$3621`, `$7FA4`/`$7FA7` and
-      `$7C37`/`$7C3C`. The bonus-round entry at `$34D3` puts players in state
-      `$18` (`$28FA`, colour EOR 5 and play as state 1). Verify: a capture per
-      effect.
+- [ ] **6. The other special-item effects** (`$2D65`'s table, called with X the player). Done, and proved against the
+      game with `Invoke` (the routine called directly at the first pass of level 1) where the effect only sets bytes:
+      - [x] 1, 2, 21, 23, 25, 26, 27 (`$348A`-`$350C`): a bonus round is made due (`LevelClear.Schedule`: `$68`, `$69`, `$6A`);
+        15 (`$2F68`): the freeze; 19, 28, 30, 31: a bare `rts`; 6 (`$A64D`): eighteen thunder shots (`PlayerTable.Shots`,
+        `$A783`), which `BubbleBlow` (`$23B8`) blows as `$44` objects and `ObjectAi` moves as bolts (proved on two scenes).
+      - [x] 20, 22 (`$7FA4`, `$7FA7`): three or seven levels on, no further than the last (`WorldEffects.SkipTo`,
+        `GameLoop.SkipLevel`); the levels between are not set up, beyond the bonus rounds' schedule. By hand.
+      - [x] 8, 11 (`$2DD7`, `$2ECC`): every object is reset (`$4A`), caught enemies are let out and every enemy killed
+        (`$2E79`, `$2E61`); 8 also hides the level's two items. The row-by-row wipe, the scattering sprites and the flashes are
+        not modelled. By hand.
+      - [ ] **Not translated, so they do nothing** (`ItemEffects.Untranslated` is told, and the game goes on): 7 (`$A653`, which
+        sets `$58FF` for `$1AB6`, a diagonal flight of the dragon in a bubble that kills what it passes), 16-18
+        (`$2F7D`-`$2F89`, a results screen with a bonus of 1 or 50 points by which player is ahead), 24 (`$34A0`, the bonus
+        round proper: enemies to state `$16`, players to `$18`), 29 (`$35B0`), 32 (`$3621`), 33 and 34 (`$7C37`, `$7C3C`, only
+        reached on level `$63`).
 - [ ] **7. Super mode, bonus rounds and level 100** (`SUBFLG` `$63`, whose
       items and food throw today, and the ending at `$A5B7`).
 - [ ] **8. Sound.** Music plays through the own SID stack

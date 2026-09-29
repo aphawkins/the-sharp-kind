@@ -38,6 +38,10 @@ internal sealed class ItemEffects
     // The effects that act on the level, not on the player: the game wires them in.
     internal Action<int, int>? World { get; set; }
 
+    // Told of an effect nothing has translated yet, with its type and the address of its routine. The effect does nothing,
+    // and the game goes on: 7, 16, 17, 18, 24, 29 and 32 to 34 are the ones a level's items can reach.
+    internal Action<int, ushort>? Untranslated { get; set; }
+
     internal void Apply(int type, int player)
     {
         if (World is not null && WorldEffects.Handles(type))
@@ -82,7 +86,8 @@ internal sealed class ItemEffects
                 _players.Shots[player] = ThunderShots;
                 break;
             default:
-                throw new NotSupportedException($"special item {type}'s effect at ${s_handlers[type]:X4} is not translated");
+                Untranslated?.Invoke(type, s_handlers[type]);
+                break;
         }
     }
 
