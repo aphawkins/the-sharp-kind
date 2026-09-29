@@ -15,20 +15,20 @@ public sealed class HudModelTests
     [Theory]
 
     // Every digit significant, so every digit drawn.
-    [InlineData(0x12, 0x34, 0x56, "123456")]
+    [InlineData(0x12, 0x34, 0x56, "1234560")]
 
     // The high nibble of the first byte is the leading digit, and a zero there is blanked.
-    [InlineData(0x01, 0x23, 0x45, " 12345")]
-    [InlineData(0x00, 0x12, 0x34, "  1234")]
+    [InlineData(0x01, 0x23, 0x45, " 123450")]
+    [InlineData(0x00, 0x12, 0x34, "  12340")]
 
     // Once a digit that is not zero has been seen, the zeros after it are digits again.
-    [InlineData(0x10, 0x00, 0x00, "100000")]
-    [InlineData(0x00, 0x00, 0x10, "    10")]
+    [InlineData(0x10, 0x00, 0x00, "1000000")]
+    [InlineData(0x00, 0x00, 0x10, "    100")]
 
     // $3FB0 always writes the last digit, so a score of nothing is a single zero.
-    [InlineData(0x00, 0x00, 0x00, "     0")]
-    [InlineData(0x00, 0x00, 0x01, "     1")]
-    public void ReadsAScoreAsSixDigitsWithLeadingZerosBlanked(byte high, byte mid, byte low, string expected)
+    [InlineData(0x00, 0x00, 0x00, "     00")]
+    [InlineData(0x00, 0x00, 0x01, "     10")]
+    public void ReadsAScoreAsSixDigitsAndTheZeroEveryScoreEndsInWithLeadingZerosBlanked(byte high, byte mid, byte low, string expected)
     {
         HudModel model = Score([high, mid, low]);
 
@@ -40,17 +40,17 @@ public sealed class HudModelTests
     {
         HudModel model = new([0x00, 0x01, 0x11], [0x00, 0x02, 0x22], [0x00, 0x03, 0x33], 3, 3, 9);
 
-        Assert.Equal("   111", model.PlayerOneScore);
-        Assert.Equal("   222", model.PlayerTwoScore);
-        Assert.Equal("   333", model.HighScore);
+        Assert.Equal("   1110", model.PlayerOneScore);
+        Assert.Equal("   2220", model.PlayerTwoScore);
+        Assert.Equal("   3330", model.HighScore);
     }
 
     [Fact]
-    public void ASixDigitScoreIsAlwaysSixCharacters()
+    public void AScoreIsAlwaysSevenCharacters()
     {
         HudModel model = Score([0x00, 0x00, 0x00]);
 
-        Assert.Equal(HudModel.ScoreDigits, model.PlayerOneScore.Length);
+        Assert.Equal(HudModel.ScoreCharacters, model.PlayerOneScore.Length);
     }
 
     [Theory]

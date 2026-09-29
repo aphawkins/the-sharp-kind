@@ -32,6 +32,16 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
 
     private const int PlayingPlayers = 1;
 
+    // `$3234`: where a room shows its clock, at the top, and each player's count, along the bottom, and in what colours.
+    private const int RoomClockColumn = 15;
+    private const int RoomClockColour = 9;
+    private const int RoomCountRow = 24;
+    private const int RoomSecondColumn = 30;
+    private const int RoomFirstColour = 13;
+    private const int RoomSecondColour = 11;
+
+    private static readonly byte[] s_hiddenItems = [0xFF, 0xFF];
+
     private readonly IAbstraction _abstraction;
     private readonly LevelStore _levels;
     private readonly ZoneStore _zones;
@@ -41,6 +51,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     private readonly IView<HudModel> _hudView;
     private readonly IView<ObjectsModel> _objectView;
     private readonly IView<ItemsModel> _itemView;
+    private readonly IView<RoomModel> _roomView;
     private readonly IView<EffectsModel> _effectsView;
     private readonly IView<BannerModel> _bannerView;
     private readonly float _bannerHeight;
@@ -115,6 +126,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         _hudView = rendition.CreateHudView(surface);
         _objectView = rendition.CreateObjectView(surface);
         _itemView = rendition.CreateItemView(surface);
+        _roomView = rendition.CreateRoomView(surface);
         _effectsView = rendition.CreateEffectsView(surface);
         _bannerHeight = surface.Layout.BannerHeight;
         _bannerView = rendition.CreateBannerView(surface);
@@ -240,6 +252,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
             new RenderLayer(interior, interiorWidth, height, new EffectsLayer(this)),
             new RenderLayer(whole, wholeWidth, height, new ObjectLayer(this)),
             new RenderLayer(whole, wholeWidth, height, new SidebarLayer(this)),
+            new RenderLayer(whole, wholeWidth, height, new RoomLayer(this)),
             new RenderLayer(whole, wholeWidth, height, new SpriteLayer(this)),
             new RenderLayer(hud, hudWidth, height, new HudLayer(this)));
     }
@@ -342,13 +355,45 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         Loop.Fire.Characters,
         _playfield.Colours);
 
+    // A room clears the screen and the render pass that draws the level's items is not run while it lasts.
     private ItemsModel Items() => new(
-        Loop.Items.Type,
+        Loop.Room.Active ? s_hiddenItems : Loop.Items.Type,
         Loop.Items.Column,
         Loop.Items.Row,
         Loop.Items.Art,
         Loop.Items.Colour,
         _playfield.Colours);
+
+    // A bonus room over the level: the clock and the counts while it lasts, and the results after.
+    private RoomModel Room()
+    {
+        ItemRoom room = Loop.Room;
+
+        if (!room.Active)
+        {
+            return new([], 0, 0, _playfield.Colours, _playfield.Tile, [], false);
+        }
+
+        List<RoomText> lines = [];
+
+        if (room.Phase == ItemRoom.Stage.Playing)
+        {
+            lines.Add(new(RoomClockColumn, 0, RoomClockColour, $"{Loop.Timer.Seconds:D2}"));
+            lines.Add(new(0, RoomCountRow, RoomFirstColour, $"{room.Counts[0]:D2}"));
+            lines.Add(new(RoomSecondColumn, RoomCountRow, RoomSecondColour, $"{room.Counts[1]:D2}"));
+        }
+
+        lines.AddRange(room.Lines);
+
+        return new(
+            [.. room.Items.Where(item => item.X != 0 || item.Y != 0).Select(item => (item.Column, item.Row))],
+            room.Art,
+            room.Colour,
+            _playfield.Colours,
+            _playfield.Tile,
+            lines,
+            room.Phase == ItemRoom.Stage.Results);
+    }
 
     private sealed class PlayfieldLayer(BubbleBobbleMain game) : ILayerDrawer
     {
@@ -363,6 +408,11 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     private sealed class ItemLayer(BubbleBobbleMain game) : ILayerDrawer
     {
         public void Draw() => game._itemView.Draw(game.Items());
+    }
+
+    private sealed class RoomLayer(BubbleBobbleMain game) : ILayerDrawer
+    {
+        public void Draw() => game._roomView.Draw(game.Room());
     }
 
     private sealed class ObjectLayer(BubbleBobbleMain game) : ILayerDrawer

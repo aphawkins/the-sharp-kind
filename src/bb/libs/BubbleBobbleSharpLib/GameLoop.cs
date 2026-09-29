@@ -74,18 +74,8 @@ internal sealed class GameLoop
         _enemies = BuildEnemies(Entities, Objects, random, food, Flow, Water);
         _push = new(Entities, Objects);
         _death = new(Entities);
-        BubbleCollision collision = new(Objects, Entities);
-
         Fire = new(Entities, food);
-        _ai = new(
-            Objects,
-            Entities,
-            new(Objects, Entities, collision),
-            new(Objects),
-            random,
-            new(Objects, Entities, Timer),
-            new(Objects, Entities, random, Fire, collision, food, Scores),
-            Flow);
+        _ai = BuildAi(Entities, Objects, random, Timer, Fire, food, Scores, Flow);
         _timers = new(Objects, Entities);
         Pop = new(Objects, Entities, PlayerTable, food, Scores, Water);
         _spawner = new(Entities, random);
@@ -109,6 +99,8 @@ internal sealed class GameLoop
         _extend = new(PlayerTable, End);
         _world = new(Clear, Flow, Timer, Entities, Objects, food, Items, Bonus);
         effects.World = _world.Apply;
+        Room = new(Entities, Scores, Timer, Items, _world.ResetObjects);
+        _world.Room = StartRoom;
 
         // $0956-$0977.
         PlayerTable.Lives.Fill(StartingLives);
@@ -136,6 +128,8 @@ internal sealed class GameLoop
     internal Scores Scores { get; } = new();
 
     internal FoodDrop Food { get; }
+
+    internal ItemRoom Room { get; }
 
     internal BonusRound Bonus { get; }
 
@@ -270,6 +264,12 @@ internal sealed class GameLoop
             return;
         }
 
+        if (Room.Active)
+        {
+            RoomPass(ports, map);
+            return;
+        }
+
         Items.Update();
 
         byte hurry = Timer.Hurry;
@@ -340,6 +340,29 @@ internal sealed class GameLoop
             water);
     }
 
+    private static EnemyAiLoop BuildAi(
+        EntityTable entities,
+        ObjectTable objects,
+        BbRandom random,
+        LevelTimer timer,
+        FireStrips fire,
+        FoodDrop food,
+        Scores scores,
+        LevelFlow flow)
+    {
+        BubbleCollision collision = new(objects, entities);
+
+        return new(
+            objects,
+            entities,
+            new(objects, entities, collision),
+            new(objects),
+            random,
+            new(objects, entities, timer),
+            new(objects, entities, random, fire, collision, food, scores),
+            flow);
+    }
+
     private static EnemyFrame BuildEnemies(
         EntityTable entities,
         ObjectTable objects,
@@ -361,6 +384,35 @@ internal sealed class GameLoop
             food,
             flow,
             water);
+    }
+
+    // The item's routine waits for the room, and the IRQ goes on without it: the clock, and the players when it is
+    // their turn. A pass is two frames of the room's loop.
+    private void RoomPass(ReadOnlySpan<byte> ports, SolidMap map)
+    {
+        for (int frame = 0; frame < FramesPerPass; frame++)
+        {
+            Room.Frame();
+
+            if (Timer.Advance())
+            {
+                Items.Tick();
+            }
+        }
+
+        _players.Step(ports, _counter, map);
+        _death.Update();
+        _counter += 2;
+    }
+
+    // `$A428`, `$A45B`: the room clears the level's screen, of the bubbles and the water as well as what is loose in it.
+    private void StartRoom(int type)
+    {
+        SolidMap map = _map ?? throw new InvalidOperationException("Start a level before the first pass.");
+
+        Room.Begin(type, _subflg, map);
+        Pop.Drawn.Fill(BubblePop.NotDrawn);
+        Water.Mask = 0;
     }
 
     private void StartPlayers(bool next)

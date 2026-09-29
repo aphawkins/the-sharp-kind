@@ -35,6 +35,8 @@ public sealed class EightBitRendition : IBbRendition
 
     public IView<EffectsModel> CreateEffectsView(IViewSurface surface) => new EffectsView8Bit(surface);
 
+    public IView<RoomModel> CreateRoomView(IViewSurface surface) => new RoomView8Bit(surface);
+
     public IView<TitleModel> CreateTitleView(IViewSurface surface) => new TitleView8Bit(surface);
 
     public IView<BannerModel> CreateBannerView(IViewSurface surface) => new BannerView8Bit(surface);

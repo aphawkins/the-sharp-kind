@@ -530,12 +530,13 @@ def export_object_sprites(out_dir, canonical):
 # top-left, bottom-left, top-right, bottom-right. So a block is two 16-byte
 # columns, one byte a row - the software sprites' own layout, two columns wide.
 #
-# The indices are $A892 (food) and $A8C1 (special item); the highest is $39.
+# The indices are $A892 (food) and $A8C1 (special item); the highest is $39. The bonus rooms of items 16, 17 and 18 (`$2F8D`)
+# draw blocks $3F, $41 and $40 (`$A2C0`, `$A300`, `$A2E0`), so the sheet runs on to $41.
 
 ITEM_CELL_WIDTH = 8
 ITEM_CELL_HEIGHT = 16
 ITEM_BLOCK_BYTES = 32
-ITEM_BLOCK_COUNT = 0x3A
+ITEM_BLOCK_COUNT = 0x42
 ITEMS_ROM = 0x9AE0
 
 

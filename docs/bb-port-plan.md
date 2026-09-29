@@ -658,10 +658,18 @@ Each item ends with how it is proved.
       - [x] The giant bonus a cleared level drops when one of the bonus items set `$69` (`SuperBonus`, `$1750`, `$2ACB`): falls to
         `$C8`, scores `$69` for a player that touches it, drawn as the cake, the melon or the diamond. Proved against the game
         (`SuperBonusOracleTests`).
+      - [x] 16, 17 and 18 (`$2F7D`-`$2F89`, `$2F8D`): the bonus room. `ItemRoom` clears the level of enemies and objects, places an
+        item on every free 2 by 2 of its platforms (`Place`, `$2FAC`-`$3049`: two rows at a time from the top, for as many row
+        pairs as `$2A` EOR the level comes to, mod 10), and gives the players thirty seconds to take them (each within `$10` of
+        a player in state 1; 50 points each). With every item taken each player in the game is paid 100,000 (the one with the
+        most, or a tie) or 50,000. The game waits in the routine and the IRQ goes on, so `GameLoop.RoomPass` runs the room's
+        frames, the clock and the players. Proved against the game: `ItemRoomOracleTests` (every level's placement bar the
+        gaps and level 43, the taking, the results and the text). Drawn by `RoomView8Bit` (the items from three new blocks of
+        `item-chars.tga`, the clock and counts, the results' window).
       - [ ] **Not translated, so they do nothing** (`ItemEffects.Untranslated` is told, and the game goes on): 7 (`$A653`, which
-        sets `$58FF` for `$1AB6`, a diagonal flight of the dragon in a bubble that kills what it passes), 16-18
-        (`$2F7D`-`$2F89`, a results screen with a bonus of 1 or 50 points by which player is ahead), 29 (`$35B0`), 32
-        (`$3621`), 33 and 34 (`$7C37`, `$7C3C`, only reached on level `$63`).
+        sets `$58FF` for `$1AB6`, a diagonal flight of a giant bubble down the level that kills what it passes; drawn by
+        `$3F28` from characters), 29 (`$35B0`), 32 (`$3621`, the super bonus room), 33 and 34 (`$7C37`, `$7C3C`, only reached on
+        level `$63`).
 - [ ] **7. Super mode, bonus rounds and level 100** (`SUBFLG` `$63`, whose
       items and food throw today, and the ending at `$A5B7`).
 - [x] **8. Sound.** Music plays through the own SID stack

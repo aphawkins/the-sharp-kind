@@ -63,6 +63,11 @@ public interface IBbRendition
     /// <returns>The view.</returns>
     public IView<EffectsModel> CreateEffectsView(IViewSurface surface);
 
+    /// <summary>Creates the view that draws a bonus room over the level.</summary>
+    /// <param name="surface">Everything the view draws with.</param>
+    /// <returns>The view.</returns>
+    public IView<RoomModel> CreateRoomView(IViewSurface surface);
+
     /// <summary>Creates the view that draws the title screen.</summary>
     /// <param name="surface">Everything the view draws with.</param>
     /// <returns>The view.</returns>

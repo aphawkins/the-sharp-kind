@@ -74,6 +74,9 @@ internal sealed class WorldEffects
     // `$10`, SUBFLG: the level the game is on, from 0.
     internal byte Level { get; set; }
 
+    // The bonus room of items 16, 17 and 18, which the game starts.
+    internal Action<int>? Room { get; set; }
+
     // `$587F`: the level index (from 0) a skip goes to, or none.
     internal int? SkipTo { get; set; }
 
@@ -82,7 +85,7 @@ internal sealed class WorldEffects
 
     // Whether the item's effect is one of these.
     internal static bool Handles(int type)
-        => type is 1 or 2 or 8 or 11 or 15 or 19 or 20 or 21 or 22 or 23 or 24 or 25 or 26 or 27 or 28 or 30 or 31;
+        => type is 1 or 2 or 8 or 11 or 15 or (>= 16 and <= 18) or 19 or 20 or 21 or 22 or 23 or 24 or 25 or 26 or 27 or 28 or 30 or 31;
 
     // `player` is the one who took the item, which none of these use.
     internal void Apply(int type, int player)
@@ -115,6 +118,9 @@ internal sealed class WorldEffects
             case 15:
                 Freeze();
                 break;
+            case >= ItemRoom.FirstEffect and <= ItemRoom.LastEffect:
+                Room?.Invoke(type);
+                break;
             case 24:
                 _bonus?.Start();
                 break;
@@ -137,6 +143,33 @@ internal sealed class WorldEffects
             default:
                 // 19, 28, 30 and 31 are a bare `rts`.
                 break;
+        }
+    }
+
+    // `$2E79`.
+    internal void ResetObjects()
+    {
+        if (Cleared)
+        {
+            return;
+        }
+
+        for (int slot = ObjectTable.Capacity - 1; slot >= 0; slot--)
+        {
+            byte type = _objects.Type[slot];
+
+            if (type is >= FirstCaught and < CaughtBelow)
+            {
+                int enemy = (type - FirstCaught) >> 1;
+
+                _entities.State[enemy + FirstEnemy] = _objects.Variant[slot];
+                _entities.SpriteEnable |= (byte)(1 << (enemy + FirstEnemy));
+                _food.Kill(enemy);
+            }
+
+            _objects.Type[slot] = KilledType;
+            _objects.Column[slot] = 0;
+            _objects.Row[slot] = 0;
         }
     }
 
@@ -167,32 +200,5 @@ internal sealed class WorldEffects
         }
 
         _entities.EnemyCount = 0;
-    }
-
-    // `$2E79`.
-    private void ResetObjects()
-    {
-        if (Cleared)
-        {
-            return;
-        }
-
-        for (int slot = ObjectTable.Capacity - 1; slot >= 0; slot--)
-        {
-            byte type = _objects.Type[slot];
-
-            if (type is >= FirstCaught and < CaughtBelow)
-            {
-                int enemy = (type - FirstCaught) >> 1;
-
-                _entities.State[enemy + FirstEnemy] = _objects.Variant[slot];
-                _entities.SpriteEnable |= (byte)(1 << (enemy + FirstEnemy));
-                _food.Kill(enemy);
-            }
-
-            _objects.Type[slot] = KilledType;
-            _objects.Column[slot] = 0;
-            _objects.Row[slot] = 0;
-        }
     }
 }

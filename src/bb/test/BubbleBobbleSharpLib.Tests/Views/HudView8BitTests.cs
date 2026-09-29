@@ -60,11 +60,11 @@ public sealed class HudView8BitTests
             new([0x00, 0x11, 0x11], [0x00, 0x22, 0x22], [0x00, 0x33, 0x33], 3, 3, 9));
 
         Assert.Equal(
-            [("  1111", new Vector2(Column, 5 * Cell), TestSurface.Colour(5)),
-             ("  2222", new Vector2(Column, 12 * Cell), TestSurface.Colour(3)),
-             ("  3333", new Vector2(Column, 20 * Cell), TestSurface.Colour(1))],
+            [("  11110", new Vector2(Column, 5 * Cell), TestSurface.Colour(5)),
+             ("  22220", new Vector2(Column, 12 * Cell), TestSurface.Colour(3)),
+             ("  33330", new Vector2(Column, 20 * Cell), TestSurface.Colour(1))],
             graphics.LeftTexts
-                .Where(x => x.Text.Length == HudModel.ScoreDigits)
+                .Where(x => x.Text.Length == HudModel.ScoreCharacters && x.Text.All(c => c is ' ' or (>= '0' and <= '9')))
                 .Select(x => (x.Text, x.Position, x.Colour)));
     }
 

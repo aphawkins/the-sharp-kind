@@ -9,6 +9,9 @@ public sealed class HudModel
 {
     private const char Blank = ' ';
 
+    // `$E3A7` writes a zero after a score's last digit, so every score is a multiple of ten.
+    private const char Units = '0';
+
     /// <summary>Initializes a new instance of the <see cref="HudModel"/> class.</summary>
     /// <param name="playerOneScore">Player one's score, as packed BCD.</param>
     /// <param name="playerTwoScore">Player two's score, as packed BCD.</param>
@@ -38,16 +41,19 @@ public sealed class HudModel
     /// <summary>Gets how many digits those bytes are drawn as.</summary>
     public static int ScoreDigits => ScoreBytes * 2;
 
+    /// <summary>Gets how many characters a score is drawn as: its digits, and the zero that every score ends in.</summary>
+    public static int ScoreCharacters => ScoreDigits + 1;
+
     /// <summary>Gets how many cells a player's lives are drawn in.</summary>
     public static int LifeCells => 7;
 
-    /// <summary>Gets player one's score, six characters, leading zeros blanked.</summary>
+    /// <summary>Gets player one's score, seven characters, leading zeros blanked, and the zero every score ends in.</summary>
     public string PlayerOneScore { get; }
 
-    /// <summary>Gets player two's score, six characters, leading zeros blanked.</summary>
+    /// <summary>Gets player two's score, seven characters, leading zeros blanked, and the zero every score ends in.</summary>
     public string PlayerTwoScore { get; }
 
-    /// <summary>Gets the high score, six characters, leading zeros blanked.</summary>
+    /// <summary>Gets the high score, seven characters, leading zeros blanked, and the zero every score ends in.</summary>
     public string HighScore { get; }
 
     /// <summary>Gets player one's lives.</summary>
@@ -92,6 +98,6 @@ public sealed class HudModel
                 : Blank;
         }
 
-        return new(digits);
+        return new string(digits) + Units;
     }
 }

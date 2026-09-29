@@ -1084,6 +1084,32 @@ state, so `EnemyFrame` dispatches to it.
   a byte above. `$2A0B` clears the slot.
 - Not here: the pop (`$3D2D`, `$3D77`), and `$29FF`'s store to `$B0`.
 
+### ItemRoom
+
+The special items of types 16, 17 and 18: the bonus room (`$2F8D`-`$3168`, `$3193`'s loop, `$3234`, `$3266`).
+
+- Entry (`$A428`): the routine is called from `$2CB7` and does not return until the room is over. `$2E79` resets the objects,
+  `$3293` redraws the level's screen from `$8B00`, `$1E2E` empties the enemy slots, `$5E`, `$5D` and `$2A` are `$FF`, `$52` is 0 (the
+  food, showing), the item tables `$4600`-`$47FF` and the item art `$4210` are cleared, the HUD font goes to `$4300`, and the
+  water (`$4D`) stops.
+- Placement (`$2F98`-`$3049`): X is `$2A EOR SUBFLG`, reduced by ten while above ten (nought only for SUBFLG `$2A`, level 43,
+  where the game looks in whatever follows the map). From map row 1, two rows at a time, along each from column 28 down to 2 in
+  twos, a block whose four cells (the two at the column and the two below) are all free gets an item: X = column * 8 + `$14`,
+  Y = (row - 1) * 8 + `$35`, the screen address of its top-left character in `$4E00`/`$4F00`, and `$597F` counts them. The
+  characters `$42`, `$43`, `$44`, `$45` (top-left, bottom-left, top-right, bottom-right) and the colour RAM `$39` are written. The rows
+  end at `$55` items or when X row pairs have been done (and if there are none, one more row pair is tried, and so on).
+- The art is `$38`/`$39` (`$C0`/`$0D`, `$00`/`$0C`, `$E0`/`$0F` for 16, 17, 18): the block at `$A2C0`, `$A300`, `$A2E0` (blocks `$3F`,
+  `$41`, `$40` of the item art at `$9AE0`), in the colour RAM byte `$0D`, `$0C`, `$0F`. `$3169` brings it into `$4210` a row a
+  frame from each end (16 frames); `$3074` takes it away the same way.
+- The loop (`$31A2`) each frame: the clock (`$3234`, at zero the loop ends), then each player in state 1, player 2 first: every item
+  within `$10` of it in X and Y goes (`$597F` less one, its X and Y 0, its characters restored), the player's count (`$31`, `$32`)
+  is one more and `$3200`'s operand (`$50`) is added to the score. The loop ends when `$597F` is 0 or the clock is.
+- The results (`$3074`-`$3105`): a window (`$312E`: the level's tile round a space, 20 by 10 cells from (6, 5)), BONUS at (13, 7),
+  each player's `500X` and count at (8, 8) and (17, 8), and, for a player in the game when every item was taken, PERFECT and the
+  bonus at (8, 10) and (8, 12), (17, 10) and (17, 12) in their colours: a player with fewer items than the other takes 50000
+  (`$50` at `Last - 1`), any other 100000 (`$01` at `Last - 2`). Then `$C8` frames, `$2A` = `$32` and `$2B` = `$32`.
+- HUD: `$3234`'s clock at (15, 0), the counts at (0, 24) and (30, 24), two digits each.
+
 ### SuperBonus
 
 What a special item's bonus round drops when the level is cleared: `$69` (ARG, the score) is set by items 1, 2, 21, 23 and 25-27
