@@ -62,7 +62,7 @@ before any wider release.
   the launch line, `monitor.py` (`selftest`, `start`, checkpoints, memory,
   registers) and every protocol trap found so far. Use the binary monitor.
 - **The oracle** (2026-09-29): `SharpKind.Emulation` runs the real game. `Rebb64Machine` (in the BB tests'
-  `Oracle/`) loads `rebb64-raw.prg` (path in `$REBB64_PRG`, else `C:\code\github\zaidkaebb64uild\`) on a 6502 with just
+  `Oracle/`) loads `rebb64-raw.prg` (path in `$REBB64_PRG`, else `C:/code/github/zaidka/rebb64/build/`) on a 6502 with just
   enough C64 around it (raster interrupt, CIA timers, keyboard and joystick, SID) to play from the title to any level
   (`StartOnePlayer`, `EnterLevel`). `Bracket(entry, exit)` runs to a routine's entry with interrupts on, lets a test
   intervene, takes all of RAM, runs to the exit with interrupts off, and takes it again, with the CIA timer bytes the
