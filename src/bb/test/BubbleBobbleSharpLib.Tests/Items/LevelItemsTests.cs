@@ -201,7 +201,7 @@ public sealed class LevelItemsTests
         Assert.Equal(0xFF, rig.Players.DriftRing[1]);
     }
 
-    // $2D25. From $18 a byte higher.
+    // $2D25. From $18 a byte higher. Effect 7 ($58FF) is not translated, and does nothing.
     [Fact]
     public void AHighSpecialItemScoresAByteHigher()
     {
@@ -209,7 +209,8 @@ public sealed class LevelItemsTests
         Show(rig, 1, 0x1F);
         Player(rig, 0, 0x01);
 
-        Assert.Throws<NotSupportedException>(() => rig.Items.Collect(0));
+        rig.Items.Collect(0);
+
         Assert.Equal(0x08, rig.Scores.Bytes[1]);
     }
 

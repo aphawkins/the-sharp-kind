@@ -47,12 +47,16 @@ internal sealed class GameLoop
     private readonly WorldEffects _world;
     private readonly PlayerRespawn _respawn;
     private readonly PlayerJoin _join;
+    private readonly Queue<Song> _songs = new();
     private readonly int _playing;
 
     private SolidMap? _map;
     private byte _subflg;
     private int _overPasses;
     private byte _counter;
+    private int _extendAwards;
+    private int _respawns;
+    private bool _wasOver;
 
     internal GameLoop(BbRandom random, int playing)
     {
@@ -141,6 +145,10 @@ internal sealed class GameLoop
     // $0A6A: the level's clock has run out on a cleared level, and the game goes on to the next.
     internal bool IsComplete => End.Complete != 0;
 
+    // The next song the game has asked for ($F477's music_start), or none. The song of a level's start is the first the
+    // game asks for: $08E7 for the first level, and $05C5 for the others.
+    internal Song? TakeSong() => _songs.TryDequeue(out Song song) ? song : null;
+
     // $0A6E-$0A8B: the next level's number is kept for each player in the game, as the round they have reached.
     // Level 100's end is $A5B7's ending, which is step 7's. Returns the number of the level to start.
     internal int EndLevel()
@@ -215,6 +223,8 @@ internal sealed class GameLoop
         End.Begin();
         _counter = FirstCounter;
         _overPasses = 0;
+        _wasOver = false;
+        _songs.Enqueue(next ? LevelSong() : Song.Theme);
     }
 
     internal void Pass(ReadOnlySpan<byte> ports)
@@ -224,11 +234,19 @@ internal sealed class GameLoop
         // $0A99: the pause flag ($37) stops the players and the game waits. The tune (step 8) is not modelled.
         if (IsOver)
         {
+            if (!_wasOver)
+            {
+                _wasOver = true;
+                _songs.Enqueue(Song.GameOver);
+            }
+
             _overPasses++;
             return;
         }
 
         Items.Update();
+
+        byte hurry = Timer.Hurry;
 
         // $15E1: with time on the clock the level is checked for its last enemy.
         if (Flow.Update())
@@ -243,6 +261,8 @@ internal sealed class GameLoop
             }
         }
 
+        NoteSongs(hurry);
+
         // $0A19: the fire on the platforms burns.
         Fire.Update(Pop.Counter);
 
@@ -256,6 +276,7 @@ internal sealed class GameLoop
         Items.Collect(_subflg);
         _extend.Update();
         _respawn.Update(_subflg);
+        NoteLives();
         _join.Update(ports);
 
         for (int frame = 0; frame < FramesPerPass; frame++)
@@ -352,6 +373,37 @@ internal sealed class GameLoop
             PlayerTable.DriftRing[player] = 0;
             PlayerTable.WalkRing[player] = 0;
             PlayerTable.BlowRing[player] = 0;
+        }
+    }
+
+    // $05C5 and $0491: a level's tune, and the one that comes back after a death; the last level has its own.
+    private Song LevelSong() => _subflg == BonusLevel ? Song.FinalTheme : Song.Resume;
+
+    // The tunes that go with the clock running out ($15E8, $3517) and with EXTEND ($32C1).
+    private void NoteSongs(byte hurry)
+    {
+        if (hurry == 0 && Timer.Hurry == 1)
+        {
+            _songs.Enqueue(Song.HurryUp);
+        }
+        else if ((sbyte)hurry >= 0 && (sbyte)Timer.Hurry < 0)
+        {
+            _songs.Enqueue(Song.LevelComplete);
+        }
+    }
+
+    private void NoteLives()
+    {
+        if (_extend.Awards != _extendAwards)
+        {
+            _extendAwards = _extend.Awards;
+            _songs.Enqueue(Song.Extend);
+        }
+
+        if (_respawns != _respawn.Respawns)
+        {
+            _respawns = _respawn.Respawns;
+            _songs.Enqueue(LevelSong());
         }
     }
 }

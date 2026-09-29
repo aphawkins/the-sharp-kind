@@ -22,6 +22,20 @@
     "ItemChars": "item-chars.tga",
     "EffectChars": "effect-chars.tga"
   },
+  "Music": {
+    "Theme": "bubble-bobble.sid#1",
+    "Resume": "bubble-bobble.sid#2",
+    "FinalTheme": "bubble-bobble.sid#3",
+    "BonusRound": "bubble-bobble.sid#4",
+    "GameOver": "bubble-bobble.sid#5",
+    "LevelComplete": "bubble-bobble.sid#6",
+    "Title": "bubble-bobble.sid#7",
+    "Extend": "bubble-bobble.sid#8",
+    "HurryUp": "bubble-bobble.sid#9",
+    "RoundStart": "bubble-bobble.sid#10",
+    "SuperBonus": "bubble-bobble.sid#11",
+    "Ending": "bubble-bobble.sid#12"
+  },
   "Fonts": {
     "Bitmap": {
       "Small": {

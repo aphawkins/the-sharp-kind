@@ -26,6 +26,9 @@ internal sealed class ExtendBonus
         _end = end;
     }
 
+    // How many times a player has earned the life, for the song ($32C1's fanfare).
+    internal int Awards { get; private set; }
+
     internal void Update()
     {
         for (int player = PlayerTable.Capacity - 1; player >= 0; player--)
@@ -38,6 +41,7 @@ internal sealed class ExtendBonus
             _players.Lives[player]++;
             _players.ExtendLetters[player] = 0;
             _end.Skip();
+            Awards++;
         }
     }
 }

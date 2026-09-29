@@ -41,6 +41,9 @@ internal sealed class PlayerRespawn
 
     internal static ReadOnlySpan<byte> SpawnFrame => [0x00, 0x04];
 
+    // How many times a player has come back into the level, for the song ($04A3).
+    internal int Respawns { get; private set; }
+
     private static ReadOnlySpan<byte> PlayerBit => [0x01, 0x02];
 
     internal void Update(byte subflg)
@@ -58,7 +61,6 @@ internal sealed class PlayerRespawn
     {
         ResetPlayer(player, subflg);
 
-        // $04A3's level music restart is not modelled: there is no music yet (step 8).
         _items.Undying &= (byte)~PlayerBit[player];
         _entities.Frame[player] = SpawnFrame[player];
         _entities.RiseCounter[player] = 0xFF;
@@ -77,6 +79,7 @@ internal sealed class PlayerRespawn
 
             // $04EB: in a bonus round ($5A7F) the player goes to state 0 instead; bonus rounds are step 7.
             _entities.State[player] = RespawningState;
+            Respawns++;
         }
 
         _timer.Restart();

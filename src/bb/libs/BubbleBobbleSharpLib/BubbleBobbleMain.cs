@@ -152,6 +152,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         }
 
         ShowColours();
+        PlaySongs();
 
         if (Loop.Finished)
         {
@@ -193,6 +194,18 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
             new RenderLayer(whole, wholeWidth, height, new SidebarLayer(this)),
             new RenderLayer(whole, wholeWidth, height, new SpriteLayer(this)),
             new RenderLayer(hud, hudWidth, height, new HudLayer(this)));
+    }
+
+    // The songs the game has asked for. The level's own tunes go round again; the others play once.
+    private void PlaySongs()
+    {
+        while (Loop.TakeSong() is Song song)
+        {
+            if (AudioOptions.MusicOn)
+            {
+                Sound.Play(song.ToString(), song is Song.Theme or Song.Resume or Song.FinalTheme);
+            }
+        }
     }
 
     // $1C and $1E are the level's background colours, and the freeze swaps them ($15CF, $2F68).

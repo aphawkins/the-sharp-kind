@@ -12,7 +12,12 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 - **A new library, `SharpKind.Emulation`**: a 6502 CPU (the documented NMOS instruction set, decimal mode, the
   read-modify-write double write), a SID chip (three voices, ADSR, the filter, a 44.1 kHz renderer) and a PSID player
   ([src/useful/libs/SharpKind.Emulation](src/useful/libs/SharpKind.Emulation)). The shipped Bubble Bobble tune runs on it.
-  Nothing plays it yet: the audio stack's SID work goes on from here.
+  `SoftwareSound` and `SDLSound` play SID songs (`file.sid#N`).
+- **Bubble Bobble has its music**: the 12 songs of `bubble-bobble.sid` are manifest entries, and the game plays the theme,
+  the level tunes, hurry-up, level complete, EXTEND and game over as the C64 game does
+  ([Song.cs](src/bb/libs/BubbleBobbleSharpLib/Song.cs)).
+- **Fruit rains at the end of a bonus level, and most special items have their effect** (the rest do nothing until
+  step 6 and 7 finish them).
 - **The real Bubble Bobble runs headless as a test oracle** (`Rebb64Machine`), so a routine can be bracketed and its RAM
   compared with the port's without VICE. Tests that need the image skip when rebb64 is absent.
 - **Bubble Bobble's special bubbles work** (step 5): they float up from the corners of most levels

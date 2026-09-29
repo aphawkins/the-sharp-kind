@@ -656,12 +656,21 @@ Each item ends with how it is proved.
         reached on level `$63`).
 - [ ] **7. Super mode, bonus rounds and level 100** (`SUBFLG` `$63`, whose
       items and food throw today, and the ending at `$A5B7`).
-- [ ] **8. Sound.** Music plays through the own SID stack
-      ([audio-own-stack.md](work-items/audio-own-stack.md)); the effects stay
-      here. List the trigger IDs in
-      `sid-wrapper.s`, record a `.wav` per effect and tune, and drive them
-      through `ISound`/`AudioController` from the same call sites. Verify: a
-      manifest test that every trigger has an asset.
+- [x] **8. Sound.** Music plays through the own SID stack
+      ([audio-own-stack.md](work-items/audio-own-stack.md)). The C64 game has
+      music only (`sound.s` is the SID player), so the "effects" of this step
+      are `music_start` songs, and there are no `.wav` files. The 12 songs are
+      manifest entries (`Theme` to `Ending`, `bubble-bobble.sid#1` to `#12`),
+      `Song` names them, and `GameLoop.TakeSong` queues the ones asked for:
+      the theme at the game's start (`$08E7`), the resume or final tune at
+      every other level start (`$05C5`) and after a death (`$04A3`), hurry-up
+      (`$15E8`), level complete (`$3517`), EXTEND (`$32C1`) and game over
+      (`$0A9E`). `BubbleBobbleMain` plays them when music is on. Verified by
+      `GameSongTests`, with a manifest test.
+      Not yet asked for: round start (10, `bubbles-sprites.s:179`, whose
+      order against song 2 is not clear), bonus round (4) and super bonus
+      (11), which are step 7, and title (7) and ending (12), which are step 9
+      and step 7.
 - [ ] **9. Front end.** Title and attract mode, one or two players, game over
       and high score, as `IGameScreen`s in a `ScreenManager`. Remove the `N`
       key. Stop offering `16-bit` and `Modern`, which this game has no art

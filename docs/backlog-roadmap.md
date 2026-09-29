@@ -45,7 +45,6 @@ Steps from section 5 of [bb-port-plan.md](bb-port-plan.md), in order.
 
 - [ ] [6: the other special-item effects](work-items/bb-6-special-item-effects.md)
 - [ ] [7: super mode, bonus rounds and level 100](work-items/bb-7-super-mode-bonus-level-100.md)
-- [ ] [8: sound effects](work-items/bb-8-sound-effects.md)
 - [ ] [9: front end](work-items/bb-9-front-end.md)
 - [ ] [10: join the repo](work-items/bb-10-join-the-repo.md)
 - [ ] [Level map differs from the game's in about 45 levels](work-items/bb-solidmap-fidelity.md)
