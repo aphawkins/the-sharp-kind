@@ -43,6 +43,7 @@ internal sealed class GameLoop
     private readonly EntityTimers _timers;
     private readonly EnemySpawner _spawner;
     private readonly BubbleSpawner _bubbles;
+    private readonly ExtendBonus _extend;
     private readonly PlayerRespawn _respawn;
     private readonly PlayerJoin _join;
     private readonly int _playing;
@@ -95,6 +96,7 @@ internal sealed class GameLoop
         _join = new(Entities, PlayerTable, Scores);
         Clear = new(Timer, Entities, Objects, Items, random);
         End = new(Timer, Entities, Objects, Pop, Items, random);
+        _extend = new(PlayerTable, End);
 
         // $0956-$0977.
         PlayerTable.Lives.Fill(StartingLives);
@@ -221,6 +223,7 @@ internal sealed class GameLoop
         _ai.Update(map);
         _timers.Update(ReleasedState);
         Items.Collect(_subflg);
+        _extend.Update();
         _respawn.Update(_subflg);
         _join.Update(ports);
 

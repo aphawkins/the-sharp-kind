@@ -74,6 +74,9 @@ internal sealed class LevelEnd
     // $05C5 clears $21 at each level's start.
     internal void Begin() => Complete = 0;
 
+    // $32E9's `dec $21` (`ExtendBonus`): the level is over, whatever the enemies say.
+    internal void Skip() => Complete--;
+
     // $15E4-$15FA.
     internal void Update()
     {
