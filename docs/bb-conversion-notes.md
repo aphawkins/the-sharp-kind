@@ -1431,8 +1431,13 @@ screen, so the position bytes are carried as they are.
   written anyway, so the state does not say whether a slot is seen. `$D015`
   does: all on during play, except `$142E`'s flicker. An empty slot is
   parked at Y `$15`, in the top border.
-- A pointer outside `$5800`'s sprites is not drawn: food's (base `$F2`,
-  `$7C80` on), which `$2921` builds at run time.
+- A pointer outside `$5800`'s sprites is not drawn as one: food's (base `$F2`,
+  `$7C80` on), which `$2921` builds at run time from a block of item art
+  (`$A892` by the food, 16 by 16 in the sprite's second and third bytes from
+  its sixth row, the bit pairs of `$2996` swapped so that the character's 10 is
+  the sprite's shared colour 1 and its 11 the sprite's own). `SpriteModel.FoodArt`
+  carries the block of a slot in state `$12` and the view draws it from
+  `item-chars.tga`.
 - `$1822`: a slot below state `$11` (`$1826`) with its flash timer running
   takes `$8570`'s colour (copied from `$47B5` by `$451E`): 5 and 3 for the
   players, 10 (light red) for an enemy.

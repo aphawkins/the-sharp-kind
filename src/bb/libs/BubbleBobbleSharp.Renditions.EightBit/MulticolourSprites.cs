@@ -19,13 +19,15 @@ internal sealed class MulticolourSprites
     private readonly IGraphics _graphics;
     private readonly IPaletteCollection _palette;
     private readonly string _source;
+    private readonly bool _itemArt;
     private readonly Dictionary<int, string> _painted = [];
 
-    internal MulticolourSprites(IViewSurface surface, string source)
+    internal MulticolourSprites(IViewSurface surface, string source, bool itemArt = false)
     {
         _graphics = surface.Graphics;
         _palette = surface.Palette;
         _source = source;
+        _itemArt = itemArt;
     }
 
     /// <summary>The sheet painted in one sprite's colour.</summary>
@@ -45,12 +47,21 @@ internal sealed class MulticolourSprites
         return name;
     }
 
-    private Dictionary<uint, FastColor> Entries(int colour) => new()
-    {
-        [Colour(1).Argb] = Colour(MulticolourZero),
-        [Colour(2).Argb] = Colour(colour),
-        [Colour(3).Argb] = Colour(MulticolourOne),
-    };
+    // The item art is character art, and `$2996` turns a character's bit pairs into a sprite's: 10 and 11 change places, so
+    // the character's second background is the sprite's second shared colour and its colour RAM the sprite's own.
+    private Dictionary<uint, FastColor> Entries(int colour) => _itemArt
+        ? new()
+        {
+            [Colour(1).Argb] = Colour(MulticolourZero),
+            [Colour(2).Argb] = Colour(MulticolourOne),
+            [Colour(3).Argb] = Colour(colour),
+        }
+        : new()
+        {
+            [Colour(1).Argb] = Colour(MulticolourZero),
+            [Colour(2).Argb] = Colour(colour),
+            [Colour(3).Argb] = Colour(MulticolourOne),
+        };
 
     private FastColor Colour(int index) => _palette[index.ToString(CultureInfo.InvariantCulture)];
 }

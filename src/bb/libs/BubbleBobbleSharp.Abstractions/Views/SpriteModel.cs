@@ -15,6 +15,7 @@ public sealed class SpriteModel
 
     private static readonly byte[] s_flashColour = [0x05, 0x03, 0x0A, 0x0A, 0x0A, 0x0A, 0x0A, 0x0A];
 
+    private readonly byte _enabled;
     private readonly bool[] _drawn;
     private readonly byte[] _x;
     private readonly byte[] _y;
@@ -48,6 +49,7 @@ public sealed class SpriteModel
         Check(colour, nameof(colour));
         Check(flashTimer, nameof(flashTimer));
 
+        _enabled = enabled;
         _drawn = new bool[Capacity];
         _x = x[..Capacity].ToArray();
         _y = y[..Capacity].ToArray();
@@ -75,6 +77,12 @@ public sealed class SpriteModel
     /// <summary>Gets the mask on a sprite's colour.</summary>
     public static int ColourMask => 0x0F;
 
+    /// <summary>
+    /// Gets the block of item art each slot is drawn from when it is food, or -1. The game builds a food's sprite at run time
+    /// from the art (<c>$2921</c>), so its pointer names no sprite of the sheet.
+    /// </summary>
+    public IReadOnlyList<int>? FoodArt { get; init; }
+
     /// <summary>Whether a slot is drawn at all.</summary>
     /// <param name="slot">The slot, 0 to 7.</param>
     /// <returns>Whether that slot is drawn.</returns>
@@ -94,6 +102,16 @@ public sealed class SpriteModel
     /// <param name="slot">The slot, 0 to 7.</param>
     /// <returns>The sprite's index in the sheet.</returns>
     public int Sprite(int slot) => _sprite[slot];
+
+    /// <summary>Whether a slot is drawn as food, from a block of item art.</summary>
+    /// <param name="slot">The slot, 0 to 7.</param>
+    /// <returns>Whether that slot is food.</returns>
+    public bool IsFood(int slot) => FoodArt?[slot] is >= 0 && (_enabled & (1 << slot)) != 0;
+
+    /// <summary>A food slot's block of item art.</summary>
+    /// <param name="slot">The slot, 0 to 7.</param>
+    /// <returns>The block's index in item-chars.tga.</returns>
+    public int Food(int slot) => FoodArt?[slot] ?? -1;
 
     /// <summary>The colour a slot is drawn in.</summary>
     /// <param name="slot">The slot, 0 to 7.</param>

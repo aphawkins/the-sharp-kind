@@ -12,6 +12,9 @@ internal sealed class LevelItems
 {
     internal const int Count = 2;
 
+    // How many foods there are: $A892 and $A8E4 have this many entries.
+    internal const int FoodKinds = 47;
+
     private const byte BonusLevel = 0x63;
 
     private const byte BestFood = 0x2E;

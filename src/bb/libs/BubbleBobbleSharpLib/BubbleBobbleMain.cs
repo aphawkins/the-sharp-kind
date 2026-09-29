@@ -292,7 +292,10 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         Loop.Entities.SpriteBase,
         Loop.Entities.Colour,
         Loop.Entities.FlashTimer,
-        Loop.Entities.SpriteEnable);
+        Loop.Entities.SpriteEnable)
+    {
+        FoodArt = Loop.FoodArt(),
+    };
 
     private HudModel Hud() => new(
         Loop.Scores.Bytes[..HudModel.ScoreBytes],

@@ -67,6 +67,7 @@ internal sealed class GameLoop
         Water = new(Entities, random);
         Rings rings = new(PlayerTable, Scores);
         FoodDrop food = new(Entities, Scores, random);
+        Food = food;
 
         _blow = new(PlayerTable, Entities, Objects, rings);
         _players = BuildPlayers(Entities, _blow, rings, Water);
@@ -131,6 +132,8 @@ internal sealed class GameLoop
     internal FireStrips Fire { get; }
 
     internal Scores Scores { get; } = new();
+
+    internal FoodDrop Food { get; }
 
     internal BonusRound Bonus { get; }
 
@@ -230,6 +233,22 @@ internal sealed class GameLoop
         _overPasses = 0;
         _wasOver = false;
         _songs.Enqueue(next ? LevelSong() : Song.Theme);
+    }
+
+    // Which block of item art each slot is drawn from, for an enemy that has become food ($2921 builds its sprite from
+    // it at run time), or -1: a food past the end of the art is not drawn.
+    internal int[] FoodArt()
+    {
+        int[] art = new int[EntityTable.Capacity];
+
+        for (int slot = 0; slot < art.Length; slot++)
+        {
+            byte food = Entities.State[slot] == FoodDrop.FoodState ? Food.Number(slot) : byte.MaxValue;
+
+            art[slot] = food < LevelItems.FoodKinds ? LevelItems.FoodArt(food) : -1;
+        }
+
+        return art;
     }
 
     internal void Pass(ReadOnlySpan<byte> ports)

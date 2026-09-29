@@ -198,6 +198,10 @@ internal sealed class FoodDrop
         }
     }
 
+    // $2928-$292E: which food a slot in state $12 is, from $A790 by AttackTimer. The game then reads its art from $A892 and
+    // its colour from $A8E4, both of which end at food $2E.
+    internal byte Number(int slot) => s_image[_entities.AttackTimer[slot]];
+
     internal void Land(int slot)
     {
         if (_placed)

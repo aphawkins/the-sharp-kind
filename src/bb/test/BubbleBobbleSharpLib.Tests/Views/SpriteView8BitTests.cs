@@ -137,6 +137,45 @@ public sealed class SpriteView8BitTests
         Assert.Equal(new(0, 0), graphics.ImageParts[1].SourcePosition);
     }
 
+    // An enemy that has become food (state $12, base $F2) names no sprite of the sheet: $2921 built its sprite from a block of
+    // item art, 16 by 16 in the sprite's second and third bytes from its sixth row. Block 5, in slot 2.
+    [Fact]
+    public void DrawsAFoodFromItsItemArtInsideTheSprite()
+    {
+        RecordingGraphics graphics = Draw(FoodModel(art: 5, colour: 0x0A));
+
+        (string image, Vector2 position, Vector2 size, Vector2 sourcePosition, Vector2 sourceSize) = Assert.Single(graphics.ImageParts);
+
+        Assert.Equal("ItemChars.Colour10", image);
+        Assert.Equal(new(SpawnX - OriginX + 8, SpawnY - OriginY + 5), position);
+        Assert.Equal(new(16, 16), size);
+        Assert.Equal(new(5 * 8, 0), sourcePosition);
+        Assert.Equal(new(8, 16), sourceSize);
+    }
+
+    // A character's second background (entry 10) is the sprite's shared white (`$2996` swaps 10 and 11), and its colour RAM
+    // (entry 11) the sprite's own.
+    [Fact]
+    public void PaintsAFoodsArtWithItsBitPairsSwapped()
+    {
+        RecordingGraphics graphics = Draw(FoodModel(art: 5, colour: 0x0A));
+
+        FastBitmap painted = graphics.Image("ItemChars.Colour10");
+
+        Assert.Equal(TestSurface.Colour(0), painted.GetPixel(0, 0));
+        Assert.Equal(TestSurface.Colour(2), painted.GetPixel(1, 0));
+        Assert.Equal(TestSurface.Colour(1), painted.GetPixel(2, 0));
+        Assert.Equal(TestSurface.Colour(0x0A), painted.GetPixel(3, 0));
+    }
+
+    [Fact]
+    public void DrawsNoFoodForASlotWithoutArt()
+    {
+        SpriteModel model = FoodModel(art: -1, colour: 0x0A);
+
+        Assert.Empty(Draw(model).ImageParts);
+    }
+
     // The two players in slots 0 and 1, with the six enemy slots empty. A slot given a state is
     // enabled in $D015 and the rest are not.
     private static SpriteModel Model(byte[]? state = null, byte[]? frame = null)
@@ -157,12 +196,26 @@ public sealed class SpriteView8BitTests
             (byte)Enumerable.Range(0, SpriteModel.Capacity).Where(i => states[i] != 0).Sum(i => 1 << i));
     }
 
+    private static SpriteModel FoodModel(int art, byte colour)
+    {
+        byte[] state = [0, 0, 0x12, 0, 0, 0, 0, 0];
+        byte[] frame = [0, 0, 0x02, 0, 0, 0, 0, 0];
+        byte[] spriteBase = [0, 0, 0xF2, 0, 0, 0, 0, 0];
+        byte[] position = [0, 0, SpawnX, 0, 0, 0, 0, 0];
+        byte[] height = [0, 0, SpawnY, 0, 0, 0, 0, 0];
+
+        return new(state, position, height, frame, spriteBase, [0, 0, colour, 0, 0, 0, 0, 0], new byte[8], 0x04)
+        {
+            FoodArt = [-1, -1, art, -1, -1, -1, -1, -1],
+        };
+    }
+
     private static RecordingGraphics Draw(SpriteModel model)
     {
         RecordingGraphics graphics = new(320, 200);
         EightBitRendition rendition = new();
 
-        rendition.CreateSpriteView(new TestSurface(graphics, "SpritesGame")).Draw(model);
+        rendition.CreateSpriteView(new TestSurface(graphics, "SpritesGame", "ItemChars")).Draw(model);
 
         return graphics;
     }
