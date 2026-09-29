@@ -29,7 +29,10 @@ internal sealed class TitleView8Bit : IView<TitleModel>
 
         FastColor logo = Colour(model.LogoColour);
 
-        for (int row = 0; row < model.LogoRows.Count; row++)
+        // The banner says the name already, so the logo is only for a screen that has none.
+        int logoRows = _surface.Layout.BannerHeight > 0 ? 0 : model.LogoRows.Count;
+
+        for (int row = 0; row < logoRows; row++)
         {
             string cells = model.LogoRows[row];
 

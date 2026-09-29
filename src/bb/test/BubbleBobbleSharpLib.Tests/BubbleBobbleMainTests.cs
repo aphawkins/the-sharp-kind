@@ -130,7 +130,7 @@ public sealed class BubbleBobbleMainTests
 
     // The level and its items trimmed to the 28 columns the decoration leaves, the bubbles and the
     // decoration over the whole 32, a bonus room over them, the players over that, and the HUD in the eight columns past them.
-    // All are the full height of the screen. The players share the decoration's band because a sprite
+    // All are the full height of the screen, after the whole screen the banner is drawn across. The players share the decoration's band because a sprite
     // may be anywhere on the level, including over its outermost columns.
     [Fact]
     public void ComposesTheLevelItsItemsEffectsBubblesDecorationRoomPlayersAndHudAsEightLayers()
@@ -138,7 +138,8 @@ public sealed class BubbleBobbleMainTests
         RecordingGraphics graphics = Draw();
 
         Assert.Equal(
-            [(new Vector2(16, 0), 224f, 200f),
+            [(new Vector2(0, 0), 320f, 200f),
+             (new Vector2(16, 0), 224f, 200f),
              (new Vector2(16, 0), 224f, 200f),
              (new Vector2(16, 0), 224f, 200f),
              (new Vector2(0, 0), 256f, 200f),
