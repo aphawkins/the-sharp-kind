@@ -278,6 +278,24 @@ public sealed class BubblePopTests
         Assert.Equal(0x04, rig.Pop.DrawnSubY[Slot]);
     }
 
+    // $E779 draws at $DC and $EE as they are when $E90E reaches the slot; the mover ($0CF2) changes them afterwards,
+    // and what is on the screen stays the picture made before.
+    [Fact]
+    public void ABubbleStaysDrawnWhereItWasWhenTheMoverMovesIt()
+    {
+        Rig rig = new();
+        Place(rig, Slot, 0x02);
+        rig.Objects.Column[Slot] = 12;
+        rig.Objects.Row[Slot] = 20;
+
+        rig.Pop.Update();
+        rig.Objects.Row[Slot] = 19;
+        rig.Objects.Column[Slot] = 13;
+
+        Assert.Equal(12, rig.Pop.DrawnColumn[Slot]);
+        Assert.Equal(20, rig.Pop.DrawnRow[Slot]);
+    }
+
     // Past its table, a shot's vector would read the next table.
     [Theory]
     [InlineData(0x2A, 2)]

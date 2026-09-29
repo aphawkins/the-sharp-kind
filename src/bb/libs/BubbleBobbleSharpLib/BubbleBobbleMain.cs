@@ -213,8 +213,8 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
 
     private ObjectsModel Objects() => new(
         Loop.Pop.Drawn,
-        Loop.Objects.Column,
-        Loop.Objects.Row,
+        Loop.Pop.DrawnColumn,
+        Loop.Pop.DrawnRow,
         Loop.Pop.DrawnSubY,
         _playfield.Colours);
 

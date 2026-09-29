@@ -341,6 +341,38 @@ public sealed class GameLoopTests
         Assert.NotEqual(x, loop.Objects.X[slot]);
     }
 
+    // The picture of a bubble is made at the top of a pass, at the place the pass before left it: its row and its
+    // line in the row have to be the pair the object had then. Mixing the row it moved to with the line it was
+    // drawn at made a rising bubble jump a row too far every fourth pass.
+    [Fact]
+    public void ARisingBubbleIsDrawnWhereItWasNotWhereItHasMovedTo()
+    {
+        GameLoop loop = Start(1, seed: 1);
+        const int slot = ObjectTable.Capacity - 1;
+        loop.Pass([PushFire, Idle]);
+        (byte Row, byte SubY, byte Column)? before = null;
+        int checkedPasses = 0;
+
+        for (int pass = 0; pass < 60; pass++)
+        {
+            loop.Pass([Idle, Idle]);
+
+            if (before is { } previous && loop.Pop.Drawn[slot] != BubblePop.NotDrawn)
+            {
+                Assert.Equal(previous.Row, loop.Pop.DrawnRow[slot]);
+                Assert.Equal(previous.SubY, loop.Pop.DrawnSubY[slot]);
+                Assert.Equal(previous.Column, loop.Pop.DrawnColumn[slot]);
+                checkedPasses++;
+            }
+
+            before = loop.Objects.Type[slot] == ObjectTable.FreeType
+                ? null
+                : (loop.Objects.Row[slot], loop.Objects.SubY[slot], loop.Objects.Column[slot]);
+        }
+
+        Assert.True(checkedPasses > 30);
+    }
+
     // Two seconds of each.
     private static byte Stick(int pass)
     {

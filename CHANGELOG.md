@@ -7,6 +7,16 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Fixed (Bubble Bobble bubbles jerked as they rose, 2026-09-28)
+
+- **A rising Bubble Bobble bubble moves evenly again.** It was drawn at the
+  row the mover had taken it to but the line within the row it had at the top
+  of the pass, so every fourth pass it jumped a row too far and fell back.
+  The picture now uses the column and row `$E90E` saw when it drew
+  ([BubblePop.cs](src/bb/libs/BubbleBobbleSharpLib/Bubbles/BubblePop.cs)).
+  Found by dumping the app's frames, which showed the same jump in the build
+  before step 4 as well.
+
 ### Added (Bubble Bobble hurry-up and Baron, 2026-09-28)
 
 - **A Bubble Bobble level that takes too long turns its enemies angry, and

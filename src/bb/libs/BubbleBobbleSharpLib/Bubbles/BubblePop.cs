@@ -77,6 +77,10 @@ internal sealed class BubblePop
 
     private readonly byte[] _drawnSubY = new byte[ObjectTable.Capacity];
 
+    private readonly byte[] _drawnColumn = new byte[ObjectTable.Capacity];
+
+    private readonly byte[] _drawnRow = new byte[ObjectTable.Capacity];
+
     internal BubblePop(ObjectTable objects, EntityTable entities, PlayerTable players, FoodDrop food, Scores scores)
     {
         ArgumentNullException.ThrowIfNull(objects);
@@ -97,6 +101,12 @@ internal sealed class BubblePop
     internal Span<byte> Drawn => _drawn;
 
     internal Span<byte> DrawnSubY => _drawnSubY;
+
+    // The place each slot was drawn at, which the movers change later in the same pass: the picture is the one
+    // made here, at the start of the pass, and shows until the next.
+    internal Span<byte> DrawnColumn => _drawnColumn;
+
+    internal Span<byte> DrawnRow => _drawnRow;
 
     internal byte Counter { get; set; }
 
@@ -125,6 +135,8 @@ internal sealed class BubblePop
         byte type = _objects.Type[slot];
 
         _drawnSubY[slot] = _objects.SubY[slot];
+        _drawnColumn[slot] = _objects.Column[slot];
+        _drawnRow[slot] = _objects.Row[slot];
         _drawn[slot] = type switch
         {
             <= LastFloatingType => Entry(type, slot),
