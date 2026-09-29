@@ -655,6 +655,9 @@ Each item ends with how it is proved.
         flashing, and the state 1 turn run twice). `RoundState` carries `$5A7F` (the state a death or the level's end sees
         a player in: `$10`, `$18` in the round) and `$5ABF` (the state a released enemy takes: `$0A`, `$16`), which a level's
         start puts back. Proved against the game: `BonusRoundOracleTests` runs the effect and 900 turns of the slots.
+      - [x] The giant bonus a cleared level drops when one of the bonus items set `$69` (`SuperBonus`, `$1750`, `$2ACB`): falls to
+        `$C8`, scores `$69` for a player that touches it, drawn as the cake, the melon or the diamond. Proved against the game
+        (`SuperBonusOracleTests`).
       - [ ] **Not translated, so they do nothing** (`ItemEffects.Untranslated` is told, and the game goes on): 7 (`$A653`, which
         sets `$58FF` for `$1AB6`, a diagonal flight of the dragon in a bubble that kills what it passes), 16-18
         (`$2F7D`-`$2F89`, a results screen with a bonus of 1 or 50 points by which player is ahead), 29 (`$35B0`), 32

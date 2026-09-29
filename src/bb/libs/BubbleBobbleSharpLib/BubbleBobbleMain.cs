@@ -295,6 +295,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         Loop.Entities.SpriteEnable)
     {
         FoodArt = Loop.FoodArt(),
+        BonusStage = Loop.Clear.SuperBonus is { Showing: true } ? Loop.Clear.BonusStage : -1,
     };
 
     private HudModel Hud() => new(

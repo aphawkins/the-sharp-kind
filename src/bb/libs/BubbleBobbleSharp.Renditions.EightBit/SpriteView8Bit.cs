@@ -19,16 +19,28 @@ internal sealed class SpriteView8Bit : IView<SpriteModel>
     private const string Sheet = "SpritesGame";
     private const string FoodSheet = "ItemChars";
 
+    // The giant bonus: two sprites across, so 24 entries in the sheet. The block's first slot is the top left; a melon's
+    // sprites hang three rows above the sheet's picture, and a diamond is the block's lower pair.
+    private const int BonusSourceWidth = 24;
+    private const int BonusFirstSlot = 2;
+    private const int BonusLowerSlot = 4;
+    private const int MelonRaise = 18;
+    private const int CakeStage = 0;
+    private const int MelonStage = 1;
+
     // The food's 16 by 16 art sits in the sprite's second and third bytes, from its sixth row.
     private const float FoodOffsetX = 8;
     private const float FoodOffsetY = 5;
     private const int FoodSourceWidth = 8;
     private const int FoodHeight = 16;
 
+    private static readonly float[] s_bonusHeights = [42, 24, 21];
+
     private readonly IGraphics _graphics;
     private readonly BbViewLayout _layout;
     private readonly MulticolourSprites _sprites;
     private readonly MulticolourSprites _foods;
+    private readonly MulticolourSprites[] _bonuses;
 
     internal SpriteView8Bit(IViewSurface surface)
     {
@@ -38,6 +50,7 @@ internal sealed class SpriteView8Bit : IView<SpriteModel>
         _layout = surface.Layout;
         _sprites = new(surface, Sheet);
         _foods = new(surface, FoodSheet, itemArt: true);
+        _bonuses = [new(surface, "BonusCake"), new(surface, "BonusMelon"), new(surface, "BonusDiamond")];
     }
 
     public void Draw(SpriteModel model)
@@ -46,6 +59,11 @@ internal sealed class SpriteView8Bit : IView<SpriteModel>
 
         for (int slot = SpriteModel.Capacity - 1; slot >= 0; slot--)
         {
+            if (slot == BonusFirstSlot && model.BonusStage >= 0)
+            {
+                DrawBonus(model);
+            }
+
             if (model.IsFood(slot))
             {
                 DrawFood(model, slot);
@@ -55,6 +73,27 @@ internal sealed class SpriteView8Bit : IView<SpriteModel>
                 DrawSprite(model, slot);
             }
         }
+    }
+
+    private void DrawBonus(SpriteModel model)
+    {
+        int kind = Math.Min(model.BonusStage, 2);
+        int top = model.BonusStage switch
+        {
+            CakeStage => BonusFirstSlot,
+            MelonStage => BonusFirstSlot,
+            _ => BonusLowerSlot,
+        };
+        float raise = model.BonusStage == MelonStage ? MelonRaise : 0;
+
+        float height = s_bonusHeights[kind];
+
+        _graphics.DrawImagePart(
+            _bonuses[kind].Paint(model.Colour(BonusFirstSlot)),
+            new(model.X(BonusFirstSlot) - SpriteOriginX, model.Y(top) - SpriteOriginY + raise + _layout.BannerHeight),
+            new(BonusSourceWidth * 2, height),
+            new(0, 0),
+            new(BonusSourceWidth, height));
     }
 
     private void DrawFood(SpriteModel model, int slot)

@@ -1084,6 +1084,23 @@ state, so `EnemyFrame` dispatches to it.
   a byte above. `$2A0B` clears the slot.
 - Not here: the pop (`$3D2D`, `$3D77`), and `$29FF`'s store to `$B0`.
 
+### SuperBonus
+
+What a special item's bonus round drops when the level is cleared: `$69` (ARG, the score) is set by items 1, 2, 21, 23 and 25-27
+with `$6A` (the stage, 0 to 4) and `$68` (`LevelClear.Schedule`).
+
+- `$1750`-`$175D` (`LevelClear.Clear`, when `$69` is not zero): `$1E2E` empties the six enemy slots (state, X, Y), slot 2 goes to
+  state `$15`, and Y of slots 4 and 5 (`$C6`, `$C7`) to `$15`. `$3517` (`$68` not zero) sets `$2AE9`, the colour of the block, from
+  `$A81F` by the stage (`$07`, `$05`, `$07`, `$0E`, `$04`), and, for a stage, copies the block's sprite art to `$7D00`: a cake
+  (`$A320`, four sprites) for stage 0; a melon (`$A420`'s pattern, `$35A8`'s pattern and `$A4A0`'s two sprites) for 1; a diamond
+  (`$A520`, two sprites) for 2, 3 and 4.
+- State `$15` (`$2ACB`, `SuperBonus.Step`): while slot 2's Y is not `$C8` the block is placed at X `$80` and `$98` (slots 2 and 4;
+  3 and 5), sprite base `$F4`, frame 0-3 by slot, and every piece's Y is four lower. The players are tested each turn, player 2
+  first: X from the block's `$BC` within `$30`, Y from `$C4` within `$24`, whatever the player's state. The touch adds `$69` at the
+  player's `Last - 1` score byte (`$AB51` less one; `$10` is 1,000 points) and empties slots 2 to 5.
+- Drawn from slot 2's position with `bonus-cake.tga` (the block), `bonus-melon.tga` (three rows above the lower pair, which
+  hold the picture's bottom) and `bonus-diamond.tga` (the lower pair, at slot 4's Y), in `SpriteView8Bit`.
+
 ### BonusRound
 
 The special item of type 24 (`$34A0`-`$34F9`). `tools/bb/dis6502.py` reads the routines from the game's bytes; the

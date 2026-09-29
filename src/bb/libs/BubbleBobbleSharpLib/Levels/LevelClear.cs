@@ -38,6 +38,8 @@ internal sealed class LevelClear
     private const byte BonusBase = 9;
     private const byte BonusWrap = 0x2E;
 
+    private static readonly byte[] s_stageColours = [0x07, 0x05, 0x07, 0x0E, 0x04];
+
     private readonly LevelTimer _timer;
     private readonly EntityTable _entities;
     private readonly ObjectTable _objects;
@@ -67,6 +69,13 @@ internal sealed class LevelClear
     internal byte BonusArg { get; set; }
 
     internal byte BonusStage { get; set; } = 0xFF;
+
+    // `$2AE9`, the colour of the giant bonus's sprites, which `$3517` takes from `$A81F` by the stage. It is left as it was for
+    // a round that has no stage, which never shows one.
+    internal byte BonusColour { get; set; }
+
+    // The block a cleared level drops when `$69` is set.
+    internal SuperBonus? SuperBonus { get; set; }
 
     // $59BF: the level a bonus round is due after, and $59FF: how far to the next one ($092A, $095E).
     internal byte BonusLevel { get; set; } = FirstBonusLevel;
@@ -158,13 +167,23 @@ internal sealed class LevelClear
 
         PopObjects();
 
+        // $1751-$175D.
+        if (BonusArg != 0)
+        {
+            SuperBonus?.Begin();
+        }
+
         _timer.Frames = LevelTimer.FramesPerSecond;
         _timer.Hurry = 0xFF;
         _timer.Seconds = ClearedSeconds;
 
-        // $176B-$176F: a bonus round's entry, `$3517`, loads the round's item art into `$4230` and the mask `$40A8`, which
-        // the fruit is drawn from (`BubblePop.FruitArt`); with `$6A` set (an item effect) it also copies the round's stage
-        // data to `$7D00`, which is not modelled.
+        // $176B-$176F: a bonus round's entry, `$3517`, sets the colour of the giant bonus from its stage, and loads the
+        // round's item art into `$4230` and the mask `$40A8`, which the fruit is drawn from (`BubblePop.FruitArt`); with `$6A`
+        // set (an item effect) it also copies the round's stage data to `$7D00`, the giant bonus's sprites.
+        if (BonusType != 0 && (sbyte)BonusStage >= 0)
+        {
+            BonusColour = s_stageColours[BonusStage];
+        }
     }
 
     // $171B-$1750: every object but the three that stay is kept as it was and made a pop.

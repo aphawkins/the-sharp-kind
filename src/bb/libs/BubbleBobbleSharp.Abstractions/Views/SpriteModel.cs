@@ -83,6 +83,12 @@ public sealed class SpriteModel
     /// </summary>
     public IReadOnlyList<int>? FoodArt { get; init; }
 
+    /// <summary>
+    /// Gets the stage of the giant bonus a cleared level has dropped (<c>$6A</c>; the block of four sprites at <c>$7D00</c>,
+    /// slots 2 to 5), or -1: a cake for 0, a melon for 1 and a diamond above.
+    /// </summary>
+    public int BonusStage { get; init; } = -1;
+
     /// <summary>Whether a slot is drawn at all.</summary>
     /// <param name="slot">The slot, 0 to 7.</param>
     /// <returns>Whether that slot is drawn.</returns>

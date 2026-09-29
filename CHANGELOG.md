@@ -13,6 +13,9 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
   read-modify-write double write), a SID chip (three voices, ADSR, the filter, a 44.1 kHz renderer) and a PSID player
   ([src/useful/libs/SharpKind.Emulation](src/useful/libs/SharpKind.Emulation)). The shipped Bubble Bobble tune runs on it.
   `SoftwareSound` and `SDLSound` play SID songs (`file.sid#N`).
+- **Bubble Bobble's giant bonus drops**: a level cleared after a bonus item shows a cake, a melon or a diamond falling from the
+  top, which a player scores by touching ([SuperBonus.cs](src/bb/libs/BubbleBobbleSharpLib/Levels/SuperBonus.cs)); proved against
+  the real game.
 - **Bubble Bobble's food is drawn**: an enemy that has been popped and landed shows as the fruit its chain earned, from the
   item art, as the game builds it into the sprite at run time (`SpriteModel.FoodArt`, `SpriteView8Bit`).
 - **Bubble Bobble's bonus round works** (the special item of type 24): the enemies still loose drop through the platforms and

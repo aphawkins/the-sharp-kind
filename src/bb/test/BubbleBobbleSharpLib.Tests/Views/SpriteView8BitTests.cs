@@ -176,6 +176,30 @@ public sealed class SpriteView8BitTests
         Assert.Empty(Draw(model).ImageParts);
     }
 
+    // The giant bonus is four sprites, slots 2 to 5, from base $F4: a block 48 across that the game builds at $7D00. A cake is the
+    // whole block from slot 2's position; a melon's picture starts three rows above the lower pair; a diamond is only the lower
+    // pair, at slot 4's position.
+    [Theory]
+    [InlineData(0, "BonusCake.Colour7", 42, 0x40 - OriginY)]
+    [InlineData(1, "BonusMelon.Colour7", 24, 0x40 - OriginY + 18)]
+    [InlineData(2, "BonusDiamond.Colour7", 21, 0x55 - OriginY)]
+    public void DrawsTheGiantBonusFromItsSheet(int stage, string image, float height, float top)
+    {
+        RecordingGraphics graphics = Draw(BonusModel(stage));
+
+        (string name, Vector2 position, Vector2 size, Vector2 sourcePosition, Vector2 sourceSize) = Assert.Single(graphics.ImageParts);
+
+        Assert.Equal(image, name);
+        Assert.Equal(new(0x80 - OriginX, top), position);
+        Assert.Equal(new(48, height), size);
+        Assert.Equal(new(0, 0), sourcePosition);
+        Assert.Equal(new(24, height), sourceSize);
+    }
+
+    // The two sprites of a melon or a diamond that the block's sprite pointers name are beyond the sheet, and draw nothing.
+    [Fact]
+    public void DrawsNoGiantBonusWhenThereIsNone() => Assert.Empty(Draw(BonusModel(-1)).ImageParts);
+
     // The two players in slots 0 and 1, with the six enemy slots empty. A slot given a state is
     // enabled in $D015 and the rest are not.
     private static SpriteModel Model(byte[]? state = null, byte[]? frame = null)
@@ -194,6 +218,21 @@ public sealed class SpriteView8BitTests
             [PlayerOneColour, PlayerTwoColour, 0, 0, 0, 0, 0, 0],
             new byte[SpriteModel.Capacity],
             (byte)Enumerable.Range(0, SpriteModel.Capacity).Where(i => states[i] != 0).Sum(i => 1 << i));
+    }
+
+    private static SpriteModel BonusModel(int stage)
+    {
+        byte[] state = [0, 0, 0x15, 0, 0, 0, 0, 0];
+        byte[] frame = [0, 0, 0, 1, 2, 3, 0, 0];
+        byte[] spriteBase = [0, 0, 0xF4, 0xF4, 0xF4, 0xF4, 0, 0];
+        byte[] colour = [0, 0, 7, 7, 7, 7, 0, 0];
+        byte[] x = [0, 0, 0x80, 0x98, 0x80, 0x98, 0, 0];
+        byte[] y = [0, 0, 0x40, 0x40, 0x55, 0x55, 0, 0];
+
+        return new(state, x, y, frame, spriteBase, colour, new byte[8], 0x3C)
+        {
+            BonusStage = stage,
+        };
     }
 
     private static SpriteModel FoodModel(int art, byte colour)
@@ -215,7 +254,9 @@ public sealed class SpriteView8BitTests
         RecordingGraphics graphics = new(320, 200);
         EightBitRendition rendition = new();
 
-        rendition.CreateSpriteView(new TestSurface(graphics, "SpritesGame", "ItemChars")).Draw(model);
+        TestSurface surface = new(graphics, "SpritesGame", "ItemChars", "BonusCake", "BonusMelon", "BonusDiamond");
+
+        rendition.CreateSpriteView(surface).Draw(model);
 
         return graphics;
     }

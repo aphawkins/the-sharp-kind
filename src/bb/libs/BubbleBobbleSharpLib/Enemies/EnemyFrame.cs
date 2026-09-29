@@ -81,6 +81,9 @@ internal sealed class EnemyFrame
         _tumble = new(entities, food);
     }
 
+    // The giant bonus a cleared level drops (state $15), which the game wires in.
+    internal SuperBonus? SuperBonus { get; set; }
+
     internal void Enter()
     {
         for (int slot = FirstEnemy; slot < EntityTable.Capacity; slot++)
@@ -241,6 +244,9 @@ internal sealed class EnemyFrame
                 break;
             case FoodDrop.FoodState:
                 _food.Wait(slot);
+                break;
+            case Levels.SuperBonus.State:
+                SuperBonus?.Step();
                 break;
             case EnemyTumble.TumbleState:
                 _tumble.Step(slot, cell, map);

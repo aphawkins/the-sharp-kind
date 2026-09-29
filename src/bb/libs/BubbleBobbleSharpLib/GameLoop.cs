@@ -102,6 +102,8 @@ internal sealed class GameLoop
         _respawn = new(Entities, PlayerTable, Items, Timer, Round);
         _join = new(Entities, PlayerTable, Scores);
         Clear = new(Timer, Entities, Objects, Items, random);
+        Clear.SuperBonus = new(Entities, Scores, Clear);
+        _enemies.SuperBonus = Clear.SuperBonus;
         End = new(Timer, Entities, Objects, Pop, Items, random, Round);
         Bonus = new(Entities, Round, End.SavedFlash);
         _extend = new(PlayerTable, End);
