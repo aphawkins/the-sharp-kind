@@ -40,6 +40,9 @@ internal sealed class BubblePop
     private const int FireCell = 67;
     private const int DropFrames = 4;
     private const int BoltCell = 71;
+    private const int FruitCell = 72;
+    private const byte FruitType = 0x4C;
+    private const byte PlayfieldColourRam = 0x0D;
 
     private const int ShotTurns = 4;
     private const int ClassSixTurns = 2;
@@ -64,6 +67,7 @@ internal sealed class BubblePop
 
     private const byte FireType = 0x24;
     private const byte ThunderType = 0x26;
+    private const byte ThunderShotType = 0x44;
 
     private const byte LeftThrow = 0x84;
     private const byte RightThrow = 0x04;
@@ -95,6 +99,8 @@ internal sealed class BubblePop
 
     private readonly byte[] _drawnRow = new byte[ObjectTable.Capacity];
 
+    private readonly byte[] _drawnColour = new byte[ObjectTable.Capacity];
+
     internal BubblePop(ObjectTable objects, EntityTable entities, PlayerTable players, FoodDrop food, Scores scores, WaterFlow water)
     {
         ArgumentNullException.ThrowIfNull(objects);
@@ -123,6 +129,12 @@ internal sealed class BubblePop
     internal Span<byte> DrawnColumn => _drawnColumn;
 
     internal Span<byte> DrawnRow => _drawnRow;
+
+    // Each slot's colour RAM byte, which is the level's own for everything but the fruit.
+    internal Span<byte> DrawnColour => _drawnColour;
+
+    // The block of item art the fruit is drawn from ($4230, loaded by $3517 from the round's food).
+    internal byte FruitArt { get; set; }
 
     internal byte Counter { get; set; }
 
@@ -153,12 +165,14 @@ internal sealed class BubblePop
         _drawnSubY[slot] = _objects.SubY[slot];
         _drawnColumn[slot] = _objects.Column[slot];
         _drawnRow[slot] = _objects.Row[slot];
+        _drawnColour[slot] = type == FruitType ? _objects.Behaviour[slot] : PlayfieldColourRam;
         _drawn[slot] = type switch
         {
             <= LastFloatingType => Entry(type, slot),
             TouchedType or ExpiredType or PopFrom => PopFrame(0, slot),
             PopMiddle or PopLate => PopFrame(4, slot),
             FireType => (byte)(FireCell + Drop(slot)),
+            FruitType => (byte)(FruitCell + FruitArt),
             _ => NotDrawn,
         };
 
@@ -227,6 +241,7 @@ internal sealed class BubblePop
             ClassFiveType => ClassFiveCell + Turn(turn, ShotTurns, type),
             ThrownType => ThrownCell,
             ThunderType => BoltCell,
+            ThunderShotType => ShotCell + Turn(turn, ShotTurns, type),
             _ when Baron.Is(type) => BaronCell + s_baronSide[slot] + ((Counter >> 1) & 0x01),
             _ => null,
         };

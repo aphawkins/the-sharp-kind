@@ -15,6 +15,8 @@ internal sealed class BubbleBlow
 
     internal const byte SpawnTimer = 0x04;
 
+    internal const byte ThunderType = 0x44;
+
     private const byte LeftEdge = 0x14;
     private const byte TopEdge = 0x15;
 
@@ -129,8 +131,23 @@ internal sealed class BubbleBlow
         _objects.Variant[slot] = _players.BlowVariant[player];
 
         Place(player, slot, cell);
+        Thunder(player, slot);
 
         _rings.Blow(player);
+    }
+
+    // $23B8-$23D6: a player with thunder shots left blows one, which goes the way they face.
+    private void Thunder(int player, int slot)
+    {
+        if ((_players.Shots[player] & 0x80) != 0)
+        {
+            return;
+        }
+
+        _players.Shots[player]--;
+        _objects.SubX[slot] = (byte)((_objects.Direction[slot] & 0x80) != 0 ? 0 : 2);
+        _objects.State[slot] = 0;
+        _objects.Type[slot] = ThunderType;
     }
 
     private void Place(int player, int slot, in PlayerCell cell)

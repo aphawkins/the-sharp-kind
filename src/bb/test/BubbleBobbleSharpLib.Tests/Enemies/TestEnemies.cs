@@ -19,7 +19,7 @@ internal static class TestEnemies
     {
         FoodDrop food = new(entities, new Scores(), random);
 
-        return new(objects, entities, random, new(entities, food), new(objects, entities), food);
+        return new(objects, entities, random, new(entities, food), new(objects, entities), food, new Scores());
     }
 
     internal static EnemyFrame Frame(EntityTable entities, ObjectTable objects, BbRandom random)

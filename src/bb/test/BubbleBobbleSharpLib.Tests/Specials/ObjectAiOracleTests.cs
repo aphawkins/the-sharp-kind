@@ -61,6 +61,10 @@ public sealed class ObjectAiOracleTests
         { "boomerang right", 0x2C, 0x02, 8, 14 },
         { "boomerang left", 0x2C, 0x80, 24, 14 },
         { "thrown", 0x32, 0x00, 12, 6 },
+        { "thunder shot right", 0x44, 0x00, 6, 12 },
+        { "thunder shot left", 0x44, 0x80, 24, 12 },
+        { "fruit", 0x4C, 0x00, 10, 3 },
+        { "fruit above a platform", 0x4C, 0x00, 20, 4 },
     };
 
     [Theory]
@@ -143,11 +147,11 @@ public sealed class ObjectAiOracleTests
     // On the fourth pass something is put where the object is: an enemy for a bolt to knock out, a player for a shot to kill.
     private static void Meet(Rebb64Machine machine, byte type)
     {
-        int entity = type == 0x26 ? 2 : 0;
+        int entity = type is 0x26 or 0x44 ? 2 : 0;
         byte x = machine.Peek(0xAA0C + Slot);
         byte y = machine.Peek(0xAA1E + Slot);
 
-        if (type is 0x24 or 0x2C or 0x32)
+        if (type is 0x24 or 0x2C or 0x32 or 0x4C)
         {
             x = (byte)((machine.Peek(0xDC + Slot) << 3) + 0x18);
             y = (byte)((machine.Peek(0xEE + Slot) << 3) + 0x15);
@@ -210,10 +214,16 @@ public sealed class ObjectAiOracleTests
             High = capture.Before[Random + 1],
         };
 
-        FoodDrop food = new(entities, new Scores(), random);
+        Scores scores = new();
+        FoodDrop food = new(entities, scores, random);
         FireStrips fire = Load(capture.Before, entities, food);
         BubbleCollision collision = new(objects, entities);
         LevelFlow flow = new(new LevelTimer()) { Freeze = capture.Before[Freeze] };
+
+        for (int i = 0; i < 6; i++)
+        {
+            scores.Add(i, capture.Before[0x0400 + i]);
+        }
 
         EnemyAiLoop loop = new(
             objects,
@@ -222,7 +232,7 @@ public sealed class ObjectAiOracleTests
             new EntityMover(objects),
             random,
             new Baron(objects, entities, new LevelTimer()),
-            new ObjectAi(objects, entities, random, fire, collision, food),
+            new ObjectAi(objects, entities, random, fire, collision, food, scores),
             flow);
 
         loop.Update(map);
@@ -239,6 +249,7 @@ public sealed class ObjectAiOracleTests
         AssertStrips(capture, fire, name, pass);
         Assert.Equal(capture.After[Random], random.Low);
         Assert.Equal(capture.After[Random + 1], random.High);
+        Assert.Equal(Convert.ToHexString(capture.After, 0x0400, 6), Convert.ToHexString(scores.Bytes.ToArray()));
     }
 
     private static FireStrips Load(byte[] ram, EntityTable entities, FoodDrop food)

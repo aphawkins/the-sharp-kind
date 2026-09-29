@@ -68,14 +68,7 @@ public sealed class LevelClearGoldenTests
         byte[] state = before[1..];
         Rig rig = new(state, after[RandomAt]);
 
-        if (state[Bonus] == 0)
-        {
-            rig.Clear.Update();
-        }
-        else
-        {
-            Assert.Throws<NotSupportedException>(rig.Clear.Update);
-        }
+        rig.Clear.Update();
 
         // $B4, $C6 and $C7 are an enemy slot's, which the clear only sets when $69 is (it is not); $58FF, which it
         // clears, is not modelled, and the save writes the zero.

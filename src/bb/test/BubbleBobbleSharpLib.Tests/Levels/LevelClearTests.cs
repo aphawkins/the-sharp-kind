@@ -154,7 +154,7 @@ public sealed class LevelClearTests
         rig.Clear.BonusType = 9;
         new byte[] { 0x04, 0x38, 0x41, 0x42, 0x10 }.CopyTo(rig.Objects.Type);
 
-        Assert.Throws<NotSupportedException>(rig.Clear.Update);
+        rig.Clear.Update();
 
         Assert.Equal([0x4C, 0x4C, 0x4C, 0x3A, 0x3A], rig.Objects.Type[..5].ToArray());
         Assert.Equal(LevelItems.FoodColour(9), rig.Objects.Behaviour[0]);

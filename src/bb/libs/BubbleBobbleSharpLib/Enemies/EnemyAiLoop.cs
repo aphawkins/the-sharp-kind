@@ -111,11 +111,21 @@ internal sealed class EnemyAiLoop
         }
     }
 
-    // $0D4E: the types $24 to $33 go through a table of routines, and `$67` (a frozen level) stops the table. Types $34
-    // and up, except the $44 and $4C the plan has not got to, do nothing here.
+    // $0D4E: the types $24 to $33 go through a table of routines, and `$67` (a frozen level) stops the table. Above them
+    // only the $44 and $4C are anything, and the freeze does not stop them.
     private void Special(int slot, byte type, SolidMap map)
     {
-        if (type >= TableEnd || _flow.Freeze != 0)
+        if (type >= TableEnd)
+        {
+            if (ObjectAi.Handles(type))
+            {
+                _objectAi.Step(slot, map);
+            }
+
+            return;
+        }
+
+        if (_flow.Freeze != 0)
         {
             return;
         }

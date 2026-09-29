@@ -62,6 +62,12 @@ internal sealed class LevelClear
     // $68: which bonus round this level is followed by, or 0 for none.
     internal byte BonusType { get; set; }
 
+    // $69 (ARG), and $6A: the score the round's super bonus is worth, and which stage's data it is built from (negative
+    // for none, which is what a level start leaves).
+    internal byte BonusArg { get; set; }
+
+    internal byte BonusStage { get; set; } = 0xFF;
+
     // $59BF: the level a bonus round is due after, and $59FF: how far to the next one ($092A, $095E).
     internal byte BonusLevel { get; set; } = FirstBonusLevel;
 
@@ -71,6 +77,8 @@ internal sealed class LevelClear
     internal void Begin(byte subflg)
     {
         BonusType = 0;
+        BonusArg = 0;
+        BonusStage = 0xFF;
 
         if (BonusLevel != subflg)
         {
@@ -94,6 +102,14 @@ internal sealed class LevelClear
         }
 
         BonusType = (byte)type;
+    }
+
+    // $348A-$3510: an item effect makes a bonus round due after this level.
+    internal void Schedule(byte type, byte arg, byte stage)
+    {
+        BonusType = type;
+        BonusArg = arg;
+        BonusStage = stage;
     }
 
     // $16DA-$1750, and $1751-$1772 for a level with nothing left in it.
@@ -146,10 +162,9 @@ internal sealed class LevelClear
         _timer.Hurry = 0xFF;
         _timer.Seconds = ClearedSeconds;
 
-        if (BonusType != 0)
-        {
-            throw new NotSupportedException("the bonus round's entry at $3517 is not translated");
-        }
+        // $176B-$176F: a bonus round's entry, `$3517`, loads the round's item art into `$4230` and the mask `$40A8`, which
+        // the fruit is drawn from (`BubblePop.FruitArt`); with `$6A` set (an item effect) it also copies the round's stage
+        // data to `$7D00`, which is not modelled.
     }
 
     // $171B-$1750: every object but the three that stay is kept as it was and made a pop.

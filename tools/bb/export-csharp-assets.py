@@ -394,6 +394,10 @@ _DROP_TABLE_GRAPHICS = (0x9300, 0x9330, 0x9360, 0x9390)
 _DROP_TABLE_MASKS = (0x93C0, 0x93F0, 0x9420, 0x9450)
 _BOLT_COLUMNS = (0x92C0, 0x92D0, 0x92E0, 0x92F0)
 
+# $0EC5 ($4C, the fruit that rains after a bonus level) is drawn by $3F88 from the item art $3517 loads into $4230, with
+# the mask $3576 makes of it: transparent where the art is 00. One cell for each of the $3A blocks (ITEM_BLOCK_COUNT), the
+# two columns of the art and an empty third.
+
 
 def _column_bytes(addr, bubble_masks, software_sprites):
     """The 16 bytes (one column, one byte a row) at a graphic/mask address."""
@@ -460,6 +464,24 @@ def export_object_sprites(out_dir, canonical):
         _column_bytes(a, bubble_masks, software_sprites) for a in (m1, m2, _THIRD_MASK)
     )
     cells.append(decode_object_cell(graphic48, mask48, report))
+
+    software_sprites_for_items = software_sprites
+
+    for block in range(ITEM_BLOCK_COUNT):
+        data = _read_bytes(
+            software_sprites_for_items,
+            ITEMS_ROM + ITEM_BLOCK_BYTES * block,
+            SOFTWARE_SPRITES_BASE,
+            ITEM_BLOCK_BYTES,
+        )
+        cell = [[0] * OBJECT_CELL_WIDTH for _ in range(OBJECT_CELL_HEIGHT)]
+
+        for row in range(OBJECT_CELL_HEIGHT):
+            for col in range(2):
+                for i, value in enumerate(_bit_pairs(data[col * 16 + row])):
+                    cell[row][col * 4 + i] = value
+
+        cells.append(cell)
 
     if report["mixed_mask"]:
         raise SystemExit(

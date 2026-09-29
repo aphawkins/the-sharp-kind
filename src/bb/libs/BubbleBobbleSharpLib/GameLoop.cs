@@ -44,6 +44,7 @@ internal sealed class GameLoop
     private readonly EnemySpawner _spawner;
     private readonly BubbleSpawner _bubbles;
     private readonly ExtendBonus _extend;
+    private readonly WorldEffects _world;
     private readonly PlayerRespawn _respawn;
     private readonly PlayerJoin _join;
     private readonly int _playing;
@@ -79,14 +80,16 @@ internal sealed class GameLoop
             new(Objects),
             random,
             new(Objects, Entities, Timer),
-            new(Objects, Entities, random, Fire, collision, food),
+            new(Objects, Entities, random, Fire, collision, food, Scores),
             Flow);
         _timers = new(Objects, Entities);
         Pop = new(Objects, Entities, PlayerTable, food, Scores, Water);
         _spawner = new(Entities, random);
         _bubbles = new(Objects, Entities, random);
 
-        Items = new(Entities, Scores, new(PlayerTable, Entities), random)
+        ItemEffects effects = new(PlayerTable, Entities);
+
+        Items = new(Entities, Scores, effects, random)
         {
             FoodBase = (byte)((random.Next() & FirstFoodMask) + FirstFoodBase + (random.Carry ? 1 : 0)),
             Undying = OnePlayer,
@@ -97,6 +100,8 @@ internal sealed class GameLoop
         Clear = new(Timer, Entities, Objects, Items, random);
         End = new(Timer, Entities, Objects, Pop, Items, random);
         _extend = new(PlayerTable, End);
+        _world = new(Clear, Flow, Timer, Entities, Objects, food, Items);
+        effects.World = _world.Apply;
 
         // $0956-$0977.
         PlayerTable.Lives.Fill(StartingLives);
@@ -155,6 +160,27 @@ internal sealed class GameLoop
             : _subflg + 1;
     }
 
+    // $7FB2-$7FDD: an item that skips levels has taken the game on. Returns the number of the level to start, having set
+    // up the levels between only as far as the bonus rounds' schedule ($0688) goes, or none.
+    internal int? SkipLevel()
+    {
+        if (_world.SkipTo is not int target)
+        {
+            return null;
+        }
+
+        _world.SkipTo = null;
+
+        for (int level = _subflg + 1; level < target; level++)
+        {
+            Clear.Begin((byte)level);
+        }
+
+        _subflg = (byte)target;
+
+        return target + 1;
+    }
+
     // $09DC-$0A05. A level that follows another ($0A96) keeps the players it has in the game.
     internal void Start(Level level, IReadOnlyList<ZoneRect> zones, int number, bool next = false)
     {
@@ -171,6 +197,10 @@ internal sealed class GameLoop
         StartPlayers(next);
 
         _subflg = (byte)(number - 1);
+        _world.Level = _subflg;
+        _world.Cleared = false;
+        _world.SkipTo = null;
+        PlayerTable.Shots.Fill(0xFF);
 
         if (_subflg != BonusLevel)
         {
@@ -218,6 +248,7 @@ internal sealed class GameLoop
 
         _blow.Tick();
         _bubbles.Update(map);
+        Pop.FruitArt = LevelItems.FoodArt(Clear.BonusType);
         Pop.Update();
         _push.Update(map);
         _ai.Update(map);

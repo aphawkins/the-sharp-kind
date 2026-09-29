@@ -46,6 +46,9 @@ public sealed class ObjectsModel
     /// <summary>Gets the level's colour byte.</summary>
     public int Colours { get; }
 
+    /// <summary>Gets each slot's colour RAM byte, or none when every slot wears the playfield's.</summary>
+    public IReadOnlyList<byte>? SlotColours { get; init; }
+
     /// <summary>Gets a value indicating whether a slot was drawn.</summary>
     /// <param name="slot">The object slot.</param>
     /// <returns>Whether the slot was drawn.</returns>
@@ -55,6 +58,11 @@ public sealed class ObjectsModel
     /// <param name="slot">The object slot.</param>
     /// <returns>The entry index.</returns>
     public byte Entry(int slot) => _drawn[slot];
+
+    /// <summary>Gets the colour RAM byte a slot is drawn in.</summary>
+    /// <param name="slot">The object slot.</param>
+    /// <returns>The colour byte.</returns>
+    public byte Colour(int slot) => SlotColours is null ? (byte)0x0D : SlotColours[slot];
 
     /// <summary>Gets a slot's character column.</summary>
     /// <param name="slot">The object slot.</param>

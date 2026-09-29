@@ -19,6 +19,7 @@ internal sealed class PlayerTable
     private readonly byte[] _blowState = [0x88, 0x88];
     private readonly byte[] _blowVariant = [0x04, 0x04];
     private readonly byte[] _blowType = [0x04, 0x04];
+    private readonly byte[] _shots = [0xFF, 0xFF];
     private readonly byte[] _driftRing = new byte[Capacity];
     private readonly byte[] _walkRing = new byte[Capacity];
     private readonly byte[] _blowRing = new byte[Capacity];
@@ -50,6 +51,9 @@ internal sealed class PlayerTable
     internal Span<byte> BlowVariant => _blowVariant;
 
     internal Span<byte> BlowType => _blowType;
+
+    // $A783, $A784: the thunder shots a player still has to blow; $FF for none. A level start and a death end them.
+    internal Span<byte> Shots => _shots;
 
     internal Span<byte> DriftRing => _driftRing;
 

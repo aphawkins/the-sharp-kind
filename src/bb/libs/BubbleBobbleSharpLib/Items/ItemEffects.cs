@@ -14,6 +14,7 @@ internal sealed class ItemEffects
     private const byte CandyType = 0xFF;
 
     private const byte FinalFlash = 0xFE;
+    private const byte ThunderShots = 0x12;
 
     private static readonly ushort[] s_handlers =
     [
@@ -34,8 +35,17 @@ internal sealed class ItemEffects
         _entities = entities;
     }
 
+    // The effects that act on the level, not on the player: the game wires them in.
+    internal Action<int, int>? World { get; set; }
+
     internal void Apply(int type, int player)
     {
+        if (World is not null && WorldEffects.Handles(type))
+        {
+            World(type, player);
+            return;
+        }
+
         switch (type)
         {
             case 0:
@@ -67,6 +77,9 @@ internal sealed class ItemEffects
                 break;
             case 14:
                 _players.BlowRing[player]--;
+                break;
+            case 6:
+                _players.Shots[player] = ThunderShots;
                 break;
             default:
                 throw new NotSupportedException($"special item {type}'s effect at ${s_handlers[type]:X4} is not translated");

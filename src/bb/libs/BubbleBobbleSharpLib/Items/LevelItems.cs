@@ -137,6 +137,9 @@ internal sealed class LevelItems
     // $A8E4.
     internal static byte FoodColour(int food) => s_foodColours[food];
 
+    // $A892: the block of item art a food is drawn from.
+    internal static byte FoodArt(int food) => s_foodArt[food];
+
     // $16FB-$170B: a level cleared calls its special item off. One showing has its timer run out; one not yet
     // shown is never shown.
     internal void CancelSpecial()

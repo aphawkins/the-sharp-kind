@@ -194,6 +194,31 @@ internal sealed class Rebb64Machine : IBus
         return new Capture(before, [.. _ram], [.. TimerLog]);
     }
 
+    // Calls a routine of the game's as `jsr` would, with interrupts off, from wherever the machine is: an intervention that
+    // stands in for a call a test cannot wait for. The registers and the two stack bytes the call uses are put back.
+    internal Capture Invoke(int address, byte a, byte x, long maxCycles)
+    {
+        (int pc, byte s, byte ra, byte rx, byte ry, byte status) = (Cpu.PC, Cpu.S, Cpu.A, Cpu.X, Cpu.Y, Cpu.Status);
+        (byte low, byte high) = (_ram[0x01FE], _ram[0x01FF]);
+
+        byte[] before = [.. _ram];
+        bool enabled = InterruptsEnabled;
+
+        InterruptsEnabled = false;
+        TimerLog.Clear();
+        _logging = true;
+        Cpu.Call(address, a, (int)maxCycles, x, 0);
+        _logging = false;
+        InterruptsEnabled = enabled;
+
+        Capture capture = new(before, [.. _ram], [.. TimerLog]);
+
+        (Cpu.PC, Cpu.S, Cpu.A, Cpu.X, Cpu.Y, Cpu.Status) = (pc, s, ra, rx, ry, status);
+        (_ram[0x01FE], _ram[0x01FF]) = (low, high);
+
+        return capture;
+    }
+
     // From the start of a pass: end the level as `$0A6E` does, with SUBFLG set so that the next one is `number`, and run
     // to that level's first pass. Not a way to play: the players keep whatever state they are in.
     internal void EnterLevel(int number)

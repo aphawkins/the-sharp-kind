@@ -276,6 +276,25 @@ public sealed class BubblePopTests
         Assert.Equal(drawnSubY, rig.Pop.DrawnSubY[Slot]);
     }
 
+    // $3F88 draws the fruit from the round's item art, in the fruit's own colour RAM byte; everything else wears the playfield's.
+    [Fact]
+    public void TheFruitIsDrawnFromTheRoundsArtInItsOwnColour()
+    {
+        Rig rig = new();
+        Place(rig, Slot, 0x4C);
+        rig.Objects.Behaviour[Slot] = 0x0B;
+        rig.Objects.SubY[Slot] = 0x04;
+        Place(rig, Slot - 1, 0x00);
+        rig.Pop.FruitArt = 0x03;
+
+        rig.Pop.Update();
+
+        Assert.Equal(75, rig.Pop.Drawn[Slot]);
+        Assert.Equal(0x04, rig.Pop.DrawnSubY[Slot]);
+        Assert.Equal(0x0B, rig.Pop.DrawnColour[Slot]);
+        Assert.Equal(0x0D, rig.Pop.DrawnColour[Slot - 1]);
+    }
+
     // $3E30-$3E5B: the bolt starts on the grid and goes the way the player who burst it faces.
     [Theory]
     [InlineData(0, 0x84)]

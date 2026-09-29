@@ -145,6 +145,12 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
             ShowLevel(Loop.EndLevel(), next: true);
         }
 
+        // $7FB2: an item has skipped levels.
+        if (Loop.SkipLevel() is int skipped)
+        {
+            ShowLevel(skipped, next: true);
+        }
+
         ShowColours();
 
         if (Loop.Finished)
@@ -224,7 +230,10 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         Loop.Pop.DrawnColumn,
         Loop.Pop.DrawnRow,
         Loop.Pop.DrawnSubY,
-        _playfield.Colours);
+        _playfield.Colours)
+    {
+        SlotColours = Loop.Pop.DrawnColour.ToArray(),
+    };
 
     private EffectsModel Effects() => new(
         Loop.Water.Mask != 0,

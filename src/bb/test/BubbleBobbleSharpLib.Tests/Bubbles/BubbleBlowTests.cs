@@ -322,6 +322,37 @@ public sealed class BubbleBlowTests
         Assert.Equal(0xFF, entities.BubbleTimer[1]);
     }
 
+    // $23B8-$23D6: a player with thunder shots left blows one instead, which goes the way they face.
+    [Theory]
+    [InlineData(FacingRight, 2)]
+    [InlineData(FacingLeft, 0)]
+    public void ABlowWithThunderShotsLeftMakesAShotFacingTheWayThePlayerFaces(byte facing, byte subX)
+    {
+        (PlayerTable players, EntityTable entities, ObjectTable objects, BubbleBlow blow) = Standing(facing);
+        players.Shots[0] = 0x12;
+
+        Run(blow, entities, players);
+
+        Assert.Equal(0x11, players.Shots[0]);
+        Assert.Equal(BubbleBlow.ThunderType, objects.Type[FirstSlot]);
+        Assert.Equal(subX, objects.SubX[FirstSlot]);
+        Assert.Equal(0, objects.State[FirstSlot]);
+    }
+
+    // $23B8: $FF is none, and the last shot ($00) is still a shot.
+    [Theory]
+    [InlineData(0xFF, BubbleBlow.BubbleType)]
+    [InlineData(0x00, BubbleBlow.ThunderType)]
+    public void OnlyAPlayerWithAShotBlowsThunder(byte shots, byte type)
+    {
+        (PlayerTable players, EntityTable entities, ObjectTable objects, BubbleBlow blow) = Standing(FacingRight);
+        players.Shots[0] = shots;
+
+        Run(blow, entities, players);
+
+        Assert.Equal(type, objects.Type[FirstSlot]);
+    }
+
     // The blow, run as far as the frame the bubble is made on.
     private static void Run(BubbleBlow blow, EntityTable entities, PlayerTable players)
     {

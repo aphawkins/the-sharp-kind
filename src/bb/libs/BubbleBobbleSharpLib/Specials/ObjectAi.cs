@@ -31,6 +31,8 @@ internal sealed class ObjectAi
     internal const byte SlowShotType = 0x2A;
     internal const byte BoomerangType = 0x2C;
     internal const byte ThrownType = 0x32;
+    internal const byte FruitType = 0x4C;
+    internal const byte ThunderShotType = 0x44;
 
     private const byte GoneType = 0x38;
     private const byte CollectedType = 0x3A;
@@ -59,12 +61,20 @@ internal sealed class ObjectAi
 
     private const byte KillCall = 0x02;
 
+    private const int FruitBelow = 0x78;
+    private const byte FruitScore = 0x70;
+    private const byte FruitPause = 0x04;
+    private const byte FruitXOrigin = 0x14;
+    private const byte FruitYOrigin = 0x15;
+    private const byte FruitReach = 0x10;
+
     private readonly ObjectTable _objects;
     private readonly EntityTable _entities;
     private readonly BbRandom _random;
     private readonly FireStrips _fire;
     private readonly BubbleCollision _collision;
     private readonly FoodDrop _food;
+    private readonly Scores _scores;
 
     internal ObjectAi(
         ObjectTable objects,
@@ -72,7 +82,8 @@ internal sealed class ObjectAi
         BbRandom random,
         FireStrips fire,
         BubbleCollision collision,
-        FoodDrop food)
+        FoodDrop food,
+        Scores scores)
     {
         ArgumentNullException.ThrowIfNull(objects);
         ArgumentNullException.ThrowIfNull(entities);
@@ -80,6 +91,7 @@ internal sealed class ObjectAi
         ArgumentNullException.ThrowIfNull(fire);
         ArgumentNullException.ThrowIfNull(collision);
         ArgumentNullException.ThrowIfNull(food);
+        ArgumentNullException.ThrowIfNull(scores);
 
         _objects = objects;
         _entities = entities;
@@ -87,12 +99,14 @@ internal sealed class ObjectAi
         _fire = fire;
         _collision = collision;
         _food = food;
+        _scores = scores;
     }
 
     // What `$B0` was set to by the last bolt to hit an enemy (`$3E`'s `lda #$02`), which nothing translated reads.
     internal byte LastHit { get; private set; }
 
-    internal static bool Handles(byte type) => type is FireType or BoltType or ShotType or SlowShotType or BoomerangType or ThrownType;
+    internal static bool Handles(byte type)
+        => type is FireType or BoltType or ShotType or SlowShotType or BoomerangType or ThrownType or FruitType or ThunderShotType;
 
     internal void Step(int slot, SolidMap map)
     {
@@ -118,6 +132,13 @@ internal sealed class ObjectAi
                 break;
             case ThrownType:
                 Thrown(slot);
+                break;
+            case FruitType:
+                Fruit(slot, map);
+                break;
+            case ThunderShotType:
+                _objects.SubX[slot] ^= 0x01;
+                Bolt(slot);
                 break;
         }
     }
@@ -266,6 +287,56 @@ internal sealed class ObjectAi
         _food.Kill(enemy);
         _objects.Type[slot] = type;
         LastHit = KillCall;
+    }
+
+    // $0EC5-$0F45, the fruit a level's end rains. It falls a row every second pass, until a platform is three rows under
+    // it or the bottom of the level takes it (type $38). A player within $10 pixels takes it for 70 points, and it is gone.
+    private void Fruit(int slot, SolidMap map)
+    {
+        if (_objects.SubY[slot] == 0)
+        {
+            int origin = ((_objects.Row[slot] - RowBias) * Stride) + _objects.Column[slot];
+
+            if (!SolidAt(map, origin, FruitBelow) && !SolidAt(map, origin, FruitBelow + 1))
+            {
+                _objects.Row[slot]++;
+
+                if (_objects.Row[slot] == LastRow)
+                {
+                    _objects.Type[slot] = GoneType;
+                    return;
+                }
+
+                _objects.SubY[slot] = FruitPause;
+            }
+        }
+        else
+        {
+            _objects.SubY[slot] = 0;
+        }
+
+        Take(slot);
+    }
+
+    // $0EFD-$0F45.
+    private void Take(int slot)
+    {
+        byte x = (byte)((_objects.Column[slot] << 3) + FruitXOrigin);
+        byte y = (byte)((_objects.Row[slot] << 3) + FruitYOrigin);
+
+        for (int player = PlayerTable.Capacity - 1; player >= 0; player--)
+        {
+            if (_entities.State[player] == 0
+                || Distance.Absolute(_entities.X[player], x) >= FruitReach
+                || Distance.Absolute(_entities.Y[player], y) >= FruitReach)
+            {
+                continue;
+            }
+
+            _scores.Add(Scores.Last(player), FruitScore);
+            _objects.Type[slot] = GoneType;
+            return;
+        }
     }
 
     // $1274-$1286: every second pass, by which way it goes.
