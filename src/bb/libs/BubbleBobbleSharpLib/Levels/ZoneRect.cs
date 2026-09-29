@@ -15,4 +15,7 @@ public class ZoneRect
     public int Height { get; set; }
 
     public int Type { get; set; }
+
+    // $E24C: not a rectangle but the command that copies the left half of the map to the right.
+    public bool Mirror { get; set; }
 }

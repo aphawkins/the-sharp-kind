@@ -35,7 +35,6 @@ DEFAULT_OUT = os.path.join(
     REPO, "src", "bb", "libs", "BubbleBobbleSharp.Renditions.EightBit", "Assets"
 )
 
-SCREEN_COLUMNS = 32
 
 # Set by load_converters() once the checkout's path is known.
 DATA = None
@@ -854,75 +853,42 @@ def export_levels(path):
 # =============================================================================
 
 
-# The direction 0-3 (up, right, down, left) a mirrored cell ends up with. $E271:
-# `and #$01` tests bit 0 first and copies unchanged if it is clear, so only 1
-# (right) and 3 (left) ever flip, into each other, by `eor #$02`. 0 and 2 are
-# their own mirror.
-_MIRRORED_TYPE = [0, 3, 2, 1]
-
-
-def mirror_rect(rect):
+def level_commands(level):
     """
-    Reflect a rectangle about the screen's centre column.
+    The game's command list for one level: the rectangles and mirrors `$E1F3` runs, in its order.
 
-    convert-levels.py's is_symmetric() compares row[:16] against
-    row[16:] reversed, so the axis sits between columns 15 and 16 - which
-    puts a rectangle's mirrored left edge at 32 - x - width.
-    """
-    return {
-        "x": SCREEN_COLUMNS - rect["x"] - rect["width"],
-        "y": rect["y"],
-        "width": rect["width"],
-        "height": rect["height"],
-        "type": _MIRRORED_TYPE[rect["type"]],
-    }
-
-
-def has_trailing_zero(level):
-    """
-    Whether this level's encoded zone data carries a $00 terminator byte.
-
-    Not the same question as "does zone-data.txt say `mirror`" - it never
-    does, in the whole of the real data, zero times across all hundred
-    levels. `$E1F3` dispatches on bit 7 alone, so `decompress_level_data`
-    reads a $00 terminator exactly the way it would read an explicit `mirror`
-    opcode, and falls into the horizontal mirror at `$E24C` regardless -
-    confirmed against a VICE capture of the transient buffer, see
-    docs/bb-port-plan.md's "direction field" item. `encode_level` only omits
-    the terminator when a level's declared `size=` leaves no room for one; run
-    the real encoder rather than re-deriving its branch, so this can never
-    drift from what the build actually produces.
+    Decoded from the bytes the real encoder produces rather than from the command list in zone-data.txt, because
+    a level's `trailing=` bytes are commands too: they come after the terminator, which is itself the mirror
+    command, so they draw over the mirrored map. A byte with bit 7 clear is a mirror; any other starts a
+    three-byte rectangle. The list runs to the level's size byte, as the game's does.
     """
     encoded = zones_mod.encode_level(level)
-    rect_count = sum(1 for c in level["commands"] if c["type"] == "rect")
-    return len(encoded) > 1 + (3 * rect_count)
+    size = encoded[0]
+    commands = []
+    index = 1
 
+    while index < size:
+        first = encoded[index]
 
-def level_rects(level):
-    """
-    Run one level's command list into a plain rectangle list, mirror included.
+        if first & 0x80 == 0:
+            commands.append({"mirror": True})
+            index += 1
+            continue
 
-    `mirror` never appears as an opcode in zone-data.txt - see
-    has_trailing_zero - so what decides whether a level's right half is a
-    mirror of its left is only ever the implicit terminator, checked once
-    here rather than modelled as a command the loop reacts to.
-    """
-    rects = [
-        {
-            "x": command["x"],
-            "y": command["y"],
-            "width": command["width"],
-            "height": command["height"],
-            "type": command["zone_type"],
-        }
-        for command in level["commands"]
-        if command["type"] == "rect"
-    ]
+        second = encoded[index + 1]
+        third = encoded[index + 2]
+        commands.append(
+            {
+                "x": first & 0x1F,
+                "y": second >> 3,
+                "width": (((second & 0x07) << 2) | (third >> 6)) + 1,
+                "height": (third & 0x1F) + 1,
+                "type": (first >> 5) & 0x03,
+            }
+        )
+        index += 3
 
-    if has_trailing_zero(level):
-        rects += [mirror_rect(r) for r in reversed(rects)]
-
-    return rects
+    return commands
 
 
 def export_zones(path):
@@ -945,7 +911,7 @@ def export_zones(path):
             seen.add(source["number"])
             source = by_number[source["redirect"]]
 
-        out.append({"number": level["number"], "rects": level_rects(source)})
+        out.append({"number": level["number"], "rects": level_commands(source)})
 
     write_json(path, out)
     return len(out)

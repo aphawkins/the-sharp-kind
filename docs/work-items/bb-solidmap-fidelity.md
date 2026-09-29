@@ -1,10 +1,13 @@
-# Bubble Bobble: the port's level map is not the game's for about 45 levels
+# Bubble Bobble: the port's level map is not the game's for 21 levels
 
-[BubbleBobbleSharpLib] Found 2026-09-29 by `SolidMapOracleTests` (explicit), which compares the port's `SolidMap` for
-every level with the game's `$8500` map, cell by cell, as the game holds it at the level's first pass.
+[BubbleBobbleSharpLib] Found 2026-09-29 by `SolidMapOracleTests`, which compares the port's `SolidMap` for every level
+with the game's `$8500` map, cell by cell, as the game holds it at the level's first pass. `SolidMap` now runs the game's
+command list in order (mirror included), and the zone data is exported from the game's encoded bytes, which cut the
+levels that differ from about 45 to 21. The test skips the remaining ones (`s_gaps`): 36, 48, 52, 70 and 72-87.
 
-Levels 3-6, 8, 10, 12, 16, 18-21, 23, 27, 28, 32, 33, 35, 36, 39, 45, 48, 49, 52, 55-57, 66, 70, 72-76, 78-88, 94, 96 and 99
-differ (level 1, 2 and the rest agree). Some differ by a few cells' bubble current, and levels 72-87 by hundreds.
+Levels 36, 48, 52 and 70 differ by a few cells' bubble current. Levels 72-87 differ because the game's first-pass map
+lacks some platforms; level 76's platforms are drawn in characters `$C0` and up, which `$3998` does not count. The cause
+is not found.
 
 The game builds the map in three steps:
 
@@ -14,9 +17,6 @@ The game builds the map in three steps:
 3. `$3998` (in `D_392A`) then ORs `$80` into the map cell for every screen cell whose character is `$10` to `$1D`. The
    solid bit therefore comes from the tile drawn, after the rectangles, not from the bitmap alone.
 
-The port builds it as: row defaults, solid bits from the bitmap, then rectangles that change only the current. To fix it,
-translate the three steps (the zone data and its redirects are in `zone-data.bin`), or find which levels draw tiles that
-are not `$10` to `$1D`. The rows 0 and 24 openings differ too (level 73's bottom row has current 2 in its openings).
+Steps 1 and 2 are translated. Step 3 is still the bitmap's solid bits; finding what `$3998` does for levels 72-87 is what is left.
 
-Effects: which way bubbles drift, which cells the spawner and the dispatcher treat as solid. Verify: the explicit test
-passes.
+Effects: which way bubbles drift, which cells the spawner and the dispatcher treat as solid. Verify: `SolidMapOracleTests` passes with `s_gaps` empty.

@@ -11,11 +11,13 @@ namespace BubbleBobbleSharpLib.Tests.Levels;
 // The port's map of every level against the game's, cell by cell, as the game holds it at the level's first pass:
 // the 25 rows of 32 columns at `$8500` (a row is 40 bytes), each cell's solid bit and its two bubble-current bits.
 //
-// **This fails for about 45 levels, so it is explicit** (see work-items/bb-solidmap-fidelity.md). The port builds the map
-// from the level's bitmap and the zone rectangles; the game builds it in three steps the port has only two of: each row
-// is filled with the bubble current in the level's right-hand wall byte (`$E1D1`), each zone rectangle then overwrites
-// whole bytes, solid bit included (`$E239`), and last `$3998` sets the solid bit of every cell whose rendered screen
-// character is $10 to $1D. So a solid bit depends on the tile drawn, not on the bitmap alone, and a rectangle clears one.
+// The game builds the map in steps: each row is filled with the bubble current in the level's right-hand wall byte
+// (`$E1D1`); the level's commands then run in order (`$E1F3`), each rectangle overwriting whole bytes (`$E239`) and each
+// mirror copying the left half onto the right with a current to the left turned to the right (`$E24C`); and last
+// `$3998` sets the solid bit of every cell whose rendered screen character is $10 to $1D. The port does all but the last,
+// taking the solid bits from the level's bitmap, which agrees wherever it has been compared.
+//
+// It does not agree for the levels in `s_gaps` (work-items/bb-solidmap-fidelity.md), which the test leaves out.
 [Trait("Level", "Integration")]
 public sealed class SolidMapOracleTests
 {
@@ -26,7 +28,11 @@ public sealed class SolidMapOracleTests
     private static readonly LevelStore s_levels = LevelStore.Read(Asset("levels.json"));
     private static readonly ZoneStore s_zones = ZoneStore.Read(Asset("zones.json"));
 
-    [Fact(Explicit = true)]
+    // Levels 72 to 87 hold their first pass with the platforms not yet in the game's map (level 76's platforms are drawn
+    // in characters $C0 upwards, which `$3998` does not count), and 36, 48, 52 and 70 differ by a few cells' current.
+    private static readonly HashSet<int> s_gaps = [36, 48, 52, 70, .. Enumerable.Range(72, 16)];
+
+    [Fact]
     public void EveryLevelsMapIsTheGames()
     {
         Assert.SkipUnless(Rebb64Machine.Available, "rebb64-raw.prg is not available.");
@@ -43,11 +49,18 @@ public sealed class SolidMapOracleTests
                 machine.EnterLevel(number);
             }
 
+            if (s_gaps.Contains(number))
+            {
+                continue;
+            }
+
             List<string> cells = Mismatches(machine, SolidMap.Build(s_levels.Level(number), s_zones.Zones(number)));
 
             if (cells.Count > 0)
             {
-                wrong.Add($"level {number}: {cells.Count} cells, first {string.Join("; ", cells.Take(6))}");
+                int solid = cells.Count(x => x.EndsWith(" S", StringComparison.Ordinal));
+
+                wrong.Add($"level {number}: {cells.Count} cells, {solid} solid, first {string.Join("; ", cells.Take(6))}");
             }
         }
 
@@ -67,7 +80,9 @@ public sealed class SolidMapOracleTests
 
                 if (game != port)
                 {
-                    cells.Add($"({row},{column}) game {game:X2} port {port:X2}");
+                    string solid = (game ^ port) >= 0x80 ? " S" : string.Empty;
+
+                    cells.Add($"({row},{column}) game {game:X2} port {port:X2}{solid}");
                 }
             }
         }

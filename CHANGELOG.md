@@ -13,6 +13,10 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
   read-modify-write double write), a SID chip (three voices, ADSR, the filter, a 44.1 kHz renderer) and a PSID player
   ([src/useful/libs/SharpKind.Emulation](src/useful/libs/SharpKind.Emulation)). The shipped Bubble Bobble tune runs on it.
   `SoftwareSound` and `SDLSound` play SID songs (`file.sid#N`).
+- **Bubble Bobble's level map follows the game's command list** (mirror included) and the zone data is exported from the
+  game's own bytes: 21 levels differ from the game, down from about 45
+  ([work item](docs/work-items/bb-solidmap-fidelity.md)). A food slot whose `AttackTimer` a boomerang reset reads the
+  next table's bytes, as the 6502 does, instead of crashing.
 - **Bubble Bobble has its music**: the 12 songs of `bubble-bobble.sid` are manifest entries, and the game plays the theme,
   the level tunes, hurry-up, level complete, EXTEND and game over as the C64 game does
   ([Song.cs](src/bb/libs/BubbleBobbleSharpLib/Song.cs)).

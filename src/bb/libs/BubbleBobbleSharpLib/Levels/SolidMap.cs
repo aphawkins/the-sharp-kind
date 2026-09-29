@@ -74,9 +74,17 @@ internal sealed class SolidMap
             }
         }
 
+        // $E1F3: the commands run in the order given, a mirror among them.
         foreach (ZoneRect zone in zones)
         {
-            Overlay(cells, zone);
+            if (zone.Mirror)
+            {
+                MirrorDirections(cells);
+            }
+            else
+            {
+                Overlay(cells, zone);
+            }
         }
 
         return new(cells, level.Number, tails);
@@ -84,6 +92,26 @@ internal sealed class SolidMap
 
     internal int Direction(int row, int column)
         => InBounds(Copied(row), column) ? _cells[(Copied(row) * Columns) + column] & DirectionMask : 0;
+
+    // $E24C-$E280: the 24 rows above the last take their right half from the left, a cell whose bit 0 is set
+    // having bit 1 flipped, so a current to the left goes to the right. The solid bits come from the tiles.
+    private static void MirrorDirections(byte[] cells)
+    {
+        for (int row = 0; row < Rows - 1; row++)
+        {
+            for (int column = 0; column < Columns / 2; column++)
+            {
+                int direction = cells[(row * Columns) + column] & DirectionMask;
+
+                if ((direction & 1) != 0)
+                {
+                    direction ^= 2;
+                }
+
+                SetDirection(cells, row, Columns - 1 - column, direction);
+            }
+        }
+    }
 
     private static bool InBounds(int row, int column)
         => row >= 0 && row < Rows && column >= 0 && column < Columns;
