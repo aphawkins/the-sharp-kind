@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\useful\libs\SharpKind.Emulation\SharpKind.Emulation.csproj" />
     <ProjectReference Include="..\..\..\useful\libs\SharpKind.Graphics\SharpKind.Graphics.csproj" />
     <ProjectReference Include="..\..\..\useful\test\SharpKind.Fakes\SharpKind.Fakes.csproj" />
     <ProjectReference Include="..\..\..\useful\test\SharpKind.GoldenFrames\SharpKind.GoldenFrames.csproj" />

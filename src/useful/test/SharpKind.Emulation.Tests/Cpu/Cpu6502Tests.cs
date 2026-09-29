@@ -297,6 +297,29 @@ public class Cpu6502Tests
     }
 
     [Fact]
+    public void ReadModifyWriteWritesTheOldValueBackFirst()
+    {
+        // Arrange: DEC $D019 and ASL $D020 on a bus that logs its writes.
+        LoggingRam ram = new();
+        Cpu6502 cpu = new(ram) { PC = Origin };
+        ram.Poke(Origin, 0xCE);
+        ram.Poke(Origin + 1, 0x19);
+        ram.Poke(Origin + 2, 0xD0);
+        ram.Poke(Origin + 3, 0x0E);
+        ram.Poke(Origin + 4, 0x20);
+        ram.Poke(Origin + 5, 0xD0);
+        ram.Poke(0xD019, 0xF1);
+        ram.Poke(0xD020, 0x81);
+
+        // Act
+        cpu.Step();
+        cpu.Step();
+
+        // Assert
+        Assert.Equal([(0xD019, 0xF1), (0xD019, 0xF0), (0xD020, 0x81), (0xD020, 0x02)], ram.Writes);
+    }
+
+    [Fact]
     public void JsrPushesTheAddressOfItsLastByteAndRtsReturnsPastIt()
     {
         // Arrange: JSR $0210 at $0200; RTS at $0210.
@@ -531,6 +554,23 @@ public class Cpu6502Tests
         }
 
         return (cpu, ram);
+    }
+
+    private sealed class LoggingRam : IBus
+    {
+        private readonly byte[] _memory = new byte[0x10000];
+
+        public List<(int Address, byte Value)> Writes { get; } = [];
+
+        public byte Read(int address) => _memory[address & 0xFFFF];
+
+        public void Write(int address, byte value)
+        {
+            Writes.Add((address, value));
+            _memory[address & 0xFFFF] = value;
+        }
+
+        public void Poke(int address, byte value) => _memory[address] = value;
     }
 
     private sealed class Ram : IBus

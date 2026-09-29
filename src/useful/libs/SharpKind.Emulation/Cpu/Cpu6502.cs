@@ -341,10 +341,10 @@ public sealed partial class Cpu6502(IBus bus)
         switch (operation)
         {
             case Operation.Inc:
-                _bus.Write(address, SetNegativeZero(_bus.Read(address) + 1));
+                Modify(address, 1);
                 break;
             case Operation.Dec:
-                _bus.Write(address, SetNegativeZero(_bus.Read(address) - 1));
+                Modify(address, -1);
                 break;
             case Operation.Inx:
                 X = SetNegativeZero(X + 1);
@@ -359,6 +359,16 @@ public sealed partial class Cpu6502(IBus bus)
                 Y = SetNegativeZero(Y - 1);
                 break;
         }
+    }
+
+    // A read-modify-write writes the old value back before the new one, as the NMOS part does. Hardware registers see it:
+    // DEC $D019 acknowledges a VIC interrupt with that first write.
+    private void Modify(int address, int step)
+    {
+        byte value = _bus.Read(address);
+
+        _bus.Write(address, value);
+        _bus.Write(address, SetNegativeZero(value + step));
     }
 
     private void Control(Operation operation, int address)
@@ -488,6 +498,7 @@ public sealed partial class Cpu6502(IBus bus)
         }
         else
         {
+            _bus.Write(address, (byte)value);
             _bus.Write(address, shifted);
         }
     }
