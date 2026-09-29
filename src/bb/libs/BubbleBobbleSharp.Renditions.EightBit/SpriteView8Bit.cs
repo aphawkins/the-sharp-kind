@@ -34,6 +34,12 @@ internal sealed class SpriteView8Bit : IView<SpriteModel>
     private const int FoodSourceWidth = 8;
     private const int FoodHeight = 16;
 
+    // The giant: three sprites across and three down, in three sets of pictures (left, stunned, right).
+    private const int BossSourceWidth = 36;
+    private const float BossHeight = 63;
+    private const int StunnedFrame = 0x09;
+    private const int RightFrame = 0x18;
+
     private static readonly float[] s_bonusHeights = [42, 24, 21];
 
     private readonly IGraphics _graphics;
@@ -41,6 +47,7 @@ internal sealed class SpriteView8Bit : IView<SpriteModel>
     private readonly MulticolourSprites _sprites;
     private readonly MulticolourSprites _foods;
     private readonly MulticolourSprites[] _bonuses;
+    private readonly MulticolourSprites _boss;
 
     internal SpriteView8Bit(IViewSurface surface)
     {
@@ -50,6 +57,7 @@ internal sealed class SpriteView8Bit : IView<SpriteModel>
         _layout = surface.Layout;
         _sprites = new(surface, Sheet);
         _foods = new(surface, FoodSheet, itemArt: true);
+        _boss = new(surface, "GrumpleGromit");
         _bonuses = [new(surface, "BonusCake"), new(surface, "BonusMelon"), new(surface, "BonusDiamond")];
     }
 
@@ -62,6 +70,11 @@ internal sealed class SpriteView8Bit : IView<SpriteModel>
             if (slot == BonusFirstSlot && model.BonusStage >= 0)
             {
                 DrawBonus(model);
+            }
+
+            if (slot == BonusFirstSlot && model.Boss is not null)
+            {
+                DrawBoss(model.Boss);
             }
 
             if (model.IsFood(slot))
@@ -94,6 +107,23 @@ internal sealed class SpriteView8Bit : IView<SpriteModel>
             new(BonusSourceWidth * 2, height),
             new(0, 0),
             new(BonusSourceWidth, height));
+    }
+
+    private void DrawBoss(BossPicture boss)
+    {
+        int set = boss.Frame switch
+        {
+            StunnedFrame => 1,
+            RightFrame => 2,
+            _ => 0,
+        };
+
+        _graphics.DrawImagePart(
+            _boss.Paint(boss.Colour & SpriteModel.ColourMask),
+            new(boss.X - SpriteOriginX, boss.Y - SpriteOriginY + _layout.BannerHeight),
+            new(BossSourceWidth * 2, BossHeight),
+            new(set * BossSourceWidth, 0),
+            new(BossSourceWidth, BossHeight));
     }
 
     private void DrawFood(SpriteModel model, int slot)

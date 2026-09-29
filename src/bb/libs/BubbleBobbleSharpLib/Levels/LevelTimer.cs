@@ -17,6 +17,7 @@ internal sealed class LevelTimer
     internal const byte Stopped = 0xFF;
 
     private const byte DefaultSeconds = 0x1E;
+    private const byte ReadySeconds = 0x02;
     private const byte SlowSubflg = 0x37;
     private const byte SlowSeconds = 0x0A;
     private const byte FastFromSubflg = 0x38;
@@ -35,7 +36,7 @@ internal sealed class LevelTimer
     internal bool IsStopped => (sbyte)Frames < 0;
 
     // $392A-$393C for the time, $09FD for the frames, and $E07E for the hurry-up. The READY!! text
-    // ($A9B1) is set by the round intro, which is step 4d's.
+    // ($A9B1) is set by the round intro ($4B..), to two seconds, and comes off when they are up.
     internal void Begin(byte subflg)
     {
         Seconds = subflg switch
@@ -48,6 +49,7 @@ internal sealed class LevelTimer
         Start = Seconds;
         Frames = FramesPerSecond;
         Hurry = 0;
+        Ready = ReadySeconds;
     }
 
     // $06AB-$06C6: one IRQ frame. Returns whether a second went by, when $06C6 counts down the item timers too.

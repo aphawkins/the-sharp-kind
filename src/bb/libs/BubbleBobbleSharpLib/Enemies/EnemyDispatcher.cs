@@ -27,6 +27,9 @@ internal sealed class EnemyDispatcher
 
     private const byte MovedType = 0x04;
 
+    private const byte ThunderType = 0x0A;
+    private const byte ThunderFlags = 0x0A;
+
     private const byte CaughtType = 0x34;
 
     private const byte LastColumn = 0x1C;
@@ -44,8 +47,9 @@ internal sealed class EnemyDispatcher
     private readonly ObjectTable _objects;
     private readonly EntityTable _entities;
     private readonly BubbleCollision _collision;
+    private readonly RoundState _round;
 
-    internal EnemyDispatcher(ObjectTable objects, EntityTable entities, BubbleCollision collision)
+    internal EnemyDispatcher(ObjectTable objects, EntityTable entities, BubbleCollision collision, RoundState? round = null)
     {
         ArgumentNullException.ThrowIfNull(objects);
         ArgumentNullException.ThrowIfNull(entities);
@@ -54,6 +58,7 @@ internal sealed class EnemyDispatcher
         _objects = objects;
         _entities = entities;
         _collision = collision;
+        _round = round ?? new();
     }
 
     internal void Step(int slot, SolidMap map)
@@ -91,9 +96,22 @@ internal sealed class EnemyDispatcher
             }
         }
 
-        _objects.Type[slot] = s_types[index];
+        byte type = s_types[index];
+        byte restore = MovedType;
 
-        Move(slot, MovedType, map);
+        // $0F73 as `bit`, once the last level has patched it in ($0F76-$0F8D): a bubble with $08 or $09 for its life (the
+        // marked player's) is the thunder bubble ($0A) where it would be the plain one, and is left so.
+        if (_round.ThunderBlow && _objects.Flags[slot] < ThunderFlags)
+        {
+            _objects.Flags[slot]++;
+
+            type = type == MovedType ? ThunderType : type;
+            restore = ThunderType;
+        }
+
+        _objects.Type[slot] = type;
+
+        Move(slot, restore, map);
     }
 
     private void Move(int slot, byte restore, SolidMap map)

@@ -3,6 +3,7 @@
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
 using BubbleBobbleSharpLib.Items;
+using BubbleBobbleSharpLib.Levels;
 using BubbleBobbleSharpLib.Players;
 
 namespace BubbleBobbleSharpLib.Bubbles;
@@ -30,8 +31,9 @@ internal sealed class BubbleBlow
     private readonly EntityTable _entities;
     private readonly ObjectTable _objects;
     private readonly Rings _rings;
+    private readonly RoundState _round;
 
-    internal BubbleBlow(PlayerTable players, EntityTable entities, ObjectTable objects, Rings rings)
+    internal BubbleBlow(PlayerTable players, EntityTable entities, ObjectTable objects, Rings rings, RoundState? round = null)
     {
         ArgumentNullException.ThrowIfNull(players);
         ArgumentNullException.ThrowIfNull(entities);
@@ -42,6 +44,7 @@ internal sealed class BubbleBlow
         _entities = entities;
         _objects = objects;
         _rings = rings;
+        _round = round ?? new();
     }
 
     internal void Tick()
@@ -134,6 +137,12 @@ internal sealed class BubbleBlow
         Thunder(player, slot);
 
         _rings.Blow(player);
+
+        // $23DE-$23E6, once the last level has patched it in: a marked player's bubble lives $08 or $09 more turns.
+        if (_round.ThunderBlow && (sbyte)_players.BossBlow[player] < 0)
+        {
+            _objects.Flags[slot] = (byte)(player | 0x08);
+        }
     }
 
     // $23B8-$23D6: a player with thunder shots left blows one, which goes the way they face.

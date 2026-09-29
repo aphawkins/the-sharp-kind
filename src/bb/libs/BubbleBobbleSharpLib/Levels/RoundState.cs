@@ -16,6 +16,11 @@ internal sealed class RoundState
     // `$5ABF`: the state an enemy comes out of its bubble in.
     internal byte Release { get; set; } = ReleasedState;
 
+    // `$23DE` and `$0F73`: the last level's player reset (`$7F9B`, `$7FA0`) patches these two places in the code, so that a
+    // player marked by the crystal (`PlayerTable.BossBlow`) blows bubbles that turn to thunder. They stay patched until a game
+    // begins (`$098F`, `$0994`).
+    internal bool ThunderBlow { get; set; }
+
     internal void Begin()
     {
         Respawn = RestState;

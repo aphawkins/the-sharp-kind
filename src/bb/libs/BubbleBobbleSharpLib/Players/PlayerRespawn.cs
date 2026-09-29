@@ -48,6 +48,9 @@ internal sealed class PlayerRespawn
 
     internal static ReadOnlySpan<byte> SpawnFrame => [0x00, 0x04];
 
+    // The last level's giant, which patches the game as a player's reset finds it ($7F83).
+    internal BossFight? Boss { get; set; }
+
     // How many times a player has come back into the level, for the song ($04A3).
     internal int Respawns { get; private set; }
 
@@ -124,9 +127,10 @@ internal sealed class PlayerRespawn
         _entities.FlashTimer[player] = 0;
         _entities.LeapFlag[player] = 0;
 
+        // $7F7D-$7FA0: on the last level.
         if (subflg == BonusLevel)
         {
-            throw new NotSupportedException($"slot {player}'s death on the bonus level at $7F7F is not translated");
+            Boss?.Patch();
         }
     }
 }

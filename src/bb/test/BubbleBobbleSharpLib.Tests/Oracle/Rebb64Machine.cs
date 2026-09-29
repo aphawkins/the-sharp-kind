@@ -128,6 +128,11 @@ internal sealed class Rebb64Machine : IBus
 
     internal void Poke(int address, ReadOnlySpan<byte> values) => values.CopyTo(_ram.AsSpan(address));
 
+    // A VIC-II register, which the game reads and writes apart from the RAM under it.
+    internal byte PeekVic(int register) => _vic[register];
+
+    internal void PokeVic(int register, byte value) => _vic[register] = value;
+
     // One key, or none: column and row as the keyboard matrix numbers them (the '1' key is column 7, row 0).
     internal void Press(int column, int row) => _keys[column] = (byte)~(1 << row);
 

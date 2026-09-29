@@ -89,6 +89,11 @@ public sealed class SpriteModel
     /// </summary>
     public int BonusStage { get; init; } = -1;
 
+    /// <summary>
+    /// Gets the last level's giant (<c>$BC</c> to <c>$C0</c>): nine sprites in a block, or null when it is not about.
+    /// </summary>
+    public BossPicture? Boss { get; init; }
+
     /// <summary>Whether a slot is drawn at all.</summary>
     /// <param name="slot">The slot, 0 to 7.</param>
     /// <returns>Whether that slot is drawn.</returns>

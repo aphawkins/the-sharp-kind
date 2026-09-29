@@ -70,13 +70,13 @@ internal sealed class GameLoop
         FoodDrop food = new(Entities, Scores, random);
         Food = food;
 
-        _blow = new(PlayerTable, Entities, Objects, rings);
+        _blow = new(PlayerTable, Entities, Objects, rings, Round);
         _players = BuildPlayers(Entities, _blow, rings, Water);
         _enemies = BuildEnemies(Entities, Objects, random, food, Flow, Water);
         _push = new(Entities, Objects);
         _death = new(Entities);
         Fire = new(Entities, food);
-        _ai = BuildAi(Entities, Objects, random, Timer, Fire, food, Scores, Flow);
+        _ai = BuildAi(Entities, Objects, random, Timer, Fire, food, Scores, Flow, Round);
         _timers = new(Objects, Entities);
         Pop = new(Objects, Entities, PlayerTable, food, Scores, Water);
         _spawner = new(Entities, random);
@@ -96,6 +96,9 @@ internal sealed class GameLoop
         Clear.SuperBonus = new(Entities, Scores, Clear);
         _enemies.SuperBonus = Clear.SuperBonus;
         End = new(Timer, Entities, Objects, Pop, Items, random, Round);
+        Boss = new(Entities, Objects, PlayerTable, Items, Round, Timer, End);
+        _respawn.Boss = Boss;
+        Clear.ReadyEnded = AppearBoss;
         Bonus = new(Entities, Round, End.SavedFlash);
         _extend = new(PlayerTable, End);
         _world = new(Clear, Flow, Timer, Entities, Objects, food, Items, Bonus);
@@ -131,6 +134,8 @@ internal sealed class GameLoop
     internal FoodDrop Food { get; }
 
     internal ItemRoom Room { get; }
+
+    internal BossFight Boss { get; }
 
     internal BonusRound Bonus { get; }
 
@@ -215,10 +220,8 @@ internal sealed class GameLoop
         _world.SkipTo = null;
         PlayerTable.Shots.Fill(0xFF);
 
-        if (_subflg != BonusLevel)
-        {
-            Items.Setup(level, _subflg);
-        }
+        Items.Setup(level, _subflg);
+        Boss.Begin(_subflg);
 
         _enemies.Enter();
 
@@ -295,7 +298,16 @@ internal sealed class GameLoop
         Fire.Update(Pop.Counter);
 
         _blow.Tick();
-        _bubbles.Update(map);
+
+        if (_subflg == BossFight.Level)
+        {
+            Boss.Hit();
+        }
+        else
+        {
+            _bubbles.Update(map);
+        }
+
         Pop.FruitArt = LevelItems.FoodArt(Clear.BonusType);
         Pop.Update();
         _push.Update(map);
@@ -323,6 +335,12 @@ internal sealed class GameLoop
 
         _enemies.Step(_counter, map);
         _players.Step(ports, _counter, map);
+
+        if (Boss.Active)
+        {
+            Boss.Move();
+        }
+
         _death.Update();
         _counter += 2;
     }
@@ -350,14 +368,15 @@ internal sealed class GameLoop
         FireStrips fire,
         FoodDrop food,
         Scores scores,
-        LevelFlow flow)
+        LevelFlow flow,
+        RoundState round)
     {
         BubbleCollision collision = new(objects, entities);
 
         return new(
             objects,
             entities,
-            new(objects, entities, collision),
+            new(objects, entities, collision, round),
             new(objects),
             random,
             new(objects, entities, timer),
@@ -461,6 +480,15 @@ internal sealed class GameLoop
     }
 
     // $05C5 and $0491: a level's tune, and the one that comes back after a death; the last level has its own.
+    // $16C1: the READY!! has gone, and on the last level the giant comes.
+    private void AppearBoss()
+    {
+        if (_subflg == BossFight.Level)
+        {
+            Boss.Appear();
+        }
+    }
+
     private Song LevelSong() => _subflg == BonusLevel ? Song.FinalTheme : Song.Resume;
 
     // The tunes that go with the clock running out ($15E8, $3517) and with EXTEND ($32C1).

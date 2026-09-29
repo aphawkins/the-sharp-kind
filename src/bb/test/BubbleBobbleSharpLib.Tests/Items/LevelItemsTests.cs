@@ -111,12 +111,17 @@ public sealed class LevelItemsTests
         Assert.Equal(colour, rig.Items.Colour[1]);
     }
 
+    // $2B9E, $7F83: the last level's two items are the crystal, showing at once.
     [Fact]
-    public void ThrowsForTheBonusLevel()
+    public void TheLastLevelHasTheCrystalForBothItems()
     {
         Rig rig = new();
 
-        Assert.Throws<NotSupportedException>(() => rig.Items.Setup(s_level, 0x63));
+        rig.Items.Setup(s_level, 0x63);
+
+        Assert.Equal([0x2A, 0x2A], rig.Items.Art.ToArray());
+        Assert.Equal([0x0D, 0x0D], rig.Items.Colour.ToArray());
+        Assert.Equal(0x22, rig.Items.Type[1]);
     }
 
     // $06C6.

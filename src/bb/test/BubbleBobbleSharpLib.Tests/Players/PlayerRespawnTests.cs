@@ -126,14 +126,16 @@ public sealed class PlayerRespawnTests
         Assert.Equal(0, rig.Players.Round[1]);
     }
 
-    // $7F77: the bonus level's own setup is step 7's.
+    // $7F7D: the last level's giant patches the game as a player's reset finds it, which is the giant's own to do.
     [Fact]
-    public void ADeathOnTheBonusLevelIsNotTranslated()
+    public void ADeathOnTheLastLevelIsAResetLikeAnother()
     {
         Rig rig = new();
         rig.Dead(0);
 
-        Assert.Throws<NotSupportedException>(() => rig.Respawn.Update(0x63));
+        rig.Respawn.Update(0x63);
+
+        Assert.Equal(0, rig.Entities.FlashTimer[0]);
     }
 
     // $0514-$0527, $16E4: with two or more enemies left, the free ones lose their anger; a caught one keeps it.

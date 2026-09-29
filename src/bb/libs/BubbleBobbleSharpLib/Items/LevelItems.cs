@@ -19,6 +19,14 @@ internal sealed class LevelItems
 
     private const byte BestFood = 0x2E;
 
+    // The last level's items: type $51 for the food, which is past the end of the food tables, and $22 for the special item; both
+    // are the same picture in the same colour ($A8E3, $A935, $A8C1 and $A913 give $2A and $0D), and score 5 in the hundreds.
+    private const byte BossFood = 0x51;
+    private const byte BossSpecial = 0x22;
+    private const byte BossArt = 0x2A;
+    private const byte BossColour = 0x0D;
+    private const byte BossScore = 0x05;
+
     private const byte MilestoneStep = 0x0A;
     private const byte MilestoneItem = 0x20;
     private const byte LastMilestone = 0x3A;
@@ -161,11 +169,6 @@ internal sealed class LevelItems
     {
         ArgumentNullException.ThrowIfNull(level);
 
-        if (number == BonusLevel)
-        {
-            throw new NotSupportedException("the bonus level's items at $2B9E are not translated");
-        }
-
         _x[0] = (byte)(level.FoodDrop.X << 3);
         _y[0] = (byte)(level.FoodDrop.Y << 3);
         _x[1] = (byte)(level.PowerupSpawn.X << 3);
@@ -175,20 +178,26 @@ internal sealed class LevelItems
         _column[1] = (byte)level.PowerupSpawn.X;
         _row[1] = (byte)level.PowerupSpawn.Y;
 
-        int food = (_random.Next() & 0x03) + FoodBase + (_random.Carry ? 1 : 0);
-        food = Math.Min(food, BestFood);
-        _type[0] = (byte)(food | 0x80);
-        _art[0] = s_foodArt[food];
-        _colour[0] = s_foodColours[food];
-        FoodBase = 0;
+        if (number == BonusLevel)
+        {
+            BossItems(number);
+        }
+        else
+        {
+            int food = (_random.Next() & 0x03) + FoodBase + (_random.Carry ? 1 : 0);
+            food = Math.Min(food, BestFood);
+            _type[0] = (byte)(food | 0x80);
+            _art[0] = s_foodArt[food];
+            _colour[0] = s_foodColours[food];
+            FoodBase = 0;
 
-        int special = Special(number);
-        _type[1] = (byte)(special | 0x80);
-        _art[1] = s_specialArt[special];
-        _colour[1] = s_specialColours[special];
+            int special = Special(number);
+            _type[1] = (byte)(special | 0x80);
+            _art[1] = s_specialArt[special];
+            _colour[1] = s_specialColours[special];
 
-        _timer[0] = (byte)((_random.Next() & 0x07) + 3);
-        _timer[1] = (byte)((_random.Next() & 0x0F) + 1);
+            Timers();
+        }
 
         for (int i = Count - 1; i >= 0; i--)
         {
@@ -196,6 +205,15 @@ internal sealed class LevelItems
             _x[i] = (byte)x;
             _y[i] = (byte)(_y[i] + TopEdge + (x > 0xFF ? 1 : 0));
         }
+    }
+
+    // $7F83-$7F91: the last level's two items are the same crystal, showing at once for as long as their types say in seconds.
+    internal void ShowBossItems()
+    {
+        _type[1] = BossSpecial;
+        _timer[1] = BossSpecial;
+        _type[0] = BossFood;
+        _timer[0] = BossFood;
     }
 
     internal void Tick()
@@ -260,6 +278,29 @@ internal sealed class LevelItems
         }
     }
 
+    // $2B9E-$2BAD, with `$2BBD`'s and `$2C32`'s tails: no food is rolled, but the special item is, for nothing, and the timers are
+    // rolled twice ($2C5B-$2C6D, run for each of the two calls); the crystal's art and colour are those of both items.
+    private void BossItems(byte number)
+    {
+        _ = Special(number);
+        Timers();
+        Timers();
+
+        _art[0] = BossArt;
+        _colour[0] = BossColour;
+        _art[1] = BossArt;
+        _colour[1] = BossColour;
+
+        ShowBossItems();
+    }
+
+    // $2C5B-$2C6D.
+    private void Timers()
+    {
+        _timer[0] = (byte)((_random.Next() & 0x07) + 3);
+        _timer[1] = (byte)((_random.Next() & 0x0F) + 1);
+    }
+
     private int Special(byte number)
     {
         if (Undying != 0 && Milestone < number)
@@ -300,7 +341,7 @@ internal sealed class LevelItems
 
         if (item == 0)
         {
-            score = s_foodScores[type];
+            score = type == BossFood ? BossScore : s_foodScores[type];
 
             if (type >= FoodHighFrom)
             {
@@ -325,7 +366,8 @@ internal sealed class LevelItems
         }
         else if (number == BonusLevel)
         {
-            throw new NotSupportedException("the bonus level's food at $7C3C is not translated");
+            // $2D34-$2D3A: the last level's food is the crystal too.
+            _effects.Apply(BossSpecial, player);
         }
     }
 }

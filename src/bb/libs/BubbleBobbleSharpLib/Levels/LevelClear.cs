@@ -74,6 +74,9 @@ internal sealed class LevelClear
     // a round that has no stage, which never shows one.
     internal byte BonusColour { get; set; }
 
+    // What the end of the READY!! text starts: the last level's giant ($16B8-$16D8).
+    internal Action? ReadyEnded { get; set; }
+
     // The block a cleared level drops when `$69` is set.
     internal SuperBonus? SuperBonus { get; set; }
 
@@ -128,6 +131,7 @@ internal sealed class LevelClear
         if (_timer.Ready == 0)
         {
             _timer.Ready = LevelTimer.Stopped;
+            ReadyEnded?.Invoke();
         }
 
         if ((sbyte)_timer.Hurry >= 0)

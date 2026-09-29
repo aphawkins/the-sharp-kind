@@ -671,8 +671,10 @@ Each item ends with how it is proved.
         `$3F28` from characters), 29 (`$35B0`) and 32 (`$3621`, the super bonus room).
       - [x] 33 (`$7C37`, the last milestone's item at level 50: to level `$45`, counting up a byte at a time as `$7FD4` does) and
         34 (`$7C3C`, the last level's crystal: the taker's `$37C7` goes negative).
-- [ ] **7. Super mode, bonus rounds and level 100** (`SUBFLG` `$63`, whose
-      items and food throw today, and the ending at `$A5B7`).
+- [ ] **7. Super mode, bonus rounds and level 100** (`SUBFLG` `$63`).
+      - [x] The last level's items, food and player reset, and the giant (`BossFight`, `$1134`, `$1D84`), with the crystal's
+        thunder bubbles (`RoundState.ThunderBlow`). Proved against the game in `BossFightOracleTests`.
+      - [ ] The ending (`$A5B7`), which `GameLoop.EndLevel` still throws at.
 - [x] **8. Sound.** Music plays through the own SID stack
       ([audio-own-stack.md](work-items/audio-own-stack.md)). The C64 game has
       music only (`sound.s` is the SID player), so the "effects" of this step

@@ -339,6 +339,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     {
         FoodArt = Loop.FoodArt(),
         BonusStage = Loop.Clear.SuperBonus is { Showing: true } ? Loop.Clear.BonusStage : -1,
+        Boss = Loop.Boss is { Active: true, Shown: true } boss ? new(boss.X, boss.Y, boss.Frame, boss.Colour) : null,
     };
 
     private HudModel Hud() => new(

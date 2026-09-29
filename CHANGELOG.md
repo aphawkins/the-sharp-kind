@@ -7,6 +7,15 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Added (Bubble Bobble's last level, 2026-09-29)
+
+- **Level 100 has its giant** ([BossFight.cs](src/bb/libs/BubbleBobbleSharpLib/Levels/BossFight.cs)): it appears when the READY!!
+  is gone, bounces about the level in a 3x3 block of sprites, and kills a player it touches. The crystal turns a player's bubbles
+  to thunder; fifty bolts stun the giant, and a player who touches it then wins (the ending itself is not in yet). A stunned
+  giant flickers and gets up angry, moving twice a pass. The level's items and a player's coming back no longer throw.
+  Its moves, hits and recovery are proved against the real game (`BossFightOracleTests`).
+- **The READY!! counter starts at each level** (`$A9B1` is 2), so what waits for it, the giant, comes.
+
 ### Added (SharpKind.Emulation and Bubble Bobble's special bubbles, 2026-09-29)
 
 - **A new library, `SharpKind.Emulation`**: a 6502 CPU (the documented NMOS instruction set, decimal mode, the
