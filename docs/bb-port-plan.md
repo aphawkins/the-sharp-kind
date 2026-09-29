@@ -61,6 +61,15 @@ before any wider release.
 - **VICE:** use the `vice-drive` skill (`.claude/skills/vice-drive/`). It has
   the launch line, `monitor.py` (`selftest`, `start`, checkpoints, memory,
   registers) and every protocol trap found so far. Use the binary monitor.
+- **The oracle** (2026-09-29): `SharpKind.Emulation` runs the real game. `Rebb64Machine` (in the BB tests'
+  `Oracle/`) loads `rebb64-raw.prg` (path in `$REBB64_PRG`, else `C:\code\github\zaidkaebb64uild\`) on a 6502 with just
+  enough C64 around it (raster interrupt, CIA timers, keyboard and joystick, SID) to play from the title to any level
+  (`StartOnePlayer`, `EnterLevel`). `Bracket(entry, exit)` runs to a routine's entry with interrupts on, lets a test
+  intervene, takes all of RAM, runs to the exit with interrupts off, and takes it again, with the CIA timer bytes the
+  `$E9EA` rolls mixed in (`Capture.Timer`, to replay through `ScriptedRandomSource`). A test loads the bytes before into
+  the port (`RamImage`), runs the port, and compares. Tests that need the image skip when it is absent, so CI without
+  rebb64 still runs the captures. It is faster and steadier than VICE; use VICE for the picture, and for a
+  disagreement with the oracle.
 - **Golden captures** are how behaviour is proved. Bracket a routine with two
   exec checkpoints, record the bytes it can touch before and after, and replay
   every line through the port byte for byte. The captures live in
@@ -605,13 +614,31 @@ Each item ends with how it is proved.
 
       Not in step 4: level 99's `$5AFF` and the ending (step 7); the bonus
       round's `$3517` and `$68` (step 7).
-- [ ] **5. Special bubbles and EXTEND.** `$0BED` (bubbles from the corners),
-      the special bubbles' own pop arms at `$3E02` (`$06` level-end fruit
-      positions and `OPMASK`, `$08`, `$0A`), `$32C1` and `extend-bonus.s`.
-      Verify: six letters award a life, against a VICE capture.
-- [ ] **2d(ii). Draw the special bubbles**, with item 5: the vectors for
-      `$24` (`$E758`), `$26` (`$3E94`) and `$44`–`$4C` (`$3EFD`, `$3F28`,
-      `$E968`, `$3F88`). Only the special bubbles make these types.
+- [x] **5. Special bubbles and EXTEND.** Split into steps, each proved against the real game run on
+      `SharpKind.Emulation` (see section 2, "The oracle"). The reference's names for all of this are wrong: the "enemy
+      spawner" at `$0BED` makes bubbles, the "bounce path" is a strip of fire, and so on.
+      - [x] **5a. The corner spawner, `$0BED`.** `BubbleSpawner`: every 22 passes, with an enemy left, a special bubble
+        floats up from a corner where the bubble current flows in. `$3A6C`'s tail (`Configure`) patches `$0A38`, `$0C9C` and
+        `$0CC2` from the level's `SpawnFlags`; most levels never spawn. The standard chooser makes a plain `$04` bubble or a
+        `$06`/`$08`/`$0A` special one from a masked roll; the other chooser makes EXTEND letter bubbles (`$0C`-`$14`), from a
+        seed kept in `$5BFF`. Nine levels, 150 calls each, and seven level set-ups match. Level 73 is left out: see the
+        level-map item in the backlog.
+      - [x] **5b. The pop arms, `$3E02`, and the water.** `BubblePop.Arm`: a `$06` bubble starts `WaterFlow` (`$1B40`, run once
+        a pass by the IRQ before `$1CBD`): eleven cells that fall, walk along a platform and drop off it, carrying (state
+        `$0D`, `$284D`) any enemy or player they touch to the bottom, where an enemy drowns into food and a player is put on
+        its feet. A `$0A` bubble becomes a bolt (`$26`) thrown the way the player faces, an `$08` bubble a fire drop (`$24`).
+        The accumulator the 6502 carries between the tests is kept. Five streams and thirteen pops match.
+      - [x] **5c. The special objects, `$0D4E`'s table.** `ObjectAi`: the fire drop (`$11B7`), which lands and lights a
+        `FireStrips` strip (`$1319`, five at most, which burn for six timer steps and kill an enemy standing on them); the bolt
+        (`$10D6`), which knocks out every enemy it touches; and the enemies' shot (`$28`), slow shot (`$2A`), boomerang
+        (`$2C`) and thrown thing (`$32`), which had no AI until now, so nothing an enemy fired ever moved. A frozen level
+        (`$67`) stops the table. Twelve scenes match.
+      - [x] **5d. EXTEND, `$32C1`.** `ExtendBonus`: six letters give a life, clear the letters and end the level. The fanfare
+        and the screen of fruit are not modelled, so the level clock does not run on through them.
+- [x] **2d(ii). Draw the special bubbles.** `object-sprites.tga` gains the fire drop's four cells and the bolt (67-71);
+      `effect-chars.tga` holds the water's and the fire's characters (`$1C`, `$1F`, `$40`, `$41`), drawn by `EffectsView8Bit`
+      in a layer above the items. Types `$44`-`$4C` are made by steps 6 and 7 and are drawn with them. Not compared with
+      VICE screenshots.
 - [ ] **6. The other special-item effects:** 1, 2, 6–8, 11 and 15–34 in
       `$2D65`. They are level skips (`$2F7D`–`$2F89`, `$2ECC`), the freeze,
       screen effects, and handlers at `$348A`–`$3621`, `$7FA4`/`$7FA7` and

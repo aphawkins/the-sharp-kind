@@ -57,4 +57,9 @@ public interface IBbRendition
     /// <param name="surface">Everything the view draws with.</param>
     /// <returns>The view.</returns>
     public IView<ItemsModel> CreateItemView(IViewSurface surface);
+
+    /// <summary>Creates the view that draws the water and the fire.</summary>
+    /// <param name="surface">Everything the view draws with.</param>
+    /// <returns>The view.</returns>
+    public IView<EffectsModel> CreateEffectsView(IViewSurface surface);
 }

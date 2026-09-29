@@ -7,6 +7,26 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Added (SharpKind.Emulation and Bubble Bobble's special bubbles, 2026-09-29)
+
+- **A new library, `SharpKind.Emulation`**: a 6502 CPU (the documented NMOS instruction set, decimal mode, the
+  read-modify-write double write), a SID chip (three voices, ADSR, the filter, a 44.1 kHz renderer) and a PSID player
+  ([src/useful/libs/SharpKind.Emulation](src/useful/libs/SharpKind.Emulation)). The shipped Bubble Bobble tune runs on it.
+  Nothing plays it yet: the audio stack's SID work goes on from here.
+- **The real Bubble Bobble runs headless as a test oracle** (`Rebb64Machine`), so a routine can be bracketed and its RAM
+  compared with the port's without VICE. Tests that need the image skip when rebb64 is absent.
+- **Bubble Bobble's special bubbles work** (step 5): they float up from the corners of most levels
+  ([BubbleSpawner.cs](src/bb/libs/BubbleBobbleSharpLib/Bubbles/BubbleSpawner.cs)); a water bubble floods the level and carries
+  what it touches down ([WaterFlow.cs](src/bb/libs/BubbleBobbleSharpLib/Specials/WaterFlow.cs)); a fire bubble drops fire that
+  burns on a platform ([FireStrips.cs](src/bb/libs/BubbleBobbleSharpLib/Specials/FireStrips.cs)); a thunder bubble throws a bolt
+  that knocks out the enemies it meets; and six EXTEND letters give a life and end the level
+  ([ExtendBonus.cs](src/bb/libs/BubbleBobbleSharpLib/Levels/ExtendBonus.cs)). All are drawn. Each is proved against the real
+  game on many scenes.
+- **What enemies fire now moves**: the shot, slow shot, boomerang and thrown thing had no AI, so they hung where they were
+  made ([ObjectAi.cs](src/bb/libs/BubbleBobbleSharpLib/Specials/ObjectAi.cs)).
+- **Found, not fixed**: the port's level map differs from the game's in about 45 levels (the bubble current, and some solid
+  cells); see [the work item](docs/work-items/bb-solidmap-fidelity.md).
+
 ### Fixed (Bubble Bobble bubbles jerked as they rose, 2026-09-28)
 
 - **A rising Bubble Bobble bubble moves evenly again.** It was drawn at the

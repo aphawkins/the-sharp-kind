@@ -37,6 +37,9 @@ internal sealed class BubblePop
     private const int ShotCell = 58;
     private const int ClassFiveCell = 62;
     private const int ThrownCell = 66;
+    private const int FireCell = 67;
+    private const int DropFrames = 4;
+    private const int BoltCell = 71;
 
     private const int ShotTurns = 4;
     private const int ClassSixTurns = 2;
@@ -155,6 +158,7 @@ internal sealed class BubblePop
             <= LastFloatingType => Entry(type, slot),
             TouchedType or ExpiredType or PopFrom => PopFrame(0, slot),
             PopMiddle or PopLate => PopFrame(4, slot),
+            FireType => (byte)(FireCell + Drop(slot)),
             _ => NotDrawn,
         };
 
@@ -202,6 +206,12 @@ internal sealed class BubblePop
         }
     }
 
+    // $E758: the picture is entry $34 or $A9C4 of the tables, one of four.
+    private int Drop(int slot)
+        => _objects.SubX[slot] < DropFrames
+            ? _objects.SubX[slot]
+            : throw new NotSupportedException($"a fire drop with $A9C4 {_objects.SubX[slot]} reads past its table");
+
     private byte Entry(byte type, int slot) => (byte)((type * 2) + _objects.SubX[slot]);
 
     private byte PopFrame(int frameBase, int slot) => (byte)(PopFrameBase + frameBase + _objects.SubX[slot]);
@@ -216,6 +226,7 @@ internal sealed class BubblePop
             ClassSixType => ClassSixCell + Turn(turn, ClassSixTurns, type),
             ClassFiveType => ClassFiveCell + Turn(turn, ShotTurns, type),
             ThrownType => ThrownCell,
+            ThunderType => BoltCell,
             _ when Baron.Is(type) => BaronCell + s_baronSide[slot] + ((Counter >> 1) & 0x01),
             _ => null,
         };
@@ -328,7 +339,7 @@ internal sealed class BubblePop
             case FireItem:
                 _objects.SubY[slot] = 0;
                 _objects.Type[slot] = FireType;
-                _drawn[slot] = NotDrawn;
+                _drawn[slot] = (byte)(FireCell + Drop(slot));
                 _drawnSubY[slot] = 0;
                 break;
             default:
@@ -356,7 +367,7 @@ internal sealed class BubblePop
         byte frame = _entities.Frame[player];
 
         _objects.Direction[slot] = frame is < 4 or (>= 8 and < 0x0A) ? LeftThrow : RightThrow;
-        _drawn[slot] = NotDrawn;
+        _drawn[slot] = BoltCell;
         _drawnSubY[slot] = 0;
     }
 

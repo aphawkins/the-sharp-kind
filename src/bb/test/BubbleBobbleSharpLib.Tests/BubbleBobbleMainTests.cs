@@ -23,7 +23,8 @@ public sealed class BubbleBobbleMainTests
     // The sheets the views draw from. The game repaints them - in the level's colours for the
     // playfield's two, in the sprite's own colour for the players' - before it draws, so the surface
     // has to be holding them by the time a frame is composed.
-    private static readonly string[] s_sheets = ["LevelTiles", "TileEdges", "Sidebars", "SpritesGame", "ObjectSprites", "ItemChars"];
+    private static readonly string[] s_sheets =
+        ["LevelTiles", "TileEdges", "Sidebars", "SpritesGame", "ObjectSprites", "ItemChars", "EffectChars"];
 
     private static readonly LevelStore s_levels = LevelStore.Read(Path.Combine(
         AppContext.BaseDirectory,
@@ -168,12 +169,13 @@ public sealed class BubbleBobbleMainTests
     // All are the full height of the screen. The players share the decoration's band because a sprite
     // may be anywhere on the level, including over its outermost columns.
     [Fact]
-    public void ComposesTheLevelItsItemsBubblesDecorationPlayersAndHudAsSixLayers()
+    public void ComposesTheLevelItsItemsEffectsBubblesDecorationPlayersAndHudAsSevenLayers()
     {
         RecordingGraphics graphics = Draw();
 
         Assert.Equal(
             [(new Vector2(16, 0), 224f, 200f),
+             (new Vector2(16, 0), 224f, 200f),
              (new Vector2(16, 0), 224f, 200f),
              (new Vector2(0, 0), 256f, 200f),
              (new Vector2(0, 0), 256f, 200f),

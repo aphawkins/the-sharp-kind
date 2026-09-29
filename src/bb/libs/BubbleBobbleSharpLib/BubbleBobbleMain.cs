@@ -42,6 +42,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     private readonly IView<HudModel> _hudView;
     private readonly IView<ObjectsModel> _objectView;
     private readonly IView<ItemsModel> _itemView;
+    private readonly IView<EffectsModel> _effectsView;
 
     private readonly Input _input;
     private readonly LayerRunner _layers;
@@ -97,21 +98,11 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         _hudView = rendition.CreateHudView(surface);
         _objectView = rendition.CreateObjectView(surface);
         _itemView = rendition.CreateItemView(surface);
+        _effectsView = rendition.CreateEffectsView(surface);
 
         ShowLevel(FirstLevel);
 
-        (Vector2 interior, float interiorWidth, float height) = surface.Layout.PlayfieldInterior;
-        (Vector2 whole, float wholeWidth, _) = surface.Layout.PlayfieldArea;
-        (Vector2 hud, float hudWidth, _) = surface.Layout.HudArea;
-
-        _layers = new LayerRunner(
-            Graphics,
-            new RenderLayer(interior, interiorWidth, height, new PlayfieldLayer(this)),
-            new RenderLayer(interior, interiorWidth, height, new ItemLayer(this)),
-            new RenderLayer(whole, wholeWidth, height, new ObjectLayer(this)),
-            new RenderLayer(whole, wholeWidth, height, new SidebarLayer(this)),
-            new RenderLayer(whole, wholeWidth, height, new SpriteLayer(this)),
-            new RenderLayer(hud, hudWidth, height, new HudLayer(this)));
+        _layers = CreateLayers(surface);
     }
 
     public bool IsRunning { get; private set; } = true;
@@ -181,6 +172,23 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         Loop.Start(level, _zones.Zones(number), number, next);
     }
 
+    private LayerRunner CreateLayers(BbViewSurface surface)
+    {
+        (Vector2 interior, float interiorWidth, float height) = surface.Layout.PlayfieldInterior;
+        (Vector2 whole, float wholeWidth, _) = surface.Layout.PlayfieldArea;
+        (Vector2 hud, float hudWidth, _) = surface.Layout.HudArea;
+
+        return new LayerRunner(
+            Graphics,
+            new RenderLayer(interior, interiorWidth, height, new PlayfieldLayer(this)),
+            new RenderLayer(interior, interiorWidth, height, new ItemLayer(this)),
+            new RenderLayer(interior, interiorWidth, height, new EffectsLayer(this)),
+            new RenderLayer(whole, wholeWidth, height, new ObjectLayer(this)),
+            new RenderLayer(whole, wholeWidth, height, new SidebarLayer(this)),
+            new RenderLayer(whole, wholeWidth, height, new SpriteLayer(this)),
+            new RenderLayer(hud, hudWidth, height, new HudLayer(this)));
+    }
+
     // $1C and $1E are the level's background colours, and the freeze swaps them ($15CF, $2F68).
     private void ShowColours()
     {
@@ -218,6 +226,16 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         Loop.Pop.DrawnSubY,
         _playfield.Colours);
 
+    private EffectsModel Effects() => new(
+        Loop.Water.Mask != 0,
+        Loop.Water.Columns,
+        Loop.Water.Rows,
+        Loop.Fire.Columns,
+        Loop.Fire.Rows,
+        Loop.Fire.Lengths,
+        Loop.Fire.Characters,
+        _playfield.Colours);
+
     private ItemsModel Items() => new(
         Loop.Items.Type,
         Loop.Items.Column,
@@ -229,6 +247,11 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     private sealed class PlayfieldLayer(BubbleBobbleMain game) : ILayerDrawer
     {
         public void Draw() => game._playfieldView.Draw(game._playfield);
+    }
+
+    private sealed class EffectsLayer(BubbleBobbleMain game) : ILayerDrawer
+    {
+        public void Draw() => game._effectsView.Draw(game.Effects());
     }
 
     private sealed class ItemLayer(BubbleBobbleMain game) : ILayerDrawer

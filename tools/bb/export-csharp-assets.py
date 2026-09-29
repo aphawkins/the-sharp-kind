@@ -388,6 +388,13 @@ _SHOT_COLUMNS = (
 )
 
 
+# $E758 ($24, the fire drop): entry $34 | $A9C4 of $AA54/$AAC8, four cells, then $3E94 ($26, the bolt), one cell, whose
+# columns are soft_spr_0x3c0 to 0x3f0 ($8F00 + the offset).
+_DROP_TABLE_GRAPHICS = (0x9300, 0x9330, 0x9360, 0x9390)
+_DROP_TABLE_MASKS = (0x93C0, 0x93F0, 0x9420, 0x9450)
+_BOLT_COLUMNS = (0x92C0, 0x92D0, 0x92E0, 0x92F0)
+
+
 def _column_bytes(addr, bubble_masks, software_sprites):
     """The 16 bytes (one column, one byte a row) at a graphic/mask address."""
     if BUBBLE_MASKS_BASE <= addr < BUBBLE_MASKS_BASE + len(bubble_masks):
@@ -400,8 +407,8 @@ def _column_bytes(addr, bubble_masks, software_sprites):
 def export_object_sprites(out_dir, canonical):
     """
     Compose object-sprites.tga: entries 0-43 (bubbles and lightning), the
-    eight pop-animation frames, then the shots and the Baron, one 12x16 cell
-    each, laid out in a single row.
+    eight pop-animation frames, then the shots and the Baron, the fire drop's
+    four cells and the bolt, one 12x16 cell each, laid out in a single row.
     """
     bubble_masks_image = tga_mod.parse_tga(os.path.join(DATA, "bubble-masks.tga"))
     software_sprites_image = tga_mod.parse_tga(os.path.join(DATA, "software-sprites.tga"))
@@ -439,6 +446,20 @@ def export_object_sprites(out_dir, canonical):
             _column_bytes(a, bubble_masks, software_sprites) for a in (m1, m2, _THIRD_MASK)
         )
         cells.append(decode_object_cell(graphic48, mask48, report))
+
+    for graphic_addr, mask_addr in zip(_DROP_TABLE_GRAPHICS, _DROP_TABLE_MASKS):
+        graphic48 = _block_bytes(graphic_addr, bubble_masks, software_sprites)
+        mask48 = _block_bytes(mask_addr, bubble_masks, software_sprites)
+        cells.append(decode_object_cell(graphic48, mask48, report))
+
+    g1, g2, m1, m2 = _BOLT_COLUMNS
+    graphic48 = b"".join(
+        _column_bytes(a, bubble_masks, software_sprites) for a in (g1, g2, _THIRD_GRAPHIC)
+    )
+    mask48 = b"".join(
+        _column_bytes(a, bubble_masks, software_sprites) for a in (m1, m2, _THIRD_MASK)
+    )
+    cells.append(decode_object_cell(graphic48, mask48, report))
 
     if report["mixed_mask"]:
         raise SystemExit(
@@ -672,6 +693,50 @@ def export_tile_edges(out_dir, canonical):
 
 
 # =============================================================================
+# Effect characters (the water and the fire)
+# =============================================================================
+#
+# The water ($1B40) draws screen code $1F, and the fire ($1319) $1C, $40 and
+# $41, into the playfield's characters. Like the tile edges they are cut out of
+# charset.tga and read as bit-pairs, but these use all four values, so the
+# sheet has item-chars.tga's five entries: entry 00 is the screen's background,
+# opaque black, as it is behind the items.
+
+EFFECT_CHARS = (0x1C, 0x1F, 0x40, 0x41)
+
+
+def export_effect_chars(out_dir, canonical):
+    """charset.tga's screen codes $1C, $1F, $40 and $41 -> 4x8 multicolour cells."""
+    source = tga_mod.parse_tga(os.path.join(DATA, "charset.tga"))
+
+    width = len(EFFECT_CHARS) * TILE_EDGE_WIDTH
+    pixels = bytearray(width * CELL)
+
+    for cell, code in enumerate(EFFECT_CHARS):
+        src_x = (code % CHARSET_COLUMNS) * CELL
+        src_y = (code // CHARSET_COLUMNS) * CELL
+
+        for y in range(CELL):
+            for x in range(TILE_EDGE_WIDTH):
+                high = tga_mod.get_pixel(source, src_x + (x * 2), src_y + y)
+                low = tga_mod.get_pixel(source, src_x + (x * 2) + 1, src_y + y)
+                pair = (high << 1) | low
+
+                pixels[(y * width) + (cell * TILE_EDGE_WIDTH) + x] = pair if pair != 0 else 4
+
+    chars = {"width": width, "height": CELL, "pixels": pixels, "palette": [None] * 5}
+
+    write_tga(
+        os.path.join(out_dir, "Images", "effect-chars.tga"),
+        chars,
+        0,
+        list(canonical[:4]) + [canonical[0]],
+    )
+
+    return len(EFFECT_CHARS)
+
+
+# =============================================================================
 # Levels
 # =============================================================================
 
@@ -883,6 +948,12 @@ def main():
     print(
         f"Wrote {count} item blocks -> "
         f"{os.path.join(args.out, 'Images', 'item-chars.tga')}"
+    )
+
+    count = export_effect_chars(args.out, canonical)
+    print(
+        f"Wrote {count} effect characters -> "
+        f"{os.path.join(args.out, 'Images', 'effect-chars.tga')}"
     )
 
 

@@ -258,6 +258,24 @@ public sealed class BubblePopTests
         Assert.Equal(0x3C, rig.Objects.Type[Slot]);
     }
 
+    // $E758 picks a cell by $A9C4 and keeps $A9D6, which the fall toggles; $3E94 draws the bolt, and clears OLDTXT.
+    [Theory]
+    [InlineData(0x24, 0, 0x04, 67, 0x04)]
+    [InlineData(0x24, 3, 0x00, 70, 0x00)]
+    [InlineData(0x26, 0, 0x04, 71, 0x00)]
+    public void TheFireDropAndTheBoltAreDrawnByTheirOwnVectors(byte type, byte subX, byte subY, int cell, byte drawnSubY)
+    {
+        Rig rig = new();
+        Place(rig, Slot, type);
+        rig.Objects.SubX[Slot] = subX;
+        rig.Objects.SubY[Slot] = subY;
+
+        rig.Pop.Update();
+
+        Assert.Equal(cell, rig.Pop.Drawn[Slot]);
+        Assert.Equal(drawnSubY, rig.Pop.DrawnSubY[Slot]);
+    }
+
     // $3E30-$3E5B: the bolt starts on the grid and goes the way the player who burst it faces.
     [Theory]
     [InlineData(0, 0x84)]
