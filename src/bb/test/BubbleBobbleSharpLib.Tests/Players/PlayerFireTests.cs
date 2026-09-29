@@ -141,7 +141,8 @@ public sealed class PlayerFireTests
             new PlayerMovement(entities, blow, TestBlow.NoRings()),
             new PlayerJump(entities, new PlayerDrift(entities, steer, TestBlow.NoRings()), new PlayerLanding(entities, descent)),
             new PlayerFall(entities, steer),
-            blow);
+            blow,
+            TestBlow.NoWater(entities));
 
         return (entities, objects, frame);
     }

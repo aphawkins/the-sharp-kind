@@ -61,7 +61,7 @@ public sealed class BubblePopGoldenTests
             High = before[Zero + 0x27],
         };
 
-        BubblePop pop = new(objects, entities, players, new(entities, scores, random), scores);
+        BubblePop pop = new(objects, entities, players, new(entities, scores, random), scores, new(entities, random));
         Load(before, objects, entities, players, scores, pop);
 
         pop.Update();

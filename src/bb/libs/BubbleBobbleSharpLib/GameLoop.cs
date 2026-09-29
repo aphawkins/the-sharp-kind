@@ -7,6 +7,7 @@ using BubbleBobbleSharpLib.Enemies;
 using BubbleBobbleSharpLib.Items;
 using BubbleBobbleSharpLib.Levels;
 using BubbleBobbleSharpLib.Players;
+using BubbleBobbleSharpLib.Specials;
 
 namespace BubbleBobbleSharpLib;
 
@@ -58,17 +59,18 @@ internal sealed class GameLoop
         _playing = playing;
 
         Flow = new(Timer);
+        Water = new(Entities, random);
         Rings rings = new(PlayerTable, Scores);
         FoodDrop food = new(Entities, Scores, random);
 
         _blow = new(PlayerTable, Entities, Objects, rings);
-        _players = BuildPlayers(Entities, _blow, rings);
-        _enemies = BuildEnemies(Entities, Objects, random, food, Flow);
+        _players = BuildPlayers(Entities, _blow, rings, Water);
+        _enemies = BuildEnemies(Entities, Objects, random, food, Flow, Water);
         _push = new(Entities, Objects);
         _death = new(Entities);
         _ai = new(Objects, Entities, new(Objects, Entities, new(Objects, Entities)), new(Objects), random, new(Objects, Entities, Timer));
         _timers = new(Objects, Entities);
-        Pop = new(Objects, Entities, PlayerTable, food, Scores);
+        Pop = new(Objects, Entities, PlayerTable, food, Scores, Water);
         _spawner = new(Entities, random);
         _bubbles = new(Objects, Entities, random);
 
@@ -101,6 +103,8 @@ internal sealed class GameLoop
     internal PlayerTable PlayerTable { get; } = new();
 
     internal BubblePop Pop { get; }
+
+    internal WaterFlow Water { get; }
 
     internal Scores Scores { get; } = new();
 
@@ -212,13 +216,19 @@ internal sealed class GameLoop
             }
         }
 
+        // $06AB: the IRQ moves the water before $1CBD moves anything that is in it.
+        if (Water.Mask != 0)
+        {
+            Water.Update(map);
+        }
+
         _enemies.Step(_counter, map);
         _players.Step(ports, _counter, map);
         _death.Update();
         _counter += 2;
     }
 
-    private static PlayerFrame BuildPlayers(EntityTable entities, BubbleBlow blow, Rings rings)
+    private static PlayerFrame BuildPlayers(EntityTable entities, BubbleBlow blow, Rings rings, WaterFlow water)
     {
         PlayerSteer steer = new(entities, blow);
         PlayerDrift drift = new(entities, steer, rings);
@@ -229,10 +239,17 @@ internal sealed class GameLoop
             new PlayerMovement(entities, blow, rings),
             new PlayerJump(entities, drift, new PlayerLanding(entities, descent)),
             new PlayerFall(entities, steer),
-            blow);
+            blow,
+            water);
     }
 
-    private static EnemyFrame BuildEnemies(EntityTable entities, ObjectTable objects, BbRandom random, FoodDrop food, LevelFlow flow)
+    private static EnemyFrame BuildEnemies(
+        EntityTable entities,
+        ObjectTable objects,
+        BbRandom random,
+        FoodDrop food,
+        LevelFlow flow,
+        WaterFlow water)
     {
         EnemyChase chase = new(entities);
         PlayerDescent descent = new(entities);
@@ -245,7 +262,8 @@ internal sealed class GameLoop
             new(entities),
             new(entities, objects, descent, random),
             food,
-            flow);
+            flow,
+            water);
     }
 
     private void StartPlayers(bool next)

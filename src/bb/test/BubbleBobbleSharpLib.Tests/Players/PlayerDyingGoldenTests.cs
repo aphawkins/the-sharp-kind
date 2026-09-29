@@ -118,7 +118,8 @@ public sealed class PlayerDyingGoldenTests
             new PlayerMovement(entities, blow, TestBlow.NoRings()),
             new PlayerJump(entities, new PlayerDrift(entities, steer, TestBlow.NoRings()), new PlayerLanding(entities, descent)),
             new PlayerFall(entities, steer),
-            blow);
+            blow,
+            TestBlow.NoWater(entities));
     }
 
     private static List<(byte[] Before, byte[] After)> Capture()

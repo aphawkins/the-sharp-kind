@@ -5,6 +5,8 @@
 using BubbleBobbleSharpLib.Bubbles;
 using BubbleBobbleSharpLib.Items;
 using BubbleBobbleSharpLib.Players;
+using BubbleBobbleSharpLib.Specials;
+using SharpKind.Fakes;
 
 namespace BubbleBobbleSharpLib.Tests.Players;
 
@@ -19,4 +21,7 @@ internal static class TestBlow
 
     // Rings on a table of their own, so none is ever set and nothing scores.
     internal static Rings NoRings() => new(new PlayerTable(), new Scores());
+
+    // Water that is never started.
+    internal static WaterFlow NoWater(EntityTable entities) => new(entities, new(new FakeRandomSource()));
 }

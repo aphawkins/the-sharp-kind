@@ -22,7 +22,7 @@ internal sealed class EndRig
     {
         Random = new(source);
         Items = new(Entities, Scores, new(Players, Entities), Random);
-        Pop = new(Objects, Entities, Players, new(Entities, Scores, Random), Scores);
+        Pop = new(Objects, Entities, Players, new(Entities, Scores, Random), Scores, new(Entities, Random));
         End = new(Timer, Entities, Objects, Pop, Items, Random);
         Timer.Begin(0);
     }

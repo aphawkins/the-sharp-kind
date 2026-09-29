@@ -116,7 +116,13 @@ public sealed class ObjectView8BitGoldenTests
         ObjectTable objects = new();
         EntityTable entities = new();
         Scores scores = new();
-        BubblePop pop = new(objects, entities, new PlayerTable(), new(entities, scores, new(new FakeRandomSource())), scores);
+        BubblePop pop = new(
+            objects,
+            entities,
+            new PlayerTable(),
+            new(entities, scores, new(new FakeRandomSource())),
+            scores,
+            new(entities, new(new FakeRandomSource())));
 
         objects.Type[@case.Slot] = @case.Type;
         objects.Column[@case.Slot] = @case.Column;

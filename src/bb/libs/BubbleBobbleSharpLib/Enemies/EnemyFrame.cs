@@ -5,6 +5,7 @@
 using BubbleBobbleSharpLib.Items;
 using BubbleBobbleSharpLib.Levels;
 using BubbleBobbleSharpLib.Players;
+using BubbleBobbleSharpLib.Specials;
 
 namespace BubbleBobbleSharpLib.Enemies;
 
@@ -44,6 +45,7 @@ internal sealed class EnemyFrame
     private readonly EnemyRunner _runner;
     private readonly FoodDrop _food;
     private readonly LevelFlow _flow;
+    private readonly WaterFlow _water;
 
     internal EnemyFrame(
         EntityTable entities,
@@ -53,7 +55,8 @@ internal sealed class EnemyFrame
         DiagonalMover diagonal,
         EnemyRunner runner,
         FoodDrop food,
-        LevelFlow flow)
+        LevelFlow flow,
+        WaterFlow water)
     {
         ArgumentNullException.ThrowIfNull(entities);
         ArgumentNullException.ThrowIfNull(walker);
@@ -63,6 +66,7 @@ internal sealed class EnemyFrame
         ArgumentNullException.ThrowIfNull(runner);
         ArgumentNullException.ThrowIfNull(food);
         ArgumentNullException.ThrowIfNull(flow);
+        ArgumentNullException.ThrowIfNull(water);
 
         _entities = entities;
         _walker = walker;
@@ -72,6 +76,7 @@ internal sealed class EnemyFrame
         _runner = runner;
         _food = food;
         _flow = flow;
+        _water = water;
     }
 
     internal void Enter()
@@ -219,6 +224,9 @@ internal sealed class EnemyFrame
                 break;
             case RunnerState:
                 _runner.Step(slot, target, cell, map);
+                break;
+            case WaterFlow.CarriedState:
+                _ = _water.Follow(slot);
                 break;
             case FoodDrop.FlyingState:
                 _food.Fly(slot);

@@ -164,9 +164,21 @@ internal sealed class Rebb64Machine : IBus
     // Runs to `entry` with interrupts on, lets `setup` change the machine (an intervention, and the test must say so),
     // takes the whole of RAM, runs to `exit` with interrupts off so that nothing else can touch it, and takes it again.
     // `exit` is an address the routine returns to; the call's own JSR is at entry - 3 for a `jsr` caller.
-    internal Capture Bracket(int entry, int exit, long maxCycles, Action<Rebb64Machine>? setup = null)
+    internal Capture Bracket(
+        int entry,
+        int exit,
+        long maxCycles,
+        Action<Rebb64Machine>? setup = null,
+        Func<Rebb64Machine, bool>? when = null)
     {
         RunTo(entry, maxCycles);
+
+        // An entry reached in a loop, for a slot other than the one wanted, is run past.
+        while (when is not null && !when(this))
+        {
+            RunTo(entry, maxCycles);
+        }
+
         setup?.Invoke(this);
         TimerLog.Clear();
 

@@ -5,6 +5,7 @@
 using BubbleBobbleSharpLib.Enemies;
 using BubbleBobbleSharpLib.Items;
 using BubbleBobbleSharpLib.Players;
+using BubbleBobbleSharpLib.Specials;
 
 namespace BubbleBobbleSharpLib.Bubbles;
 
@@ -54,9 +55,18 @@ internal sealed class BubblePop
     private const byte LetterFrom = 0x0C;
     private const byte LetterBelow = 0x16;
 
-    private const byte ItemType = 0x06;
-    private const byte PlatformType = 0x0A;
-    private const byte VanishType = 0x08;
+    private const byte WaterType = 0x06;
+    private const byte ThunderItem = 0x0A;
+    private const byte FireItem = 0x08;
+
+    private const byte FireType = 0x24;
+    private const byte ThunderType = 0x26;
+
+    private const byte LeftThrow = 0x84;
+    private const byte RightThrow = 0x04;
+    private const int GridOrigin = 0x14;
+    private const int GridReturn = 0x13;
+    private const byte GridMask = 0xF8;
 
     private static readonly byte[] s_baronSide = [0x02, 0x00];
 
@@ -69,6 +79,7 @@ internal sealed class BubblePop
     private readonly PlayerTable _players;
     private readonly FoodDrop _food;
     private readonly Scores _scores;
+    private readonly WaterFlow _water;
 
     private readonly byte[] _chain = new byte[PlayerTable.Capacity];
     private readonly byte[] _chainBefore = new byte[PlayerTable.Capacity];
@@ -81,19 +92,21 @@ internal sealed class BubblePop
 
     private readonly byte[] _drawnRow = new byte[ObjectTable.Capacity];
 
-    internal BubblePop(ObjectTable objects, EntityTable entities, PlayerTable players, FoodDrop food, Scores scores)
+    internal BubblePop(ObjectTable objects, EntityTable entities, PlayerTable players, FoodDrop food, Scores scores, WaterFlow water)
     {
         ArgumentNullException.ThrowIfNull(objects);
         ArgumentNullException.ThrowIfNull(entities);
         ArgumentNullException.ThrowIfNull(players);
         ArgumentNullException.ThrowIfNull(food);
         ArgumentNullException.ThrowIfNull(scores);
+        ArgumentNullException.ThrowIfNull(water);
 
         _objects = objects;
         _entities = entities;
         _players = players;
         _food = food;
         _scores = scores;
+        _water = water;
     }
 
     internal Span<byte> Chain => _chain;
@@ -280,12 +293,71 @@ internal sealed class BubblePop
             }
         }
 
-        if (held is ItemType or PlatformType or VanishType)
+        Arm(slot, held);
+    }
+
+    // $3E02-$3E76. `a` is the accumulator the 6502 carries from one test to the next, which is not always the type: a
+    // water bubble that cannot start leaves it holding what it last read.
+    private void Arm(int slot, byte held)
+    {
+        int a = held;
+
+        if (a == WaterType)
         {
-            throw new NotSupportedException($"special bubble ${held:X2}'s pop at $3E02 is not translated");
+            a = _water.Mask;
+
+            if (a == 0)
+            {
+                if (_water.TryStart(_objects.Column[slot], _objects.Row[slot]))
+                {
+                    // $3DA9: gone, and nothing drawn.
+                    _objects.Type[slot] = GoneType;
+                    _drawn[slot] = NotDrawn;
+                    return;
+                }
+
+                a = (byte)(_objects.Row[slot] + 1);
+            }
         }
 
-        _objects.Type[slot] = PopFrom;
+        switch (a)
+        {
+            case ThunderItem:
+                Throw(slot);
+                break;
+            case FireItem:
+                _objects.SubY[slot] = 0;
+                _objects.Type[slot] = FireType;
+                _drawn[slot] = NotDrawn;
+                _drawnSubY[slot] = 0;
+                break;
+            default:
+                _objects.Type[slot] = PopFrom;
+                break;
+        }
+    }
+
+    // $3E30-$3E5B: the bubble becomes the bolt, on the grid, thrown the way the player who burst it faces.
+    private void Throw(int slot)
+    {
+        _objects.Type[slot] = ThunderType;
+
+        int difference = _objects.X[slot] - GridOrigin;
+
+        _objects.X[slot] = (byte)(((byte)difference & GridMask) + GridReturn + (difference >= 0 ? 1 : 0));
+
+        int player = _objects.Direction[slot];
+
+        if (player >= EntityTable.Capacity)
+        {
+            throw new NotSupportedException($"a bolt from a bubble facing ${player:X2} reads $8520 + ${player:X2}, past the entities");
+        }
+
+        byte frame = _entities.Frame[player];
+
+        _objects.Direction[slot] = frame is < 4 or (>= 8 and < 0x0A) ? LeftThrow : RightThrow;
+        _drawn[slot] = NotDrawn;
+        _drawnSubY[slot] = 0;
     }
 
     private void Letter(int player, byte held)

@@ -5,6 +5,7 @@
 using BubbleBobbleSharpLib.Bubbles;
 using BubbleBobbleSharpLib.Items;
 using BubbleBobbleSharpLib.Players;
+using BubbleBobbleSharpLib.Specials;
 using SharpKind.Fakes;
 using Xunit;
 
@@ -211,17 +212,87 @@ public sealed class BubblePopTests
         Assert.Equal(0x01, rig.Scores.Bytes[5]);
     }
 
-    // $3E02. The special bubbles' own arms are not translated.
-    [Theory]
-    [InlineData(0x06)]
-    [InlineData(0x08)]
-    [InlineData(0x0A)]
-    public void ThrowsOnASpecialBubblesOwnArm(byte held)
+    // $3E06-$3E29: a water bubble with no water running starts it at the bubble's cell and is gone at once.
+    [Fact]
+    public void AWaterBubbleStartsTheWaterAndVanishes()
     {
         Rig rig = new();
-        Touched(rig, Slot, held, player: 0);
+        Touched(rig, Slot, 0x06, player: 0);
 
-        Assert.Throws<NotSupportedException>(rig.Pop.Update);
+        rig.Pop.Update();
+
+        Assert.Equal(0xFF, rig.Water.Mask);
+        Assert.All(rig.Water.Columns.ToArray(), c => Assert.Equal(0x0D, c));
+        Assert.All(rig.Water.Rows.ToArray(), r => Assert.Equal(0x0E, r));
+        Assert.Equal(0x36, rig.Objects.Type[Slot]);
+        Assert.Equal(BubblePop.NotDrawn, rig.Pop.Drawn[Slot]);
+    }
+
+    // $3E08: water already running, so the bubble just pops.
+    [Fact]
+    public void AWaterBubbleWhileWaterRunsPops()
+    {
+        Rig rig = new();
+        rig.Water.Mask = 0x04;
+        Touched(rig, Slot, 0x06, player: 0);
+
+        rig.Pop.Update();
+
+        Assert.Equal(0x04, rig.Water.Mask);
+        Assert.Equal(0x3C, rig.Objects.Type[Slot]);
+    }
+
+    // $3E1B: a row of $1C or more leaves no room below, so the cells' columns change but the water does not start.
+    [Fact]
+    public void AWaterBubbleTooLowPopsAndLeavesItsColumns()
+    {
+        Rig rig = new();
+        Touched(rig, Slot, 0x06, player: 0);
+        rig.Objects.Row[Slot] = 0x1C;
+
+        rig.Pop.Update();
+
+        Assert.Equal(0, rig.Water.Mask);
+        Assert.Equal(0x0D, rig.Water.Columns[0]);
+        Assert.Equal(0x1D, rig.Water.Rows[0]);
+        Assert.Equal(0x3C, rig.Objects.Type[Slot]);
+    }
+
+    // $3E30-$3E5B: the bolt starts on the grid and goes the way the player who burst it faces.
+    [Theory]
+    [InlineData(0, 0x84)]
+    [InlineData(3, 0x84)]
+    [InlineData(4, 0x04)]
+    [InlineData(7, 0x04)]
+    [InlineData(8, 0x84)]
+    [InlineData(9, 0x84)]
+    [InlineData(10, 0x04)]
+    public void AThunderBubbleBecomesABoltThrownTheWayThePlayerFaces(byte frame, byte direction)
+    {
+        Rig rig = new();
+        Touched(rig, Slot, 0x0A, player: 1);
+        rig.Entities.Frame[1] = frame;
+        rig.Objects.X[Slot] = 0x83;
+
+        rig.Pop.Update();
+
+        Assert.Equal(0x26, rig.Objects.Type[Slot]);
+        Assert.Equal(0x7C, rig.Objects.X[Slot]);
+        Assert.Equal(direction, rig.Objects.Direction[Slot]);
+    }
+
+    // $3E5E-$3E6B: a fire bubble becomes the falling fire, with $A9D6 cleared.
+    [Fact]
+    public void AFireBubbleBecomesTheFallingFire()
+    {
+        Rig rig = new();
+        Touched(rig, Slot, 0x08, player: 0);
+        rig.Objects.SubY[Slot] = 0x04;
+
+        rig.Pop.Update();
+
+        Assert.Equal(0x24, rig.Objects.Type[Slot]);
+        Assert.Equal(0, rig.Objects.SubY[Slot]);
     }
 
     // $3EFD, $E752, $3ED4 and $3E77 pick a cell by $A9C4, and clear OLDTXT.
@@ -327,12 +398,13 @@ public sealed class BubblePopTests
 
     private sealed class Rig
     {
-        internal Rig() => Pop = new(
-            Objects,
-            Entities,
-            Players,
-            new(Entities, Scores, new(new FakeRandomSource())),
-            Scores);
+        internal Rig()
+        {
+            Water = new(Entities, new(new FakeRandomSource()));
+            Pop = new(Objects, Entities, Players, new(Entities, Scores, new(new FakeRandomSource())), Scores, Water);
+        }
+
+        internal WaterFlow Water { get; }
 
         internal ObjectTable Objects { get; } = new();
 

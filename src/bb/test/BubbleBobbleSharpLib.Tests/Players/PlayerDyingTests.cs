@@ -104,7 +104,8 @@ public sealed class PlayerDyingTests
             new PlayerMovement(entities, blow, TestBlow.NoRings()),
             new PlayerJump(entities, new PlayerDrift(entities, steer, TestBlow.NoRings()), new PlayerLanding(entities, descent)),
             new PlayerFall(entities, steer),
-            blow);
+            blow,
+            TestBlow.NoWater(entities));
     }
 
     private static EntityTable Dying(bool grounded)

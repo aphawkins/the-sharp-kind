@@ -4,6 +4,7 @@
 
 using BubbleBobbleSharpLib.Bubbles;
 using BubbleBobbleSharpLib.Levels;
+using BubbleBobbleSharpLib.Specials;
 
 namespace BubbleBobbleSharpLib.Players;
 
@@ -33,25 +34,29 @@ internal sealed class PlayerFrame
     private readonly PlayerFall _fall;
     private readonly BubbleBlow _blow;
     private readonly PlayerDying _dying;
+    private readonly WaterFlow _water;
 
     internal PlayerFrame(
         EntityTable entities,
         PlayerMovement movement,
         PlayerJump jump,
         PlayerFall fall,
-        BubbleBlow blow)
+        BubbleBlow blow,
+        WaterFlow water)
     {
         ArgumentNullException.ThrowIfNull(entities);
         ArgumentNullException.ThrowIfNull(movement);
         ArgumentNullException.ThrowIfNull(jump);
         ArgumentNullException.ThrowIfNull(fall);
         ArgumentNullException.ThrowIfNull(blow);
+        ArgumentNullException.ThrowIfNull(water);
 
         _entities = entities;
         _movement = movement;
         _jump = jump;
         _fall = fall;
         _blow = blow;
+        _water = water;
         _dying = new(entities);
     }
 
@@ -81,6 +86,9 @@ internal sealed class PlayerFrame
                 return;
             case PlayerRespawn.RespawningState:
                 Respawning(player, port, map);
+                return;
+            case WaterFlow.CarriedState:
+                Carried(player, port, map);
                 return;
             default:
                 throw new NotSupportedException(
@@ -148,6 +156,32 @@ internal sealed class PlayerFrame
         }
 
         Idle(player, port, map);
+    }
+
+    // $284D-$2877 and $287C-$28A4: carried by the water. A player at the water's bottom is let go; otherwise it can still
+    // blow and walk, and a jump ends it.
+    private void Carried(int player, byte port, SolidMap map)
+    {
+        if (_water.Follow(player))
+        {
+            _water.Release(player);
+            _entities.State[player] = PlayingState;
+            return;
+        }
+
+        byte blowTimer = _entities.BubbleTimer[player];
+
+        if ((blowTimer & 0x80) == 0)
+        {
+            _blow.Step(player, blowTimer, PlayerCell.Of(_entities.X[player], _entities.Y[player]));
+        }
+
+        _movement.Step(player, port, map);
+
+        if ((_entities.RiseCounter[player] & 0x80) == 0)
+        {
+            _entities.State[player] = PlayingState;
+        }
     }
 
     // $290D: counts down to state 1, flashing, and plays as state 1 meanwhile.
