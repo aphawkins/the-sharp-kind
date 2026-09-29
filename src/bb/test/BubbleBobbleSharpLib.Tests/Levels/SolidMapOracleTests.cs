@@ -17,7 +17,9 @@ namespace BubbleBobbleSharpLib.Tests.Levels;
 // `$3998` sets the solid bit of every cell whose rendered screen character is $10 to $1D. The port does all but the last,
 // taking the solid bits from the level's bitmap, which agrees wherever it has been compared.
 //
-// It does not agree for the levels in `s_gaps` (work-items/bb-solidmap-fidelity.md), which the test leaves out.
+// Three things the first reading missed, each found by this test: a level whose zone data redirects (`level N -> M`) starts
+// its map from the target's wall bytes and current; the mirror runs over all 25 rows; and level 73 sets four cells of its
+// own (`$F217`). The oracle's own colour RAM had been sharing the RAM under it, which spoiled the bitmaps of levels 72-87.
 [Trait("Level", "Integration")]
 public sealed class SolidMapOracleTests
 {
@@ -27,10 +29,6 @@ public sealed class SolidMapOracleTests
 
     private static readonly LevelStore s_levels = LevelStore.Read(Asset("levels.json"));
     private static readonly ZoneStore s_zones = ZoneStore.Read(Asset("zones.json"));
-
-    // Levels 72 to 87 hold their first pass with the platforms not yet in the game's map (level 76's platforms are drawn
-    // in characters $C0 upwards, which `$3998` does not count), and 36, 48, 52 and 70 differ by a few cells' current.
-    private static readonly HashSet<int> s_gaps = [36, 48, 52, 70, .. Enumerable.Range(72, 16)];
 
     [Fact]
     public void EveryLevelsMapIsTheGames()
@@ -47,11 +45,6 @@ public sealed class SolidMapOracleTests
             if (number > 1)
             {
                 machine.EnterLevel(number);
-            }
-
-            if (s_gaps.Contains(number))
-            {
-                continue;
             }
 
             List<string> cells = Mismatches(machine, SolidMap.Build(s_levels.Level(number), s_zones.Zones(number)));

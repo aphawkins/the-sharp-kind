@@ -7,6 +7,15 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Fixed (Bubble Bobble's level maps are the game's for all 99 levels, 2026-09-29)
+
+- **`SolidMapOracleTests` compares every level and skips none.** Four things were wrong: a level whose zone data redirects
+  (`level N -> M`, levels 2, 36, 48 and 52) starts its map from the target's wall bytes and bubble current
+  (`Level.ZoneSource`, exported by `tools/bb`); the mirror runs over all 25 rows, not 24; level 73 sets four cells of
+  current in its bottom row (`$F217`); and the oracle's colour RAM shared the RAM under it, which spoiled the bitmaps of levels
+  72-87 (only the test machine was wrong). Bubbles on levels 36, 48, 52, 70 and 73 now drift as the game's do; the item rooms
+  of every level (bar 43) and the special bubbles of level 73 are proved too.
+
 ### Added (Bubble Bobble's last level, 2026-09-29)
 
 - **Level 100 has its giant** ([BossFight.cs](src/bb/libs/BubbleBobbleSharpLib/Levels/BossFight.cs)): it appears when the READY!!

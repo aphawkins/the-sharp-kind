@@ -25,7 +25,13 @@ public class Level
 
     public int SpawnFlags { get; set; }
 
+    // The level whose zone data this level runs (`level N -> M` in the game's zone data; 0 for none). The game runs the target's data
+    // whole, which starts the map from the target's wall bytes and bubble current (`$E1D1`).
+    public int ZoneSource { get; set; }
+
     public IList<EnemySpawn> Enemies { get; init; } = [];
 
     public IList<string> Bitmap { get; init; } = [];
+
+    internal Level? Seed { get; set; }
 }

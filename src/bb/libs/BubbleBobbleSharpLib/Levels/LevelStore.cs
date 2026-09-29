@@ -23,6 +23,11 @@ public sealed class LevelStore
         }
 
         _levels = [.. levels];
+
+        foreach (Level level in _levels.Where(x => x.ZoneSource > 0))
+        {
+            level.Seed = _levels[level.ZoneSource - 1];
+        }
     }
 
     public static int Count => 100;
@@ -49,6 +54,7 @@ public sealed class LevelStore
         FoodDrop = level.FoodDrop,
         PowerupSpawn = level.PowerupSpawn,
         SpawnFlags = level.SpawnFlags,
+        ZoneSource = level.ZoneSource,
         Enemies = [.. level.Enemies.Select(Harder)],
         Bitmap = level.Bitmap,
     };

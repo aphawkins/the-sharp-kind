@@ -36,6 +36,9 @@ internal sealed class Rebb64Machine : IBus
 
     private readonly byte[] _ram = new byte[0x10000];
     private readonly byte[] _vic = new byte[0x40];
+
+    // The colour RAM is a chip of its own, four bits wide, under the same addresses as the RAM the game keeps its level bitmaps in.
+    private readonly byte[] _colour = new byte[0x400];
     private readonly byte[][] _cia = [new byte[16], new byte[16]];
     private readonly int[] _timer = new int[4];
     private readonly int[] _latch = new int[4];
@@ -287,7 +290,7 @@ internal sealed class Rebb64Machine : IBus
     {
         < 0xD400 => ReadVic(address & 0x3F),
         < 0xD800 => Sid.Read(address & 0x1F),
-        < 0xDC00 => _ram[address],
+        < 0xDC00 => _colour[address - 0xD800],
         < 0xDD00 => ReadCia(0, address & 0x0F),
         < 0xDE00 => ReadCia(1, address & 0x0F),
         _ => 0xFF,
@@ -304,7 +307,7 @@ internal sealed class Rebb64Machine : IBus
                 Sid.Write(address & 0x1F, value);
                 break;
             case < 0xDC00:
-                _ram[address] = value;
+                _colour[address - 0xD800] = (byte)(value & 0x0F);
                 break;
             case < 0xDD00:
                 WriteCia(0, address & 0x0F, value);

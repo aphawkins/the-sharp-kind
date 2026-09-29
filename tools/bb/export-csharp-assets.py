@@ -806,9 +806,35 @@ def export_effect_chars(out_dir, canonical):
 # =============================================================================
 
 
+def zone_sources():
+    """
+    The zone data's redirects, `level N -> M`, resolved: the (1-based) level whose zone data a redirected level runs.
+
+    The game's `$E18B` runs the target's data whole, its bitmap included, so a redirected level's map starts from the
+    target's wall bytes and bubble current, not its own.
+    """
+    with open(os.path.join(DATA, "zone-data.txt"), "r") as f:
+        levels = zones_mod.parse_text(f.read())
+
+    by_number = {x["number"]: x for x in levels}
+    sources = {}
+
+    for level in levels:
+        source = level
+
+        while source["redirect"] is not None:
+            source = by_number[source["redirect"]]
+
+        if source is not level:
+            sources[level["number"] + 1] = source["number"] + 1
+
+    return sources
+
+
 def export_levels(path):
     """levels.txt -> levels.json, via convert-levels.py's own parser."""
     levels = levels_mod.parse_levels(os.path.join(DATA, "levels.txt"))
+    sources = zone_sources()
 
     out = []
     for level in levels:
@@ -829,6 +855,7 @@ def export_levels(path):
                     "y": level["powerup_spawn"][1],
                 },
                 "spawnFlags": level["spawn_flags"],
+                "zoneSource": sources.get(level["num"], 0),
                 "enemies": [
                     {
                         "x": e["x_col"],

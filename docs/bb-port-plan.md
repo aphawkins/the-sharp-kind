@@ -621,8 +621,7 @@ Each item ends with how it is proved.
         floats up from a corner where the bubble current flows in. `$3A6C`'s tail (`Configure`) patches `$0A38`, `$0C9C` and
         `$0CC2` from the level's `SpawnFlags`; most levels never spawn. The standard chooser makes a plain `$04` bubble or a
         `$06`/`$08`/`$0A` special one from a masked roll; the other chooser makes EXTEND letter bubbles (`$0C`-`$14`), from a
-        seed kept in `$5BFF`. Nine levels, 150 calls each, and seven level set-ups match. Level 73 is left out: see the
-        level-map item in the backlog.
+        seed kept in `$5BFF`. Nine levels, 150 calls each, and seven level set-ups match. Level 73 is proved too, now the level maps are the game's.
       - [x] **5b. The pop arms, `$3E02`, and the water.** `BubblePop.Arm`: a `$06` bubble starts `WaterFlow` (`$1B40`, run once
         a pass by the IRQ before `$1CBD`): eleven cells that fall, walk along a platform and drop off it, carrying (state
         `$0D`, `$284D`) any enemy or player they touch to the bottom, where an enemy drowns into food and a player is put on
@@ -664,7 +663,7 @@ Each item ends with how it is proved.
         a player in state 1; 50 points each). With every item taken each player in the game is paid 100,000 (the one with the
         most, or a tie) or 50,000. The game waits in the routine and the IRQ goes on, so `GameLoop.RoomPass` runs the room's
         frames, the clock and the players. Proved against the game: `ItemRoomOracleTests` (every level's placement bar the
-        gaps and level 43, the taking, the results and the text). Drawn by `RoomView8Bit` (the items from three new blocks of
+        level 43, the taking, the results and the text). Drawn by `RoomView8Bit` (the items from three new blocks of
         `item-chars.tga`, the clock and counts, the results' window).
       - [ ] **Not translated, so they do nothing** (`ItemEffects.Untranslated` is told, and the game goes on): 7 (`$A653`, which
         sets `$58FF` for `$1AB6`, a diagonal flight of a giant bubble down the level that kills what it passes; drawn by

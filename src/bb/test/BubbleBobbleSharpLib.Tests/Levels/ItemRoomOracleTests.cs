@@ -18,9 +18,7 @@ namespace BubbleBobbleSharpLib.Tests.Levels;
 // routine's frames. When the room has begun to wait for the players (`$3193`'s loop), the items it placed are read from
 // `$4600` (X) and `$4700` (Y), `$597F` says how many, and the port's placement on the level's map is compared.
 //
-// The levels 36, 48, 52, 70 and 72 to 87, whose maps differ a little from the game's (work-items/bb-solidmap-fidelity.md),
-// are left out, and so is level 43, where the row count comes to nought and the game looks for items in whatever
-// follows the map in memory.
+// Level 43 is left out, where the row count comes to nought and the game looks for items in whatever follows the map in memory.
 [Trait("Level", "Integration")]
 public sealed class ItemRoomOracleTests
 {
@@ -32,7 +30,7 @@ public sealed class ItemRoomOracleTests
     private static readonly LevelStore s_levels = LevelStore.Read(Asset("levels.json"));
     private static readonly ZoneStore s_zones = ZoneStore.Read(Asset("zones.json"));
 
-    private static readonly HashSet<int> s_left = [36, 43, 48, 52, 70, .. Enumerable.Range(72, 16)];
+    private static readonly HashSet<int> s_left = [43];
 
     [Fact]
     public void PlacesTheItemsOfEveryLevelWhereTheGameDoes()

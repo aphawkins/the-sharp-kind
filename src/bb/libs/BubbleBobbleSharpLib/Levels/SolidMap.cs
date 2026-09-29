@@ -19,6 +19,12 @@ internal sealed class SolidMap
 
     private const int LevelRow = 1;
 
+    // $F217-$F22E, from the level's set-up: level 73 has its own four cells of current to the right in the bottom row's gap.
+    private const int GapLevel = 73;
+    private const int GapFirst = 9;
+    private const int GapLast = 12;
+    private const int GapDirection = 2;
+
     private static readonly int[][] s_edgeBytes =
     [
         [0xFF, 0xFF],
@@ -87,17 +93,25 @@ internal sealed class SolidMap
             }
         }
 
+        if (level.Number == GapLevel)
+        {
+            for (int column = GapFirst; column <= GapLast; column++)
+            {
+                cells[((Rows - 1) * Columns) + column] = GapDirection;
+            }
+        }
+
         return new(cells, level.Number, tails);
     }
 
     internal int Direction(int row, int column)
         => InBounds(Copied(row), column) ? _cells[(Copied(row) * Columns) + column] & DirectionMask : 0;
 
-    // $E24C-$E280: the 24 rows above the last take their right half from the left, a cell whose bit 0 is set
+    // $E24C-$E280: all 25 rows take their right half from the left, a cell whose bit 0 is set
     // having bit 1 flipped, so a current to the left goes to the right. The solid bits come from the tiles.
     private static void MirrorDirections(byte[] cells)
     {
-        for (int row = 0; row < Rows - 1; row++)
+        for (int row = 0; row < Rows; row++)
         {
             for (int column = 0; column < Columns / 2; column++)
             {
@@ -123,8 +137,11 @@ internal sealed class SolidMap
         _ => row,
     };
 
-    private static void FillRowDefaults(byte[] cells, Level level)
+    // `$E1D1`: the level's own, or the wall bytes and current of the level whose zone data it runs.
+    private static void FillRowDefaults(byte[] cells, Level own)
     {
+        Level level = own.Seed ?? own;
+
         for (int row = 0; row < Rows; row++)
         {
             int direction = row switch

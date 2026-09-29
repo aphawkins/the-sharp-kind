@@ -44,10 +44,8 @@ public sealed class BubbleSpawnerOracleTests
     private static readonly LevelStore s_levels = LevelStore.Read(Asset("levels.json"));
     private static readonly ZoneStore s_zones = ZoneStore.Read(Asset("zones.json"));
 
-    // A spread of spawn flags: the mask operand takes 0 to 6, and a few levels take the letter chooser. Level 73 is left
-    // out: the port's map has a bubble current in its bottom row's openings that the game's does not
-    // (SolidMapOracleTests).
-    public static TheoryData<int> Levels() => [3, 5, 17, 25, 68, 78, 80, 88, 99];
+    // A spread of spawn flags: the mask operand takes 0 to 6, and a few levels take the letter chooser.
+    public static TheoryData<int> Levels() => [3, 5, 17, 25, 68, 73, 78, 80, 88, 99];
 
     [Theory]
     [MemberData(nameof(Levels))]
