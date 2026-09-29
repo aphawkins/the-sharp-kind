@@ -28,9 +28,17 @@ Status: Playable, preview.
 
 A C# port of Geoff Crammond's 'Stunt Car Racer', converted from the C++/DirectX9 Windows remake of the Amiga original.
 
+### [Bubble Bobble - The Sharp Kind](bb-readme.md)
+
+![Bubble Bobble - The Sharp Kind - Screenshot](images/bb-screenshot.png)
+
+Status: Work in progress.
+
+A C# port of the C64 'Bubble Bobble', converted from a byte-exact disassembly of Software Creations' 1987 conversion.
+
 ## SharpKind libraries
 
-Both games are built on a shared set of engine libraries under `src/useful/` — graphics, audio, input, assets and the game loop — published as `SharpKind.*` NuGet packages.
+All three games are built on a shared set of engine libraries under `src/useful/` — graphics, audio, input, assets and the game loop — published as `SharpKind.*` NuGet packages.
 
 ## Learn more
 

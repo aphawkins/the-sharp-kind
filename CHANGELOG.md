@@ -18,6 +18,7 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
   ([Song.cs](src/bb/libs/BubbleBobbleSharpLib/Song.cs)).
 - **Bubble Bobble has a title screen**: the logo and credits, fire to start, and back to the title when the game is over
   ([TitleScreen.cs](src/bb/libs/BubbleBobbleSharpLib/Screens/TitleScreen.cs)). The debug `N` key is gone.
+- **Bubble Bobble has a 56-line banner** above the C64's 200 lines (320x256), a screenshot, and its place in the docs.
 - **Fruit rains at the end of a bonus level, and most special items have their effect** (the rest do nothing until
   step 6 and 7 finish them).
 - **The real Bubble Bobble runs headless as a test oracle** (`Rebb64Machine`), so a routine can be bracketed and its RAM

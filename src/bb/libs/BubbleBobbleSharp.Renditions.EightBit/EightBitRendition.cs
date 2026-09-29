@@ -15,7 +15,7 @@ public sealed class EightBitRendition : IBbRendition
 
     public int ScreenWidth => 320;
 
-    public int ScreenHeight => 200;
+    public int ScreenHeight => 256;
 
     public IReadOnlyList<int> WindowScales => [1, 2, 3, 4];
 
@@ -36,4 +36,6 @@ public sealed class EightBitRendition : IBbRendition
     public IView<EffectsModel> CreateEffectsView(IViewSurface surface) => new EffectsView8Bit(surface);
 
     public IView<TitleModel> CreateTitleView(IViewSurface surface) => new TitleView8Bit(surface);
+
+    public IView<BannerModel> CreateBannerView(IViewSurface surface) => new BannerView8Bit(surface);
 }

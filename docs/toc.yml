@@ -4,6 +4,8 @@
   href: elite-readme.md
 - name: Stunt Car Racer
   href: scr-readme.md
+- name: Bubble Bobble
+  href: bb-readme.md
 - name: Project
   items:
     - name: Architecture principles

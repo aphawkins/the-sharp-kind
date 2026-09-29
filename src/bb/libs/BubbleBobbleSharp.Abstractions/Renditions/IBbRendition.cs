@@ -67,4 +67,9 @@ public interface IBbRendition
     /// <param name="surface">Everything the view draws with.</param>
     /// <returns>The view.</returns>
     public IView<TitleModel> CreateTitleView(IViewSurface surface);
+
+    /// <summary>Creates the view that draws the banner above the screen.</summary>
+    /// <param name="surface">Everything the view draws with.</param>
+    /// <returns>The view.</returns>
+    public IView<BannerModel> CreateBannerView(IViewSurface surface);
 }

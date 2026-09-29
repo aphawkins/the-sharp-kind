@@ -25,7 +25,9 @@ Status: Playable, preview.
 
 ### [Bubble Bobble - The Sharp Kind](docs/bb-readme.md)
 
-Status: Early work in progress, not yet playable end to end.
+![Bubble Bobble - The Sharp Kind - Screenshot](docs/images/bb-screenshot.png)
+
+Status: Work in progress. The title screen, the levels, the enemies, the bubbles and the music are in; the bonus rounds, the super mode and the ending are not.
 
 ## Getting started
 
@@ -37,6 +39,9 @@ dotnet run --project src/elite/apps/EliteSharp
 
 # Stunt Car Racer
 dotnet run --project src/scr/apps/StuntCarRacerSharp
+
+# Bubble Bobble
+dotnet run --project src/bb/apps/BubbleBobbleSharp
 
 # Control gallery — every shared UI control, for looking at
 dotnet run --project src/useful/apps/SharpKind.UI.Gallery

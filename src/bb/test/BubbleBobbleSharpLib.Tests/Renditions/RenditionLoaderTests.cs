@@ -48,7 +48,7 @@ public sealed class RenditionLoaderTests : IDisposable
 
         // 40x25 character cells of 8x8 pixels, which is the C64's screen.
         Assert.Equal(320, found.Chosen.ScreenWidth);
-        Assert.Equal(200, found.Chosen.ScreenHeight);
+        Assert.Equal(256, found.Chosen.ScreenHeight);
     }
 
     [Fact]

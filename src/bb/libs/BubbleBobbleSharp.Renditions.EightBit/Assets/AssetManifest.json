@@ -20,7 +20,8 @@
     "BonusMelon": "bonus-melon.tga",
     "ObjectSprites": "object-sprites.tga",
     "ItemChars": "item-chars.tga",
-    "EffectChars": "effect-chars.tga"
+    "EffectChars": "effect-chars.tga",
+    "Banner": "banner.png"
   },
   "Music": {
     "Theme": "bubble-bobble.sid#1",

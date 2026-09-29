@@ -681,7 +681,12 @@ Each item ends with how it is proved.
       `TitleScreenTests`, and by running the app.
       Not done: the cheat key sequence at `$45A7`, and a table of scores (the
       reference keeps one high score only).
-- [ ] **10. Join the repo.**
+- [ ] **10. Join the repo.** Done: the banner (320x256; the layout's
+      `BannerHeight` moves the screen grid down, rather than `PlayfieldRow`, and
+      `SpriteView8Bit` adds it), `decisions.md`, `bb-readme.md`,
+      `reference-sources.md`, `index.md`, `toc.yml`, `README.md`, a screenshot
+      and the CHANGELOG. Left: golden frames for all 100 levels, and a
+      zero-warning full-solution build with every test green.
       - 320x256 with a 56-line banner on top, the repo's 8-bit tier (Elite's
         size). `EightBitRendition.ScreenHeight` to 256, `PlayfieldRow` to 7,
         and a `BannerModel` drawing `Assets/Images/banner.png` (already

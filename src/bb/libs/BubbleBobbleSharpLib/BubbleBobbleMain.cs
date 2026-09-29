@@ -42,6 +42,8 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     private readonly IView<ObjectsModel> _objectView;
     private readonly IView<ItemsModel> _itemView;
     private readonly IView<EffectsModel> _effectsView;
+    private readonly IView<BannerModel> _bannerView;
+    private readonly float _bannerHeight;
     private readonly ScreenManager<BbScreen, IGameScreen> _screens;
 
     private readonly Input _input;
@@ -98,16 +100,12 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         _objectView = rendition.CreateObjectView(surface);
         _itemView = rendition.CreateItemView(surface);
         _effectsView = rendition.CreateEffectsView(surface);
-        IView<TitleModel> titleView = rendition.CreateTitleView(surface);
+        _bannerHeight = surface.Layout.BannerHeight;
+        _bannerView = rendition.CreateBannerView(surface);
 
         ShowLevel(FirstLevel);
 
-        LayerRunner layers = CreateLayers(surface);
-
-        _screens = new(Keyboard);
-        _screens.Add(BbScreen.Title, new TitleScreen(TitleFire, StartGame, PlaySong, titleView.Draw));
-        _screens.Add(BbScreen.Play, new PlayScreen(UpdateGame, layers.Draw));
-        _screens.Set(BbScreen.Title);
+        _screens = CreateScreens(rendition.CreateTitleView(surface), CreateLayers(surface));
     }
 
     public bool IsRunning { get; private set; } = true;
@@ -147,6 +145,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     public void Draw()
     {
         Graphics.Clear();
+        _bannerView.Draw(new BannerModel(_bannerHeight));
         _screens.Current.Draw();
         Graphics.ScreenUpdate();
     }
@@ -199,6 +198,17 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         {
             _screens.Set(BbScreen.Title);
         }
+    }
+
+    private ScreenManager<BbScreen, IGameScreen> CreateScreens(IView<TitleModel> titleView, LayerRunner layers)
+    {
+        ScreenManager<BbScreen, IGameScreen> screens = new(Keyboard);
+
+        screens.Add(BbScreen.Title, new TitleScreen(TitleFire, StartGame, PlaySong, titleView.Draw));
+        screens.Add(BbScreen.Play, new PlayScreen(UpdateGame, layers.Draw));
+        screens.Set(BbScreen.Title);
+
+        return screens;
     }
 
     private LayerRunner CreateLayers(BbViewSurface surface)

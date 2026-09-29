@@ -19,6 +19,7 @@ internal sealed class SpriteView8Bit : IView<SpriteModel>
     private const string Sheet = "SpritesGame";
 
     private readonly IGraphics _graphics;
+    private readonly BbViewLayout _layout;
     private readonly MulticolourSprites _sprites;
 
     internal SpriteView8Bit(IViewSurface surface)
@@ -26,6 +27,7 @@ internal sealed class SpriteView8Bit : IView<SpriteModel>
         ArgumentNullException.ThrowIfNull(surface);
 
         _graphics = surface.Graphics;
+        _layout = surface.Layout;
         _sprites = new(surface, Sheet);
     }
 
@@ -45,7 +47,7 @@ internal sealed class SpriteView8Bit : IView<SpriteModel>
     private void DrawSprite(SpriteModel model, int slot)
         => _graphics.DrawImagePart(
             _sprites.Paint(model.Colour(slot)),
-            new(model.X(slot) - SpriteOriginX, model.Y(slot) - SpriteOriginY),
+            new(model.X(slot) - SpriteOriginX, model.Y(slot) - SpriteOriginY + _layout.BannerHeight),
             new(SourceSpriteWidth * 2, SpriteHeight),
             new(model.Sprite(slot) * SourceSpriteWidth, 0),
             new(SourceSpriteWidth, SpriteHeight));

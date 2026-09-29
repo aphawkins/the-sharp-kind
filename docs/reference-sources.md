@@ -35,6 +35,16 @@ by feel.
   rewrite rather than a transcription: read it first, then confirm against the
   BBC source before treating anything as settled.
 
+## Bubble Bobble
+
+- **[zaidka/rebb64](https://github.com/zaidka/rebb64)** - a byte-exact
+  disassembly of the C64 game that rebuilds to the original binary. **Golden**.
+  Its comments and labels are often wrong, so a routine is named from what it
+  does. The port's tests run the built image on the `SharpKind.Emulation` CPU as
+  an oracle, and compare the port's memory with the game's.
+- **The HVSC `bubble-bobble.sid`** - the game's own sound driver, played on the
+  same emulation.
+
 ## Stunt Car Racer
 
 - **[ptitSeb/stuntcarremake](https://github.com/ptitSeb/stuntcarremake)** -

@@ -1116,6 +1116,12 @@ functionality. Conclusions:
   per-effect sound volume/pitch/pan all landed 2026-07-20, see
   CHANGELOG.)
 
+## Resolved (2026-09-29)
+
+- **Bubble Bobble's banner**: the 8-bit rendition is 320x256, a 56-line banner
+  above the C64's 200 lines. It is house chrome, outside the fidelity rule, so
+  comparisons with the C64 crop to the 200 lines below it.
+
 ## Resolved (2026-07-11)
 
 - **v1 release scope**: Elite + SCR, with SCR labelled preview given its
