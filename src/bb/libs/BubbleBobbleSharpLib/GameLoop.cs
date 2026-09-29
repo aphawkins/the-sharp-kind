@@ -41,6 +41,7 @@ internal sealed class GameLoop
     private readonly PlayerDeath _death;
     private readonly EntityTimers _timers;
     private readonly EnemySpawner _spawner;
+    private readonly BubbleSpawner _bubbles;
     private readonly PlayerRespawn _respawn;
     private readonly PlayerJoin _join;
     private readonly int _playing;
@@ -69,6 +70,7 @@ internal sealed class GameLoop
         _timers = new(Objects, Entities);
         Pop = new(Objects, Entities, PlayerTable, food, Scores);
         _spawner = new(Entities, random);
+        _bubbles = new(Objects, Entities, random);
 
         Items = new(Entities, Scores, new(PlayerTable, Entities), random)
         {
@@ -145,6 +147,7 @@ internal sealed class GameLoop
         _map = SolidMap.Build(level, zones, Entities);
 
         _spawner.Spawn(level.Enemies);
+        _bubbles.Configure(level.SpawnFlags);
 
         StartPlayers(next);
 
@@ -192,6 +195,7 @@ internal sealed class GameLoop
         }
 
         _blow.Tick();
+        _bubbles.Update(map);
         Pop.Update();
         _push.Update(map);
         _ai.Update(map);
