@@ -683,10 +683,9 @@ Each item ends with how it is proved.
       (`$15E8`), level complete (`$3517`), EXTEND (`$32C1`) and game over
       (`$0A9E`). `BubbleBobbleMain` plays them when music is on. Verified by
       `GameSongTests`, with a manifest test.
-      Not yet asked for: round start (10, `bubbles-sprites.s:179`, whose
-      order against song 2 is not clear), bonus round (4) and super bonus
-      (11), which are step 7, and title (7) and ending (12), which are step 9
-      and step 7.
+      The round start (10) plays when the Barons come (`$1621`), and the bonus
+      round (4) when the item starts one. Not yet asked for: super bonus (11)
+      and the ending (12).
 - [x] **9. Front end.** `ScreenManager<BbScreen, IGameScreen>` with a
       `TitleScreen` (rebb64's `$4556`: the logo of charset characters `$60`-`$8B`,
       exported as the `Logo` font, and the credits; fire on either joystick starts

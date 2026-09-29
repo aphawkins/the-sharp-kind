@@ -53,6 +53,20 @@ public sealed class GameSongTests
         Assert.Contains(Song.HurryUp, Drain(loop));
     }
 
+    // $1621's `ldy #$43`: the Barons come, and song 10 (the round start's) plays.
+    [Fact]
+    public void TheBaronsComingPlaysTheRoundStartTune()
+    {
+        GameLoop loop = Start(1, next: false);
+        _ = loop.TakeSong();
+        loop.Timer.Seconds = 0;
+        loop.Timer.Hurry = 1;
+
+        loop.Pass([Idle, Idle]);
+
+        Assert.Contains(Song.RoundStart, Drain(loop));
+    }
+
     [Fact]
     public void AllSixLettersPlayTheExtendFanfare()
     {

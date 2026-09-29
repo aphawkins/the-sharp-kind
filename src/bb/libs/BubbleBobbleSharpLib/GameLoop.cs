@@ -55,6 +55,7 @@ internal sealed class GameLoop
     private int _extendAwards;
     private int _respawns;
     private int _bonusRounds;
+    private int _baronCalls;
     private bool _wasOver;
 
     internal GameLoop(BbRandom random, int playing)
@@ -480,6 +481,12 @@ internal sealed class GameLoop
         {
             _extendAwards = _extend.Awards;
             _songs.Enqueue(Song.Extend);
+        }
+
+        if (_baronCalls != End.BaronCalls)
+        {
+            _baronCalls = End.BaronCalls;
+            _songs.Enqueue(Song.RoundStart);
         }
 
         if (_bonusRounds != Bonus.Rounds)

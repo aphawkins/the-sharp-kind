@@ -74,6 +74,9 @@ internal sealed class LevelEnd
     // round (step 7) is what sets them.
     internal byte[] SavedFlash { get; } = new byte[PlayerTable.Capacity];
 
+    // How many times the Barons have been called, for the song ($1621's `ldy #$43`, the round start's).
+    internal int BaronCalls { get; private set; }
+
     // $05C5 clears $21 at each level's start.
     internal void Begin() => Complete = 0;
 
@@ -110,6 +113,7 @@ internal sealed class LevelEnd
     // The clock stops, with the level's time on it, until the last Baron goes ($1490).
     private void SpawnBarons()
     {
+        BaronCalls++;
         PopSlots();
         WaitForSlots();
 
