@@ -30,6 +30,19 @@ public sealed class WorldEffectsTests
         Assert.Equal(target, rig.World.SkipTo);
     }
 
+    // $7C37: the last milestone's item makes the game go to level $45 (70), from wherever it is.
+    [Theory]
+    [InlineData(48)]
+    [InlineData(5)]
+    public void TheFinalMilestoneItemSendsTheGameToLevelSeventy(byte level)
+    {
+        Rig rig = new() { World = { Level = level } };
+
+        rig.World.Apply(33, 0);
+
+        Assert.Equal(0x45, rig.World.SkipTo);
+    }
+
     // $2E61: every enemy in state 1 to $0A, or $0D, is killed, and the count is left at zero.
     [Fact]
     public void ClearingKillsEveryEnemyThatIsLeft()

@@ -79,7 +79,6 @@ public sealed class ItemEffectsTests
     [InlineData(7, 0xA653)]
     [InlineData(16, 0x2F7D)]
     [InlineData(24, 0x34A0)]
-    [InlineData(34, 0x7C3C)]
     public void ReportsAnEffectNotTranslatedAndDoesNothing(int type, int address)
     {
         (_, ItemEffects effects) = Create();
@@ -89,6 +88,20 @@ public sealed class ItemEffectsTests
         effects.Apply(type, 0);
 
         Assert.Equal([(type, (ushort)address)], reported);
+    }
+
+    // $7C3C: the last level's crystal makes the taker's byte negative, which turns their bubbles to thunder.
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    public void TheCrystalOfTheLastLevelMarksThePlayerWhoTookIt(int player)
+    {
+        (PlayerTable players, ItemEffects effects) = Create();
+
+        effects.Apply(34, player);
+
+        Assert.Equal(0xFF, players.BossBlow[player]);
+        Assert.Equal(0x00, players.BossBlow[1 - player]);
     }
 
     private static (PlayerTable Players, ItemEffects Effects) Create()

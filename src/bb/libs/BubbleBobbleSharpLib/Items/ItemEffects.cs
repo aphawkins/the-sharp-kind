@@ -85,6 +85,10 @@ internal sealed class ItemEffects
             case 6:
                 _players.Shots[player] = ThunderShots;
                 break;
+            case 34:
+                // $7C3C: the last level's crystal.
+                _players.BossBlow[player]--;
+                break;
             default:
                 Untranslated?.Invoke(type, s_handlers[type]);
                 break;

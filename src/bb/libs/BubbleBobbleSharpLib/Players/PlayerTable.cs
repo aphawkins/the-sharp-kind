@@ -23,6 +23,7 @@ internal sealed class PlayerTable
     private readonly byte[] _driftRing = new byte[Capacity];
     private readonly byte[] _walkRing = new byte[Capacity];
     private readonly byte[] _blowRing = new byte[Capacity];
+    private readonly byte[] _boss = new byte[Capacity];
 
     internal Span<byte> Lives => _lives;
 
@@ -60,4 +61,8 @@ internal sealed class PlayerTable
     internal Span<byte> WalkRing => _walkRing;
 
     internal Span<byte> BlowRing => _blowRing;
+
+    // $37C7, $37C8: negative for a player who has taken the last level's crystal (`$7C3C`), whose bubbles then turn to thunder
+    // ($23DE), and which a player's reset clears ($7F71).
+    internal Span<byte> BossBlow => _boss;
 }

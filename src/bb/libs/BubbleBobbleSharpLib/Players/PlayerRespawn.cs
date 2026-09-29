@@ -116,10 +116,11 @@ internal sealed class PlayerRespawn
         _players.BlowType[player] = 0x04;
         _players.Shots[player] = 0xFF;
 
-        // $A783, $37C7 and $A813 feed arms gated off by level setup; they are not modelled.
+        // $A783 and $A813 feed arms gated off by level setup; they are not modelled.
         _players.DriftRing[player] = 0;
         _players.WalkRing[player] = 0;
         _players.BlowRing[player] = 0;
+        _players.BossBlow[player] = 0;
         _entities.FlashTimer[player] = 0;
         _entities.LeapFlag[player] = 0;
 

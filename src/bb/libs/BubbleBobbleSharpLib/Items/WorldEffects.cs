@@ -19,6 +19,7 @@ internal sealed class WorldEffects
     private const byte SkipThree = 3;
     private const byte SkipSeven = 7;
     private const byte LastLevel = 0x63;
+    private const byte FinalMilestoneLevel = 0x45;
 
     private const byte FirstCaught = 0x18;
     private const byte CaughtBelow = 0x24;
@@ -85,7 +86,7 @@ internal sealed class WorldEffects
 
     // Whether the item's effect is one of these.
     internal static bool Handles(int type)
-        => type is 1 or 2 or 8 or 11 or 15 or (>= 16 and <= 18) or 19 or 20 or 21 or 22 or 23 or 24 or 25 or 26 or 27 or 28 or 30 or 31;
+        => type is 1 or 2 or 8 or 11 or 15 or (>= 16 and <= 28) or 30 or 31 or 33;
 
     // `player` is the one who took the item, which none of these use.
     internal void Apply(int type, int player)
@@ -129,6 +130,10 @@ internal sealed class WorldEffects
                 break;
             case 22:
                 Skip(SkipSeven);
+                break;
+            case 33:
+                // $7C37: to level $45, whichever way that is.
+                SkipTo = FinalMilestoneLevel;
                 break;
             case 8:
                 _items.Type[FoodSlot] = FoodGone;

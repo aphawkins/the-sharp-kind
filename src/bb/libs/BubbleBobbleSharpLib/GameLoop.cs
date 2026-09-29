@@ -183,7 +183,8 @@ internal sealed class GameLoop
 
         _world.SkipTo = null;
 
-        for (int level = _subflg + 1; level < target; level++)
+        // `$7FD4`-`$7FEE` counts the level up until it is the target, a byte at a time, so a target below the level goes the long way.
+        for (int level = (_subflg + 1) & 0xFF; level != target; level = (level + 1) & 0xFF)
         {
             Clear.Begin((byte)level);
         }
