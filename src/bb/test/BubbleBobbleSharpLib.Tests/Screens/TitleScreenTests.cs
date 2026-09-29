@@ -78,6 +78,44 @@ public sealed class TitleScreenTests
         Assert.Equal(BbScreen.Play, game.Screen);
     }
 
+    // $45A7-$45E1, $45E3-$462A: S, U, P, O, R and the Commodore key held together start the game in super mode, in which the
+    // enemies of every level are a class up: level 1's are class 0, which is state 2, and are class 1, state 3.
+    [Fact]
+    public void SixKeysHeldTogetherStartTheGameWithHarderEnemies()
+    {
+        FakeAbstraction abstraction = new();
+        BubbleBobbleMain game = Game(abstraction);
+        FakeKeyboard keyboard = (FakeKeyboard)abstraction.Keyboard;
+
+        foreach (ConsoleKey key in new[] { ConsoleKey.S, ConsoleKey.U, ConsoleKey.P, ConsoleKey.O, ConsoleKey.R, ConsoleKey.Tab })
+        {
+            keyboard.KeyDown(key, ConsoleModifiers.None);
+        }
+
+        game.Update();
+
+        Assert.Equal(BbScreen.Play, game.Screen);
+        Assert.Contains(Enumerable.Range(2, 6), slot => game.Loop.Entities.State[slot] == 3);
+        Assert.DoesNotContain(Enumerable.Range(2, 6), slot => game.Loop.Entities.State[slot] == 2);
+    }
+
+    [Fact]
+    public void FiveOfTheSixKeysStartNothing()
+    {
+        FakeAbstraction abstraction = new();
+        BubbleBobbleMain game = Game(abstraction);
+        FakeKeyboard keyboard = (FakeKeyboard)abstraction.Keyboard;
+
+        foreach (ConsoleKey key in new[] { ConsoleKey.S, ConsoleKey.U, ConsoleKey.P, ConsoleKey.O, ConsoleKey.R })
+        {
+            keyboard.KeyDown(key, ConsoleModifiers.None);
+        }
+
+        game.Update();
+
+        Assert.Equal(BbScreen.Title, game.Screen);
+    }
+
     [Fact]
     public void ANewGameStartsFromScratch()
     {

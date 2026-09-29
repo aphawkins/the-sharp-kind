@@ -8,9 +8,11 @@ Part of [The Sharp Kind](https://github.com/aphawkins/the-sharp-kind/blob/main/R
 
 ## Status
 
-Work in progress. The game opens on the title screen and plays through the 100 levels: the players, the enemies, the bubbles (water, fire, thunder and EXTEND), the items, fruit, and the music from the C64's SID chip, which runs on the shared `SharpKind.Emulation` library. Not yet in: the bonus rounds, the super mode, the ending and some of the special items' effects. See [bb-port-plan.md](bb-port-plan.md).
+Work in progress. The game opens on the title screen and plays through the 100 levels: the players, the enemies, the bubbles (water, fire, thunder and EXTEND), the items, fruit, and the music from the C64's SID chip, which runs on the shared `SharpKind.Emulation` library. The bonus rounds of the special items, the giant bonus and the super mode are in. Not yet in: the last level's boss and the ending, and some of the special items' effects. See [bb-port-plan.md](bb-port-plan.md).
 
 The 56-line banner above the screen is house chrome and not part of the C64 game.
+
+The keys: the arrows and the space bar, or W, A, S, D and Q, for the two players; Escape to leave. On the title screen, S, U, P, O, R and Tab held together start the super mode, a harder game (the Commodore key, in the C64's own code, is Tab here).
 
 ## Getting Started
 

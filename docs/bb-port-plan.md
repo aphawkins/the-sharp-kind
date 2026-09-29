@@ -695,8 +695,11 @@ Each item ends with how it is proved.
       follows `$E3F5`. `IBbRendition.CreateTitleView` draws it. Only the 8-bit
       rendition is installed, so no other is offered. Verified by
       `TitleScreenTests`, and by running the app.
-      Not done: the cheat key sequence at `$45A7`, and a table of scores (the
-      reference keeps one high score only).
+      The cheat at `$45A7` is in: S, U, P, O, R and the Commodore key (Tab)
+      held together on the title screen start the super mode
+      (`LevelStore.Super`: every enemy's class 0 becomes 1 and 6 becomes 5,
+      `$45F4`-`$4617`). Not done: a table of scores (the reference keeps one
+      high score only).
 - [ ] **10. Join the repo.** Done: the banner (320x256; the layout's
       `BannerHeight` moves the screen grid down, rather than `PlayfieldRow`, and
       `SpriteView8Bit` adds it), `decisions.md`, `bb-readme.md`,

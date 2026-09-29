@@ -21,18 +21,21 @@ internal sealed class TitleScreen : IGameScreen
     ];
 
     private readonly Func<byte> _fire;
-    private readonly Action _start;
+    private readonly Func<bool> _superKeys;
+    private readonly Action<bool> _start;
     private readonly Action<Song> _play;
     private readonly Action<TitleModel> _draw;
 
-    internal TitleScreen(Func<byte> fire, Action start, Action<Song> play, Action<TitleModel> draw)
+    internal TitleScreen(Func<byte> fire, Func<bool> superKeys, Action<bool> start, Action<Song> play, Action<TitleModel> draw)
     {
         ArgumentNullException.ThrowIfNull(fire);
+        ArgumentNullException.ThrowIfNull(superKeys);
         ArgumentNullException.ThrowIfNull(start);
         ArgumentNullException.ThrowIfNull(play);
         ArgumentNullException.ThrowIfNull(draw);
 
         _fire = fire;
+        _superKeys = superKeys;
         _start = start;
         _play = play;
         _draw = draw;
@@ -55,11 +58,18 @@ internal sealed class TitleScreen : IGameScreen
 
     public void Reset() => _play(Song.Title);
 
+    // $4568-$4590, $45A7-$45E1: six keys held together, on the keyboard and not the stick, are the cheat, which the game starts in.
     public void Update()
     {
+        if (_superKeys())
+        {
+            _start(true);
+            return;
+        }
+
         if ((_fire() & Fire) == 0)
         {
-            _start();
+            _start(false);
         }
     }
 

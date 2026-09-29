@@ -66,6 +66,42 @@ public sealed class LevelStoreTests
         Assert.All(level.Enemies, x => Assert.True(x.FaceLeft && x.MoveLeft));
     }
 
+    // $45F4-$4617: super mode moves every enemy's class a step: 0 to 1 and 6 to 5, and nothing else changes.
+    [Fact]
+    public void SuperModeMovesClassZeroToOneAndClassSixToFive()
+    {
+        LevelStore harder = s_levels.Super();
+
+        for (int number = 1; number <= LevelStore.Count; number++)
+        {
+            IList<EnemySpawn> before = s_levels.Level(number).Enemies;
+            IList<EnemySpawn> after = harder.Level(number).Enemies;
+
+            Assert.Equal(before.Count, after.Count);
+
+            for (int i = 0; i < before.Count; i++)
+            {
+                int expected = before[i].Type switch
+                {
+                    0 => 1,
+                    6 => 5,
+                    int other => other,
+                };
+
+                Assert.Equal(expected, after[i].Type);
+                Assert.Equal((before[i].X, before[i].Y, before[i].Delay), (after[i].X, after[i].Y, after[i].Delay));
+            }
+        }
+    }
+
+    [Fact]
+    public void SuperModeLeavesTheOriginalAlone()
+    {
+        _ = s_levels.Super();
+
+        Assert.All(s_levels.Level(1).Enemies, enemy => Assert.Equal(0, enemy.Type));
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(101)]

@@ -15,6 +15,8 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
   `SoftwareSound` and `SDLSound` play SID songs (`file.sid#N`).
 - **The 6502 runs the undocumented no-operations** (`$1A`, `$80`, `$04`, `$0C`, `$5C` and the rest that skip an operand), as
   Bubble Bobble's level-100 start needs.
+- **Bubble Bobble has its super mode**: S, U, P, O, R and Tab held together on the title screen start a harder game, as the C64's
+  cheat does ([LevelStore.Super](src/bb/libs/BubbleBobbleSharpLib/Levels/LevelStore.cs)).
 - **Bubble Bobble's bonus rooms work** (the special items of types 16, 17 and 18): every free place on the platforms grows an
   item, the players have thirty seconds to take them, and taking them all pays 100,000
   ([ItemRoom.cs](src/bb/libs/BubbleBobbleSharpLib/Levels/ItemRoom.cs)); proved against the real game for every level's placement

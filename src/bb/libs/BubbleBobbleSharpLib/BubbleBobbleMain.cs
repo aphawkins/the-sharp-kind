@@ -42,8 +42,10 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
 
     private static readonly byte[] s_hiddenItems = [0xFF, 0xFF];
 
+    private static readonly ConsoleKey[] s_superKeys =
+        [ConsoleKey.S, ConsoleKey.U, ConsoleKey.P, ConsoleKey.O, ConsoleKey.R, ConsoleKey.Tab];
+
     private readonly IAbstraction _abstraction;
-    private readonly LevelStore _levels;
     private readonly ZoneStore _zones;
     private readonly IView<PlayfieldModel> _playfieldView;
     private readonly IView<SidebarModel> _sidebarView;
@@ -62,6 +64,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
 
     private readonly byte[] _highScore = new byte[HudModel.ScoreBytes];
 
+    private LevelStore _levels;
     private PlayfieldModel _playfield;
     private SidebarModel _sidebar;
 
@@ -179,8 +182,16 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     }
 
     // $F005: a new game, from the first level. The title's tune stops when the game's theme starts.
-    internal void StartGame()
+    internal void StartGame() => StartGame(superMode: false);
+
+    // $45E3-$462A: the cheat makes every level's enemies harder, and the data stays so.
+    internal void StartGame(bool superMode)
     {
+        if (superMode)
+        {
+            _levels = _levels.Super();
+        }
+
         Loop = new GameLoop(new BbRandom(new RandomSource(_random)), PlayingPlayers);
         ShowLevel(FirstLevel);
         _screens.Set(BbScreen.Play);
@@ -232,7 +243,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     {
         ScreenManager<BbScreen, IGameScreen> screens = new(Keyboard);
 
-        screens.Add(BbScreen.Title, new TitleScreen(TitleFire, StartGame, PlaySong, titleView.Draw));
+        screens.Add(BbScreen.Title, new TitleScreen(TitleFire, SuperKeys, StartGame, PlaySong, titleView.Draw));
         screens.Add(BbScreen.Play, new PlayScreen(UpdateGame, layers.Draw));
         screens.Set(BbScreen.Title);
 
@@ -272,6 +283,9 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
             }
         }
     }
+
+    // $45A7-$45E1: S, U, P, O and R and the Commodore key, which is Tab here, all down at once.
+    private bool SuperKeys() => s_superKeys.All(Keyboard.IsPressed);
 
     // Fire on either joystick: a port reads with the bit clear.
     private byte TitleFire()
