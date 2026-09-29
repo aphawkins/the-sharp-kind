@@ -17,8 +17,6 @@ internal sealed class GameLoop
 
     private const byte FirstCounter = 0x01;
 
-    private const byte ReleasedState = 0x0A;
-
     private const byte OnePlayer = 0x01;
 
     private const byte BonusLevel = 0x63;
@@ -56,6 +54,7 @@ internal sealed class GameLoop
     private byte _counter;
     private int _extendAwards;
     private int _respawns;
+    private int _bonusRounds;
     private bool _wasOver;
 
     internal GameLoop(BbRandom random, int playing)
@@ -99,12 +98,13 @@ internal sealed class GameLoop
             Undying = OnePlayer,
         };
 
-        _respawn = new(Entities, PlayerTable, Items, Timer);
+        _respawn = new(Entities, PlayerTable, Items, Timer, Round);
         _join = new(Entities, PlayerTable, Scores);
         Clear = new(Timer, Entities, Objects, Items, random);
-        End = new(Timer, Entities, Objects, Pop, Items, random);
+        End = new(Timer, Entities, Objects, Pop, Items, random, Round);
+        Bonus = new(Entities, Round, End.SavedFlash);
         _extend = new(PlayerTable, End);
-        _world = new(Clear, Flow, Timer, Entities, Objects, food, Items);
+        _world = new(Clear, Flow, Timer, Entities, Objects, food, Items, Bonus);
         effects.World = _world.Apply;
 
         // $0956-$0977.
@@ -131,6 +131,10 @@ internal sealed class GameLoop
     internal FireStrips Fire { get; }
 
     internal Scores Scores { get; } = new();
+
+    internal BonusRound Bonus { get; }
+
+    internal RoundState Round { get; } = new();
 
     internal LevelItems Items { get; }
 
@@ -221,6 +225,7 @@ internal sealed class GameLoop
         Flow.Begin(level.Colours);
         Clear.Begin(_subflg);
         End.Begin();
+        Round.Begin();
         _counter = FirstCounter;
         _overPasses = 0;
         _wasOver = false;
@@ -272,7 +277,7 @@ internal sealed class GameLoop
         Pop.Update();
         _push.Update(map);
         _ai.Update(map);
-        _timers.Update(ReleasedState);
+        _timers.Update(Round.Release);
         Items.Collect(_subflg);
         _extend.Update();
         _respawn.Update(_subflg);
@@ -398,6 +403,12 @@ internal sealed class GameLoop
         {
             _extendAwards = _extend.Awards;
             _songs.Enqueue(Song.Extend);
+        }
+
+        if (_bonusRounds != Bonus.Rounds)
+        {
+            _bonusRounds = Bonus.Rounds;
+            _songs.Enqueue(Song.BonusRound);
         }
 
         if (_respawns != _respawn.Respawns)

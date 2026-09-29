@@ -649,11 +649,16 @@ Each item ends with how it is proved.
       - [x] 8, 11 (`$2DD7`, `$2ECC`): every object is reset (`$4A`), caught enemies are let out and every enemy killed
         (`$2E79`, `$2E61`); 8 also hides the level's two items. The row-by-row wipe, the scattering sprites and the flashes are
         not modelled. By hand.
+      - [x] 24 (`$34A0`, the bonus round proper): `BonusRound.Start` sends every loose enemy into state `$16`
+        (`EnemyTumble`, `$2785`: it drops through the platforms) and then `$17` (`$27CB`: it waits until a player is within
+        `$10`, and then goes as food, entry `$0A`), and the players into state `$18` (`PlayerFrame.InBonusRound`, `$28FA`:
+        flashing, and the state 1 turn run twice). `RoundState` carries `$5A7F` (the state a death or the level's end sees
+        a player in: `$10`, `$18` in the round) and `$5ABF` (the state a released enemy takes: `$0A`, `$16`), which a level's
+        start puts back. Proved against the game: `BonusRoundOracleTests` runs the effect and 900 turns of the slots.
       - [ ] **Not translated, so they do nothing** (`ItemEffects.Untranslated` is told, and the game goes on): 7 (`$A653`, which
         sets `$58FF` for `$1AB6`, a diagonal flight of the dragon in a bubble that kills what it passes), 16-18
-        (`$2F7D`-`$2F89`, a results screen with a bonus of 1 or 50 points by which player is ahead), 24 (`$34A0`, the bonus
-        round proper: enemies to state `$16`, players to `$18`), 29 (`$35B0`), 32 (`$3621`), 33 and 34 (`$7C37`, `$7C3C`, only
-        reached on level `$63`).
+        (`$2F7D`-`$2F89`, a results screen with a bonus of 1 or 50 points by which player is ahead), 29 (`$35B0`), 32
+        (`$3621`), 33 and 34 (`$7C37`, `$7C3C`, only reached on level `$63`).
 - [ ] **7. Super mode, bonus rounds and level 100** (`SUBFLG` `$63`, whose
       items and food throw today, and the ending at `$A5B7`).
 - [x] **8. Sound.** Music plays through the own SID stack

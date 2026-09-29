@@ -44,6 +44,7 @@ internal sealed class EnemyFrame
     private readonly DiagonalMover _diagonal;
     private readonly EnemyRunner _runner;
     private readonly FoodDrop _food;
+    private readonly EnemyTumble _tumble;
     private readonly LevelFlow _flow;
     private readonly WaterFlow _water;
 
@@ -77,6 +78,7 @@ internal sealed class EnemyFrame
         _food = food;
         _flow = flow;
         _water = water;
+        _tumble = new(entities, food);
     }
 
     internal void Enter()
@@ -239,6 +241,12 @@ internal sealed class EnemyFrame
                 break;
             case FoodDrop.FoodState:
                 _food.Wait(slot);
+                break;
+            case EnemyTumble.TumbleState:
+                _tumble.Step(slot, cell, map);
+                break;
+            case EnemyTumble.WaitingState:
+                _tumble.Touch(slot);
                 break;
         }
     }

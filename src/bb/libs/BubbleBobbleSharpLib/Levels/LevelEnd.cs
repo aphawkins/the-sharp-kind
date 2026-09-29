@@ -38,6 +38,7 @@ internal sealed class LevelEnd
     private readonly BubblePop _pop;
     private readonly LevelItems _items;
     private readonly BbRandom _random;
+    private readonly RoundState _round;
 
     internal LevelEnd(
         LevelTimer timer,
@@ -45,7 +46,8 @@ internal sealed class LevelEnd
         ObjectTable objects,
         BubblePop pop,
         LevelItems items,
-        BbRandom random)
+        BbRandom random,
+        RoundState? round = null)
     {
         ArgumentNullException.ThrowIfNull(timer);
         ArgumentNullException.ThrowIfNull(entities);
@@ -60,6 +62,7 @@ internal sealed class LevelEnd
         _pop = pop;
         _items = items;
         _random = random;
+        _round = round ?? new();
     }
 
     internal static ReadOnlySpan<byte> SpawnColour => s_spawnColour;
@@ -210,7 +213,7 @@ internal sealed class LevelEnd
                 continue;
             }
 
-            if (state != PlayerRespawn.RespawningState)
+            if (state != _round.Respawn)
             {
                 return;
             }

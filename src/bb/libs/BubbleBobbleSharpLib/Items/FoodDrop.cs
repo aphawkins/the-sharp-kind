@@ -170,6 +170,14 @@ internal sealed class FoodDrop
 
     internal void Fall(int slot, in PlayerCell cell, SolidMap map)
     {
+        Drop(slot, cell, map);
+        Animate(slot);
+    }
+
+    // $273D-$277E: two pixels down, and a landing on the row a platform lines up with. The bonus round's tumble ($272F)
+    // calls this without the animation.
+    internal void Drop(int slot, in PlayerCell cell, SolidMap map)
+    {
         ArgumentNullException.ThrowIfNull(map);
 
         byte y = unchecked((byte)(_entities.Y[slot] + FallStep));
@@ -188,8 +196,6 @@ internal sealed class FoodDrop
         {
             _entities.State[slot] = LandedState;
         }
-
-        Animate(slot);
     }
 
     internal void Land(int slot)

@@ -90,6 +90,9 @@ internal sealed class PlayerFrame
             case WaterFlow.CarriedState:
                 Carried(player, port, map);
                 return;
+            case BonusRound.PlayerState:
+                InBonusRound(player, port, map);
+                return;
             default:
                 throw new NotSupportedException(
                     $"slot {player}'s state ${_entities.State[player]:X2} at $1E6C is not translated");
@@ -194,6 +197,17 @@ internal sealed class PlayerFrame
 
         _entities.Colour[player] ^= RespawnFlash;
         Playing(player, port, PlayerCell.Of(_entities.X[player], _entities.Y[player]), map);
+    }
+
+    // $28FA-$290C: a bonus round's player flashes and plays as state 1, twice a frame: the handler, then `$1E6C` again.
+    private void InBonusRound(int player, byte port, SolidMap map)
+    {
+        _entities.Colour[player] ^= RespawnFlash;
+        Playing(player, port, PlayerCell.Of(_entities.X[player], _entities.Y[player]), map);
+
+        _entities.State[player] = PlayingState;
+        Step(player, port, map);
+        _entities.State[player] = BonusRound.PlayerState;
     }
 
     private void Idle(int player, byte port, SolidMap map)

@@ -23,8 +23,14 @@ internal sealed class PlayerRespawn
     private readonly PlayerTable _players;
     private readonly LevelItems _items;
     private readonly LevelTimer _timer;
+    private readonly RoundState _round;
 
-    internal PlayerRespawn(EntityTable entities, PlayerTable players, LevelItems items, LevelTimer timer)
+    internal PlayerRespawn(
+        EntityTable entities,
+        PlayerTable players,
+        LevelItems items,
+        LevelTimer timer,
+        RoundState? round = null)
     {
         ArgumentNullException.ThrowIfNull(entities);
         ArgumentNullException.ThrowIfNull(players);
@@ -35,6 +41,7 @@ internal sealed class PlayerRespawn
         _players = players;
         _items = items;
         _timer = timer;
+        _round = round ?? new();
     }
 
     internal static ReadOnlySpan<byte> SpawnX => [0x2C, 0xEC];
@@ -77,8 +84,8 @@ internal sealed class PlayerRespawn
             _entities.X[player] = SpawnX[player];
             _entities.TurnInterval[player] = RespawnPasses;
 
-            // $04EB: in a bonus round ($5A7F) the player goes to state 0 instead; bonus rounds are step 7.
-            _entities.State[player] = RespawningState;
+            // $04EB: the state is $5A7F, which a bonus round makes $18.
+            _entities.State[player] = _round.Respawn;
             Respawns++;
         }
 

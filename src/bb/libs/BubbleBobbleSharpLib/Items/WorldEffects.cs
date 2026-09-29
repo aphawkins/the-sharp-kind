@@ -9,7 +9,7 @@ using BubbleBobbleSharpLib.Players;
 namespace BubbleBobbleSharpLib.Items;
 
 // The special items whose effects act on the level rather than on the player who took them: the `$2D65` handlers that
-// schedule a bonus round (`$348A`-`$350C`), freeze the level (`$2F68`), skip levels (`$7FA4`, `$7FA7`) and clear it of
+// schedule a bonus round (`$348A`-`$350C`), start one (`$34A0`), freeze the level (`$2F68`), skip levels (`$7FA4`, `$7FA7`) and clear it of
 // enemies (`$2DD7`, `$2ECC`). What they draw (the wipe, the flashes, the scattering sprites) and how long they hold the game
 // for (the IRQ runs on through it) is not modelled.
 internal sealed class WorldEffects
@@ -41,6 +41,7 @@ internal sealed class WorldEffects
     private readonly ObjectTable _objects;
     private readonly FoodDrop _food;
     private readonly LevelItems _items;
+    private readonly BonusRound? _bonus;
 
     internal WorldEffects(
         LevelClear clear,
@@ -49,7 +50,8 @@ internal sealed class WorldEffects
         EntityTable entities,
         ObjectTable objects,
         FoodDrop food,
-        LevelItems items)
+        LevelItems items,
+        BonusRound? bonus = null)
     {
         ArgumentNullException.ThrowIfNull(clear);
         ArgumentNullException.ThrowIfNull(flow);
@@ -66,6 +68,7 @@ internal sealed class WorldEffects
         _objects = objects;
         _food = food;
         _items = items;
+        _bonus = bonus;
     }
 
     // `$10`, SUBFLG: the level the game is on, from 0.
@@ -79,7 +82,7 @@ internal sealed class WorldEffects
 
     // Whether the item's effect is one of these.
     internal static bool Handles(int type)
-        => type is 1 or 2 or 8 or 11 or 15 or 19 or 20 or 21 or 22 or 23 or 25 or 26 or 27 or 28 or 30 or 31;
+        => type is 1 or 2 or 8 or 11 or 15 or 19 or 20 or 21 or 22 or 23 or 24 or 25 or 26 or 27 or 28 or 30 or 31;
 
     // `player` is the one who took the item, which none of these use.
     internal void Apply(int type, int player)
@@ -111,6 +114,9 @@ internal sealed class WorldEffects
                 break;
             case 15:
                 Freeze();
+                break;
+            case 24:
+                _bonus?.Start();
                 break;
             case 20:
                 Skip(SkipThree);

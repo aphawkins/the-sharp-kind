@@ -1084,6 +1084,28 @@ state, so `EnemyFrame` dispatches to it.
   a byte above. `$2A0B` clears the slot.
 - Not here: the pop (`$3D2D`, `$3D77`), and `$29FF`'s store to `$B0`.
 
+### BonusRound
+
+The special item of type 24 (`$34A0`-`$34F9`). `tools/bb/dis6502.py` reads the routines from the game's bytes; the
+comments of rebb64's sources on these states are wrong in places.
+
+- `Start`: each enemy slot (2 to 7) in a state from 1 to `$0A` keeps that state in `RiseCounter` (`$87A0`; a rising `$0A`
+  already holds the one it returns to), goes to state `$16`, `HoldTimer` 0 (`$863A`) and `Mode` `$FF` (`$85C2`). `$8728` and
+  `$8729` (a player's flash) are saved in `$A813` and `$A814`, and a player in the game that is not dying (`$0E`) or dead
+  (`$0F`) goes to `$18` with no flash. `$5A7F` becomes `$18`, `$5ABF` `$16`, and song `$19` (`Song.BonusRound`) starts.
+  `$0656`-`$0664`, at each level's start, puts `$5A7F` and `$5ABF` back to `$10` and `$0A`.
+- `$5A7F` is the state `$04EB` stores for a player after a death, and the one `$1604` takes for a player waiting at the
+  level's end (which goes on to state 1 and gets its `$A813` flash back); `$5ABF` is the state `$1442` (`EntityTimers`)
+  lets a released enemy out in.
+- State `$16` (`$2785`, `EnemyTumble.Step`): colour `$0E`. `$29`-`$2B` blocked (inside a platform), or neither of `$51`, `$52`
+  blocked, goes on down (`$27B2`: X even, Y odd, then `$273D`'s two pixels, `FoodDrop.Drop`); `$51` or `$52` blocked is a
+  landing, state `$17`. `$273D`'s own landing (state `$11`) becomes `$17` too. Neither state animates.
+- State `$17` (`$27CB`, `EnemyTumble.Touch`), and the end of `$16`'s turn: the higher player in the game (state not 0) within
+  `$10` in X and Y takes it: the state in `RiseCounter` comes back, `FoodDrop.Kill` (`$1A6F`) runs and `AttackTimer` is `$0A`
+  (food entry 10, which reads the byte after the food table: `$22`).
+- State `$18` (`$28FA`, `PlayerFrame.InBonusRound`): the colour EOR 5 (`$2916`), the state 1 turn (`$2162`), then state 1 is
+  stored and `$1E6C` runs the state 1 turn once more, and `$18` is stored back. A player is twice as fast.
+
 ### ItemEffects
 
 `$2D65` and `$2D88` (`special-item-effects.s`): the special item's effect.

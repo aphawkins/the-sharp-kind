@@ -82,6 +82,25 @@ internal static class RamImage
         entities.EnemyCount = ram[EnemyCount];
     }
 
+    // The blow, the rings and the lives, as the game holds them: `$A824` (the time to the next blow), `$ACCB` (which way a
+    // blow faces), `$A77B` to `$A784` (what a blow makes, and the thunder shots left) and `$61` to `$66` (the rings).
+    internal static void Load(ReadOnlySpan<byte> ram, PlayerTable players)
+    {
+        for (int player = 0; player < PlayerTable.Capacity; player++)
+        {
+            players.Reload[player] = ram[0xA824 + player];
+            players.BlowFacing[player] = ram[0xACCB + player];
+            players.BlowReload[player] = ram[0xA77B + player];
+            players.BlowState[player] = ram[0xA77D + player];
+            players.BlowVariant[player] = ram[0xA77F + player];
+            players.BlowType[player] = ram[0xA781 + player];
+            players.Shots[player] = ram[0xA783 + player];
+            players.DriftRing[player] = ram[0x61 + player];
+            players.WalkRing[player] = ram[0x63 + player];
+            players.BlowRing[player] = ram[0x65 + player];
+        }
+    }
+
     // Every object byte, slot by slot, for comparing.
     internal static string Objects(ObjectTable objects)
     {
