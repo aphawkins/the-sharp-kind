@@ -12,6 +12,7 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\SharpKind.Assets\SharpKind.Assets.csproj" />
+	  <ProjectReference Include="..\SharpKind.Emulation\SharpKind.Emulation.csproj" />
 	  <ProjectReference Include="..\SharpKind\SharpKind.csproj" />
 	</ItemGroup>
 

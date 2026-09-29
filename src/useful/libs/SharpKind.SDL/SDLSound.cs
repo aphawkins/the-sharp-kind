@@ -32,6 +32,8 @@ public sealed unsafe class SDLSound : ISound, IDisposable
     private const int MaxDecodeSeconds = 300;
 
     private readonly Dictionary<string, nint> _music;
+    private readonly Dictionary<string, string> _sidPaths;
+    private readonly SidOutput? _sid;
     private readonly Dictionary<string, nint> _sfx;
     private readonly nint[] _oneShotTracks;
     private readonly nint _loopTrack;
@@ -51,9 +53,14 @@ public sealed unsafe class SDLSound : ISound, IDisposable
 
         string? soundFontPath = assetLocator.SoundFontPaths.Count > 0 ? assetLocator.SoundFontPaths.Values.First() : null;
 
-        _music = assetLocator.MusicPaths.ToDictionary(
-            x => x.Key,
-            x => LoadMusicAudio(x.Value, soundFontPath));
+        _sidPaths = assetLocator.MusicPaths.Where(x => MusicPath.IsSid(x.Value)).ToDictionary(x => x.Key, x => x.Value);
+
+        // SID songs are played by SharpKind.Emulation on a device of their own, not loaded into the mixer.
+        _sid = _sidPaths.Count > 0 ? new SidOutput() : null;
+
+        _music = assetLocator.MusicPaths
+            .Where(x => !_sidPaths.ContainsKey(x.Key))
+            .ToDictionary(x => x.Key, x => LoadMusicAudio(x.Value, soundFontPath));
 
         _sfx = assetLocator.SfxPaths.ToDictionary(
             x => x.Key,
@@ -85,6 +92,15 @@ public sealed unsafe class SDLSound : ISound, IDisposable
 
     public void Play(string musicType, bool repeat)
     {
+        if (_sidPaths.TryGetValue(musicType, out string? sidPath))
+        {
+            SDLGuard.Execute(() => MIX_StopTrack((MIX_Track*)_musicTrack, 0));
+            _sid!.Play(sidPath, repeat);
+            return;
+        }
+
+        _sid?.Stop();
+
         MIX_Track* track = (MIX_Track*)_musicTrack;
         SDLGuard.Execute(() => MIX_SetTrackAudio(track, (MIX_Audio*)_music[musicType]));
         SDLGuard.Execute(() => MIX_PlayTrack(track, 0));
@@ -113,7 +129,11 @@ public sealed unsafe class SDLSound : ISound, IDisposable
         SDLGuard.Execute(() => MIX_PlayTrack(track, 0));
     }
 
-    public void StopMusic() => SDLGuard.Execute(() => MIX_StopTrack((MIX_Track*)_musicTrack, 0));
+    public void StopMusic()
+    {
+        _sid?.Stop();
+        SDLGuard.Execute(() => MIX_StopTrack((MIX_Track*)_musicTrack, 0));
+    }
 
     public void PlayLoop(string sfxType, double pitch)
     {
@@ -206,7 +226,7 @@ public sealed unsafe class SDLSound : ISound, IDisposable
 
             if (disposing)
             {
-                // dispose managed state (managed objects)
+                _sid?.Dispose();
             }
 
             // free unmanaged resources (unmanaged objects) and override finalizer

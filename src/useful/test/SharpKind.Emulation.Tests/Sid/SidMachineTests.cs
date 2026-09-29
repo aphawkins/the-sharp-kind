@@ -103,6 +103,23 @@ public class SidMachineTests
     }
 
     [Fact]
+    public void StartingASongPutsTheVolumeBackWhateverTheLastLeft()
+    {
+        // Arrange
+        SidMachine machine = new();
+        machine.Chip.Write(0x18, 0x00);
+        PsidFile psid = PsidFile.Read(BuildPsid(songs: 1, start: 1, speed: 0, load: Load, play: Play));
+
+        // Act
+        machine.StartMusic(psid, 1);
+        float[] buffer = new float[2 * SidChip.SampleRate / 10];
+        machine.Render(buffer);
+
+        // Assert
+        Assert.Contains(buffer, sample => Math.Abs(sample) > 0.01f);
+    }
+
+    [Fact]
     public void StopMusicSilencesTheChipAndStopsThePlayRoutine()
     {
         // Arrange

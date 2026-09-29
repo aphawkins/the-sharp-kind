@@ -329,9 +329,11 @@ public sealed class SoftwareSound : ISound, IDisposable
     }
 
     private IMusicStream CreateMusicStream(string path, bool repeat)
-        => IsMidi(path)
-            ? new MidiMusicStream(new MidiFile(path), new Synthesizer(GetSoundFont(), SampleRate), repeat)
-            : new OggMusicStream(path, repeat);
+        => MusicPath.IsSid(path)
+            ? new SidStream(path, repeat)
+            : IsMidi(path)
+                ? new MidiMusicStream(new MidiFile(path), new Synthesizer(GetSoundFont(), SampleRate), repeat)
+                : new OggMusicStream(path, repeat);
 
     private void StopMusicLocked()
     {
@@ -430,6 +432,19 @@ public sealed class SoftwareSound : ISound, IDisposable
         public float RightGain { get; set; }
 
         public bool Active { get; set; }
+    }
+
+    // A C64 SID tune, played by SharpKind.Emulation.
+    private sealed class SidStream(string path, bool repeat) : IMusicStream
+    {
+        private readonly SidSongPlayer _player = new(path, repeat);
+
+        public void Render(Span<float> buffer) => _player.Render(buffer);
+
+        // A SID song holds no unmanaged resources.
+        public void Dispose()
+        {
+        }
     }
 
     // MeltySynth's own sequencer handles looping (via the loop flag) and goes silent once a non-looping track's tails are exhausted.

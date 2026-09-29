@@ -59,6 +59,9 @@ public sealed class SidMachine
             Chip.Write(register, 0);
         }
 
+        // A tune's own init may not set the volume, and the one a song before it left could be off.
+        Chip.Write(VolumeRegister, FullVolume);
+
         Bus.Clear();
         Bus.Load(tune.LoadAddress, tune.Data.Span);
         Cpu.Call(tune.InitAddress, (byte)(song - 1), InitCycles);
