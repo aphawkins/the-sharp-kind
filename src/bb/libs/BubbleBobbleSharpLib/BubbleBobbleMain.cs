@@ -176,6 +176,9 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     public void Draw()
     {
         Graphics.Clear();
+
+        // The last frame's final layer left its clip set, and the banner sits outside every layer.
+        Graphics.SetClipRegion(Vector2.Zero, Layout.ScreenWidth, Layout.ScreenHeight);
         _bannerView.Draw(new BannerModel(_bannerHeight));
         _screens.Current.Draw();
         Graphics.ScreenUpdate();
