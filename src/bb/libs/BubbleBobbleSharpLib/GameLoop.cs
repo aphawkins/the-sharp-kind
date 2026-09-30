@@ -533,16 +533,14 @@ internal sealed class GameLoop
 
     private Song LevelSong() => _subflg == BonusLevel ? Song.FinalTheme : Song.Resume;
 
-    // The tunes that go with the clock running out ($15E8, $3517) and with EXTEND ($32C1).
+    // The tune that goes with the clock running out ($15E8). Clearing the level does not change the music: the level
+    // complete tune (song 6) is asked for only as the screen scrolls to the next level ($168A, $3BA2), and the next level's
+    // own tune follows at once, so it is not played.
     private void NoteSongs(byte hurry)
     {
         if (hurry == 0 && Timer.Hurry == 1)
         {
             _songs.Enqueue(Song.HurryUp);
-        }
-        else if ((sbyte)hurry >= 0 && (sbyte)Timer.Hurry < 0)
-        {
-            _songs.Enqueue(Song.LevelComplete);
         }
     }
 
