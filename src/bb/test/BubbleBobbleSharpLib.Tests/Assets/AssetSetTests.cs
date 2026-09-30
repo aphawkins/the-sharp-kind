@@ -92,7 +92,7 @@ public sealed class AssetSetTests
         Assert.Equal(8, font.CellWidth);
         Assert.Equal(8, font.CellHeight);
         Assert.Equal(16, font.Columns);
-        Assert.Equal(4, font.Rows);
+        Assert.Equal(8, font.Rows);
         Assert.False(font.IsProportional);
     }
 

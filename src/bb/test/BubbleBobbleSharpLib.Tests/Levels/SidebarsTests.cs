@@ -1,4 +1,4 @@
-// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
+﻿// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
 // 'rebb64' - github.com/zaidka/rebb64.
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
@@ -64,5 +64,18 @@ public sealed class SidebarsTests
     {
         Assert.Equal(0, Sidebars.Select(s_levels.Level(1)).HeaderTile);
         Assert.Equal(99, Sidebars.Select(s_levels.Level(100)).HeaderTile);
+    }
+
+    // $38A5: the level number is split into tens and ones; level 100 is drawn as two brackets ($38E3).
+    [Theory]
+    [InlineData(1, " 1")]
+    [InlineData(42, "42")]
+    [InlineData(99, "99")]
+    [InlineData(100, "[]")]
+    public void SplitsTheLevelNumberIntoGlyphs(int number, string text)
+    {
+        SidebarModel model = Sidebars.Select(s_levels.Level(number));
+
+        Assert.Equal(text, model.NumberText);
     }
 }

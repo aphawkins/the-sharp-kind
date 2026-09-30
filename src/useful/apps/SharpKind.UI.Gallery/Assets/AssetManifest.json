@@ -11,13 +11,13 @@
         "File": "bbc-micro.bmp",
         "CellWidth": 8,
         "CellHeight": 8,
-        "Columns": 12
+        "Columns": 16
       },
       "Large": {
         "File": "bbc-micro.bmp",
         "CellWidth": 8,
         "CellHeight": 8,
-        "Columns": 12
+        "Columns": 16
       }
     },
     "TrueType": {

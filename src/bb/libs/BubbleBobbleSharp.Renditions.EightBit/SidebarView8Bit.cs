@@ -4,6 +4,7 @@
 
 using System.Numerics;
 using BubbleBobbleSharp.Abstractions.Views;
+using SharpKind;
 using SharpKind.Graphics;
 
 namespace BubbleBobbleSharp.Renditions.EightBit;
@@ -19,6 +20,11 @@ internal sealed class SidebarView8Bit : IView<SidebarModel>
 
     private const int TileSheetColumns = 10;
 
+    private const string NumberFont = "LevelNumber";
+    private const int NumberRows = 6;
+    private const string BlackColour = "0";
+    private const string WhiteColour = "1";
+
     private const string SidebarSheet = "Sidebars";
     private const string TileSheet = "LevelTiles";
 
@@ -26,6 +32,8 @@ internal sealed class SidebarView8Bit : IView<SidebarModel>
     private readonly BbViewLayout _layout;
     private readonly MulticolourSheet _sidebars;
     private readonly MulticolourSheet _tiles;
+    private readonly FastColor _black;
+    private readonly FastColor _white;
 
     internal SidebarView8Bit(IViewSurface surface)
     {
@@ -35,6 +43,8 @@ internal sealed class SidebarView8Bit : IView<SidebarModel>
         _layout = surface.Layout;
         _sidebars = new(surface, SidebarSheet);
         _tiles = new(surface, TileSheet);
+        _black = surface.Palette[BlackColour];
+        _white = surface.Palette[WhiteColour];
     }
 
     public void Draw(SidebarModel model)
@@ -51,6 +61,27 @@ internal sealed class SidebarView8Bit : IView<SidebarModel>
             DrawBlock(model, 0, row, rows);
             DrawBlock(model, _layout.PlayfieldColumns - BlockColumns, row, rows);
         }
+
+        DrawNumber(model);
+    }
+
+    // $38E9: the level number's two characters ($1A, $1B) replace the top-left corner of the level.
+    private void DrawNumber(SidebarModel model)
+    {
+        if (model.NumberText.Length == 0)
+        {
+            return;
+        }
+
+        // The font's background is transparent, so its rows are blacked out first: the five of the glyph and the blank
+        // one under it ($386E-$3874 clear six). The rest of the cell keeps the wall: the reference fills those two rows
+        // from the level's own data ($387A-$388F).
+        _graphics.DrawRectangleFilled(
+            _layout.Playfield.Cell(0, 0),
+            BlockColumns * _layout.CellWidth,
+            NumberRows * _layout.CellHeight / CharacterHeight,
+            _black);
+        _graphics.DrawTextLeft(_layout.Playfield.Cell(0, 0), model.NumberText, NumberFont, _white);
     }
 
     private void DrawBlock(SidebarModel model, int column, int row, int rows)

@@ -702,7 +702,7 @@ Each item ends with how it is proved.
       and the ending (12).
 - [x] **9. Front end.** `ScreenManager<BbScreen, IGameScreen>` with a
       `TitleScreen` (rebb64's `$4556`: the logo of charset characters `$60`-`$8B`,
-      exported as the `Logo` font, and the credits; fire on either joystick starts
+      now the banner image, and the credits; fire on either joystick starts
       a new game; the title tune plays) and a `PlayScreen`. Both players out for
       `$96` frames returns to the title. The `N` key is gone. The high score
       follows `$E3F5`. `IBbRendition.CreateTitleView` draws it. Only the 8-bit

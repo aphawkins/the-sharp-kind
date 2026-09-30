@@ -7,6 +7,17 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Added (Bubble Bobble's level number, and fonts laid out by character code, 2026-09-30)
+
+- **Bubble Bobble draws the level number** in the top-left corner of the level, as `$38E9` does: two 4x6 glyphs from the game's digit
+  font (`level-number.tga`, drawn twice as wide by the new `WidthScale`), a zero tens digit left blank, level 100 as `[]`. Six rows
+  are blacked out under it; the rest of the two cells is still the wall, where the game fills it from the level's own data.
+- **Every bitmap font sheet is laid out by character code**: sixteen columns from code 0, so a cell is `(c & 0xF, c >> 4)` and
+  `A` (0x41) is column 1, row 4. Elite's `bbc-micro.bmp` was reflowed from twelve columns, the 16-bit `font1`/`font2` sheets and
+  Bubble Bobble's charset were padded with two blank rows. `BitmapFontEntry.WidthScale` stretches a grid font's glyphs for art
+  authored at half width.
+- **Removed Bubble Bobble's title logo font**, which only drew when there was no banner.
+
 ### Added (Bubble Bobble's giant bubble, 2026-09-29)
 
 - **The special item of type 7 sweeps the level with a giant bubble** ([GiantBubble.cs](src/bb/libs/BubbleBobbleSharpLib/Levels/GiantBubble.cs)):

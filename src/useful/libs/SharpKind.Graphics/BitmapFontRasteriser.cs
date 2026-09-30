@@ -26,7 +26,7 @@ public sealed class BitmapFontRasteriser : IFontRasteriser
         BitmapFont font = _fonts[fontType];
 
         // Sized for the worst case (every glyph as wide as its cell), then cut down once actual widths are known for proportional sheets.
-        using FastBitmap temp = new(text.Length * font.CellWidth, font.CellHeight);
+        using FastBitmap temp = new(text.Length * font.DrawnCellWidth, font.CellHeight);
         int totalWidth = 0;
 
         foreach (char letter in text)
@@ -56,7 +56,7 @@ public sealed class BitmapFontRasteriser : IFontRasteriser
         {
             width += !font.Has(letter) ? MissingWidth(font)
                 : font.IsProportional ? ProportionalGlyphWidth(font, letter)
-                : font.CellWidth;
+                : font.DrawnCellWidth;
         }
 
         return new(width, font.CellHeight);
@@ -64,7 +64,7 @@ public sealed class BitmapFontRasteriser : IFontRasteriser
 
     // A character with no cell leaves a space-width gap rather than a substitute glyph (unlike the .fon rasteriser), keeping the line readable.
     private static int MissingWidth(BitmapFont font)
-        => font.IsProportional ? ProportionalGlyphWidth(font, ' ') : font.CellWidth;
+        => font.IsProportional ? ProportionalGlyphWidth(font, ' ') : font.DrawnCellWidth;
 
     // Ink takes the requested colour, background becomes transparent, everything else copies through - letting a glyph carry more than one colour.
     private static FastColor Recolour(BitmapFont font, int x, int y, in FastColor color)
@@ -86,11 +86,16 @@ public sealed class BitmapFontRasteriser : IFontRasteriser
         {
             for (int x = 0; x < font.CellWidth; x++)
             {
-                temp.SetPixel(left + x, y, Recolour(font, originX + x, originY + y, color));
+                FastColor pixel = Recolour(font, originX + x, originY + y, color);
+
+                for (int stretch = 0; stretch < font.WidthScale; stretch++)
+                {
+                    temp.SetPixel(left + (x * font.WidthScale) + stretch, y, pixel);
+                }
             }
         }
 
-        return font.CellWidth;
+        return font.DrawnCellWidth;
     }
 
     // Width half of AppendProportionalGlyph; Recolour leaves magenta alone so markers stay put regardless of text colour.

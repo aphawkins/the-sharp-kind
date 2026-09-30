@@ -14,6 +14,7 @@ public sealed class BitmapFontAsset
         CellWidth = entry.CellWidth;
         CellHeight = entry.CellHeight;
         Columns = entry.Columns;
+        WidthScale = Math.Max(1, entry.WidthScale);
         IsProportional = entry.IsProportional;
     }
 
@@ -24,6 +25,8 @@ public sealed class BitmapFontAsset
     public int CellHeight { get; }
 
     public int Columns { get; }
+
+    public int WidthScale { get; }
 
     public bool IsProportional { get; }
 }

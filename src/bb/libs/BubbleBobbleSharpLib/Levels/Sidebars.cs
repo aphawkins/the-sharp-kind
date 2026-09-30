@@ -19,6 +19,7 @@ internal static class Sidebars
         return new(
             level.Sidebar >= NoDesignFrom ? SidebarModel.NoDesign : level.Sidebar,
             headerTile,
-            level.Colours);
+            level.Colours,
+            level.Number);
     }
 }

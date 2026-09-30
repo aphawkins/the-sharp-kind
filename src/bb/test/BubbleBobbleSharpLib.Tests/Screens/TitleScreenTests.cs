@@ -2,7 +2,6 @@
 // 'rebb64' - github.com/zaidka/rebb64.
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
-using BubbleBobbleSharp.Abstractions.Views;
 using BubbleBobbleSharp.Renditions.EightBit;
 using BubbleBobbleSharpLib.Fakes;
 using BubbleBobbleSharpLib.Levels;
@@ -28,25 +27,6 @@ public sealed class TitleScreenTests
 
     private static readonly LevelStore s_levels = LevelStore.Read(Path.Combine(s_assets, "levels.json"));
     private static readonly ZoneStore s_zones = ZoneStore.Read(Path.Combine(s_assets, "zones.json"));
-
-    [Fact]
-    public void TheLogoIsFourRowsOfFortyCharacters()
-    {
-        Assert.Equal(4, TitleScreen.Model.LogoRows.Count);
-        Assert.All(TitleScreen.Model.LogoRows, row => Assert.Equal(40, row.Length));
-    }
-
-    // $80 to $AB are the glyphs, less $20 for the screen code; $40 is a blank.
-    [Fact]
-    public void ALogoCharacterNamesItsGlyphAndABlankHasNone()
-    {
-        string first = TitleScreen.Model.LogoRows[0];
-
-        Assert.Equal(' ', first[0]);
-        Assert.Equal((char)(' ' + 1), first[1]);
-        Assert.Equal(TitleModel.LogoBlank, first[3]);
-        Assert.Equal((char)(' ' + 0x22), TitleScreen.Model.LogoRows[3][17]);
-    }
 
     [Fact]
     public void OpensOnTheTitleAndFireStartsTheGame()

@@ -8,10 +8,9 @@ using SharpKind;
 
 namespace BubbleBobbleSharp.Renditions.EightBit;
 
-/// <summary>Draws the title screen: a logo of charset characters, and text.</summary>
+/// <summary>Draws the title screen: its text.</summary>
 internal sealed class TitleView8Bit : IView<TitleModel>
 {
-    private const string LogoFont = "Logo";
     private const string TextFont = "Small";
 
     private readonly IViewSurface _surface;
@@ -26,28 +25,6 @@ internal sealed class TitleView8Bit : IView<TitleModel>
     public void Draw(TitleModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
-
-        FastColor logo = Colour(model.LogoColour);
-
-        // The banner says the name already, so the logo is only for a screen that has none.
-        int logoRows = _surface.Layout.BannerHeight > 0 ? 0 : model.LogoRows.Count;
-
-        for (int row = 0; row < logoRows; row++)
-        {
-            string cells = model.LogoRows[row];
-
-            for (int column = 0; column < cells.Length; column++)
-            {
-                if (cells[column] != TitleModel.LogoBlank)
-                {
-                    _surface.Graphics.DrawTextLeft(
-                        _surface.Layout.Screen.Cell(column, row),
-                        cells[column].ToString(),
-                        LogoFont,
-                        logo);
-                }
-            }
-        }
 
         foreach (TitleText line in model.Lines)
         {

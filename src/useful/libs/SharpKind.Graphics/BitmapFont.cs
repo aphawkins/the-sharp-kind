@@ -26,6 +26,7 @@ public sealed class BitmapFont
         CellWidth = asset.CellWidth;
         CellHeight = asset.CellHeight;
         Columns = asset.Columns;
+        WidthScale = asset.WidthScale;
         IsProportional = asset.IsProportional;
         Rows = image.Height / asset.CellHeight;
     }
@@ -37,6 +38,12 @@ public sealed class BitmapFont
     public int CellHeight { get; }
 
     public int Columns { get; }
+
+    // Grid glyphs are drawn this many times wider than their cell; proportional sheets are never stretched.
+    public int WidthScale { get; }
+
+    // The width a grid glyph is drawn at.
+    public int DrawnCellWidth => CellWidth * WidthScale;
 
     public int Rows { get; }
 
@@ -51,14 +58,14 @@ public sealed class BitmapFont
     // A sheet only carries cells its image has room for; anything outside that range has no glyph and would read outside the image.
     public bool Has(char letter)
     {
-        int index = letter - ' ';
+        int index = letter;
         return index >= 0 && index < Columns * Rows;
     }
 
-    // Glyphs run from space (ASCII 32) left to right, top to bottom; Columns fixed at 16 matches the classic (c >> 4) - 2 / c & 0xF layout.
+    // Glyphs are laid out by character code, left to right, top to bottom: at sixteen columns a cell is (c & 0xF, c >> 4).
     public (int X, int Y) CellOrigin(char letter)
     {
-        int index = letter - ' ';
+        int index = letter;
         int column = index % Columns;
         int row = index / Columns;
         return (column * CellWidth, row * CellHeight);

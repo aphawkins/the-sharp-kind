@@ -55,6 +55,11 @@ a manifest section and a setting value read the same:
 }
 ```
 
+A bitmap font sheet is laid out by character code, left to right, top to
+bottom from code 0, at sixteen columns: a character's cell is read off its hex
+code, column `code & 0xF` and row `code >> 4` (`A`, 0x41, is column 1, row 4). `WidthScale` draws a grid font's
+glyphs that many times wider than the sheet, for art authored at half width.
+
 A kind a set declares nothing for is simply absent, and the engine draws with
 that set's own sheets instead. A section the build does not recognise is
 refused outright rather than read as declaring nothing, so a misspelling says
