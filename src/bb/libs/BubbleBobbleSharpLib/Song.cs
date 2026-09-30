@@ -4,8 +4,9 @@
 
 namespace BubbleBobbleSharpLib;
 
-// The songs of bubble-bobble.sid, in the order of its PSID songs ($EE50's A register, less one), which is the order of
-// the `song_table` of the reference's sid-wrapper.s. The enum's name is the key of the song in the asset manifest.
+// The songs the game asks for, numbered as the `song_table` of the reference's sid-wrapper.s numbers them. The enum's name is
+// the key of the song in the asset manifest, which is where the HVSC bubble-bobble.sid differs: its song 7 is the EXTEND
+// fanfare and its song 8 the title tune, the other way round.
 internal enum Song
 {
     Theme = 1,

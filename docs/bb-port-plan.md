@@ -689,6 +689,14 @@ Each item ends with how it is proved.
       (`$15E8`), level complete (`$3517`), EXTEND (`$32C1`) and game over
       (`$0A9E`). `BubbleBobbleMain` plays them when music is on. Verified by
       `GameSongTests`, with a manifest test.
+      The HVSC `bubble-bobble.sid` numbers its songs as the reference's
+      `song_table` does except 7 and 8, which it has the other way round: its
+      song 7 is the EXTEND fanfare (6.8 seconds) and its song 8 the title
+      tune (about 87 seconds). The manifest has `Title` at `#8` and `Extend`
+      at `#7` for that; the title tune had been cut short at the fanfare.
+      Open: the other ten were checked by ear only, and the level-complete
+      tune (`#6`) runs 37 seconds, which sounds long for a fanfare.
+      `EverySongIsInTheManifest` expects the swap. Not heard in the running game.
       The round start (10) plays when the Barons come (`$1621`), and the bonus
       round (4) when the item starts one. Not yet asked for: super bonus (11)
       and the ending (12).

@@ -79,7 +79,8 @@ public sealed class GameSongTests
         Assert.Contains(Song.Extend, Drain(loop));
     }
 
-    // Every song the game asks for has a place in the rendition's manifest, and names a song of the SID.
+    // Every song the game asks for has a place in the rendition's manifest, and names a song of the SID. The HVSC file has the
+    // title tune and the EXTEND fanfare the other way round from the reference's table.
     [Fact]
     public void EverySongIsInTheManifest()
     {
@@ -88,7 +89,14 @@ public sealed class GameSongTests
 
         foreach (Song song in Enum.GetValues<Song>())
         {
-            Assert.Equal($"bubble-bobble.sid#{(int)song}", music.GetProperty(song.ToString()).GetString());
+            int number = song switch
+            {
+                Song.Title => (int)Song.Extend,
+                Song.Extend => (int)Song.Title,
+                _ => (int)song,
+            };
+
+            Assert.Equal($"bubble-bobble.sid#{number}", music.GetProperty(song.ToString()).GetString());
         }
 
         Assert.True(File.Exists(Path.Combine(s_assets, "Music", "bubble-bobble.sid")));
