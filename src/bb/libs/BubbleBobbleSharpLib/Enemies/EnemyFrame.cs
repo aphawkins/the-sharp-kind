@@ -36,6 +36,9 @@ internal sealed class EnemyFrame
     private const byte ClassFiveState = 0x07;
     private const byte ClassSixState = 0x08;
     private const byte RunnerState = 0x09;
+    private const byte ReleasedState = 0x0A;
+    private const byte LeftWall = 0x24;
+    private const byte RightWall = 0xF4;
 
     private readonly EntityTable _entities;
     private readonly EnemyWalker _walker;
@@ -230,6 +233,9 @@ internal sealed class EnemyFrame
             case RunnerState:
                 _runner.Step(slot, target, cell, map);
                 break;
+            case ReleasedState:
+                Released(slot, cell, map);
+                break;
             case WaterFlow.CarriedState:
                 _ = _water.Follow(slot);
                 break;
@@ -255,6 +261,30 @@ internal sealed class EnemyFrame
                 _tumble.Touch(slot);
                 break;
         }
+    }
+
+    // $2808-$284C: out of its bubble an enemy drops, and lands as the class it was (held in RiseCounter). Once down it
+    // is kept inside the walls and its jump, fall and ground state start afresh.
+    private void Released(int slot, in PlayerCell cell, SolidMap map)
+    {
+        EntityAnimation.Step(_entities, slot);
+        _food.Drop(slot, cell, map, _entities.RiseCounter[slot]);
+
+        if (_entities.State[slot] == ReleasedState)
+        {
+            return;
+        }
+
+        if (_entities.State[slot] == RunnerState)
+        {
+            _entities.X[slot] = (byte)(((byte)(_entities.X[slot] - 0x14) & 0xFC) + 0x14);
+        }
+
+        _entities.X[slot] = Math.Clamp(_entities.X[slot], LeftWall, RightWall);
+        _entities.RiseCounter[slot] = 0xFF;
+        _entities.FallCounter[slot] = 0xFF;
+        _entities.GroundState[slot] = 0xFF;
+        _entities.BubbleTimer[slot] = 0xFF;
     }
 
     private void Shooter(int slot, int target, in PlayerCell cell, SolidMap map)

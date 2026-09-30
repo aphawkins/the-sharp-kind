@@ -376,7 +376,8 @@ internal sealed class BubblePop
 
         if (player >= EntityTable.Capacity)
         {
-            throw new NotSupportedException($"a bolt from a bubble facing ${player:X2} reads $8520 + ${player:X2}, past the entities");
+            throw new NotSupportedException(
+                $"a bolt from a bubble facing ${player:X2} reads $8520 + ${player:X2}, past the entities, is not translated");
         }
 
         byte frame = _entities.Frame[player];

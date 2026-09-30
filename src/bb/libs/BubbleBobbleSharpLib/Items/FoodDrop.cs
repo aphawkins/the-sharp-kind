@@ -176,7 +176,10 @@ internal sealed class FoodDrop
 
     // $273D-$277E: two pixels down, and a landing on the row a platform lines up with. The bonus round's tumble ($272F)
     // calls this without the animation.
-    internal void Drop(int slot, in PlayerCell cell, SolidMap map)
+    internal void Drop(int slot, in PlayerCell cell, SolidMap map) => Drop(slot, cell, map, LandedState);
+
+    // $277F is the state a landing stores, which $2808 patches to the class of an enemy out of its bubble.
+    internal void Drop(int slot, in PlayerCell cell, SolidMap map, byte landed)
     {
         ArgumentNullException.ThrowIfNull(map);
 
@@ -194,7 +197,7 @@ internal sealed class FoodDrop
             && !EnemyProbes.Blocked(cell, map, InsideLeft, InsideLeft + 1, InsideLeft + 2)
             && EnemyProbes.Blocked(cell, map, UnderLeft, UnderLeft + 1, UnderLeft + 2))
         {
-            _entities.State[slot] = LandedState;
+            _entities.State[slot] = landed;
         }
     }
 
