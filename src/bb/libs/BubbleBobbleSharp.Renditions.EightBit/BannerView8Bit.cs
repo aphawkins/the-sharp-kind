@@ -27,9 +27,11 @@ internal sealed class BannerView8Bit : IView<BannerModel>
 
         if (model.Height > 0)
         {
+            // The art is authored 160 wide, like the 8-bit tier's pixels, so it is stretched to the screen's width.
             Vector2 size = new(_surface.Layout.ScreenWidth, model.Height);
+            Vector2 source = new(_surface.Graphics.ImageSize(Image).X, model.Height);
 
-            _surface.Graphics.DrawImagePart(Image, Vector2.Zero, size, Vector2.Zero, size);
+            _surface.Graphics.DrawImagePart(Image, Vector2.Zero, size, Vector2.Zero, source);
         }
     }
 }
