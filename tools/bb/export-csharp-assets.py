@@ -633,11 +633,12 @@ def export_giant_bubble(out_dir, canonical):
 
 # charset.tga is a 14x10 grid in the game's own order, which is not ASCII: the
 # digits come first, and the letters happen to land where ASCII minus 32 would
-# put them. The engine's BitmapFont indexes a grid sheet by `char - ' '`, so the
-# sheet is rewritten in that order and the cells nothing maps to are left blank.
+# put them. The engine's BitmapFont reads a sheet of sixteen columns from
+# character 0, a character's cell at (c & 0xF, c >> 4), so the sheet is
+# rewritten by character code and the cells nothing maps to are left blank.
 CHARSET_COLUMNS = 14
 FONT_COLUMNS = 16
-FONT_ROWS = 4
+FONT_ROWS = 8
 CELL = 8
 
 # The HUD marks a player's remaining lives with screen code $1D, which the
@@ -654,21 +655,23 @@ LIFE_ICON_CELL = 0x1D
 
 
 def charset_source_cells():
-    """ASCII glyph index (char - ' ') -> the cell in charset.tga holding it."""
+    """Character code -> the cell in charset.tga holding it."""
     cells = {}
 
     for digit in range(10):
-        cells[ord("0") + digit - ord(" ")] = digit
+        cells[ord("0") + digit] = digit
 
     for letter in range(26):
-        cells[ord("A") + letter - ord(" ")] = 33 + letter
+        cells[ord("A") + letter] = 33 + letter
 
-    cells[ord(LIFE_ICON) - ord(" ")] = LIFE_ICON_CELL
+    cells[ord(LIFE_ICON)] = LIFE_ICON_CELL
 
     # The title screen's credits end a line with screen code $3B and wrap the last in $3C, which are a full stop
-    # and an exclamation mark.
-    cells[ord(".") - ord(" ")] = 0x3B
-    cells[ord("!") - ord(" ")] = 0x3C
+    # and an exclamation mark. The story ($AC41) writes a comma as $3E and an apostrophe as $3F.
+    cells[ord(".")] = 0x3B
+    cells[ord("!")] = 0x3C
+    cells[ord(",")] = 0x3E
+    cells[ord("'")] = 0x3F
 
     return cells
 
@@ -707,42 +710,83 @@ def export_font(out_dir, canonical):
     return len(cells)
 
 
-# The title screen's logo is 44 characters of the charset, screen codes $60 to $8B, which the title's text codes
-# ($80 to $AB, less $20) name. They take a font of their own, so the view draws a line of the logo as a string in
-# the colour RAM's colour: the glyph for screen code $60 + n is the character ' ' + n.
-LOGO_FIRST_CELL = 0x60
-LOGO_GLYPHS = 44
+# The game's two small fonts, both four double-width pixels by eight, are font sheets in the layout BitmapFont reads
+# now: sixteen columns from character 0, a character's cell at (c & 0xF, c >> 4). White ink on opaque black, as the
+# charset's is, so the view draws them in whatever colour it asks for.
+SMALL_FONT_CELL_WIDTH = 4
+SMALL_FONT_ROWS = 6
+INK = 1
+
+# digit-font.tga: twelve 5x8 glyphs, column-major ($38BB copies each glyph's five bytes into rows 0-4 of characters
+# $1A and $1B), and each byte is read as four multicolour pixels. Glyphs 10 and 11 are level 100's squeezed "10" and
+# "0" ($38E3), which SidebarModel asks for as '[' and ']'.
+DIGIT_FONT_WIDTH = 5
+LEVEL_NUMBER_CHARACTERS = "0123456789[]"
+
+# hud-font.tga: twenty 4x8 multicolour glyphs, ten to a row ($FE90): the digits, R O U N D E A Y, a double
+# exclamation mark and a blank, which the ROUND and READY!! text ($3C01) spells with.
+HUD_FONT_COLUMNS = 10
+HUD_FONT_CHARACTERS = "0123456789ROUNDEAY! "
 
 
-def export_logo_font(out_dir, canonical):
-    """charset.tga's screen codes $60-$8B -> a grid font sheet of the title's logo."""
-    source = tga_mod.parse_tga(os.path.join(DATA, "charset.tga"))
-
-    width = FONT_COLUMNS * CELL
-    height = ((LOGO_GLYPHS + FONT_COLUMNS - 1) // FONT_COLUMNS) * CELL
+def _small_font(glyphs):
+    """{character: 8 rows of 4 booleans} -> a font sheet image."""
+    width = FONT_COLUMNS * SMALL_FONT_CELL_WIDTH
+    height = SMALL_FONT_ROWS * CELL
     pixels = bytearray(width * height)
 
-    for index in range(LOGO_GLYPHS):
-        cell = LOGO_FIRST_CELL + index
-        src_x = (cell % CHARSET_COLUMNS) * CELL
-        src_y = (cell // CHARSET_COLUMNS) * CELL
-        dst_x = (index % FONT_COLUMNS) * CELL
-        dst_y = (index // FONT_COLUMNS) * CELL
+    for character, rows in glyphs.items():
+        code = ord(character)
+        dst_x = (code % FONT_COLUMNS) * SMALL_FONT_CELL_WIDTH
+        dst_y = (code // FONT_COLUMNS) * CELL
 
-        for y in range(CELL):
-            for x in range(CELL):
-                pixels[(dst_y + y) * width + dst_x + x] = tga_mod.get_pixel(source, src_x + x, src_y + y)
+        for y, row in enumerate(rows):
+            for x, lit in enumerate(row):
+                if lit:
+                    pixels[(dst_y + y) * width + dst_x + x] = INK
 
-    font = {
-        "width": width,
-        "height": height,
-        "pixels": pixels,
-        "palette": source["palette"],
-    }
+    return {"width": width, "height": height, "pixels": pixels, "palette": [(0, 0, 0), (255, 255, 255)]}
 
-    write_tga(os.path.join(out_dir, "Fonts", "logo.tga"), font, None, canonical)
 
-    return LOGO_GLYPHS
+def export_level_number_font(out_dir, canonical):
+    """digit-font.tga -> the level number's font sheet, each glyph turned on its side as the game copies it."""
+    source = tga_mod.parse_tga(os.path.join(DATA, "digit-font.tga"))
+    glyphs = {}
+
+    for index, character in enumerate(LEVEL_NUMBER_CHARACTERS):
+        rows = []
+
+        for column in range(DIGIT_FONT_WIDTH):
+            bits = [tga_mod.get_pixel(source, index * DIGIT_FONT_WIDTH + column, y) != 0 for y in range(CELL)]
+
+            # A multicolour pixel is a pair of bits; the font only ever sets both or neither.
+            rows.append([bits[2 * x] or bits[(2 * x) + 1] for x in range(SMALL_FONT_CELL_WIDTH)])
+
+        glyphs[character] = rows
+
+    write_tga(os.path.join(out_dir, "Fonts", "level-number.tga"), _small_font(glyphs), None, canonical)
+
+    return len(glyphs)
+
+
+def export_hud_font(out_dir, canonical):
+    """hud-font.tga -> the ROUND and READY!! text's font sheet."""
+    source = tga_mod.parse_tga(os.path.join(DATA, "hud-font.tga"))
+    glyphs = {}
+
+    for index, character in enumerate(HUD_FONT_CHARACTERS):
+        src_x = (index % HUD_FONT_COLUMNS) * SMALL_FONT_CELL_WIDTH
+        src_y = (index // HUD_FONT_COLUMNS) * CELL
+
+        # The text is ORed into the characters under it, so only bit-pair 11, the colour RAM's colour, is drawn.
+        glyphs[character] = [
+            [tga_mod.get_pixel(source, src_x + x, src_y + y) == 3 for x in range(SMALL_FONT_CELL_WIDTH)]
+            for y in range(CELL)
+        ]
+
+    write_tga(os.path.join(out_dir, "Fonts", "hud-font.tga"), _small_font(glyphs), None, canonical)
+
+    return len(glyphs)
 
 
 # =============================================================================
@@ -1042,8 +1086,11 @@ def main():
     count = export_font(args.out, canonical)
     print(f"Wrote a {count}-glyph font -> {os.path.join(args.out, 'Fonts', 'charset.tga')}")
 
-    count = export_logo_font(args.out, canonical)
-    print(f"Wrote a {count}-glyph logo font -> {os.path.join(args.out, 'Fonts', 'logo.tga')}")
+    count = export_level_number_font(args.out, canonical)
+    print(f"Wrote a {count}-glyph level number font -> {os.path.join(args.out, 'Fonts', 'level-number.tga')}")
+
+    count = export_hud_font(args.out, canonical)
+    print(f"Wrote a {count}-glyph HUD font -> {os.path.join(args.out, 'Fonts', 'hud-font.tga')}")
 
     count = export_tile_edges(args.out, canonical)
     print(

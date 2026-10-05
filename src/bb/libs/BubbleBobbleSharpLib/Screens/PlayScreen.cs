@@ -6,7 +6,7 @@ using SharpKind.Abstraction;
 
 namespace BubbleBobbleSharpLib.Screens;
 
-// $F005 onwards: the game. Its update and its drawing are the game's own.
+// $091B onwards: the game. Its update and its drawing are the game's own.
 internal sealed class PlayScreen(Action update, Action draw) : IGameScreen
 {
     public void Reset()

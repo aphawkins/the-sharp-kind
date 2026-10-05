@@ -25,6 +25,12 @@ internal sealed class SidebarView8Bit : IView<SidebarModel>
     private const string BlackColour = "0";
     private const string WhiteColour = "1";
 
+    // $ACFD: the ROUND and READY!! lines, from column 12 of rows 10 and 12, in colour RAM $09: white where the font is.
+    private const string ReadyFont = "Hud";
+    private const int ReadyColumn = 12;
+    private const int RoundRow = 10;
+    private const int ReadyRow = 12;
+
     private const string SidebarSheet = "Sidebars";
     private const string TileSheet = "LevelTiles";
 
@@ -68,6 +74,20 @@ internal sealed class SidebarView8Bit : IView<SidebarModel>
         {
             DrawNumber(model);
         }
+
+        DrawReady(model);
+    }
+
+    // $3C01: the text is ORed into the characters under it, so the level shows through wherever the font is clear.
+    private void DrawReady(SidebarModel model)
+    {
+        if (model.Round <= 0)
+        {
+            return;
+        }
+
+        _graphics.DrawTextLeft(_layout.Playfield.Cell(ReadyColumn, RoundRow), model.RoundText, ReadyFont, _white);
+        _graphics.DrawTextLeft(_layout.Playfield.Cell(ReadyColumn, ReadyRow), model.ReadyText, ReadyFont, _white);
     }
 
     // $38E9: the level number's two characters ($1A, $1B) replace the top-left corner of the level.

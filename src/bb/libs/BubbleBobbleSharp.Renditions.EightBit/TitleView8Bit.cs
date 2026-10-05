@@ -8,23 +8,50 @@ using SharpKind;
 
 namespace BubbleBobbleSharp.Renditions.EightBit;
 
-/// <summary>Draws the title screen: its text.</summary>
+/// <summary>Draws a front-end screen: its stars, its rules and its text.</summary>
 internal sealed class TitleView8Bit : IView<TitleModel>
 {
     private const string TextFont = "Small";
 
+    // The characters' multicolour pixels are two wide. $FE is one row of the background's second colour ($D022, blue),
+    // $FF two rows of its third ($D023, cyan); $1E is two lines of blue, on rows 2 and 5.
+    private const int StarColumn = 2;
+    private const int StarRow = 3;
+    private const int StarWidth = 2;
+    private const int BlueColour = 6;
+    private const int CyanColour = 3;
+
+    private static readonly int[] s_ruleLines = [2, 5];
+
     private readonly IViewSurface _surface;
+    private readonly FastColor _blue;
+    private readonly FastColor _cyan;
 
     internal TitleView8Bit(IViewSurface surface)
     {
         ArgumentNullException.ThrowIfNull(surface);
 
         _surface = surface;
+        _blue = Colour(BlueColour);
+        _cyan = Colour(CyanColour);
     }
 
     public void Draw(TitleModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
+
+        foreach (TitleStar star in model.Stars)
+        {
+            Pixels(star.Column, star.Row, StarColumn, StarRow, StarWidth, star.Big ? 2 : 1, star.Big ? _cyan : _blue);
+        }
+
+        foreach (TitleRule rule in model.Rules)
+        {
+            foreach (int line in s_ruleLines)
+            {
+                Pixels(rule.Column, rule.Row, 0, line, rule.Length * (int)_surface.Layout.CellWidth, 1, _blue);
+            }
+        }
 
         foreach (TitleText line in model.Lines)
         {
@@ -35,6 +62,13 @@ internal sealed class TitleView8Bit : IView<TitleModel>
                 Colour(line.Colour));
         }
     }
+
+    private void Pixels(int column, int row, int x, int y, int width, int height, in FastColor colour)
+        => _surface.Graphics.DrawRectangleFilled(
+            _surface.Layout.Screen.Cell(column, row) + new System.Numerics.Vector2(x, y),
+            width,
+            height,
+            colour);
 
     private FastColor Colour(int index) => _surface.Palette[index.ToString(CultureInfo.InvariantCulture)];
 }

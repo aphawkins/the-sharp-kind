@@ -29,7 +29,7 @@ public sealed class TitleScreenTests
     private static readonly ZoneStore s_zones = ZoneStore.Read(Path.Combine(s_assets, "zones.json"));
 
     [Fact]
-    public void OpensOnTheTitleAndFireStartsTheGame()
+    public void OpensOnTheTitleAndFireGoesOnToTheChoiceOfPlayers()
     {
         FakeAbstraction abstraction = new();
         BubbleBobbleMain game = Game(abstraction);
@@ -42,8 +42,7 @@ public sealed class TitleScreenTests
         ((FakeKeyboard)abstraction.Keyboard).KeyDown(ConsoleKey.Spacebar, ConsoleModifiers.None);
         game.Update();
 
-        Assert.Equal(BbScreen.Play, game.Screen);
-        Assert.Equal(1, game.CurrentLevel);
+        Assert.Equal(BbScreen.Select, game.Screen);
     }
 
     [Fact]
@@ -55,10 +54,10 @@ public sealed class TitleScreenTests
 
         game.Update();
 
-        Assert.Equal(BbScreen.Play, game.Screen);
+        Assert.Equal(BbScreen.Select, game.Screen);
     }
 
-    // $45A7-$45E1, $45E3-$462A: S, U, P, O, R and the Commodore key held together start the game in super mode, in which the
+    // $45A7-$45E1, $45E3-$462A: S, U, P, O, R and the Commodore key held together go on to the choice of players in super mode, in which the
     // enemies of every level are a class up: level 1's are class 0, which is state 2, and are class 1, state 3.
     [Fact]
     public void SixKeysHeldTogetherStartTheGameWithHarderEnemies()
@@ -73,8 +72,12 @@ public sealed class TitleScreenTests
         }
 
         game.Update();
+        Assert.Equal(BbScreen.Select, game.Screen);
 
-        Assert.Equal(BbScreen.Play, game.Screen);
+        keyboard.ClearPressed();
+        keyboard.KeyDown(ConsoleKey.D1, ConsoleModifiers.None);
+        game.Update();
+
         Assert.Contains(Enumerable.Range(2, 6), slot => game.Loop.Entities.State[slot] == 3);
         Assert.DoesNotContain(Enumerable.Range(2, 6), slot => game.Loop.Entities.State[slot] == 2);
     }
@@ -102,7 +105,8 @@ public sealed class TitleScreenTests
         FakeAbstraction abstraction = new();
         BubbleBobbleMain game = Game(abstraction);
         GameLoop before = game.Loop;
-        ((FakeKeyboard)abstraction.Keyboard).KeyDown(ConsoleKey.Spacebar, ConsoleModifiers.None);
+        game.Select();
+        ((FakeKeyboard)abstraction.Keyboard).KeyDown(ConsoleKey.D1, ConsoleModifiers.None);
 
         game.Update();
 
@@ -119,17 +123,45 @@ public sealed class TitleScreenTests
         Assert.Equal(1, ((FakeSound)abstraction.Sound).PlayMusicCount);
     }
 
+    // $0406-$040B: the top score is 20000, from round 20, until it is beaten.
+    [Fact]
+    public void TheTopScoreStartsAtTwentyThousandFromRoundTwenty()
+    {
+        BubbleBobbleMain game = Game(new FakeAbstraction());
+
+        Assert.Equal([0x00, 0x20, 0x00], game.HighScore.ToArray());
+        Assert.Equal(0x13, game.TopRound);
+    }
+
+    // $E3F5: a score above the high score becomes it, and the round its player reached the top round.
     [Fact]
     public void ScoreAboveTheHighScoreBecomesIt()
     {
         BubbleBobbleMain game = Game(new FakeAbstraction());
         game.Play();
+        game.Loop.PlayerTable.Round[0] = 4;
         game.Loop.Scores.Add(2, 0x30);
+        game.Loop.Scores.Add(1, 0x12);
+        game.Loop.Scores.Add(0, 0x01);
+
+        game.Update();
+
+        Assert.Equal([0x01, 0x12, 0x30], game.HighScore.ToArray());
+        Assert.Equal(4, game.TopRound);
+    }
+
+    [Fact]
+    public void ScoreBelowTheHighScoreLeavesItAndItsRound()
+    {
+        BubbleBobbleMain game = Game(new FakeAbstraction());
+        game.Play();
+        game.Loop.PlayerTable.Round[0] = 4;
         game.Loop.Scores.Add(1, 0x12);
 
         game.Update();
 
-        Assert.Equal([0x00, 0x12, 0x30], game.HighScore.ToArray());
+        Assert.Equal([0x00, 0x20, 0x00], game.HighScore.ToArray());
+        Assert.Equal(0x13, game.TopRound);
     }
 
     [Fact]

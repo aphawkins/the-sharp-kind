@@ -46,6 +46,13 @@
         "CellHeight": 8,
         "Columns": 16
       },
+      "Hud": {
+        "File": "hud-font.tga",
+        "CellWidth": 4,
+        "CellHeight": 8,
+        "Columns": 16,
+        "WidthScale": 2
+      },
       "LevelNumber": {
         "File": "level-number.tga",
         "CellWidth": 4,

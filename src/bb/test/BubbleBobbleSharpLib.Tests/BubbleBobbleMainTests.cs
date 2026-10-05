@@ -64,9 +64,9 @@ public sealed class BubbleBobbleMainTests
     }
 
     // $0A64, $0A99: with both players out the game holds for $96 frames, seventy-five updates, and then
-    // goes back to the title.
+    // goes back to the choice of players ($F0E8).
     [Fact]
-    public void ReturnsToTheTitleSeventyFiveUpdatesAfterBothPlayersAreOut()
+    public void ReturnsToTheChoiceOfPlayersSeventyFiveUpdatesAfterBothPlayersAreOut()
     {
         BubbleBobbleMain game = Game(new FakeAbstraction());
         game.Loop.Entities.State[0] = 0;
@@ -79,7 +79,7 @@ public sealed class BubbleBobbleMainTests
 
         game.Update();
 
-        Assert.Equal(BbScreen.Title, game.Screen);
+        Assert.Equal(BbScreen.Select, game.Screen);
         Assert.True(game.IsRunning);
     }
 
@@ -209,7 +209,8 @@ public sealed class BubbleBobbleMainTests
     {
         RecordingGraphics graphics = Draw();
 
-        Assert.Equal(3, graphics.LeftTexts.Count(x => x.Text == "     00"));
+        Assert.Equal(2, graphics.LeftTexts.Count(x => x.Text == "     00"));
+        Assert.Contains(graphics.LeftTexts, x => x.Text == "  20000");
         Assert.Equal(2, graphics.LeftTexts.Count(x => x.Text == "___"));
     }
 

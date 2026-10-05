@@ -46,7 +46,12 @@ internal sealed class BubbleGlide
     {
         ArgumentNullException.ThrowIfNull(entities);
 
-        byte players = (byte)((entities.State[0] != 0 ? 1 : 0) | (entities.State[1] != 0 ? 2 : 0));
+        return Bubbles((byte)((entities.State[0] != 0 ? 1 : 0) | (entities.State[1] != 0 ? 2 : 0)), x, y, frame);
+    }
+
+    // $E4DF: the players given, a bit each, at their places in their dragons in bubbles.
+    internal static SpriteModel Bubbles(byte players, ReadOnlySpan<byte> x, ReadOnlySpan<byte> y, int frame)
+    {
         byte[] none = new byte[SpriteModel.Capacity];
         byte[] pointers = new byte[SpriteModel.Capacity];
 
