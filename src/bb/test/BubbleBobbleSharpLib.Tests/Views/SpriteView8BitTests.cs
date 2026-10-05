@@ -5,6 +5,7 @@
 using System.Numerics;
 using BubbleBobbleSharp.Abstractions.Views;
 using BubbleBobbleSharp.Renditions.EightBit;
+using SharpKind;
 using SharpKind.Graphics;
 using SharpKind.Graphics.Fakes;
 using Xunit;
@@ -154,7 +155,7 @@ public sealed class SpriteView8BitTests
     }
 
     // A character's second background (entry 10) is the sprite's shared white (`$2996` swaps 10 and 11), and its colour RAM
-    // (entry 11) the sprite's own.
+    // (entry 11) the sprite's own. Its 00, the screen's black, is the sprite's transparency.
     [Fact]
     public void PaintsAFoodsArtWithItsBitPairsSwapped()
     {
@@ -162,7 +163,7 @@ public sealed class SpriteView8BitTests
 
         FastBitmap painted = graphics.Image("ItemChars.Colour10");
 
-        Assert.Equal(TestSurface.Colour(0), painted.GetPixel(0, 0));
+        Assert.Equal(BaseColors.TransparentBlack, painted.GetPixel(0, 0));
         Assert.Equal(TestSurface.Colour(2), painted.GetPixel(1, 0));
         Assert.Equal(TestSurface.Colour(1), painted.GetPixel(2, 0));
         Assert.Equal(TestSurface.Colour(0x0A), painted.GetPixel(3, 0));

@@ -48,10 +48,12 @@ internal sealed class MulticolourSprites
     }
 
     // The item art is character art, and `$2996` turns a character's bit pairs into a sprite's: 10 and 11 change places, so
-    // the character's second background is the sprite's second shared colour and its colour RAM the sprite's own.
+    // the character's second background is the sprite's second shared colour and its colour RAM the sprite's own. The
+    // character's 00 is the screen's black, but a sprite's 00 is transparent.
     private Dictionary<uint, FastColor> Entries(int colour) => _itemArt
         ? new()
         {
+            [Colour(0).Argb] = BaseColors.TransparentBlack,
             [Colour(1).Argb] = Colour(MulticolourZero),
             [Colour(2).Argb] = Colour(MulticolourOne),
             [Colour(3).Argb] = Colour(colour),
