@@ -49,7 +49,7 @@
       "LevelNumber": {
         "File": "level-number.tga",
         "CellWidth": 4,
-        "CellHeight": 6,
+        "CellHeight": 8,
         "Columns": 16,
         "WidthScale": 2
       }
