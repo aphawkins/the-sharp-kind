@@ -32,14 +32,6 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
 
     private const int PlayingPlayers = 1;
 
-    // `$3234`: where a room shows its clock, at the top, and each player's count, along the bottom, and in what colours.
-    private const int RoomClockColumn = 15;
-    private const int RoomClockColour = 9;
-    private const int RoomCountRow = 24;
-    private const int RoomSecondColumn = 30;
-    private const int RoomFirstColour = 13;
-    private const int RoomSecondColour = 11;
-
     private static readonly byte[] s_hiddenItems = [0xFF, 0xFF];
 
     private static readonly ConsoleKey[] s_superKeys =
@@ -67,6 +59,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     private LevelStore _levels;
     private PlayfieldModel _playfield;
     private SidebarModel _sidebar;
+    private LevelChange _change;
 
     public BubbleBobbleMain(
         IAbstraction abstraction,
@@ -134,6 +127,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         _bannerHeight = surface.Layout.BannerHeight;
         _bannerView = rendition.CreateBannerView(surface);
 
+        _change = new(_levels);
         ShowLevel(FirstLevel);
 
         _screens = CreateScreens(rendition.CreateTitleView(surface), CreateLayers(surface), CreateEndingLayers(surface));
@@ -179,6 +173,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
 
         // The last frame's final layer left its clip set, and the banner sits outside every layer.
         Graphics.SetClipRegion(Vector2.Zero, Layout.ScreenWidth, Layout.ScreenHeight);
+
         _bannerView.Draw(new BannerModel(_bannerHeight));
         _screens.Current.Draw();
         Graphics.ScreenUpdate();
@@ -196,6 +191,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         }
 
         Loop = new GameLoop(new BbRandom(new RandomSource(_random)), PlayingPlayers);
+        _change = new(_levels);
         ShowLevel(FirstLevel);
         _screens.Set(BbScreen.Play);
     }
@@ -232,19 +228,36 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
             return;
         }
 
+        // $37C9, $7FB2: nothing moves while the screen flashes and scrolls, and the next level starts when it has ($09DC).
+        if (_change.Active)
+        {
+            if (_change.Pass(_playfield, _sidebar, CurrentLevel, Loop.Entities) is int level)
+            {
+                ShowLevel(level, next: true);
+            }
+
+            return;
+        }
+
         Loop.Pass(_input.Read());
         KeepHighScore();
 
-        // $0A6A: a cleared level whose clock has run out goes on to the next.
+        // $0A6A: a cleared level whose clock has run out scrolls on to the next.
         if (Loop.IsComplete && Loop.EndLevel() is int next)
         {
-            ShowLevel(next, next: true);
+            _change.ScrollTo(_playfield, _sidebar, CurrentLevel, next);
+            PlaySongs();
+
+            return;
         }
 
-        // $7FB2: an item has skipped levels.
+        // $7FB2: an item has skipped levels: the screen flashes, and scrolls through every one of them to it ($7FD4).
         if (Loop.SkipLevel() is int skipped)
         {
-            ShowLevel(skipped, next: true);
+            _change.SkipTo(skipped);
+            PlaySongs();
+
+            return;
         }
 
         ShowColours();
@@ -285,11 +298,23 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         (Vector2 whole, float wholeWidth, _) = surface.Layout.PlayfieldArea;
         (Vector2 hud, float hudWidth, _) = surface.Layout.HudArea;
 
+        // How far the old level has gone up the screen as it scrolls to the next.
+        Vector2 Scrolled() => new(0, -_change.Rows * surface.Layout.CellHeight);
+
         return new LayerRunner(
             Graphics,
+            new RenderLayer(whole, surface.Layout.ScreenWidth, height, new FlashLayer(this, surface)),
             new RenderLayer(interior, interiorWidth, height, new PlayfieldLayer(this)),
-            new RenderLayer(interior, interiorWidth, height, new ItemLayer(this)),
-            new RenderLayer(interior, interiorWidth, height, new EffectsLayer(this)),
+            new RenderLayer(interior, interiorWidth, height, new ItemLayer(this))
+            {
+                // $37C9: the level's items are characters on the screen, and go up with it.
+                Offset = Scrolled,
+            },
+            new RenderLayer(interior, interiorWidth, height, new EffectsLayer(this))
+            {
+                // So are its fire and water, which stand still while it does.
+                Offset = Scrolled,
+            },
             new RenderLayer(whole, wholeWidth, height, new ObjectLayer(this)),
             new RenderLayer(whole, wholeWidth, height, new SidebarLayer(this)),
             new RenderLayer(whole, wholeWidth, height, new RoomLayer(this)),
@@ -413,75 +438,97 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         Loop.Items.Colour,
         _playfield.Colours);
 
-    // A bonus room over the level: the clock and the counts while it lasts, and the results after.
-    private RoomModel Room()
+    // $7FB2-$7FD1: before a skip the border and background flash red ($00 EOR $02), under everything on the screen.
+    private sealed class FlashLayer(BubbleBobbleMain game, BbViewSurface surface) : ILayerDrawer
     {
-        ItemRoom room = Loop.Room;
+        private const string Red = "2";
 
-        if (Loop.Ending.Blank)
+        private readonly FastColor _red = surface.Palette[Red];
+
+        public void Draw()
         {
-            return new([], 0, 0, _playfield.Colours, _playfield.Tile, Loop.Ending.Lines, false);
+            if (game._change.FlashShows)
+            {
+                surface.Graphics.DrawRectangleFilled(
+                    surface.Layout.Screen.Cell(0, 0),
+                    surface.Layout.ScreenWidth,
+                    surface.Layout.ScreenRows * surface.Layout.CellHeight,
+                    _red);
+            }
         }
-
-        if (!room.Active)
-        {
-            return new([], 0, 0, _playfield.Colours, _playfield.Tile, [], false);
-        }
-
-        List<RoomText> lines = [];
-
-        if (room.Phase == ItemRoom.Stage.Playing)
-        {
-            lines.Add(new(RoomClockColumn, 0, RoomClockColour, $"{Loop.Timer.Seconds:D2}"));
-            lines.Add(new(0, RoomCountRow, RoomFirstColour, $"{room.Counts[0]:D2}"));
-            lines.Add(new(RoomSecondColumn, RoomCountRow, RoomSecondColour, $"{room.Counts[1]:D2}"));
-        }
-
-        lines.AddRange(room.Lines);
-
-        return new(
-            [.. room.Items.Where(item => item.X != 0 || item.Y != 0).Select(item => (item.Column, item.Row))],
-            room.Art,
-            room.Colour,
-            _playfield.Colours,
-            _playfield.Tile,
-            lines,
-            room.Phase == ItemRoom.Stage.Results);
     }
 
     private sealed class PlayfieldLayer(BubbleBobbleMain game) : ILayerDrawer
     {
-        public void Draw() => game._playfieldView.Draw(game._playfield);
+        public void Draw()
+        {
+            foreach (PlayfieldModel field in game._change.Fields(game._playfield))
+            {
+                game._playfieldView.Draw(field);
+            }
+        }
     }
 
     private sealed class EffectsLayer(BubbleBobbleMain game) : ILayerDrawer
     {
-        public void Draw() => game._effectsView.Draw(game.Effects());
+        public void Draw()
+        {
+            if (!game._change.Gliding)
+            {
+                game._effectsView.Draw(game.Effects());
+            }
+        }
     }
 
     private sealed class ItemLayer(BubbleBobbleMain game) : ILayerDrawer
     {
-        public void Draw() => game._itemView.Draw(game.Items());
+        public void Draw()
+        {
+            if (!game._change.Gliding)
+            {
+                game._itemView.Draw(game.Items());
+            }
+        }
     }
 
     private sealed class RoomLayer(BubbleBobbleMain game) : ILayerDrawer
     {
-        public void Draw() => game._roomView.Draw(game.Room());
+        public void Draw()
+        {
+            if (!game._change.InTransit)
+            {
+                game._roomView.Draw(RoomPicture.Build(game.Loop, game._playfield));
+            }
+        }
     }
 
     private sealed class ObjectLayer(BubbleBobbleMain game) : ILayerDrawer
     {
-        public void Draw() => game._objectView.Draw(game.Objects());
+        public void Draw()
+        {
+            if (!game._change.InTransit)
+            {
+                game._objectView.Draw(game.Objects());
+            }
+        }
     }
 
     private sealed class SidebarLayer(BubbleBobbleMain game) : ILayerDrawer
     {
-        public void Draw() => game._sidebarView.Draw(game._sidebar);
+        public void Draw()
+        {
+            foreach (SidebarModel sidebar in game._change.Sidebars(game._sidebar))
+            {
+                game._sidebarView.Draw(sidebar);
+            }
+        }
     }
 
     private sealed class SpriteLayer(BubbleBobbleMain game) : ILayerDrawer
     {
-        public void Draw() => game._spriteView.Draw(game.Sprites());
+        public void Draw()
+            => game._spriteView.Draw(
+                game._change.Sprites(game.Loop.Entities) ?? game.Sprites());
     }
 
     private sealed class HudLayer(BubbleBobbleMain game) : ILayerDrawer

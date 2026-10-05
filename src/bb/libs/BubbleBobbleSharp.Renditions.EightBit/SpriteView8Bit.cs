@@ -1,4 +1,4 @@
-// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
+﻿// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
 // 'rebb64' - github.com/zaidka/rebb64.
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
@@ -40,6 +40,14 @@ internal sealed class SpriteView8Bit : IView<SpriteModel>
     private const int StunnedFrame = 0x09;
     private const int RightFrame = 0x18;
 
+    // $E4DF: the dragon in a bubble is two by two sprites, two frames side by side, put at the player less ($0A, $08).
+    private const string TransitSheet = "BubbleDragonInBubble";
+    private const int TransitSourceWidth = 24;
+    private const float TransitHeight = 42;
+    private const float TransitOffsetX = 10;
+    private const float TransitOffsetY = 8;
+    private const int Players = 2;
+
     private static readonly float[] s_bonusHeights = [42, 24, 21];
 
     private readonly IGraphics _graphics;
@@ -48,6 +56,7 @@ internal sealed class SpriteView8Bit : IView<SpriteModel>
     private readonly MulticolourSprites _foods;
     private readonly MulticolourSprites[] _bonuses;
     private readonly MulticolourSprites _boss;
+    private readonly MulticolourSprites _transit;
 
     internal SpriteView8Bit(IViewSurface surface)
     {
@@ -58,12 +67,19 @@ internal sealed class SpriteView8Bit : IView<SpriteModel>
         _sprites = new(surface, Sheet);
         _foods = new(surface, FoodSheet, itemArt: true);
         _boss = new(surface, "GrumpleGromit");
+        _transit = new(surface, TransitSheet);
         _bonuses = [new(surface, "BonusCake"), new(surface, "BonusMelon"), new(surface, "BonusDiamond")];
     }
 
     public void Draw(SpriteModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
+
+        if (model.TransitFrame >= 0)
+        {
+            DrawTransit(model);
+            return;
+        }
 
         for (int slot = SpriteModel.Capacity - 1; slot >= 0; slot--)
         {
@@ -85,6 +101,26 @@ internal sealed class SpriteView8Bit : IView<SpriteModel>
             {
                 DrawSprite(model, slot);
             }
+        }
+    }
+
+    private void DrawTransit(SpriteModel model)
+    {
+        for (int slot = Players - 1; slot >= 0; slot--)
+        {
+            if (!model.IsDrawn(slot))
+            {
+                continue;
+            }
+
+            _graphics.DrawImagePart(
+                _transit.Paint(model.Colour(slot)),
+                new(
+                    model.X(slot) - TransitOffsetX - SpriteOriginX,
+                    model.Y(slot) - TransitOffsetY - SpriteOriginY + _layout.BannerHeight),
+                new(TransitSourceWidth * 2, TransitHeight),
+                new(model.TransitFrame * TransitSourceWidth, 0),
+                new(TransitSourceWidth, TransitHeight));
         }
     }
 

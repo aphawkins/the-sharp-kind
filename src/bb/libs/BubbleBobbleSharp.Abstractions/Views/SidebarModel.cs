@@ -23,6 +23,15 @@ public sealed record SidebarModel(int Design, int HeaderTile, int Colours, int N
     /// <summary>Gets how many characters one design is made of.</summary>
     public static int CharactersPerDesign => 4;
 
+    /// <summary>Gets how many rows down the decoration is drawn, negative being up; its pattern goes on past the level.</summary>
+    public int Shift { get; init; }
+
+    /// <summary>Gets the first screen row the decoration is drawn on.</summary>
+    public int FirstRow { get; init; }
+
+    /// <summary>Gets the screen row the decoration is drawn down to, not including it.</summary>
+    public int EndRow { get; init; } = PlayfieldModel.Rows;
+
     /// <summary>Gets a value indicating whether the level wears one of the designs.</summary>
     public bool HasDesign => Design != NoDesign;
 

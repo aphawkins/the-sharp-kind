@@ -21,8 +21,8 @@ internal sealed class PlayfieldView8Bit : IView<PlayfieldModel>
 
     private readonly IGraphics _graphics;
     private readonly BbViewLayout _layout;
-    private readonly MulticolourSheet _tiles;
-    private readonly MulticolourSheet _edges;
+    private readonly LevelSheets _tiles;
+    private readonly LevelSheets _edges;
 
     internal PlayfieldView8Bit(IViewSurface surface)
     {
@@ -38,30 +38,34 @@ internal sealed class PlayfieldView8Bit : IView<PlayfieldModel>
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        _tiles.Paint(model.Colours);
-        _edges.Paint(model.Colours);
+        // Only the level coming in under the scroll's split starts below the top.
+        bool incoming = model.FirstRow > 0;
+        string tiles = _tiles.Paint(model.Colours, incoming);
+        string edges = _edges.Paint(model.Colours, incoming);
 
-        for (int row = 0; row < PlayfieldModel.Rows; row++)
+        for (int row = model.FirstRow; row < model.EndRow; row++)
         {
+            int sourceRow = model.SourceRow(row);
+
             for (int column = 0; column < PlayfieldModel.Columns; column++)
             {
-                byte character = model.Character(column, row);
+                byte character = model.Character(column, sourceRow);
 
                 if (character == PlayfieldModel.Space)
                 {
                     continue;
                 }
 
-                DrawCharacter(model, character, _layout.Playfield.Cell(column, row));
+                DrawCharacter(model, character, tiles, edges, _layout.Playfield.Cell(column, row));
             }
         }
     }
 
-    private void DrawCharacter(PlayfieldModel model, byte character, Vector2 position)
+    private void DrawCharacter(PlayfieldModel model, byte character, string tiles, string edges, Vector2 position)
     {
         (string sheet, int index, int columns) = character == PlayfieldModel.LevelTile
-            ? (_tiles.Name, model.Tile, TileSheetColumns)
-            : (_edges.Name, character - PlayfieldModel.FirstTileEdge, PlayfieldModel.TileEdgeCount);
+            ? (tiles, model.Tile, TileSheetColumns)
+            : (edges, character - PlayfieldModel.FirstTileEdge, PlayfieldModel.TileEdgeCount);
 
         int sheetColumn = index % columns;
         int sheetRow = index / columns;

@@ -1,4 +1,4 @@
-// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
+﻿// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
 // 'rebb64' - github.com/zaidka/rebb64.
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
@@ -43,7 +43,6 @@ internal sealed class GameLoop
     private readonly EnemySpawner _spawner;
     private readonly BubbleSpawner _bubbles;
     private readonly ExtendBonus _extend;
-    private readonly WorldEffects _world;
     private readonly PlayerRespawn _respawn;
     private readonly PlayerJoin _join;
     private readonly Queue<Song> _songs = new();
@@ -58,6 +57,9 @@ internal sealed class GameLoop
     private int _bonusRounds;
     private int _baronCalls;
     private bool _wasOver;
+
+    // $5C3F: the last song the game started, which $05C5 looks at.
+    private Song? _song;
 
     internal GameLoop(BbRandom random, int playing)
     {
@@ -103,10 +105,10 @@ internal sealed class GameLoop
         Clear.ReadyEnded = AppearBoss;
         Bonus = new(Entities, Round, End.SavedFlash);
         _extend = new(PlayerTable, End);
-        _world = BuildWorld(random, food);
-        effects.World = _world.Apply;
-        Room = new(Entities, Scores, Timer, Items, _world.ResetObjects);
-        _world.Room = StartRoom;
+        World = BuildWorld(random, food);
+        effects.World = World.Apply;
+        Room = new(Entities, Scores, Timer, Items, World.ResetObjects);
+        World.Room = StartRoom;
 
         // $0956-$0977.
         PlayerTable.Lives.Fill(StartingLives);
@@ -157,11 +159,14 @@ internal sealed class GameLoop
 
     internal LevelEnd End { get; }
 
+    // The effects that act on the level, such as an item's skip to a later one.
+    internal WorldEffects World { get; }
+
     // $0A6A: the level's clock has run out on a cleared level, and the game goes on to the next.
     internal bool IsComplete => End.Complete != 0;
 
     // The next song the game has asked for ($F477's music_start), or none. The song of a level's start is the first the
-    // game asks for: $08E7 for the first level, and $05C5 for the others.
+    // game asks for: $08E7 for the first level, and $05C5 for the others when the level's tune is not already playing.
     internal Song? TakeSong() => _songs.TryDequeue(out Song song) ? song : null;
 
     // $0A6E-$0A8B: the next level's number is kept for each player in the game, as the round they have reached.
@@ -191,12 +196,12 @@ internal sealed class GameLoop
     // up the levels between only as far as the bonus rounds' schedule ($0688) goes, or none.
     internal int? SkipLevel()
     {
-        if (_world.SkipTo is not int target)
+        if (World.SkipTo is not int target)
         {
             return null;
         }
 
-        _world.SkipTo = null;
+        World.SkipTo = null;
 
         // `$7FD4`-`$7FEE` counts the level up until it is the target, a byte at a time, so a target below the level goes the long way.
         for (int level = (_subflg + 1) & 0xFF; level != target; level = (level + 1) & 0xFF)
@@ -225,9 +230,9 @@ internal sealed class GameLoop
         StartPlayers(next);
 
         _subflg = (byte)(number - 1);
-        _world.Level = _subflg;
-        _world.Cleared = false;
-        _world.SkipTo = null;
+        World.Level = _subflg;
+        World.Cleared = false;
+        World.SkipTo = null;
         PlayerTable.Shots.Fill(0xFF);
 
         Items.Setup(level, _subflg);
@@ -244,7 +249,14 @@ internal sealed class GameLoop
         _counter = FirstCounter;
         _overPasses = 0;
         _wasOver = false;
-        _songs.Enqueue(next ? LevelSong() : Song.Theme);
+        if (!next)
+        {
+            Ask(Song.Theme);
+        }
+        else if (StartsLevelSong())
+        {
+            Ask(LevelSong());
+        }
     }
 
     // Which block of item art each slot is drawn from, for an enemy that has become food ($2921 builds its sprite from
@@ -273,7 +285,7 @@ internal sealed class GameLoop
             if (!_wasOver)
             {
                 _wasOver = true;
-                _songs.Enqueue(Song.GameOver);
+                Ask(Song.GameOver);
             }
 
             _overPasses++;
@@ -521,7 +533,7 @@ internal sealed class GameLoop
 
     // $05C5 and $0491: a level's tune, and the one that comes back after a death; the last level has its own.
     // $16C1: the READY!! has gone, and on the last level the giant comes.
-    private GameEnding BuildEnding() => new(Entities, Scores, Boss, _songs.Enqueue);
+    private GameEnding BuildEnding() => new(Entities, Scores, Boss, Ask);
 
     private void AppearBoss()
     {
@@ -530,6 +542,18 @@ internal sealed class GameLoop
             Boss.Appear();
         }
     }
+
+    // $05AD: a song is started, and kept in $5C3F.
+    private void Ask(Song song)
+    {
+        _song = song;
+        _songs.Enqueue(song);
+    }
+
+    // $05DD-$05F0: the level's tune is started again unless the theme, its resume or the super bonus's tune is what is
+    // playing (below the final theme in the song table, or the super bonus's); level 99's always is.
+    private bool StartsLevelSong()
+        => _subflg == BonusLevel || _song is not (Song.Theme or Song.Resume or Song.SuperBonus);
 
     private Song LevelSong() => _subflg == BonusLevel ? Song.FinalTheme : Song.Resume;
 
@@ -540,7 +564,7 @@ internal sealed class GameLoop
     {
         if (hurry == 0 && Timer.Hurry == 1)
         {
-            _songs.Enqueue(Song.HurryUp);
+            Ask(Song.HurryUp);
         }
     }
 
@@ -549,25 +573,25 @@ internal sealed class GameLoop
         if (_extend.Awards != _extendAwards)
         {
             _extendAwards = _extend.Awards;
-            _songs.Enqueue(Song.Extend);
+            Ask(Song.Extend);
         }
 
         if (_baronCalls != End.BaronCalls)
         {
             _baronCalls = End.BaronCalls;
-            _songs.Enqueue(Song.RoundStart);
+            Ask(Song.RoundStart);
         }
 
         if (_bonusRounds != Bonus.Rounds)
         {
             _bonusRounds = Bonus.Rounds;
-            _songs.Enqueue(Song.BonusRound);
+            Ask(Song.BonusRound);
         }
 
         if (_respawns != _respawn.Respawns)
         {
             _respawns = _respawn.Respawns;
-            _songs.Enqueue(LevelSong());
+            Ask(LevelSong());
         }
     }
 }

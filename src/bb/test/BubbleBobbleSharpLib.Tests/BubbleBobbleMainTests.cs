@@ -83,8 +83,8 @@ public sealed class BubbleBobbleMainTests
         Assert.True(game.IsRunning);
     }
 
-    // $0A6A-$0A96: a cleared level whose clock has run out goes on to the next, with the players it had and the
-    // level they reached kept.
+    // $0A6A-$0A96: a cleared level whose clock has run out scrolls on to the next ($37C9, a row a frame, two an update),
+    // with the players it had and the level they reached kept.
     [Fact]
     public void AClearedLevelWhoseTimeIsUpGoesOnToTheNext()
     {
@@ -95,6 +95,12 @@ public sealed class BubbleBobbleMainTests
 
         game.Update();
 
+        for (int update = 1; update <= LevelScroll.Steps / 2; update++)
+        {
+            Assert.Equal(1, game.CurrentLevel);
+            game.Update();
+        }
+
         Assert.Equal(2, game.CurrentLevel);
         Assert.Equal(1, game.Loop.PlayerTable.Round[0]);
         Assert.Equal(0, game.Loop.PlayerTable.Round[1]);
@@ -102,6 +108,51 @@ public sealed class BubbleBobbleMainTests
         Assert.Equal(1, game.Loop.Entities.State[0]);
         Assert.Equal(0, game.Loop.Entities.State[1]);
         Assert.False(game.Loop.IsComplete);
+    }
+
+    // $37C9: the old level's items, fire and water are characters on the screen, so they go up with it: two rows an update.
+    [Fact]
+    [SuppressMessage(
+        "Reliability",
+        "CA2000:Dispose objects before losing scope",
+        Justification = "SetImage takes the bitmap on, and the graphics disposes what it holds.")]
+    public void TheOldLevelsItemsFireAndWaterGoUpWithTheScroll()
+    {
+        RecordingGraphics graphics = new(320, 200);
+
+        foreach (string sheet in s_sheets.Append("BubbleDragonInBubble"))
+        {
+            graphics.SetImage(sheet, new FastBitmap(4, 8));
+        }
+
+        BubbleBobbleMain game = Game(new FakeAbstraction(graphics, new(320, 200)));
+        game.Loop.Timer.Seconds = 0;
+        game.Loop.Timer.Hurry = 0xFF;
+
+        game.Update();
+        game.Update();
+        game.Draw();
+
+        Assert.Equal([new(0, -16), Vector2.Zero, new(0, -16), Vector2.Zero], graphics.Translations);
+    }
+
+    // $7FB2-$7FEE: an item that skips levels flashes the screen for 30 updates, and scrolls through every one of them, 16
+    // updates each, to the level it skips to.
+    [Fact]
+    public void ASkipScrollsThroughEveryLevelOnTheWay()
+    {
+        BubbleBobbleMain game = Game(new FakeAbstraction());
+        game.Loop.World.SkipTo = 3;
+
+        game.Update();
+
+        for (int update = 1; update <= 30 + (3 * (LevelScroll.Steps / 2)); update++)
+        {
+            Assert.Equal(1, game.CurrentLevel);
+            game.Update();
+        }
+
+        Assert.Equal(4, game.CurrentLevel);
     }
 
     // $0A8B: level 100's end is the ending.
@@ -128,17 +179,18 @@ public sealed class BubbleBobbleMainTests
         Assert.Equal(1, game.CurrentLevel);
     }
 
-    // The level and its items trimmed to the 28 columns the decoration leaves, the bubbles and the
+    // The flash before a skip under the whole screen, the level and its items trimmed to the 28 columns the decoration leaves, the bubbles and the
     // decoration over the whole 32, a bonus room over them, the players over that, and the HUD in the eight columns past them.
     // All are the full height of the screen, after the whole screen the banner is drawn across. The players share the decoration's band because a sprite
     // may be anywhere on the level, including over its outermost columns.
     [Fact]
-    public void ComposesTheLevelItsItemsEffectsBubblesDecorationRoomPlayersAndHudAsEightLayers()
+    public void ComposesTheFlashLevelItsItemsEffectsBubblesDecorationRoomPlayersAndHudAsNineLayers()
     {
         RecordingGraphics graphics = Draw();
 
         Assert.Equal(
             [(new Vector2(0, 0), 320f, 200f),
+             (new Vector2(0, 0), 320f, 200f),
              (new Vector2(16, 0), 224f, 200f),
              (new Vector2(16, 0), 224f, 200f),
              (new Vector2(16, 0), 224f, 200f),

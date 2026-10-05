@@ -1,4 +1,4 @@
-// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
+﻿// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
 // 'rebb64' - github.com/zaidka/rebb64.
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
@@ -35,6 +35,45 @@ public sealed class GameSongTests
 
     [Fact]
     public void ALevelThatFollowsAnotherResumesTheTune() => Assert.Equal(Song.Resume, Start(2, next: true).TakeSong());
+
+    // $05DD-$05F0: the theme still playing goes on into the next level; nothing is asked for.
+    [Fact]
+    public void TheThemeGoesOnIntoTheNextLevel()
+    {
+        GameLoop loop = Start(1, next: false);
+        _ = loop.TakeSong();
+
+        loop.Start(s_levels.Level(2), s_zones.Zones(2), 2, next: true);
+
+        Assert.Null(loop.TakeSong());
+    }
+
+    // $05DD-$05F0: a tune past the final theme in the song table, the hurry-up's, is followed by the level's tune again.
+    [Fact]
+    public void TheHurryUpIsFollowedByTheLevelsTuneAgain()
+    {
+        GameLoop loop = Start(1, next: false);
+        loop.Timer.Seconds = 0;
+        loop.Timer.Hurry = 0;
+        loop.Pass([Idle, Idle]);
+        _ = Drain(loop);
+
+        loop.Start(s_levels.Level(2), s_zones.Zones(2), 2, next: true);
+
+        Assert.Equal(Song.Resume, loop.TakeSong());
+    }
+
+    // $05DC: level 99's tune is always started, over the theme.
+    [Fact]
+    public void TheLastLevelsTuneIsStartedOverTheTheme()
+    {
+        GameLoop loop = Start(1, next: false);
+        _ = loop.TakeSong();
+
+        loop.Start(s_levels.Level(100), s_zones.Zones(100), 100, next: true);
+
+        Assert.Equal(Song.FinalTheme, loop.TakeSong());
+    }
 
     [Fact]
     public void TheLastLevelHasItsOwnTune() => Assert.Equal(Song.FinalTheme, Start(100, next: true).TakeSong());

@@ -579,11 +579,36 @@ Each item ends with how it is proved.
         count and bonus type were written 0) in `GameLoopTests`, for SUBFLG,
         the round and the players. Not done, and the reason step 4 does not
         carry a level 1 to 2 playthrough against VICE: the ROUND and READY!!
-        screens and the level scroll (`$09A5`, `$37C9`, `$3AB8`) are drawing;
-        the players are back at the start point when the level ends (a routine
-        that moves them in the nine seconds was not found); and level 1's
+        screens and the hurry-up scroll (`$3AB8`) are drawing;
+        the players are back at the start point when the level ends (it is
+        not the nine seconds that move them: `$E554` glides them there after
+        the scroll, below); and level 1's
         bonus round (`$3517`, step 7) comes first on the C64 (SUBFLG 0, 4, 9,
         15, 22).
+      - [x] **4d+. The scroll to the next level.** `Levels/LevelScroll`
+        (`$37C9`-`$385E`, from `$09A5` with the carry clear): the screen moves
+        up a row a frame, two a pass, for 32 rows (3 more of the old level's
+        bottom wall, 4 more of the new level's top wall, its 25), with the
+        raster split (`$20`) giving the new level its colours from its wall
+        down. The players hang where they were in dragons in bubbles (`$E4DF`,
+        the IRQ turning the frame every 8 frames, `$0746`); nothing else moves.
+        Then the next level is set up and its tune started (`$09DC`-`$09E5`),
+        and the bubbles glide to its start points (`draw_animated_sprite`,
+        `$E554`: a Bresenham line, `$E5C4`, a point a frame, both players at
+        once; `Levels/BubbleGlide`) before it is played. The glide is proved
+        **against the oracle** (`BubbleGlideOracleTests`: every point of four
+        lines, flat and steep). The old level's items
+        are characters on the screen and go up with it (the item and effect layers'
+        `RenderLayer.Offset`, through `IGraphics.SetTranslation`), and so are its
+        fire and water, which stand still while it scrolls; its bubbles are not,
+        since `$2E79` clears every object and redraws before the scroll (all
+        three seen in the oracle). An item that skips levels (`$7FB2`) scrolls
+        through each one on the way (`$7FD4`-`$7FEE`: each level drawn and
+        scrolled past, the last through `$09A5`), after the border and
+        background flash red six times, ten frames apart, with the game paused
+        (`$7FB8`-`$7FD1`; `Levels/LevelChange`). Proved **against
+        the oracle**: `LevelScrollOracleTests`, every cell inside the
+        decoration and the split at each even row of a level 1 to 2 scroll.
       - [x] **4e. The hurry-up.** `LevelEnd.HurryUp` (`$15E8`-`$15F4`, `$3AB8`):
         the first time the clock runs out, every enemy in state 1 to `$0A` is
         angry (`$16E4`), `$2D` becomes 1 and `$2A` 10. The scroll, the tune and

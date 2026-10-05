@@ -30,8 +30,8 @@ internal sealed class SidebarView8Bit : IView<SidebarModel>
 
     private readonly IGraphics _graphics;
     private readonly BbViewLayout _layout;
-    private readonly MulticolourSheet _sidebars;
-    private readonly MulticolourSheet _tiles;
+    private readonly LevelSheets _sidebars;
+    private readonly LevelSheets _tiles;
     private readonly FastColor _black;
     private readonly FastColor _white;
 
@@ -51,18 +51,23 @@ internal sealed class SidebarView8Bit : IView<SidebarModel>
     {
         ArgumentNullException.ThrowIfNull(model);
 
-        _sidebars.Paint(model.Colours);
-        _tiles.Paint(model.Colours);
+        // Only the level coming in under the scroll's split starts below the top.
+        bool incoming = model.FirstRow > 0;
+        string sheet = model.HasDesign ? _sidebars.Paint(model.Colours, incoming) : _tiles.Paint(model.Colours, incoming);
 
-        for (int row = 0; row < _layout.PlayfieldRows; row += BlockRows)
+        // A block's rows follow the decoration's own rows, wherever on the screen it has been moved to.
+        for (int row = model.FirstRow; row < model.EndRow; row++)
         {
-            int rows = Math.Min(BlockRows, _layout.PlayfieldRows - row);
+            int blockRow = (((row - model.Shift) % BlockRows) + BlockRows) % BlockRows;
 
-            DrawBlock(model, 0, row, rows);
-            DrawBlock(model, _layout.PlayfieldColumns - BlockColumns, row, rows);
+            DrawRow(model, sheet, 0, row, blockRow);
+            DrawRow(model, sheet, _layout.PlayfieldColumns - BlockColumns, row, blockRow);
         }
 
-        DrawNumber(model);
+        if (model.Shift >= model.FirstRow && model.Shift < model.EndRow)
+        {
+            DrawNumber(model);
+        }
     }
 
     // $38E9: the level number's two characters ($1A, $1B) replace the top-left corner of the level.
@@ -77,32 +82,30 @@ internal sealed class SidebarView8Bit : IView<SidebarModel>
         // one under it ($386E-$3874 clear six). The rest of the cell keeps the wall: the reference fills those two rows
         // from the level's own data ($387A-$388F).
         _graphics.DrawRectangleFilled(
-            _layout.Playfield.Cell(0, 0),
+            _layout.Playfield.Cell(0, model.Shift),
             BlockColumns * _layout.CellWidth,
             NumberRows * _layout.CellHeight / CharacterHeight,
             _black);
-        _graphics.DrawTextLeft(_layout.Playfield.Cell(0, 0), model.NumberText, NumberFont, _white);
+        _graphics.DrawTextLeft(_layout.Playfield.Cell(0, model.Shift), model.NumberText, NumberFont, _white);
     }
 
-    private void DrawBlock(SidebarModel model, int column, int row, int rows)
+    private void DrawRow(SidebarModel model, string sheet, int column, int row, int blockRow)
     {
-        for (int blockRow = 0; blockRow < rows; blockRow++)
+        for (int blockColumn = 0; blockColumn < BlockColumns; blockColumn++)
         {
-            for (int blockColumn = 0; blockColumn < BlockColumns; blockColumn++)
-            {
-                DrawCharacter(
-                    model,
-                    (blockRow * BlockColumns) + blockColumn,
-                    _layout.Playfield.Cell(column + blockColumn, row + blockRow));
-            }
+            DrawCharacter(
+                model,
+                sheet,
+                (blockRow * BlockColumns) + blockColumn,
+                _layout.Playfield.Cell(column + blockColumn, row));
         }
     }
 
-    private void DrawCharacter(SidebarModel model, int character, Vector2 position)
+    private void DrawCharacter(SidebarModel model, string sheet, int character, Vector2 position)
     {
-        (string sheet, int index) = model.HasDesign
-            ? (_sidebars.Name, (model.Design * SidebarModel.CharactersPerDesign) + character)
-            : (_tiles.Name, model.HeaderTile);
+        int index = model.HasDesign
+            ? (model.Design * SidebarModel.CharactersPerDesign) + character
+            : model.HeaderTile;
 
         int columns = model.HasDesign ? SidebarModel.CharactersPerDesign : TileSheetColumns;
         int sheetColumn = index % columns;

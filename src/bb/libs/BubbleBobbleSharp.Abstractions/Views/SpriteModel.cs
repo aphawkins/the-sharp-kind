@@ -94,6 +94,12 @@ public sealed class SpriteModel
     /// </summary>
     public BossPicture? Boss { get; init; }
 
+    /// <summary>
+    /// Gets the frame of the dragons in bubbles the players hang in while the screen scrolls to the next level (<c>$E4DF</c>,
+    /// four sprites each at the player's place less 10 across and 8 up), or -1. Only the players' slots are drawn then.
+    /// </summary>
+    public int TransitFrame { get; init; } = -1;
+
     /// <summary>Whether a slot is drawn at all.</summary>
     /// <param name="slot">The slot, 0 to 7.</param>
     /// <returns>Whether that slot is drawn.</returns>
