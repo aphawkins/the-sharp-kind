@@ -215,4 +215,10 @@ public interface IGraphics
     public void SaveScreen(string path);
 
     public void SetClipRegion(Vector2 position, float width, float height);
+
+    /// <summary>
+    /// Move everything drawn from now on by an offset, until it is set again. The clip region is not moved: it stays
+    /// where <see cref="SetClipRegion"/> put it on the screen.
+    /// </summary>
+    public void SetTranslation(Vector2 offset);
 }

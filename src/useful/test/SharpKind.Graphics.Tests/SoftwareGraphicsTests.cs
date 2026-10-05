@@ -23,6 +23,51 @@ public class SoftwareGraphicsTests
             () => SoftwareGraphics.Create(5, 5, _ => { }, assets, null!));
     }
 
+    // Everything drawn after a translation is moved by it; the clip region is not.
+    [Fact]
+    public void ATranslationMovesWhatIsDrawnButNotTheClipRegion()
+    {
+        Mock<IAssetLocator> moqAssetLocator = ArrangeAssets();
+        FastBitmap? screen = null;
+        using SoftwareGraphics graphics = SoftwareGraphics.Create(5, 5, bmp => screen = bmp, moqAssetLocator.Object);
+
+        graphics.SetClipRegion(Vector2.Zero, 5, 4);
+        graphics.SetTranslation(new(1, 2));
+        graphics.DrawPixel(new(0, 0), BaseColors.White);
+        graphics.DrawRectangleFilled(new(0, 1), 0, 0, BaseColors.Red);
+        graphics.DrawLine(new(2, 2), new(3, 2), BaseColors.Green);
+        graphics.SetTranslation(Vector2.Zero);
+        graphics.DrawPixel(new(4, 0), BaseColors.Blue);
+        graphics.ScreenUpdate();
+
+        Assert.NotNull(screen);
+        Assert.Equal(BaseColors.White, screen.GetPixel(1, 2));
+        Assert.Equal(BaseColors.Black, screen.GetPixel(0, 0));
+        Assert.Equal(BaseColors.Blue, screen.GetPixel(4, 0));
+
+        // Moved to row 4, under the clip region, which stayed put.
+        Assert.Equal(BaseColors.Black, screen.GetPixel(4, 4));
+        Assert.Equal(BaseColors.Black, screen.GetPixel(3, 4));
+        Assert.Equal(BaseColors.Black, screen.GetPixel(1, 3));
+    }
+
+    // A triangle is filled where it is moved to.
+    [Fact]
+    public void ATranslationMovesAFilledTriangle()
+    {
+        Mock<IAssetLocator> moqAssetLocator = ArrangeAssets();
+        FastBitmap? screen = null;
+        using SoftwareGraphics graphics = SoftwareGraphics.Create(8, 8, bmp => screen = bmp, moqAssetLocator.Object);
+
+        graphics.SetTranslation(new(4, 4));
+        graphics.DrawTriangleFilled(new(0, 0), new(3, 0), new(0, 3), BaseColors.White);
+        graphics.ScreenUpdate();
+
+        Assert.NotNull(screen);
+        Assert.Equal(BaseColors.White, screen.GetPixel(5, 5));
+        Assert.Equal(BaseColors.Black, screen.GetPixel(1, 1));
+    }
+
     [Fact]
     public void Clear()
     {

@@ -1,4 +1,4 @@
-// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
+﻿// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
 
 using System.Numerics;
 
@@ -17,4 +17,11 @@ namespace SharpKind.Graphics;
 /// <param name="Width">The clip rectangle's width in pixels.</param>
 /// <param name="Height">The clip rectangle's height in pixels.</param>
 /// <param name="Drawer">The drawing that goes into the rectangle.</param>
-public sealed record RenderLayer(Vector2 Position, float Width, float Height, ILayerDrawer Drawer);
+public sealed record RenderLayer(Vector2 Position, float Width, float Height, ILayerDrawer Drawer)
+{
+    /// <summary>
+    /// Gets how far the layer's drawing is moved this frame, asked each time it is drawn, or null for not at all. The clip
+    /// rectangle stays where it is, so drawing moved out of it is cut off.
+    /// </summary>
+    public Func<Vector2>? Offset { get; init; }
+}

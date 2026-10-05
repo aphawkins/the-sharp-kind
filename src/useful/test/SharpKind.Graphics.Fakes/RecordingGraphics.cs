@@ -37,6 +37,8 @@ public sealed class RecordingGraphics(float screenWidth = 0, float screenHeight 
 
     public IList<(Vector2 Position, float Width, float Height)> ClipRegions { get; } = [];
 
+    public IList<Vector2> Translations { get; } = [];
+
     public IDictionary<string, FastBitmap> Images { get; } = new Dictionary<string, FastBitmap>(StringComparer.Ordinal);
 
     public IList<(Vector2 Position, string Text, string FontType, FastColor Colour)> LeftTexts { get; } = [];
@@ -178,4 +180,6 @@ public sealed class RecordingGraphics(float screenWidth = 0, float screenHeight 
 
     public void SetClipRegion(Vector2 position, float width, float height)
         => ClipRegions.Add((position, width, height));
+
+    public void SetTranslation(Vector2 offset) => Translations.Add(offset);
 }

@@ -1,11 +1,14 @@
-// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
+﻿// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
+
+using System.Numerics;
 
 namespace SharpKind.Graphics;
 
 /// <summary>
 /// Draws a frame as an ordered list of <see cref="RenderLayer"/>s. For each
-/// layer it sets the clip region, runs the layer, and flushes the depth
-/// content, then moves on to the next.
+/// layer it sets the clip region (and the translation, for a layer with an
+/// offset), runs the layer, and flushes the depth content, then moves on to
+/// the next.
 /// <para>
 /// Build one and keep it. The set of layers is fixed in a given game, so
 /// there is nothing to rebuild per frame - a layer that has nothing to draw
@@ -34,7 +37,17 @@ public sealed class LayerRunner
         foreach (RenderLayer layer in _layers)
         {
             _graphics.SetClipRegion(layer.Position, layer.Width, layer.Height);
-            layer.Drawer.Draw();
+
+            if (layer.Offset is null)
+            {
+                layer.Drawer.Draw();
+            }
+            else
+            {
+                _graphics.SetTranslation(layer.Offset());
+                layer.Drawer.Draw();
+                _graphics.SetTranslation(Vector2.Zero);
+            }
 
             // Must run before the next layer's clip region replaces this one, or a depth-compositing backend would trim this layer's content to the next layer's rectangle - see IGraphics.FlushDepth.
             _graphics.FlushDepth();

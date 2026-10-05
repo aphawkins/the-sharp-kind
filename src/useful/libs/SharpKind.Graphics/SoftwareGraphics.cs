@@ -39,6 +39,9 @@ public sealed partial class SoftwareGraphics : IGraphics, IDisposable
     private int _clipRight;
     private int _clipBottom;
 
+    // Added to every position drawn at; see IGraphics.SetTranslation.
+    private Vector2 _translation;
+
     internal SoftwareGraphics(
         float screenWidth,
         float screenHeight,
@@ -250,6 +253,7 @@ public sealed partial class SoftwareGraphics : IGraphics, IDisposable
     {
         Debug.Assert(Images.ContainsKey(imageType), "Image has not been loaded");
 
+        position += _translation;
         FastBitmap bitmap = Images[imageType];
         bool mirrorX = sourceSize.X < 0;
         float sourceWidth = Math.Abs(sourceSize.X);
@@ -307,10 +311,10 @@ public sealed partial class SoftwareGraphics : IGraphics, IDisposable
         FastColor color,
         int surfaceId)
         => DrawLineIntDepth(
-            (int)MathF.Floor(lineStart.X),
-            (int)MathF.Floor(lineStart.Y),
-            (int)MathF.Floor(lineEnd.X),
-            (int)MathF.Floor(lineEnd.Y),
+            (int)MathF.Floor(lineStart.X + _translation.X),
+            (int)MathF.Floor(lineStart.Y + _translation.Y),
+            (int)MathF.Floor(lineEnd.X + _translation.X),
+            (int)MathF.Floor(lineEnd.Y + _translation.Y),
             1f / depthStart,
             1f / depthEnd,
             color,
@@ -318,14 +322,16 @@ public sealed partial class SoftwareGraphics : IGraphics, IDisposable
 
     public void DrawLine(Vector2 lineStart, Vector2 lineEnd, FastColor color)
         => DrawLineInt(
-            (int)MathF.Floor(lineStart.X),
-            (int)MathF.Floor(lineStart.Y),
-            (int)MathF.Floor(lineEnd.X),
-            (int)MathF.Floor(lineEnd.Y),
+            (int)MathF.Floor(lineStart.X + _translation.X),
+            (int)MathF.Floor(lineStart.Y + _translation.Y),
+            (int)MathF.Floor(lineEnd.X + _translation.X),
+            (int)MathF.Floor(lineEnd.Y + _translation.Y),
             color);
 
     public void DrawPixel(Vector2 position, FastColor color)
     {
+        position += _translation;
+
         if (position.X < _clipLeft || position.Y < _clipTop || position.X >= _clipRight || position.Y >= _clipBottom)
         {
             return;
@@ -362,6 +368,7 @@ public sealed partial class SoftwareGraphics : IGraphics, IDisposable
         // The face is one colour, so the dither has only sixteen answers for
         // it; resolve them once here rather than per pixel.
         DitherCells cells = new(stackalloc FastColor[DitherCells.Count], faceColor, dither);
+        points = Translate(points);
 
         // Create triangles of which each share the first vertex
         for (int i = 1; i < points.Length - 1; i++)
@@ -396,6 +403,8 @@ public sealed partial class SoftwareGraphics : IGraphics, IDisposable
             return;
         }
 
+        points = Translate(points);
+
         // Create triangles of which each share the first vertex
         for (int i = 1; i < points.Length - 1; i++)
         {
@@ -422,6 +431,8 @@ public sealed partial class SoftwareGraphics : IGraphics, IDisposable
             return;
         }
 
+        points = Translate(points);
+
         // Create triangles of which each share the first vertex
         for (int i = 1; i < points.Length - 1; i++)
         {
@@ -441,8 +452,8 @@ public sealed partial class SoftwareGraphics : IGraphics, IDisposable
 
     public void DrawRectangle(Vector2 position, float width, float height, FastColor color)
         => DrawRectangleInt(
-            (int)MathF.Floor(position.X),
-            (int)MathF.Floor(position.Y),
+            (int)MathF.Floor(position.X + _translation.X),
+            (int)MathF.Floor(position.Y + _translation.Y),
             (int)MathF.Floor(width),
             (int)MathF.Floor(height),
             color);
@@ -452,8 +463,8 @@ public sealed partial class SoftwareGraphics : IGraphics, IDisposable
 
     public void DrawRectangleFilled(Vector2 position, float width, float height, FastColor color)
         => DrawRectangleFilledInt(
-            (int)MathF.Floor(position.X),
-            (int)MathF.Floor(position.Y),
+            (int)MathF.Floor(position.X + _translation.X),
+            (int)MathF.Floor(position.Y + _translation.Y),
             (int)MathF.Floor(width),
             (int)MathF.Floor(height),
             color);
@@ -505,7 +516,11 @@ public sealed partial class SoftwareGraphics : IGraphics, IDisposable
         => DrawTriangleFilled(a, b, c, color, dither: null);
 
     public void DrawTriangleFilled(Vector2 a, Vector2 b, Vector2 c, in FastColor color, IColourQuantiser? dither)
-        => DrawTriangleFilledCells(a, b, c, new DitherCells(stackalloc FastColor[DitherCells.Count], color, dither));
+        => DrawTriangleFilledCells(
+            a + _translation,
+            b + _translation,
+            c + _translation,
+            new DitherCells(stackalloc FastColor[DitherCells.Count], color, dither));
 
     public void ScreenUpdate() => _screenUpdate(_screen);
 
@@ -523,6 +538,8 @@ public sealed partial class SoftwareGraphics : IGraphics, IDisposable
         _clipRight = (int)Math.Clamp(position.X + width, 0, ScreenWidth);
         _clipBottom = (int)Math.Clamp(position.Y + height, 0, ScreenHeight);
     }
+
+    public void SetTranslation(Vector2 offset) => _translation = offset;
 
     // Texture coordinates interpolated affinely (no perspective correction, fine for small
     // triangles), sampled bilinearly from whichever mip level best matches the texel-to-pixel ratio.
@@ -804,8 +821,28 @@ public sealed partial class SoftwareGraphics : IGraphics, IDisposable
         }
     }
 
+    // The points moved by the translation: the same array when there is none, so an untranslated draw allocates nothing.
+    private Vector2[] Translate(Vector2[] points)
+    {
+        if (points == null || _translation == Vector2.Zero)
+        {
+            return points!;
+        }
+
+        Vector2[] moved = new Vector2[points.Length];
+
+        for (int i = 0; i < points.Length; i++)
+        {
+            moved[i] = points[i] + _translation;
+        }
+
+        return moved;
+    }
+
     private void DrawImage(FastBitmap bitmap, Vector2 position)
     {
+        position += _translation;
+
         // Clipped once here: loops narrow to the part of the bitmap inside the clip rectangle, so the pixel path tests nothing.
         int left = Math.Max(0, _clipLeft - (int)position.X);
         int top = Math.Max(0, _clipTop - (int)position.Y);
@@ -901,6 +938,8 @@ public sealed partial class SoftwareGraphics : IGraphics, IDisposable
         bool writeColor,
         int surfaceId)
     {
+        points = Translate(points);
+
         if (points == null || depths == null || depths.Length < points.Length)
         {
             return;

@@ -1,4 +1,4 @@
-// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
+﻿// 'SharpKind Libraries' - Andy Hawkins 2023-2026.
 
 using System.Numerics;
 using SharpKind.Graphics.Fakes;
@@ -79,6 +79,35 @@ public class LayerRunnerTests
 
         Assert.Equal(2, graphics.ClipRegions.Count);
         Assert.Equal(1, hud.FlushesWhenDrawn);
+    }
+
+    // The offset is asked for each frame, set for its own layer only, and taken off again before the next.
+    [Fact]
+    public void ALayerWithAnOffsetDrawsTranslatedAndTheNextDoesNot()
+    {
+        RecordingGraphics graphics = new(512, 512);
+        Vector2 offset = new(0, -16);
+        LayerRunner runner = new(
+            graphics,
+            new RenderLayer(Vector2.Zero, 512, 384, new SilentLayer()) { Offset = () => offset },
+            new RenderLayer(Vector2.Zero, 512, 512, new SilentLayer()));
+
+        runner.Draw();
+        offset = new(0, -32);
+        runner.Draw();
+
+        Assert.Equal([new(0, -16), Vector2.Zero, new(0, -32), Vector2.Zero], graphics.Translations);
+    }
+
+    [Fact]
+    public void LayersWithoutAnOffsetSetNoTranslation()
+    {
+        RecordingGraphics graphics = new(512, 512);
+        LayerRunner runner = new(graphics, new RenderLayer(Vector2.Zero, 512, 384, new SilentLayer()));
+
+        runner.Draw();
+
+        Assert.Empty(graphics.Translations);
     }
 
     [Fact]

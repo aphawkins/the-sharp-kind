@@ -24,6 +24,9 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
     private Dictionary<string, nint> _imageTextures = [];
     private bool _isDisposed;
 
+    // Added to every position drawn at; see IGraphics.SetTranslation.
+    private Vector2 _translation;
+
     // CPU-rasterised, per-pixel depth-tested layer for DrawPolygonFilledDepth
     // / DrawPolygonTexturedDepth: SDL's accelerated 2D renderer has no depth
     // buffer, so depth-tested polygons would otherwise pop/flicker in
@@ -255,6 +258,7 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
 
         FastBitmap image = _images[imageType];
         nint texturePtr = _imageTextures[imageType];
+        position += _translation;
 
         SDLGuard.Execute(() =>
         {
@@ -321,6 +325,7 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
         FlushDepthLayer();
 
         nint texturePtr = _imageTextures[imageType];
+        position += _translation;
 
         SDL_FlipMode flip = sourceSize.X < 0 ? SDL_FlipMode.SDL_FLIP_HORIZONTAL : SDL_FlipMode.SDL_FLIP_NONE;
 
@@ -353,6 +358,9 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
             return;
         }
 
+        lineStart += _translation;
+        lineEnd += _translation;
+
         if (_depthPassOpen && _depthLayer != null)
         {
             DrawLineToDepthLayer(lineStart, lineEnd, color);
@@ -373,7 +381,7 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
             return;
         }
 
-        DrawLineDepthToLayer(lineStart, lineEnd, depthStart, depthEnd, color, surfaceId);
+        DrawLineDepthToLayer(lineStart + _translation, lineEnd + _translation, depthStart, depthEnd, color, surfaceId);
         _depthLayerDirty = true;
     }
 
@@ -387,7 +395,9 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
         FlushDepthLayer();
         SetRenderDrawColor(color);
 
-        SDLGuard.Execute(() => SDL_RenderPoint(NativeRenderer, position.X, position.Y));
+        Vector2 point = position + _translation;
+
+        SDLGuard.Execute(() => SDL_RenderPoint(NativeRenderer, point.X, point.Y));
     }
 
     public void DrawPolygon(Vector2[] points, FastColor lineColor)
@@ -470,6 +480,8 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
             return;
         }
 
+        points = Translate(points);
+
         for (int i = 1; i < points.Length - 1; i++)
         {
             DrawTriangleTexturedDepthToLayer(
@@ -501,6 +513,9 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
         float x = position.X;
         float y = position.Y;
 
+        x += _translation.X;
+        y += _translation.Y;
+
         SDLGuard.Execute(() =>
         {
             SDL_FRect rectangle = new()
@@ -531,6 +546,9 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
         float x = position.X;
         float y = position.Y;
 
+        x += _translation.X;
+        y += _translation.Y;
+
         SDLGuard.Execute(() =>
         {
             SDL_FRect rectangle = new()
@@ -559,8 +577,8 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
 
         FlushDepthLayer();
         TextTextureEntry entry = GetOrCreateTextTexture(fontType, text, color);
-        float destX = (ScreenWidth / 2) - (entry.Width / 2);
-        float destY = y;
+        float destX = (ScreenWidth / 2) - (entry.Width / 2) + _translation.X;
+        float destY = y + _translation.Y;
 
         SDLGuard.Execute(() =>
         {
@@ -578,8 +596,8 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
 
         FlushDepthLayer();
         TextTextureEntry entry = GetOrCreateTextTexture(fontType, text, color);
-        float destX = position.X;
-        float destY = position.Y;
+        float destX = position.X + _translation.X;
+        float destY = position.Y + _translation.Y;
 
         SDLGuard.Execute(() =>
         {
@@ -597,8 +615,8 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
 
         FlushDepthLayer();
         TextTextureEntry entry = GetOrCreateTextTexture(fontType, text, color);
-        float destX = position.X - entry.Width;
-        float destY = position.Y;
+        float destX = position.X - entry.Width + _translation.X;
+        float destY = position.Y + _translation.Y;
 
         SDLGuard.Execute(() =>
         {
@@ -626,9 +644,9 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
         SDLGuard.Execute(() =>
         {
             SDL_Vertex* vertices = stackalloc SDL_Vertex[3];
-            vertices[0] = ConvertVertex(a, color);
-            vertices[1] = ConvertVertex(b, color);
-            vertices[2] = ConvertVertex(c, color);
+            vertices[0] = ConvertVertex(a + _translation, color);
+            vertices[1] = ConvertVertex(b + _translation, color);
+            vertices[2] = ConvertVertex(c + _translation, color);
 
             return SDL_RenderGeometry(NativeRenderer, null, vertices, 3, null, 0);
         });
@@ -709,6 +727,8 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
             return SDL_SetRenderClipRect(NativeRenderer, &rectangle);
         });
     }
+
+    public void SetTranslation(Vector2 offset) => _translation = offset;
 
     // Uploads a decoded bitmap as a static texture. Blend mode is set explicitly since SDL_CreateTexture, unlike SDL_CreateTextureFromSurface, does not infer it from pixel alpha.
     private static nint CreateImageTexture(SDL_Renderer* renderer, FastBitmap image)
@@ -947,12 +967,32 @@ public sealed unsafe partial class SDLGraphics : IGraphics, IDisposable
         }
     }
 
+    // The points moved by the translation: the same array when there is none, so an untranslated draw allocates nothing.
+    private Vector2[] Translate(Vector2[] points)
+    {
+        if (points == null || _translation == Vector2.Zero)
+        {
+            return points!;
+        }
+
+        Vector2[] moved = new Vector2[points.Length];
+
+        for (int i = 0; i < points.Length; i++)
+        {
+            moved[i] = points[i] + _translation;
+        }
+
+        return moved;
+    }
+
     private void FillPolygonDepth(Vector2[] points, float[] depths, in FastColor faceColor, bool writeColor, int surfaceId)
     {
         if (_isDisposed || points == null || depths == null || depths.Length < points.Length || _depthLayer == null)
         {
             return;
         }
+
+        points = Translate(points);
 
         for (int i = 1; i < points.Length - 1; i++)
         {
