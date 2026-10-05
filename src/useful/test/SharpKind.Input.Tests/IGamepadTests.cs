@@ -376,6 +376,44 @@ public class IGamepadTests
     }
 
     // Both implementations must behave the same, so every contract test runs against each with a fresh instance per case.
+    // A second player's device is the first attached that is not the active one, and reads only its own input.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void TheSecondaryIsTheNextDeviceAndReadsOnlyItsOwnInput(bool software)
+    {
+        IGamepad pad = Create(software);
+        IGamepadSink sink = (IGamepadSink)pad;
+        sink.Connected(DeviceA, "first");
+        Assert.False(pad.Secondary.IsConnected);
+
+        sink.Connected(DeviceB, "second");
+        sink.ButtonDown(DeviceB, GamepadButton.A);
+        sink.AxisMoved(DeviceA, GamepadAxis.LeftX, -1f);
+
+        Assert.True(pad.Secondary.IsConnected);
+        Assert.Equal("second", pad.Secondary.DeviceName);
+        Assert.True(pad.Secondary.IsHeld(GamepadButton.A));
+        Assert.Equal(0f, pad.Secondary.Axis(GamepadAxis.LeftX));
+        Assert.False(pad.IsHeld(GamepadButton.A));
+    }
+
+    // Preferring the second device makes it the active one, and the first the secondary.
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void PreferringTheSecondDeviceSwapsThemOver(bool software)
+    {
+        IGamepad pad = Create(software);
+        IGamepadSink sink = (IGamepadSink)pad;
+        sink.Connected(DeviceA, "first");
+        sink.Connected(DeviceB, "second");
+
+        pad.PreferredDevice = "second";
+
+        Assert.Equal("first", pad.Secondary.DeviceName);
+    }
+
     private static IGamepad Create(bool software)
         => software ? new SoftwareGamepad(new FakeInput()) : new FakeGamepad();
 

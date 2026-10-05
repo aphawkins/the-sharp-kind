@@ -158,8 +158,7 @@ public sealed class InputTests
         Assert.Equal(Input.Idle, input.Read()[0]);
     }
 
-    // The pad is player 1's alone, because only one device can be read at a time. Player 2 is on the
-    // keys whatever is plugged in.
+    // One pad is player 1's alone; player 2 has the keys until a second pad is plugged in.
     [Fact]
     public void LeavesPlayerTwoAloneWhenThePadIsPushed()
     {
@@ -168,6 +167,22 @@ public sealed class InputTests
         gamepad.ButtonDown(GamepadButton.DPadLeft);
 
         Assert.Equal(Input.Idle, input.Read()[1]);
+    }
+
+    // The second pad attached is player 2's, and drives only player 2.
+    [Fact]
+    public void TheSecondPadIsPlayerTwos()
+    {
+        Input input = Build(out _, out FakeGamepad gamepad);
+        gamepad.Connected(1, "Pad 1");
+        gamepad.Connected(2, "Pad 2");
+        gamepad.ButtonDown(2, GamepadButton.DPadLeft);
+        gamepad.ButtonDown(2, GamepadButton.A);
+
+        ReadOnlySpan<byte> ports = input.Read();
+
+        Assert.Equal(Input.Idle, ports[0]);
+        Assert.Equal((byte)(Input.Idle & ~(Input.Left | Input.Fire)), ports[1]);
     }
 
     // Keys and pad drive the same five bits, so holding both is one push, not two.

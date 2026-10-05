@@ -20,6 +20,8 @@ public sealed class FakeGamepad : IGamepad, IGamepadSink
 
     public string DeviceName => Active?.Name ?? string.Empty;
 
+    public IGamepad Secondary => new SecondaryView(this);
+
     public IReadOnlyList<string> AttachedDevices => [.. _arrivals.Select(id => _devices[id].Name)];
 
     private Device? Active
@@ -43,6 +45,24 @@ public sealed class FakeGamepad : IGamepad, IGamepadSink
             }
 
             return _devices[_arrivals[0]];
+        }
+    }
+
+    private Device? Second
+    {
+        get
+        {
+            Device? active = Active;
+
+            foreach (int id in _arrivals)
+            {
+                if (_devices[id] != active)
+                {
+                    return _devices[id];
+                }
+            }
+
+            return null;
         }
     }
 
@@ -146,6 +166,40 @@ public sealed class FakeGamepad : IGamepad, IGamepadSink
         }
 
         return device;
+    }
+
+    private sealed class SecondaryView(FakeGamepad owner) : IGamepad
+    {
+        public bool IsConnected => owner.Second is not null;
+
+        public string DeviceName => owner.Second?.Name ?? string.Empty;
+
+        public IReadOnlyList<string> AttachedDevices => owner.AttachedDevices;
+
+        public string? PreferredDevice
+        {
+            get => owner.PreferredDevice;
+            set => owner.PreferredDevice = value;
+        }
+
+        public IGamepad Secondary => this;
+
+        public void ClearPressed() => owner.Second?.ClearInput();
+
+        public bool IsPressed(GamepadButton button)
+            => button != GamepadButton.None && owner.Second?.Pressed.Remove(button) == true;
+
+        public bool IsHeld(GamepadButton button)
+            => button != GamepadButton.None && owner.Second?.Held.Contains(button) == true;
+
+        public float Axis(GamepadAxis axis)
+            => owner.Second is { } second && second.Axes.TryGetValue(axis, out float value) ? value : 0f;
+
+        public bool IsAnalog(GamepadAxis axis) => owner.Second?.Analog.Contains(axis) == true;
+
+        public void Poll()
+        {
+        }
     }
 
     private sealed class Device(string name)
