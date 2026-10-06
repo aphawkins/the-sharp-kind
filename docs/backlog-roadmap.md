@@ -43,6 +43,8 @@ Every open work item, in priority order. Each line links to a file in
 
 Steps from section 5 of [bb-port-plan.md](bb-port-plan.md), in order.
 
+- [ ] Bug: [the music restarts when a player loses a life](work-items/bb-music-restarts-on-life-lost.md)
+- [ ] Bug: [popped water flows too low along the platforms](work-items/bb-water-flow-too-low.md)
 - [ ] [6b: item effect 29, the six-sprite giant](work-items/bb-6b-giant-enemy-effect.md)
 - [ ] [6c: item effect 32, the super bonus room](work-items/bb-6c-super-bonus-room.md)
 - [ ] [7: super mode, bonus rounds and level 100](work-items/bb-7-super-mode-bonus-level-100.md)
