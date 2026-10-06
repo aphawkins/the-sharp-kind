@@ -897,6 +897,81 @@ def export_effect_chars(out_dir, canonical):
 
 
 # =============================================================================
+# EXTEND letters
+# =============================================================================
+#
+# $E658 builds the letters down the side of the playfield into screen codes
+# $4A-$5D, which $E6CD writes as one 2x2 block a letter (c, c+1 below it, c+2
+# right of it, c+3 below that): E, X, T, N and D. Each block is the level's
+# wall (chars $11-$14, which $3940 copies the wall into) ANDed with the letter
+# bubble's mask, ORed with its art (bubble entries $18, $1C, $20, $24 and $28,
+# through $AA54 and $AAC8 at $18 + 4n), then ANDed with $A988's circle.
+#
+# Entry 00 is where the wall shows through, so the view draws the wall first;
+# entry 04 is opaque black, outside the circle or cleared by the mask.
+
+EXTEND_LETTERS = 5
+EXTEND_FIRST_ENTRY = 0x18
+
+# $A988: the circle, the left column's sixteen rows and then the right's.
+EXTEND_CIRCLE = bytes((
+    0xFC, 0xF3, 0xCF, 0xCF, 0x3F, 0x3F, 0x3F, 0x3F, 0x3F, 0x3F, 0x3F, 0x3F, 0xCF, 0xCF, 0xF3, 0xFC,
+    0x3F, 0xCF, 0xF3, 0xF3, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xF3, 0xF3, 0xCF, 0x3F,
+))
+
+
+def export_extend_chars(out_dir, canonical):
+    """The five EXTEND letters $E658 composes -> 8x16 multicolour blocks over the wall."""
+    bubble_masks_image = tga_mod.parse_tga(os.path.join(DATA, "bubble-masks.tga"))
+    software_sprites_image = tga_mod.parse_tga(os.path.join(DATA, "software-sprites.tga"))
+
+    bubble_masks = tga_mod.convert_bubble_masks(bubble_masks_image, 8, 16, 0)
+    software_sprites = tga_mod.convert_software_sprites(software_sprites_image, 4, 16, 0)
+
+    block_width = 2 * TILE_EDGE_WIDTH
+    width = EXTEND_LETTERS * block_width
+    height = 2 * CELL
+    pixels = bytearray(width * height)
+
+    for letter in range(EXTEND_LETTERS):
+        entry = EXTEND_FIRST_ENTRY + (4 * letter)
+        art = _block_bytes(_entry_graphic_addr(entry), bubble_masks, software_sprites)
+        mask = _block_bytes(_entry_mask_addr(entry), bubble_masks, software_sprites)
+
+        for column in range(2):
+            for y in range(height):
+                at = (column * height) + y
+                pairs = zip(_bit_pairs(art[at]), _bit_pairs(mask[at]), _bit_pairs(EXTEND_CIRCLE[at]))
+
+                for x, (ink, keep, circle) in enumerate(pairs):
+                    if circle == 0:
+                        value = 4
+                    elif circle == 3 and keep == 3 and ink == 0:
+                        value = 0
+                    elif circle == 3 and keep == 0:
+                        value = ink if ink != 0 else 4
+                    else:
+                        # Half a pair kept would mix the wall's bits with the art's, which one colour cannot show.
+                        raise SystemExit(
+                            f"EXTEND letter {letter} at column {column}, row {y}, pixel {x}: art {ink}, "
+                            f"mask {keep}, circle {circle} is not a whole pair kept or replaced."
+                        )
+
+                    pixels[(y * width) + (letter * block_width) + (column * TILE_EDGE_WIDTH) + x] = value
+
+    chars = {"width": width, "height": height, "pixels": pixels, "palette": [None] * 5}
+
+    write_tga(
+        os.path.join(out_dir, "Images", "extend-chars.tga"),
+        chars,
+        0,
+        list(canonical[:4]) + [canonical[0]],
+    )
+
+    return EXTEND_LETTERS
+
+
+# =============================================================================
 # Levels
 # =============================================================================
 
@@ -1120,6 +1195,12 @@ def main():
     print(
         f"Wrote {count} effect characters -> "
         f"{os.path.join(args.out, 'Images', 'effect-chars.tga')}"
+    )
+
+    count = export_extend_chars(args.out, canonical)
+    print(
+        f"Wrote {count} EXTEND letters -> "
+        f"{os.path.join(args.out, 'Images', 'extend-chars.tga')}"
     )
 
 

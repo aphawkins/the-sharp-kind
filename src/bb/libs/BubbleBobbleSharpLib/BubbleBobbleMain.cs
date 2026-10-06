@@ -543,9 +543,18 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
             // $3C01-$3CB1, $1694: the ROUND and READY!! text is over the level while its seconds ($A9B1) last.
             bool ready = !game._change.Active && game.Loop.Timer.Ready != LevelTimer.Stopped;
 
+            // $09EE, $E9AE: the EXTEND letters are drawn on the level once it is on the screen, and again as they change.
+            // Under VICE they stay up through the level's end, are gone while the screen scrolls, and are back on the
+            // new level while the players are still gliding in their bubbles.
+            ReadOnlySpan<byte> letters = game.Loop.PlayerTable.ExtendLetters;
+
             foreach (SidebarModel sidebar in game._change.Sidebars(game._sidebar))
             {
-                game._sidebarView.Draw(ready ? sidebar with { Round = game.CurrentLevel } : sidebar);
+                SidebarModel shown = game._change.Scroll is not null
+                    ? sidebar
+                    : sidebar with { PlayerOneLetters = letters[0], PlayerTwoLetters = letters[1] };
+
+                game._sidebarView.Draw(ready ? shown with { Round = game.CurrentLevel } : shown);
             }
         }
     }

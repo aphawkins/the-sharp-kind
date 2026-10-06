@@ -91,12 +91,70 @@ public sealed class SidebarView8BitTests
         Assert.Equal(TestSurface.Colour(9), painted.GetPixel(2, 0));
     }
 
+    // $E6CD: no letters, nothing over the wall.
+    [Fact]
+    public void DrawsNoLettersWhileThePlayersHoldNone()
+    {
+        RecordingGraphics graphics = Draw(new(3, 7, Colours));
+
+        Assert.DoesNotContain(graphics.ImageParts, x => x.ImageType == "ExtendChars.Recoloured");
+    }
+
+    // Player one's letters go down the left wall from row 10, player two's down the right, two rows a
+    // letter: E at row 10 to D at row 20.
+    [Theory]
+    [InlineData(0b000001, 0, 0f, 80f)]
+    [InlineData(0b100000, 0, 0f, 160f)]
+    [InlineData(0b001000, 1, 240f, 128f)]
+    public void DrawsALetterInItsPlaceOnItsPlayersWall(int letters, int player, float x, float y)
+    {
+        SidebarModel model = player == 0
+            ? new(3, 7, Colours) { PlayerOneLetters = letters }
+            : new(3, 7, Colours) { PlayerTwoLetters = letters };
+
+        RecordingGraphics graphics = Draw(model);
+
+        (_, Vector2 position, Vector2 size, _, Vector2 sourceSize) =
+            Assert.Single(graphics.ImageParts, part => part.ImageType == "ExtendChars.Recoloured");
+
+        Assert.Equal(new Vector2(x, y), position);
+        Assert.Equal(new Vector2(16, 16), size);
+        Assert.Equal(new Vector2(8, 16), sourceSize);
+    }
+
+    // $E73A: E, X, T, E, N, D, from five pictures, the two E's the same one.
+    [Fact]
+    public void SpellsExtendFromFivePictures()
+    {
+        RecordingGraphics graphics = Draw(new(3, 7, Colours) { PlayerOneLetters = 0b111111 });
+
+        Assert.Equal(
+            [0f, 8f, 16f, 0f, 24f, 32f],
+            graphics.ImageParts.Where(x => x.ImageType == "ExtendChars.Recoloured").Select(x => x.SourcePosition.X));
+    }
+
+    // $E658 reads the wall's four characters a column at a time, so the wall under a letter has its
+    // top-right and bottom-left characters swapped.
+    [Fact]
+    public void PutsTheWallUnderALetterAColumnAtATime()
+    {
+        RecordingGraphics graphics = Draw(new(3, 7, Colours) { PlayerOneLetters = 0b000001 });
+
+        int letter = graphics.ImageParts.Select(x => x.ImageType).ToList().IndexOf("ExtendChars.Recoloured");
+
+        (string ImageType, Vector2 Position, Vector2 Size, Vector2 SourcePosition, Vector2 SourceSize)[] under =
+            [.. graphics.ImageParts.Skip(letter - 4).Take(4)];
+
+        Assert.Equal([new(0, 80), new(0, 88), new(8, 80), new(8, 88)], under.Select(x => x.Position));
+        Assert.Equal([new(0, 24), new(4, 24), new(8, 24), new(12, 24)], under.Select(x => x.SourcePosition));
+    }
+
     private static RecordingGraphics Draw(SidebarModel model)
     {
         RecordingGraphics graphics = new(320, 200);
         EightBitRendition rendition = new();
 
-        rendition.CreateSidebarView(new TestSurface(graphics, "Sidebars", "LevelTiles")).Draw(model);
+        rendition.CreateSidebarView(new TestSurface(graphics, "Sidebars", "LevelTiles", "ExtendChars")).Draw(model);
 
         return graphics;
     }
