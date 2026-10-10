@@ -6,7 +6,7 @@
 ![Elite - The Sharp Kind - Screenshot (16-bit)](images/elite-screenshot-16-bit.png)
 16-bit
 
-A C# port of the classic BBC Micro game 'Elite', meant to look, feel and play like the original 8-bit and 16-bit versions. The original ran its logic at 13.5 Hz; this runs at the configured frame rate (60 by default), so it plays close to the same but feels slightly different.
+A C# port of the classic BBC Micro game 'Elite', meant to look, feel and play like the original 8-bit and 16-bit versions. It runs at the configured frame rate (60 by default), so it plays close to the same but feels slightly different.
 
 Part of [The Sharp Kind](https://github.com/aphawkins/the-sharp-kind/blob/main/README.md).
 
