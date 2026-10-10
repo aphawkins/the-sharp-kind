@@ -7,6 +7,12 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Fixed (Bubble Bobble's music carries on through a lost life, 2026-10-10)
+
+- **A lost life no longer restarts the level's tune.** As `$04A0` does, a death asks for the resume tune only over a song from the
+  game over's on in the song table, and not over the super bonus's: the hurry-up's is followed by the level's tune again, while the
+  theme, its resume, the final theme and the bonus round's play on.
+
 ### Changed (an audio stack of our own, one format per tier, 2026-10-10)
 
 - **`SharpKind.Audio` uses no third-party package.** Its own WAV decoder replaces NVorbis (Elite's `.ogg` effects went for the
@@ -19,8 +25,11 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
   `RenditionAssets` and the game's own asset manifest are gone.
 - **An idle SID chip costs almost nothing.** Its filter and DC blocker settle to zero instead of decaying through denormal floats,
   and a silent chip moves its voices on a sample at a time: idle 9.5% of a core to 0.1%, music 1.9% to 1.4% (Release).
-- See [audio-stack-plan.md](docs/audio-stack-plan.md) and [decisions.md](docs/decisions.md). Not yet heard: the
-  [listening check](docs/work-items/audio-listening-check.md) is on the backlog.
+- See [decisions.md](docs/decisions.md) for why and for the choices that are not obvious. All of it was checked by ear on
+  2026-10-10.
+- **`ShippedSidTuneTests`** (explicit) renders the first 30 s of every song of both shipped `.sid` files to
+  `%TEMP%\elite-<n>.wav` and `%TEMP%\bubble-bobble-<n>.wav` for listening:
+  `SharpKind.Audio.Tests.exe --filter-class SharpKind.Audio.Tests.ShippedSidTuneTests --explicit only`.
 
 ### Added (Bubble Bobble's level number, and fonts laid out by character code, 2026-09-30)
 

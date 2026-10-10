@@ -22,8 +22,6 @@
       href: release-process.md
     - name: Backlog
       href: backlog-roadmap.md
-    - name: Audio stack plan
-      href: audio-stack-plan.md
 - name: API
   href: api/
 - name: Benchmarks

@@ -704,7 +704,7 @@ Each item ends with how it is proved.
         pressed and let go. Timed from the real game run on `SharpKind.Emulation` (score climbs frames 6-105, blank at 156, the
         walk from 169); a step is two frames. No oracle for the waits.
 - [x] **8. Sound.** Music plays through the own SID stack
-      ([audio-own-stack.md](work-items/audio-own-stack.md)). The C64 game has
+      ([decisions.md](decisions.md), 2026-10-10). The C64 game has
       music only (`sound.s` is the SID player), so the "effects" of this step
       are `music_start` songs, and there are no `.wav` files. The 12 songs are
       manifest entries (`Theme` to `Ending`, `bubble-bobble.sid#1` to `#12`),

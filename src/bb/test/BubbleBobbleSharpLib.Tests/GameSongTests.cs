@@ -4,6 +4,7 @@
 
 using System.Text.Json;
 using BubbleBobbleSharpLib.Levels;
+using BubbleBobbleSharpLib.Players;
 using SharpKind;
 using Xunit;
 
@@ -104,6 +105,35 @@ public sealed class GameSongTests
         loop.Pass([Idle, Idle]);
 
         Assert.Contains(Song.RoundStart, Drain(loop));
+    }
+
+    // $04A0-$04B8: a death over the level's tune asks for nothing, so the tune plays on.
+    [Fact]
+    public void ADeathLeavesTheLevelsTunePlaying()
+    {
+        GameLoop loop = Start(1, next: false);
+        _ = loop.TakeSong();
+        loop.Entities.State[0] = PlayerFrame.DeadState;
+
+        loop.Pass([Idle, Idle]);
+
+        Assert.DoesNotContain(Song.Resume, Drain(loop));
+    }
+
+    // $04A0-$04B8: a death over the hurry-up's tune resumes the level's.
+    [Fact]
+    public void ADeathAfterTheHurryUpResumesTheLevelsTune()
+    {
+        GameLoop loop = Start(1, next: false);
+        loop.Timer.Seconds = 0;
+        loop.Timer.Hurry = 0;
+        loop.Pass([Idle, Idle]);
+        _ = Drain(loop);
+        loop.Entities.State[0] = PlayerFrame.DeadState;
+
+        loop.Pass([Idle, Idle]);
+
+        Assert.Contains(Song.Resume, Drain(loop));
     }
 
     [Fact]

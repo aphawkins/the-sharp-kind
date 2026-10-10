@@ -43,7 +43,6 @@ Every open work item, in priority order. Each line links to a file in
 
 Steps from section 5 of [bb-port-plan.md](bb-port-plan.md), in order.
 
-- [ ] Bug: [the music restarts when a player loses a life](work-items/bb-music-restarts-on-life-lost.md)
 - [ ] Bug: [popped water flows too low along the platforms](work-items/bb-water-flow-too-low.md)
 - [ ] [6b: item effect 29, the six-sprite giant](work-items/bb-6b-giant-enemy-effect.md)
 - [ ] [6c: item effect 32, the super bonus room](work-items/bb-6c-super-bonus-room.md)
@@ -51,10 +50,6 @@ Steps from section 5 of [bb-port-plan.md](bb-port-plan.md), in order.
 - [ ] [10: join the repo](work-items/bb-10-join-the-repo.md)
 
 ## Should
-
-### SharpKind
-
-- [ ] [Listen to the own audio stack](work-items/audio-listening-check.md)
 
 ## Could
 
@@ -72,6 +67,7 @@ Steps from section 5 of [bb-port-plan.md](bb-port-plan.md), in order.
 - [ ] **[DECISION]** [Is render resolution configurable independently of rendition?](work-items/render-resolution-decision.md)
 - [ ] [Spike: WASM build for Playwright visual testing](work-items/wasm-playwright-spike.md)
 - [ ] [SID: the 8580 model and CIA-timed tunes](work-items/sid-8580-and-cia-tunes.md)
+- [ ] [SoundFont: filter, LFOs, modulation envelope, reverb and chorus](work-items/soundfont-effects.md)
 
 ### Elite
 

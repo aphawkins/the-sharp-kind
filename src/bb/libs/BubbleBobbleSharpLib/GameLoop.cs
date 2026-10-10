@@ -555,6 +555,10 @@ internal sealed class GameLoop
     private bool StartsLevelSong()
         => _subflg == BonusLevel || _song is not (Song.Theme or Song.Resume or Song.SuperBonus);
 
+    // $04A0-$04B8: a death resumes the level's tune only over a song from the game over's on in the song table, and not
+    // over the super bonus's; the level's own tunes and the bonus round's play on.
+    private bool ResumesOnDeath() => _song is >= Song.GameOver and not Song.SuperBonus;
+
     private Song LevelSong() => _subflg == BonusLevel ? Song.FinalTheme : Song.Resume;
 
     // The tune that goes with the clock running out ($15E8). Clearing the level does not change the music: the level
@@ -591,7 +595,11 @@ internal sealed class GameLoop
         if (_respawns != _respawn.Respawns)
         {
             _respawns = _respawn.Respawns;
-            Ask(LevelSong());
+
+            if (ResumesOnDeath())
+            {
+                Ask(Song.Resume);
+            }
         }
     }
 }

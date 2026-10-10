@@ -10,8 +10,10 @@ to reference the decision here rather than restating it.
 
 ## Resolved (2026-10-10) — the audio stack is our own, one format per tier
 
-`SharpKind.Audio` no longer uses a third-party package. The full plan, and
-where the work differed from it, is [audio-stack-plan.md](audio-stack-plan.md).
+`SharpKind.Audio` no longer uses a third-party package. The emulator (6502,
+C64 bus, PSID reader, SID chip) is in `SharpKind.Emulation`, which Bubble
+Bobble's oracle tests also use; the MIDI, SoundFont, WAV and SID-sound code
+is in `SharpKind.Audio`.
 
 | Tier | Audio |
 |---|---|
@@ -47,12 +49,36 @@ data (C64 Elite's sound engine) is how this repo always works.
   idle chip decayed through denormal floats for ever and cost 9.5% of a core.
   The chip's output is otherwise bit-identical, which matters because Bubble
   Bobble's oracle reads the chip.
+- **SoundFont player:** the master gain is 0.57, which matches MeltySynth's
+  level on both tunes. A preset's sample address offsets are ignored
+  (SoundFont 2.01, 8.1.3). A missing drum kit falls back to bank 128's first
+  kit, never to a melodic program. Only the volume envelope, tuning, pan,
+  attenuation, ranges, sample addresses, loops and exclusive class are read;
+  the rest is a [work item](work-items/soundfont-effects.md).
+- **Public music API:** `IMusicSource` and `MusicSources`, not
+  `IMusicStream`, because CA1711 forbids the `Stream` suffix. `SDLSound`
+  streams `.mid` and `.sid` music through `MusicOutput`, an audio-device
+  stream of its own, rather than `MIX_SetTrackAudioStream`.
+- **`SidEffectEngine` simplifications:** a layered step (the C64's
+  "effect + 128") always skips the already-playing check, where the C64 reads
+  past the end of `SFXPR` and depends on what lies there. `Flush` (`SOFLUSH`)
+  drops delayed steps, where the C64's `DELAY` waits out whatever plays. The
+  volume, pan and pitch passed to `ISound.Play` are ignored for SID effects.
+  The engine takes a register-write delegate rather than a `SidChip`, so the
+  tests see every write.
+- **`SidSound.StopMusic` does nothing when no song plays**, so a game's
+  `StopMusic` does not cut effects short. A song that does not repeat ends
+  after 2 s of quiet and hands the chip back to effects.
 - **Every Elite asset is a rendition's.** `RenditionAssets` and the game's own
   manifest are gone, and Elite registers the chosen rendition's
   `AssetLocator` directly.
 - **Elite's songs:** `elite.sid` song 1 is the theme and song 2 the Blue
   Danube, from the notes each plays (song 2 has a waltz pulse over an A
-  pedal, in D). This is not yet confirmed by ear.
+  pedal, in D), and confirmed by ear on 2026-10-10, along with all 12
+  Bubble Bobble songs rendered by `ShippedSidTuneTests`. The 16-bit MIDI
+  tunes, Elite's 8-bit effects (against C64 Elite under VICE) and Stunt
+  Car Racer's effects and engine loop were also heard and sound right. The
+  16-bit tunes were not compared side by side with MeltySynth.
 
 **Elite's 8-bit effects come from the C64 source.**
 `tools/elite/export-c64-sfx.py` reads the 16 rows of the effect tables
