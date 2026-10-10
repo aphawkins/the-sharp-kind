@@ -30,7 +30,7 @@ A C# port of Geoff Crammond's 'Stunt Car Racer', converted from the C++/DirectX9
 
 ### [Bubble Bobble - The Sharp Kind](bb-readme.md)
 
-![Bubble Bobble - The Sharp Kind - Screenshot](images/bb-screenshot.png)
+![Bubble Bobble - The Sharp Kind - Screenshot](images/bb-screenshot-8-bit.png)
 
 Status: Work in progress.
 

@@ -19,10 +19,11 @@ rejected is worth having when it turns out to be the answer.
 > gets right is marked as it comes. Stunt Car Racer, which has one rendition
 > and no plugin model yet, keeps a single flat `Assets/` tree.
 
-An asset belongs either to a rendition or to the game. The artwork, fonts,
-palette and models are what a rendition looks like, so they travel with its
-assembly; the audio is not a rendition concern and stays with the executable.
-Every kind of font - the rendition's own sheets, a Windows `.fon` and a
+Every Elite asset belongs to a rendition. The artwork, fonts, palette and
+models are what a rendition looks like, and the audio is what it sounds like
+(SID music and C64 effects on 8-bit, MIDI and WAV on 16-bit; see
+[decisions.md](decisions.md), 2026-09-18 and 2026-10-10), so all of them travel
+with its assembly. Every kind of font - the rendition's own sheets, a Windows `.fon` and a
 TrueType face - shares one `Fonts/` folder, since what differs between them is
 how the manifest declares them rather than where the file sits:
 
@@ -36,11 +37,13 @@ Renditions/
       Fonts/        bbc-micro.bmp, Bm437_Master_512.FON, Mx437_Master_512.ttf
       Palette/      palette.json
       Models/       adder.obj, ..., palette.mtl
+      SFX/          elite.sidfx
+      Music/        elite.sid
   EliteSharp.Renditions.SixteenBit/
-    ... the same, its own
-Assets/
-  AssetManifest.json
-  SFX/  Music/  SoundFonts/               <- the game's own
+    ... the same, its own, and
+      SFX/          launch.wav, ...
+      Music/        theme.mid, danube.mid
+      SoundFonts/   TimGM6mb.sf2
 ```
 
 The manifest groups them the same way the folder does - one `Fonts` section
@@ -66,8 +69,8 @@ refused outright rather than read as declaring nothing, so a misspelling says
 so when the manifest is read rather than as a crash on the first screen that
 draws text.
 
-`RenditionAssets` composes the two into one `IAssetLocator`, so nothing that
-consumes an asset knows there are two places to look.
+Elite registers the chosen rendition's own `AssetLocator`; the game has no
+assets of its own.
 
 ### Why the rejected alternative won
 
@@ -79,9 +82,11 @@ expired, and by the same 2026-07-30 change that recorded it:
   categories in that change, because a model's `usemtl` names resolve through
   the palette and the two palettes stopped agreeing. There is nothing left to
   triplicate.
-* **The `.ogg` files never move.** Audio stays in the game's own `Assets/`,
-  which is not a pseudo-tier — it is the game's, and a rendition has no
-  opinion about the sound of a laser.
+* **The `.ogg` files never moved, at first.** Audio stayed in the game's own
+  `Assets/`, on the view that a rendition has no opinion about the sound of a
+  laser. That expired too: a tier's audio is part of its look and feel, so on
+  2026-10-10 the audio moved into the renditions and each tier chose its own
+  format, and every `.ogg` file went.
 
 What tipped it is that a rendition is a plugin now. A stranger's rendition
 that could draw but had nothing to draw with would not be a rendition at all.
@@ -333,12 +338,7 @@ untenable, so the lists are replaced by a glob before any assets move:
 
 ```xml
 <None Update="Assets\**\*" CopyToOutputDirectory="PreserveNewest" />
-<None Update="Assets\SFX\*.wav;Assets\Music\*.ogg"
-      CopyToOutputDirectory="Never" />
 ```
-
-The second line preserves the current intent of keeping the
-uncompressed sources in source control but out of the build output.
 
 ## Sequencing
 

@@ -7,6 +7,21 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Changed (an audio stack of our own, one format per tier, 2026-10-10)
+
+- **`SharpKind.Audio` uses no third-party package.** Its own WAV decoder replaces NVorbis (Elite's `.ogg` effects went for the
+  `.wav` sources beside them), and its own Standard MIDI File reader and SoundFont 2 player replace MeltySynth, at MeltySynth's
+  level on Elite's two tunes. `OggVorbisEncoder` went from the tests. `SDLSound` streams `.mid` music from the same code.
+- **Elite's 8-bit rendition plays the C64 version's sound effects** on the emulated SID chip, beside its SID music, as on the C64:
+  effects are silent while a song plays. `tools/elite/export-c64-sfx.py` reads the effects from the C64 source into
+  `elite.sidfx`; `SidEffectEngine` ports its `NOISE`, `NOISE2` and `SOINT`. `SidSound` plays music and effects for both backends.
+- **Every Elite asset is a rendition's.** The 16-bit rendition now holds Elite's WAV effects, MIDI tunes and SoundFont;
+  `RenditionAssets` and the game's own asset manifest are gone.
+- **An idle SID chip costs almost nothing.** Its filter and DC blocker settle to zero instead of decaying through denormal floats,
+  and a silent chip moves its voices on a sample at a time: idle 9.5% of a core to 0.1%, music 1.9% to 1.4% (Release).
+- See [audio-stack-plan.md](docs/audio-stack-plan.md) and [decisions.md](docs/decisions.md). Not yet heard: the
+  [listening check](docs/work-items/audio-listening-check.md) is on the backlog.
+
 ### Added (Bubble Bobble's level number, and fonts laid out by character code, 2026-09-30)
 
 - **Bubble Bobble draws the level number** in the top-left corner of the level, as `$38E9` does: two 4x6 glyphs from the game's digit

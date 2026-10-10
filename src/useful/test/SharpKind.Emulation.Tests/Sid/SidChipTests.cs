@@ -151,6 +151,43 @@ public class SidChipTests
         Assert.True(Peak(filteredBuffer) < Peak(openBuffer) / 2);
     }
 
+    [Fact]
+    public void AFilteredNoteRingsDownToExactSilence()
+    {
+        // Arrange: a saw through a resonant low pass, then released.
+        SidChip chip = new();
+        PlaySaw(chip, 0x1F);
+        chip.Write(0x15, 0x07);
+        chip.Write(0x16, 0x20);
+        chip.Write(0x17, 0xF1);
+        float[] buffer = new float[2 * SidChip.SampleRate / 10];
+        chip.Render(buffer);
+        chip.Write(Voice1Control, 0x20);
+
+        // Act
+        for (int i = 0; i < 40; i++)
+        {
+            chip.Render(buffer);
+        }
+
+        // Assert
+        Assert.All(buffer, sample => Assert.Equal(0f, sample));
+    }
+
+    [Fact]
+    public void ASilentChipStillCountsItsCycles()
+    {
+        // Arrange
+        SidChip chip = new();
+        float[] buffer = new float[2 * SidChip.SampleRate];
+
+        // Act
+        chip.Render(buffer);
+
+        // Assert
+        Assert.InRange(chip.Cycles, (long)SidChip.ClockRate - 1, (long)SidChip.ClockRate + 1);
+    }
+
     private static float Peak(float[] buffer) => buffer.Skip(buffer.Length / 2).Max(Math.Abs);
 
     private static void PlaySaw(SidChip chip, byte modeVolume)

@@ -81,5 +81,28 @@
     "Transporter": "transporter.obj",
     "Viper": "viper.obj",
     "Worm": "worm.obj"
+  },
+  "Sfx": {
+    "Launch": "launch.wav",
+    "Crash": "crash.wav",
+    "Dock": "dock.wav",
+    "Gameover": "gameover.wav",
+    "Pulse": "pulse.wav",
+    "HitEnemy": "hitem.wav",
+    "Explode": "explode.wav",
+    "Ecm": "ecm.wav",
+    "Missile": "missile.wav",
+    "Hyperspace": "hyper.wav",
+    "IncomingFire1": "incom1.wav",
+    "IncomingFire2": "incom2.wav",
+    "Beep": "beep.wav",
+    "Boop": "boop.wav"
+  },
+  "Music": {
+    "EliteTheme": "theme.mid",
+    "BlueDanube": "danube.mid"
+  },
+  "SoundFonts": {
+    "Default": "TimGM6mb.sf2"
   }
 }

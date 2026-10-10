@@ -8,6 +8,73 @@ split on 2026-07-31 into defects and features, and merged back on
 reshapes or unblocks backlog items, those items are updated in the backlog
 to reference the decision here rather than restating it.
 
+## Resolved (2026-10-10) — the audio stack is our own, one format per tier
+
+`SharpKind.Audio` no longer uses a third-party package. The full plan, and
+where the work differed from it, is [audio-stack-plan.md](audio-stack-plan.md).
+
+| Tier | Audio |
+|---|---|
+| 8-bit | C64 SID: `.sid` music and `.sidfx` effects |
+| 16-bit | MIDI through a SoundFont 2, and `.wav` |
+| Modern | anything, `.wav` included |
+
+**Why each package went:**
+
+- **NVorbis** decoded Elite's `.ogg` effects. A `.wav` source sat beside each,
+  so the decoder went and the `.ogg` effects with it.
+- **MeltySynth** played Elite's two `.mid` tunes. Our own Standard MIDI File
+  reader and SoundFont 2 sample player replace it. They match its level on
+  both tunes, and cost about 4% of a core.
+- **OggVorbisEncoder** only built test fixtures, which are now `.wav`.
+
+**Clean room.** The emulator and synth code is written from public hardware
+and format documentation, never from reSID, libsidplayfp, MeltySynth,
+TinySoundFont or any other GPL/LGPL source. Porting a game's own routines and
+data (C64 Elite's sound engine) is how this repo always works.
+
+**Choices that are not obvious:**
+
+- **Initial attenuation is applied at 40%**, as on the EMU hardware that
+  SoundFonts are voiced for. Without it, the Blue Danube played at a quarter
+  of MeltySynth's level.
+- **SID simplifications:** combined waveforms are ANDed, the 6581 cutoff curve
+  is a straight line, the ADSR "delay bug" is not modelled, and CIA-timed
+  tunes, RSID and the 8580 are not supported.
+- **Music and effects share one SID chip, as on the C64.** Effects play only
+  while no song plays (C64 Elite's default, `MUSILLY` = 0).
+- **The SID filter and DC blocker settle to zero below 1e-20.** Before, an
+  idle chip decayed through denormal floats for ever and cost 9.5% of a core.
+  The chip's output is otherwise bit-identical, which matters because Bubble
+  Bobble's oracle reads the chip.
+- **Every Elite asset is a rendition's.** `RenditionAssets` and the game's own
+  manifest are gone, and Elite registers the chosen rendition's
+  `AssetLocator` directly.
+- **Elite's songs:** `elite.sid` song 1 is the theme and song 2 the Blue
+  Danube, from the notes each plays (song 2 has a waltz pulse over an A
+  pedal, in D). This is not yet confirmed by ear.
+
+**Elite's 8-bit effects come from the C64 source.**
+`tools/elite/export-c64-sfx.py` reads the 16 rows of the effect tables
+(`SFXPR` to `SFXVCH`) from `elite-source.asm` into `elite.sidfx`. Each
+`SoundEffect` plays what this C64 routine plays:
+
+| `SoundEffect` | Effects | C64 routine |
+|---|---|---|
+| Launch | sfxwhosh | `LAUN` |
+| Missile | sfxwhosh | `SFRMIS`, `FRMIS` |
+| Crash | sfxexpl | `EXNO3`, from `MA63` (collision) and `OO3` (shield hit) |
+| Gameover | sfxexpl | `EXNO3`, from `DEATH` |
+| Explode | sfxexpl, frequency 81, sustain/release `$F3` | `EXNO2`, nearest range |
+| HitEnemy | sfxhit, frequency 208, sustain/release `$F3` | `EXNO`, nearest range |
+| Pulse | sfxplas | `MA68` (which picks a sound by laser type) |
+| Ecm | sfxecm | `ECBLB2` |
+| Hyperspace | sfxhyp1 (240, `$F5`); sfxwhosh; sfxhyp1 layered a frame later | `HYPNOISE` |
+| IncomingFire1, IncomingFire2 | sfxelas; sfxelas2 | `TA3` |
+| Beep | sfxbeep | `BEEP` |
+| Boop | sfxboop | `MA4`, `HME6`, `WA1` |
+| Dock | (none) | the C64 makes no docking sound |
+
 ## Resolved (2026-09-27) — Bubble Bobble item 2d is split
 
 - **2d(i)**, the enemy shots and the Baron, can be proved now.

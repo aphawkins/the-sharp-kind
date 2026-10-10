@@ -88,5 +88,25 @@
     "Transporter": "transporter.obj",
     "Viper": "viper.obj",
     "Worm": "worm.obj"
+  },
+  "Sfx": {
+    "Launch": "elite.sidfx",
+    "Crash": "elite.sidfx",
+    "Dock": "elite.sidfx",
+    "Gameover": "elite.sidfx",
+    "Pulse": "elite.sidfx",
+    "HitEnemy": "elite.sidfx",
+    "Explode": "elite.sidfx",
+    "Ecm": "elite.sidfx",
+    "Missile": "elite.sidfx",
+    "Hyperspace": "elite.sidfx",
+    "IncomingFire1": "elite.sidfx",
+    "IncomingFire2": "elite.sidfx",
+    "Beep": "elite.sidfx",
+    "Boop": "elite.sidfx"
+  },
+  "Music": {
+    "EliteTheme": "elite.sid#1",
+    "BlueDanube": "elite.sid#2"
   }
 }

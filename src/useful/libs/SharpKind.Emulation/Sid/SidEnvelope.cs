@@ -33,6 +33,9 @@ internal sealed class SidEnvelope
 
     internal int Level { get; private set; }
 
+    /// <summary>Gets a value indicating whether the level is 0 and stays so until the gate opens.</summary>
+    internal bool IsSilent => Level == 0 && _stage != Stage.Attack;
+
     internal void SetGate(bool gate)
     {
         if (gate == _gate)
@@ -112,6 +115,39 @@ internal sealed class SidEnvelope
         {
             _stage = Stage.Sustain;
         }
+    }
+
+    /// <summary>Runs as many cycles as <see cref="Clock"/> would, at once, for a silent envelope.</summary>
+    /// <param name="cycles">The cycles to run.</param>
+    internal void Advance(int cycles)
+    {
+        // A level of 0 only ever sustains or releases; anything else is clocked as it comes.
+        if (_stage == Stage.Sustain || cycles == 0)
+        {
+            return;
+        }
+
+        if (_stage != Stage.Release || Level != 0)
+        {
+            for (int i = 0; i < cycles; i++)
+            {
+                Clock();
+            }
+
+            return;
+        }
+
+        // A counter already past its period (the rate was written lower) ends its step on the next increment, just as
+        // one at period - 1 does.
+        int period = s_periods[ReleaseRate];
+        int exponentPeriod = ExponentPeriod(0);
+        _rateCounter = Math.Min(_rateCounter, period - 1);
+        _exponentCounter = Math.Min(_exponentCounter, exponentPeriod - 1);
+
+        // Each step at level 0 only moves the exponent counter on; the level stays where it is.
+        int total = _rateCounter + cycles;
+        _rateCounter = total % period;
+        _exponentCounter = (_exponentCounter + (total / period)) % exponentPeriod;
     }
 
     // The decay and release slow as the level falls, to approximate an exponential.

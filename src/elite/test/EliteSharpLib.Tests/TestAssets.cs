@@ -2,13 +2,11 @@
 // 'Elite - The New Kind' - C.J.Pinder 1999-2001.
 // Elite (C) I.Bell & D.Braben 1984.
 
-using EliteSharpLib.Renditions;
 using SharpKind.Assets;
 
 namespace EliteSharpLib.Tests;
 
-// Artwork, palettes, fonts and ship models live with the rendition, so a test wanting any of
-// those has to say which one; AssetLocator.Create() alone finds only music/effects.
+// Every Elite asset lives with a rendition, so a test wanting any has to say which one.
 internal static class TestAssets
 {
     private const string SixteenBit = "16-bit";
@@ -26,8 +24,6 @@ internal static class TestAssets
             : "EliteSharp.Renditions.EightBit";
         string folder = Path.Combine("Renditions", assembly);
 
-        return new RenditionAssets(
-            AssetLocator.CreateFrom(Path.Combine(AppContext.BaseDirectory, folder), rendition),
-            AssetLocator.Create(rendition));
+        return AssetLocator.CreateFrom(Path.Combine(AppContext.BaseDirectory, folder), rendition);
     }
 }

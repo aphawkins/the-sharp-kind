@@ -1,0 +1,36 @@
+{
+  "Effects": {
+    "sfxplas": {"Priority": 114, "Frames": 20, "Frequency": 69, "Control": 65, "AttackDecay": 1, "SustainRelease": 209, "FrequencyChange": -2, "VolumeMask": 3},
+    "sfxelas": {"Priority": 112, "Frames": 14, "Frequency": 72, "Control": 17, "AttackDecay": 9, "SustainRelease": 241, "FrequencyChange": -2, "VolumeMask": 3},
+    "sfxhit": {"Priority": 116, "Frames": 12, "Frequency": 208, "Control": 129, "AttackDecay": 32, "SustainRelease": 229, "FrequencyChange": -13, "VolumeMask": 3},
+    "sfxexpl": {"Priority": 119, "Frames": 80, "Frequency": 81, "Control": 129, "AttackDecay": 8, "SustainRelease": 251, "FrequencyChange": -1, "VolumeMask": 15},
+    "sfxwhosh": {"Priority": 115, "Frames": 63, "Frequency": 64, "Control": 129, "AttackDecay": 12, "SustainRelease": 220, "FrequencyChange": 0, "VolumeMask": 15},
+    "sfxbeep": {"Priority": 104, "Frames": 5, "Frequency": 240, "Control": 17, "AttackDecay": 0, "SustainRelease": 240, "FrequencyChange": 0, "VolumeMask": 255},
+    "sfxboop": {"Priority": 96, "Frames": 24, "Frequency": 64, "Control": 17, "AttackDecay": 99, "SustainRelease": 243, "FrequencyChange": 0, "VolumeMask": 255},
+    "sfxhyp1": {"Priority": 240, "Frames": 128, "Frequency": 128, "Control": 65, "AttackDecay": 24, "SustainRelease": 216, "FrequencyChange": 68, "VolumeMask": 31},
+    "sfxeng": {"Priority": 48, "Frames": 48, "Frequency": 16, "Control": 33, "AttackDecay": 68, "SustainRelease": 0, "FrequencyChange": 0, "VolumeMask": 255},
+    "sfxecm": {"Priority": 254, "Frames": 255, "Frequency": 80, "Control": 65, "AttackDecay": 17, "SustainRelease": 225, "FrequencyChange": 85, "VolumeMask": 255},
+    "sfxblas": {"Priority": 114, "Frames": 16, "Frequency": 52, "Control": 33, "AttackDecay": 0, "SustainRelease": 225, "FrequencyChange": -2, "VolumeMask": 3},
+    "sfxalas": {"Priority": 114, "Frames": 16, "Frequency": 51, "Control": 33, "AttackDecay": 0, "SustainRelease": 241, "FrequencyChange": -1, "VolumeMask": 3},
+    "sfxmlas": {"Priority": 146, "Frames": 112, "Frequency": 96, "Control": 17, "AttackDecay": 68, "SustainRelease": 244, "FrequencyChange": -17, "VolumeMask": 15},
+    "sfxbomb": {"Priority": 225, "Frames": 64, "Frequency": 85, "Control": 129, "AttackDecay": 17, "SustainRelease": 227, "FrequencyChange": 119, "VolumeMask": 255},
+    "sfxtrib": {"Priority": 81, "Frames": 15, "Frequency": 128, "Control": 17, "AttackDecay": 24, "SustainRelease": 176, "FrequencyChange": 123, "VolumeMask": 255},
+    "sfxelas2": {"Priority": 2, "Frames": 14, "Frequency": 64, "Control": 33, "AttackDecay": 9, "SustainRelease": 161, "FrequencyChange": -2, "VolumeMask": 3}
+  },
+  "Sounds": {
+    "Launch": [{"Effect": "sfxwhosh"}],
+    "Crash": [{"Effect": "sfxexpl"}],
+    "Dock": [],
+    "Gameover": [{"Effect": "sfxexpl"}],
+    "Pulse": [{"Effect": "sfxplas"}],
+    "HitEnemy": [{"Effect": "sfxhit", "Frequency": 208, "SustainRelease": 243}],
+    "Explode": [{"Effect": "sfxexpl", "Frequency": 81, "SustainRelease": 243}],
+    "Ecm": [{"Effect": "sfxecm"}],
+    "Missile": [{"Effect": "sfxwhosh"}],
+    "Hyperspace": [{"Effect": "sfxhyp1", "Frequency": 240, "SustainRelease": 245}, {"Effect": "sfxwhosh"}, {"Effect": "sfxhyp1", "Layer": true, "DelayFrames": 1}],
+    "IncomingFire1": [{"Effect": "sfxelas"}, {"Effect": "sfxelas2"}],
+    "IncomingFire2": [{"Effect": "sfxelas"}, {"Effect": "sfxelas2"}],
+    "Beep": [{"Effect": "sfxbeep"}],
+    "Boop": [{"Effect": "sfxboop"}]
+  }
+}

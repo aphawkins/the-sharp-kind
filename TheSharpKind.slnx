@@ -2,13 +2,17 @@
   <Folder Name="/docs/">
     <File Path="docs/architecture-principles.md" />
     <File Path="docs/asset-structure.md" />
+    <File Path="docs/audio-stack-plan.md" />
     <File Path="docs/backlog-roadmap.md" />
+    <File Path="docs/bb-conversion-notes.md" />
     <File Path="docs/bb-port-plan.md" />
+    <File Path="docs/bb-readme.md" />
     <File Path="docs/Code Complete (2nd Edition) - Steve McConnell.md" />
     <File Path="docs/decisions.md" />
     <File Path="docs/docfx.json" />
     <File Path="docs/elite-readme.md" />
     <File Path="docs/index.md" />
+    <File Path="docs/performance-notes.md" />
     <File Path="docs/reference-sources.md" />
     <File Path="docs/release-notes.md" />
     <File Path="docs/release-process.md" />
@@ -16,11 +20,59 @@
     <File Path="docs/toc.yml" />
   </Folder>
   <Folder Name="/docs/images/">
+    <File Path="docs/images/bb-screenshot-8-bit.png" />
     <File Path="docs/images/coverage-badge.svg" />
     <File Path="docs/images/elite-screenshot-16-bit.png" />
     <File Path="docs/images/elite-screenshot-8-bit.png" />
     <File Path="docs/images/nuget-icon.png" />
     <File Path="docs/images/scr-screenshot.png" />
+  </Folder>
+  <Folder Name="/docs/work-items/">
+    <File Path="docs/work-items/audio-listening-check.md" />
+    <File Path="docs/work-items/bb-10-join-the-repo.md" />
+    <File Path="docs/work-items/bb-6b-giant-enemy-effect.md" />
+    <File Path="docs/work-items/bb-6c-super-bonus-room.md" />
+    <File Path="docs/work-items/bb-7-super-mode-bonus-level-100.md" />
+    <File Path="docs/work-items/bb-music-restarts-on-life-lost.md" />
+    <File Path="docs/work-items/bb-water-flow-too-low.md" />
+    <File Path="docs/work-items/elite-arbitrary-size-test-rendition.md" />
+    <File Path="docs/work-items/elite-clip-space-path.md" />
+    <File Path="docs/work-items/elite-ecm-sound-stops.md" />
+    <File Path="docs/work-items/elite-equipment-plugin.md" />
+    <File Path="docs/work-items/elite-explosion-distance-volume.md" />
+    <File Path="docs/work-items/elite-log-field-of-view.md" />
+    <File Path="docs/work-items/elite-modern-rendition.md" />
+    <File Path="docs/work-items/elite-per-laser-sounds.md" />
+    <File Path="docs/work-items/elite-remove-square-fov-test.md" />
+    <File Path="docs/work-items/elite-sounds-during-music.md" />
+    <File Path="docs/work-items/graphics-clip-space-clipper.md" />
+    <File Path="docs/work-items/graphics-depth-range-guard-band.md" />
+    <File Path="docs/work-items/graphics-projection-matrix.md" />
+    <File Path="docs/work-items/graphics-renderer-allocations.md" />
+    <File Path="docs/work-items/graphics-subpixel-precision.md" />
+    <File Path="docs/work-items/graphics-viewport-stage.md" />
+    <File Path="docs/work-items/render-resolution-decision.md" />
+    <File Path="docs/work-items/scr-atlas-split.md" />
+    <File Path="docs/work-items/scr-clip-space-path.md" />
+    <File Path="docs/work-items/scr-controls-file.md" />
+    <File Path="docs/work-items/scr-float-car-physics.md" />
+    <File Path="docs/work-items/scr-float-opponent-physics.md" />
+    <File Path="docs/work-items/scr-float-trig.md" />
+    <File Path="docs/work-items/scr-golden-trace-harness.md" />
+    <File Path="docs/work-items/scr-opponent-portraits.md" />
+    <File Path="docs/work-items/scr-race-result-screens.md" />
+    <File Path="docs/work-items/scr-road-line-textures.md" />
+    <File Path="docs/work-items/scr-super-league-car-visuals.md" />
+    <File Path="docs/work-items/scr-super-league-toggle.md" />
+    <File Path="docs/work-items/scr-super-league-track-colours.md" />
+    <File Path="docs/work-items/scr-widescreen.md" />
+    <File Path="docs/work-items/scr-wrecked-screen.md" />
+    <File Path="docs/work-items/sdl-resizable-fullscreen.md" />
+    <File Path="docs/work-items/sdl-resizable-letterbox.md" />
+    <File Path="docs/work-items/shared-debug-overlays.md" />
+    <File Path="docs/work-items/sid-8580-and-cia-tunes.md" />
+    <File Path="docs/work-items/wasm-playwright-spike.md" />
+    <File Path="docs/work-items/wont-do.md" />
   </Folder>
   <Folder Name="/.github/">
     <File Path=".github/PULL_REQUEST_TEMPLATE.md" />
@@ -42,6 +94,13 @@
   </Folder>
   <Folder Name="/scripts/">
     <File Path="scripts/test-case-sensitive.ps1" />
+  </Folder>
+  <Folder Name="/tools/bb/">
+    <File Path="tools/bb/dis6502.py" />
+    <File Path="tools/bb/export-csharp-assets.py" />
+  </Folder>
+  <Folder Name="/tools/elite/">
+    <File Path="tools/elite/export-c64-sfx.py" />
   </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />

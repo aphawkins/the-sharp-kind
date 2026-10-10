@@ -1,34 +1,43 @@
 # Bubble Bobble - The Sharp Kind
 
+![Bubble Bobble - The Sharp Kind - Screenshot (8-bit)](images/bb-screenshot-8-bit.png)
+
 A C# port of 'Bubble Bobble', converted from the C64 disassembly of Software Creations' 1987 conversion of Taito's original arcade game.
 
-The port shares the `SharpKind` libraries with 'Elite - The Sharp Kind' and 'Stunt Car Racer - The Sharp Kind': hardware access is hidden behind interfaces, with a software renderer drawing through SDL3.
-
-Part of [The Sharp Kind](https://github.com/aphawkins/the-sharp-kind/blob/main/README.md), alongside [Elite - The Sharp Kind](elite-readme.md) and [Stunt Car Racer - The Sharp Kind](scr-readme.md). Conversion work is tracked in [bb-port-plan.md](bb-port-plan.md).
+Part of [The Sharp Kind](https://github.com/aphawkins/the-sharp-kind/blob/main/README.md).
 
 ## Status
 
-Work in progress. The game opens on the title screen and plays through the 100 levels: the players, the enemies, the bubbles (water, fire, thunder and EXTEND), the items, fruit, and the music from the C64's SID chip, which runs on the shared `SharpKind.Emulation` library. The bonus rounds of the special items, the giant bonus and the super mode are in. The last level's giant and the ending are in. Not yet in: and some of the special items' effects. See [bb-port-plan.md](bb-port-plan.md).
+Playable from start to finish: title, story, all 100 levels, bonus rounds, super mode and the ending. The music is the C64's own, played on an emulated SID chip.
 
-The 56-line banner above the screen is house chrome and not part of the C64 game.
+Not yet in: two special items' effects (the six-sprite giant and the super bonus room). Known bugs: the music restarts when a player loses a life, and popped water flows too low along platforms. See the [backlog](backlog-roadmap.md).
 
-The keys: the arrows and the space bar, or W, A, S, D and Q, for the two players; Escape to leave. On the title screen, S, U, P, O, R and Tab held together start the super mode, a harder game (the Commodore key, in the C64's own code, is Tab here).
+## Run
 
-## Getting Started
-
-To build and run from source, install the .NET SDK and run:
-
-``` bash
+```bash
 dotnet run --project src/bb/apps/BubbleBobbleSharp
 ```
 
-It can also be run and debugged directly from an IDE: open [TheSharpKind.slnx](https://github.com/aphawkins/the-sharp-kind/blob/main/TheSharpKind.slnx) in Visual Studio and set `BubbleBobbleSharp` as the startup project.
+## Controls
+
+| Action | Player 1 | Player 2 |
+| --- | --- | --- |
+| Move (up jumps) | Arrow keys | W, A, S, D |
+| Blow a bubble | Space | Q |
+| Joystick or gamepad | First one plugged in | Second one |
+
+- On the title screen, press 1 or 2 to start a game for that many players.
+- Esc quits.
+- Hold S, U, P, O, R and Tab together on the title screen for super mode, a harder game.
+
+## Configuration
+
+Settings are in `bubblebobble.sharp`; see the [main readme](https://github.com/aphawkins/the-sharp-kind/blob/main/README.md#configuration). Bubble Bobble has no settings of its own, and only the 8-bit rendition is installed. `BB_LOG_LEVEL` overrides the logging level.
 
 ## Credits
 
-'Bubble Bobble - The Sharp Kind' re-engineered in C# by Andy Hawkins 2026.
-- Converted from a disassembly of Software Creations' C64 conversion.
+'Bubble Bobble - The Sharp Kind' re-engineered in C# by Andy Hawkins 2026, from a disassembly of Software Creations' C64 conversion.
 
 Bubble Bobble is (C) Taito 1986. C64 conversion by Software Creations 1987.
 
-The 8-bit rendition's music (`bubble-bobble.sid`) is the C64 version's theme, composed by Peter Clarke, 1987 Firebird. Sourced from the High Voltage SID Collection https://hvsc.c64.org/.
+Music (`bubble-bobble.sid`) by Peter Clarke, 1987 Firebird, from the [High Voltage SID Collection](https://hvsc.c64.org/).
