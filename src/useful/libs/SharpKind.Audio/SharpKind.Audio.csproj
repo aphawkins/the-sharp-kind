@@ -2,13 +2,8 @@
 
 	<PropertyGroup>
 		<PackageId>SharpKind.Audio</PackageId>
-		<Description>Software audio playback (WAV/SoundFont/Vorbis mixing) for SharpKind-based games.</Description>
+		<Description>Software audio playback (WAV, MIDI/SoundFont2, C64 SID) for SharpKind-based games.</Description>
 	</PropertyGroup>
-
-	<ItemGroup>
-		<PackageReference Include="MeltySynth" />
-		<PackageReference Include="NVorbis" />
-	</ItemGroup>
 
 	<ItemGroup>
 	  <ProjectReference Include="..\SharpKind.Assets\SharpKind.Assets.csproj" />

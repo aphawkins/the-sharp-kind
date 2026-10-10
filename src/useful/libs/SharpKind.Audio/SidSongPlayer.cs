@@ -4,11 +4,10 @@ using SharpKind.Emulation.Sid;
 
 namespace SharpKind.Audio;
 
-/// <summary>
-/// One song of a SID tune, played by <see cref="SidMachine"/> as a stream of interleaved stereo float samples at 44.1 kHz.
-/// A tune has no marked end, so the song is taken to be over when it has gone quiet for a couple of seconds after sounding.
-/// </summary>
-public sealed class SidSongPlayer
+// One song of a SID tune, played on a SidMachine shared with sound effects, as interleaved stereo float samples at 44.1 kHz.
+// A tune has no marked end, so the song is taken to be over when it has gone quiet for a couple of seconds after sounding;
+// then the machine stops the tune and goes back to effects.
+internal sealed class SidSongPlayer
 {
     private const int QuietFramesToEnd = 2 * 44100;
     private const float Quiet = 0.0005f;
@@ -16,33 +15,27 @@ public sealed class SidSongPlayer
     private readonly PsidFile _tune;
     private readonly int _song;
     private readonly bool _repeat;
-    private readonly SidMachine _machine = new();
+    private readonly SidMachine _machine;
 
     private bool _sounded;
     private int _quietFrames;
 
-    /// <summary>Initializes a new instance of the <see cref="SidSongPlayer"/> class.</summary>
-    /// <param name="path">The SID file, with a <c>#n</c> for the song (see <see cref="MusicPath"/>).</param>
-    /// <param name="repeat">Whether to start the song again when it ends.</param>
-    public SidSongPlayer(string path, bool repeat)
+    // The song is 1-based, or none for the tune's start song.
+    internal SidSongPlayer(SidMachine machine, PsidFile tune, int? song, bool repeat)
     {
-        ArgumentNullException.ThrowIfNull(path);
-
-        (string file, int? song) = MusicPath.Parse(path);
-
-        _tune = PsidFile.Read(File.ReadAllBytes(file));
-        _song = song ?? _tune.StartSong;
+        _machine = machine;
+        _tune = tune;
+        _song = song ?? tune.StartSong;
         _repeat = repeat;
 
         _machine.StartMusic(_tune, _song);
     }
 
-    /// <summary>Gets a value indicating whether the song has ended, and is not going to repeat.</summary>
-    public bool Finished { get; private set; }
+    // The song has ended and is not going to repeat.
+    internal bool Finished { get; private set; }
 
-    /// <summary>Renders the next samples, or silence once the song is over.</summary>
-    /// <param name="buffer">Interleaved left and right samples to fill.</param>
-    public void Render(Span<float> buffer)
+    // The next samples, or silence once the song is over.
+    internal void Render(Span<float> buffer)
     {
         if (Finished)
         {
@@ -83,6 +76,7 @@ public sealed class SidSongPlayer
         else
         {
             Finished = true;
+            _machine.StopMusic();
         }
     }
 }

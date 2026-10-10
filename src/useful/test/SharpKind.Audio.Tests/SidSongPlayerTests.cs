@@ -1,25 +1,20 @@
 // 'SharpKind Libraries' - Andy Hawkins 2023-2026.
 
+using SharpKind.Emulation.Sid;
+
 namespace SharpKind.Audio.Tests;
 
-public sealed class SidSongPlayerTests : IDisposable
+public sealed class SidSongPlayerTests
 {
     private const int SampleRate = 44100;
 
-    private readonly string _path = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + ".sid");
-
-    public SidSongPlayerTests() => File.WriteAllBytes(_path, SidFixtures.BuildTune());
-
-    public void Dispose()
-    {
-        File.Delete(_path);
-        GC.SuppressFinalize(this);
-    }
+    private readonly PsidFile _tune = PsidFile.Read(SidFixtures.BuildTune());
+    private readonly SidMachine _machine = new();
 
     [Fact]
     public void PlaysTheSongAndThenIsFinished()
     {
-        SidSongPlayer player = new(_path + "#2", repeat: false);
+        SidSongPlayer player = new(_machine, _tune, song: 2, repeat: false);
         float[] first = new float[2 * SampleRate / 5];
         float[] later = new float[2 * SampleRate * 4];
 
@@ -29,13 +24,14 @@ public sealed class SidSongPlayerTests : IDisposable
 
         Assert.True(soundedEarly);
         Assert.True(player.Finished);
+        Assert.False(_machine.IsPlaying);
         Assert.All(later.Skip(later.Length - 100), sample => Assert.True(Math.Abs(sample) < 0.0001f));
     }
 
     [Fact]
     public void StartsTheSongAgainWhenItRepeats()
     {
-        SidSongPlayer player = new(_path, repeat: true);
+        SidSongPlayer player = new(_machine, _tune, song: null, repeat: true);
 
         float[] played = new float[2 * SampleRate * 6];
 
@@ -62,6 +58,7 @@ public sealed class SidSongPlayerTests : IDisposable
         }
 
         Assert.False(player.Finished);
+        Assert.True(_machine.IsPlaying);
         Assert.True(bursts >= 2, $"the song sounded {bursts} time(s) in six seconds");
     }
 

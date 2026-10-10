@@ -10,6 +10,12 @@ internal enum BbScreen
     // $4556: the logo and the credits, until fire is pressed.
     Title = 0,
 
-    // $F005: the game itself, until both players are out, and then the title again.
+    // $091B onwards: the game itself, until both players are out, and then the choice of players again.
     Play = 1,
+
+    // $F005-$F0E3: the last game's scores, until 1 or 2 is pressed.
+    Select = 2,
+
+    // $08E4-$091B: the story, while the level's theme starts.
+    Story = 3,
 }

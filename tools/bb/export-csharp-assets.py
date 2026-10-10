@@ -633,11 +633,12 @@ def export_giant_bubble(out_dir, canonical):
 
 # charset.tga is a 14x10 grid in the game's own order, which is not ASCII: the
 # digits come first, and the letters happen to land where ASCII minus 32 would
-# put them. The engine's BitmapFont indexes a grid sheet by `char - ' '`, so the
-# sheet is rewritten in that order and the cells nothing maps to are left blank.
+# put them. The engine's BitmapFont reads a sheet of sixteen columns from
+# character 0, a character's cell at (c & 0xF, c >> 4), so the sheet is
+# rewritten by character code and the cells nothing maps to are left blank.
 CHARSET_COLUMNS = 14
 FONT_COLUMNS = 16
-FONT_ROWS = 4
+FONT_ROWS = 8
 CELL = 8
 
 # The HUD marks a player's remaining lives with screen code $1D, which the
@@ -654,21 +655,23 @@ LIFE_ICON_CELL = 0x1D
 
 
 def charset_source_cells():
-    """ASCII glyph index (char - ' ') -> the cell in charset.tga holding it."""
+    """Character code -> the cell in charset.tga holding it."""
     cells = {}
 
     for digit in range(10):
-        cells[ord("0") + digit - ord(" ")] = digit
+        cells[ord("0") + digit] = digit
 
     for letter in range(26):
-        cells[ord("A") + letter - ord(" ")] = 33 + letter
+        cells[ord("A") + letter] = 33 + letter
 
-    cells[ord(LIFE_ICON) - ord(" ")] = LIFE_ICON_CELL
+    cells[ord(LIFE_ICON)] = LIFE_ICON_CELL
 
     # The title screen's credits end a line with screen code $3B and wrap the last in $3C, which are a full stop
-    # and an exclamation mark.
-    cells[ord(".") - ord(" ")] = 0x3B
-    cells[ord("!") - ord(" ")] = 0x3C
+    # and an exclamation mark. The story ($AC41) writes a comma as $3E and an apostrophe as $3F.
+    cells[ord(".")] = 0x3B
+    cells[ord("!")] = 0x3C
+    cells[ord(",")] = 0x3E
+    cells[ord("'")] = 0x3F
 
     return cells
 
@@ -707,42 +710,83 @@ def export_font(out_dir, canonical):
     return len(cells)
 
 
-# The title screen's logo is 44 characters of the charset, screen codes $60 to $8B, which the title's text codes
-# ($80 to $AB, less $20) name. They take a font of their own, so the view draws a line of the logo as a string in
-# the colour RAM's colour: the glyph for screen code $60 + n is the character ' ' + n.
-LOGO_FIRST_CELL = 0x60
-LOGO_GLYPHS = 44
+# The game's two small fonts, both four double-width pixels by eight, are font sheets in the layout BitmapFont reads
+# now: sixteen columns from character 0, a character's cell at (c & 0xF, c >> 4). White ink on opaque black, as the
+# charset's is, so the view draws them in whatever colour it asks for.
+SMALL_FONT_CELL_WIDTH = 4
+SMALL_FONT_ROWS = 6
+INK = 1
+
+# digit-font.tga: twelve 5x8 glyphs, column-major ($38BB copies each glyph's five bytes into rows 0-4 of characters
+# $1A and $1B), and each byte is read as four multicolour pixels. Glyphs 10 and 11 are level 100's squeezed "10" and
+# "0" ($38E3), which SidebarModel asks for as '[' and ']'.
+DIGIT_FONT_WIDTH = 5
+LEVEL_NUMBER_CHARACTERS = "0123456789[]"
+
+# hud-font.tga: twenty 4x8 multicolour glyphs, ten to a row ($FE90): the digits, R O U N D E A Y, a double
+# exclamation mark and a blank, which the ROUND and READY!! text ($3C01) spells with.
+HUD_FONT_COLUMNS = 10
+HUD_FONT_CHARACTERS = "0123456789ROUNDEAY! "
 
 
-def export_logo_font(out_dir, canonical):
-    """charset.tga's screen codes $60-$8B -> a grid font sheet of the title's logo."""
-    source = tga_mod.parse_tga(os.path.join(DATA, "charset.tga"))
-
-    width = FONT_COLUMNS * CELL
-    height = ((LOGO_GLYPHS + FONT_COLUMNS - 1) // FONT_COLUMNS) * CELL
+def _small_font(glyphs):
+    """{character: 8 rows of 4 booleans} -> a font sheet image."""
+    width = FONT_COLUMNS * SMALL_FONT_CELL_WIDTH
+    height = SMALL_FONT_ROWS * CELL
     pixels = bytearray(width * height)
 
-    for index in range(LOGO_GLYPHS):
-        cell = LOGO_FIRST_CELL + index
-        src_x = (cell % CHARSET_COLUMNS) * CELL
-        src_y = (cell // CHARSET_COLUMNS) * CELL
-        dst_x = (index % FONT_COLUMNS) * CELL
-        dst_y = (index // FONT_COLUMNS) * CELL
+    for character, rows in glyphs.items():
+        code = ord(character)
+        dst_x = (code % FONT_COLUMNS) * SMALL_FONT_CELL_WIDTH
+        dst_y = (code // FONT_COLUMNS) * CELL
 
-        for y in range(CELL):
-            for x in range(CELL):
-                pixels[(dst_y + y) * width + dst_x + x] = tga_mod.get_pixel(source, src_x + x, src_y + y)
+        for y, row in enumerate(rows):
+            for x, lit in enumerate(row):
+                if lit:
+                    pixels[(dst_y + y) * width + dst_x + x] = INK
 
-    font = {
-        "width": width,
-        "height": height,
-        "pixels": pixels,
-        "palette": source["palette"],
-    }
+    return {"width": width, "height": height, "pixels": pixels, "palette": [(0, 0, 0), (255, 255, 255)]}
 
-    write_tga(os.path.join(out_dir, "Fonts", "logo.tga"), font, None, canonical)
 
-    return LOGO_GLYPHS
+def export_level_number_font(out_dir, canonical):
+    """digit-font.tga -> the level number's font sheet, each glyph turned on its side as the game copies it."""
+    source = tga_mod.parse_tga(os.path.join(DATA, "digit-font.tga"))
+    glyphs = {}
+
+    for index, character in enumerate(LEVEL_NUMBER_CHARACTERS):
+        rows = []
+
+        for column in range(DIGIT_FONT_WIDTH):
+            bits = [tga_mod.get_pixel(source, index * DIGIT_FONT_WIDTH + column, y) != 0 for y in range(CELL)]
+
+            # A multicolour pixel is a pair of bits; the font only ever sets both or neither.
+            rows.append([bits[2 * x] or bits[(2 * x) + 1] for x in range(SMALL_FONT_CELL_WIDTH)])
+
+        glyphs[character] = rows
+
+    write_tga(os.path.join(out_dir, "Fonts", "level-number.tga"), _small_font(glyphs), None, canonical)
+
+    return len(glyphs)
+
+
+def export_hud_font(out_dir, canonical):
+    """hud-font.tga -> the ROUND and READY!! text's font sheet."""
+    source = tga_mod.parse_tga(os.path.join(DATA, "hud-font.tga"))
+    glyphs = {}
+
+    for index, character in enumerate(HUD_FONT_CHARACTERS):
+        src_x = (index % HUD_FONT_COLUMNS) * SMALL_FONT_CELL_WIDTH
+        src_y = (index // HUD_FONT_COLUMNS) * CELL
+
+        # The text is ORed into the characters under it, so only bit-pair 11, the colour RAM's colour, is drawn.
+        glyphs[character] = [
+            [tga_mod.get_pixel(source, src_x + x, src_y + y) == 3 for x in range(SMALL_FONT_CELL_WIDTH)]
+            for y in range(CELL)
+        ]
+
+    write_tga(os.path.join(out_dir, "Fonts", "hud-font.tga"), _small_font(glyphs), None, canonical)
+
+    return len(glyphs)
 
 
 # =============================================================================
@@ -850,6 +894,81 @@ def export_effect_chars(out_dir, canonical):
     )
 
     return len(EFFECT_CHARS)
+
+
+# =============================================================================
+# EXTEND letters
+# =============================================================================
+#
+# $E658 builds the letters down the side of the playfield into screen codes
+# $4A-$5D, which $E6CD writes as one 2x2 block a letter (c, c+1 below it, c+2
+# right of it, c+3 below that): E, X, T, N and D. Each block is the level's
+# wall (chars $11-$14, which $3940 copies the wall into) ANDed with the letter
+# bubble's mask, ORed with its art (bubble entries $18, $1C, $20, $24 and $28,
+# through $AA54 and $AAC8 at $18 + 4n), then ANDed with $A988's circle.
+#
+# Entry 00 is where the wall shows through, so the view draws the wall first;
+# entry 04 is opaque black, outside the circle or cleared by the mask.
+
+EXTEND_LETTERS = 5
+EXTEND_FIRST_ENTRY = 0x18
+
+# $A988: the circle, the left column's sixteen rows and then the right's.
+EXTEND_CIRCLE = bytes((
+    0xFC, 0xF3, 0xCF, 0xCF, 0x3F, 0x3F, 0x3F, 0x3F, 0x3F, 0x3F, 0x3F, 0x3F, 0xCF, 0xCF, 0xF3, 0xFC,
+    0x3F, 0xCF, 0xF3, 0xF3, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xFC, 0xF3, 0xF3, 0xCF, 0x3F,
+))
+
+
+def export_extend_chars(out_dir, canonical):
+    """The five EXTEND letters $E658 composes -> 8x16 multicolour blocks over the wall."""
+    bubble_masks_image = tga_mod.parse_tga(os.path.join(DATA, "bubble-masks.tga"))
+    software_sprites_image = tga_mod.parse_tga(os.path.join(DATA, "software-sprites.tga"))
+
+    bubble_masks = tga_mod.convert_bubble_masks(bubble_masks_image, 8, 16, 0)
+    software_sprites = tga_mod.convert_software_sprites(software_sprites_image, 4, 16, 0)
+
+    block_width = 2 * TILE_EDGE_WIDTH
+    width = EXTEND_LETTERS * block_width
+    height = 2 * CELL
+    pixels = bytearray(width * height)
+
+    for letter in range(EXTEND_LETTERS):
+        entry = EXTEND_FIRST_ENTRY + (4 * letter)
+        art = _block_bytes(_entry_graphic_addr(entry), bubble_masks, software_sprites)
+        mask = _block_bytes(_entry_mask_addr(entry), bubble_masks, software_sprites)
+
+        for column in range(2):
+            for y in range(height):
+                at = (column * height) + y
+                pairs = zip(_bit_pairs(art[at]), _bit_pairs(mask[at]), _bit_pairs(EXTEND_CIRCLE[at]))
+
+                for x, (ink, keep, circle) in enumerate(pairs):
+                    if circle == 0:
+                        value = 4
+                    elif circle == 3 and keep == 3 and ink == 0:
+                        value = 0
+                    elif circle == 3 and keep == 0:
+                        value = ink if ink != 0 else 4
+                    else:
+                        # Half a pair kept would mix the wall's bits with the art's, which one colour cannot show.
+                        raise SystemExit(
+                            f"EXTEND letter {letter} at column {column}, row {y}, pixel {x}: art {ink}, "
+                            f"mask {keep}, circle {circle} is not a whole pair kept or replaced."
+                        )
+
+                    pixels[(y * width) + (letter * block_width) + (column * TILE_EDGE_WIDTH) + x] = value
+
+    chars = {"width": width, "height": height, "pixels": pixels, "palette": [None] * 5}
+
+    write_tga(
+        os.path.join(out_dir, "Images", "extend-chars.tga"),
+        chars,
+        0,
+        list(canonical[:4]) + [canonical[0]],
+    )
+
+    return EXTEND_LETTERS
 
 
 # =============================================================================
@@ -1042,8 +1161,11 @@ def main():
     count = export_font(args.out, canonical)
     print(f"Wrote a {count}-glyph font -> {os.path.join(args.out, 'Fonts', 'charset.tga')}")
 
-    count = export_logo_font(args.out, canonical)
-    print(f"Wrote a {count}-glyph logo font -> {os.path.join(args.out, 'Fonts', 'logo.tga')}")
+    count = export_level_number_font(args.out, canonical)
+    print(f"Wrote a {count}-glyph level number font -> {os.path.join(args.out, 'Fonts', 'level-number.tga')}")
+
+    count = export_hud_font(args.out, canonical)
+    print(f"Wrote a {count}-glyph HUD font -> {os.path.join(args.out, 'Fonts', 'hud-font.tga')}")
 
     count = export_tile_edges(args.out, canonical)
     print(
@@ -1073,6 +1195,12 @@ def main():
     print(
         f"Wrote {count} effect characters -> "
         f"{os.path.join(args.out, 'Images', 'effect-chars.tga')}"
+    )
+
+    count = export_extend_chars(args.out, canonical)
+    print(
+        f"Wrote {count} EXTEND letters -> "
+        f"{os.path.join(args.out, 'Images', 'extend-chars.tga')}"
     )
 
 

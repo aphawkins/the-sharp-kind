@@ -6,6 +6,35 @@ namespace SharpKind.Audio.Tests;
 
 internal static class SidFixtures
 {
+    // Rows of C64 Elite's effect tables (elite-source.asm, SFXPR to SFXVCH) and sounds made of them.
+    internal const string EffectFile = /*lang=json,strict*/ """
+        {
+          "Effects": {
+            "sfxplas": { "Priority": 114, "Frames": 20, "Frequency": 69, "Control": 65, "AttackDecay": 1, "SustainRelease": 209, "FrequencyChange": -2, "VolumeMask": 3 },
+            "sfxwhosh": { "Priority": 115, "Frames": 63, "Frequency": 64, "Control": 129, "AttackDecay": 12, "SustainRelease": 220, "FrequencyChange": 0, "VolumeMask": 15 },
+            "sfxbeep": { "Priority": 104, "Frames": 5, "Frequency": 240, "Control": 17, "AttackDecay": 0, "SustainRelease": 240, "FrequencyChange": 0, "VolumeMask": 255 },
+            "sfxboop": { "Priority": 96, "Frames": 24, "Frequency": 64, "Control": 17, "AttackDecay": 99, "SustainRelease": 243, "FrequencyChange": 0, "VolumeMask": 255 },
+            "sfxhyp1": { "Priority": 240, "Frames": 128, "Frequency": 128, "Control": 65, "AttackDecay": 24, "SustainRelease": 216, "FrequencyChange": 68, "VolumeMask": 31 },
+            "sfxecm": { "Priority": 254, "Frames": 255, "Frequency": 80, "Control": 65, "AttackDecay": 17, "SustainRelease": 225, "FrequencyChange": 85, "VolumeMask": 255 },
+            "sfxelas2": { "Priority": 2, "Frames": 14, "Frequency": 64, "Control": 33, "AttackDecay": 9, "SustainRelease": 161, "FrequencyChange": -2, "VolumeMask": 3 }
+          },
+          "Sounds": {
+            "Pulse": [ { "Effect": "sfxplas" } ],
+            "Launch": [ { "Effect": "sfxwhosh" } ],
+            "Beep": [ { "Effect": "sfxbeep" } ],
+            "Boop": [ { "Effect": "sfxboop" } ],
+            "Ecm": [ { "Effect": "sfxecm" } ],
+            "Faint": [ { "Effect": "sfxelas2" } ],
+            "Hyperspace": [
+              { "Effect": "sfxhyp1", "Frequency": 240, "SustainRelease": 245 },
+              { "Effect": "sfxwhosh" },
+              { "Effect": "sfxhyp1", "Layer": true, "DelayFrames": 1 }
+            ],
+            "Dock": []
+          }
+        }
+        """;
+
     // A tune whose play routine sounds a saw on voice 1 for ten frames and then silences the chip; song 1 of 2.
     internal static byte[] BuildTune()
     {

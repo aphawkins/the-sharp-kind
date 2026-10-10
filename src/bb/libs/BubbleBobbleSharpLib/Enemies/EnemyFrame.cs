@@ -251,7 +251,7 @@ internal sealed class EnemyFrame
             case FoodDrop.FoodState:
                 _food.Wait(slot);
                 break;
-            case Levels.SuperBonus.State:
+            case SuperBonus.State:
                 SuperBonus?.Step();
                 break;
             case EnemyTumble.TumbleState:

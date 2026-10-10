@@ -40,6 +40,62 @@ adds a SID player. Decisions taken with the maintainer:
 
 `ISound` does not change. The games do not learn which tier is sounding.
 
+## Progress
+
+- Phase 0: done (2026-10-10).
+- Phase 1: done (2026-10-10). `IMusicStream` moved to its own file in 1.2
+  (internal; 2.11 makes it public), because `SampleMusicStream` must
+  implement it.
+- Phase 2: done (2026-10-10). Where it differs from the steps below:
+  - The public pair is `IMusicSource` and `MusicSources`: CA1711 forbids a
+    public `IMusicStream`. `MusicSources.Open` also opens `.sid` songs.
+  - `SDLSound` streams `.mid` and `.sid` music through `MusicOutput` (the old
+    `SidOutput`, made general), an audio-device stream of its own, not
+    `MIX_SetTrackAudioStream`.
+  - Initial attenuation is applied at 40%, as on the EMU hardware fonts are
+    voiced for; without it Danube played at a quarter of MeltySynth's level.
+    Master gain is 0.57, which matches MeltySynth's level on both tunes.
+  - A preset's sample address offsets are ignored (SoundFont 2.01, 8.1.3).
+  - A missing drum kit falls back to bank 128's first kit, never to a
+    melodic program.
+  - 200 cB of sustain is gain 0.1 (2.5 said 0.316; that is 100 cB).
+- Phase 3: re-planned (2026-10-10) against the SID code that landed before
+  this plan was worked; see the phase. Done (2026-10-10), except the
+  maintainer's listening check. Where it differs from the steps:
+  - `SidEffectEngine` takes a register-write delegate (`SidMachine.Chip.Write`
+    in `SidSound`), not a `SidChip`, so the tests can see every write.
+  - `SidSound.StopMusic` does nothing when no song plays, so a game's
+    `StopMusic` does not cut effects short.
+  - 3.7 is `ShippedSidTuneTests` (explicit). It wrote each song's first 30 s
+    to `%TEMP%\elite-<n>.wav` and `%TEMP%\bubble-bobble-<n>.wav`. Bubble
+    Bobble's song 8 plays 87.5 s and song 7 7.5 s, as bb-port-plan step 8
+    found; both Elite songs loop for ever. No `vsid` comparison was done.
+- Phase 4: 4.4 is done. Bubble Bobble plays all 12 songs through
+  `GameLoop.TakeSong` (bb-port-plan step 8).
+- Phase 4: done (2026-10-10). Where it differs from the steps:
+  - 4.1 went further, with the maintainer's agreement: `RenditionAssets` and
+    the game's own manifest are gone, and Elite registers the chosen
+    rendition's `AssetLocator` directly. The two `.ogg` music renders, which
+    nothing played, were deleted at the maintainer's request.
+  - 4.3: song 1 is the theme and song 2 the Blue Danube, from the notes each
+    plays (song 2 has a waltz pulse over an A pedal, in D). Not yet confirmed
+    by ear. `RenditionAudioTests` also plays every 8-bit effect on an idle
+    chip and expects sound (silence for `Dock`).
+  - 4.5: all four runs (8-bit and 16-bit, Software and Hardware) reached
+    flight with music on and no log errors. Not heard.
+  - SID CPU (2026-10-10): an idle chip cost 9.5% of a core in Release (16.5%
+    in Debug), because the filter and DC blocker decayed through denormal
+    floats for ever. They now settle to zero below 1e-20, and a chip whose
+    three envelopes are silent advances its voices a sample at a time
+    (`SidOscillator.Advance`, `SidEnvelope.Advance`, exact). Release: music
+    1.9% → 1.4%, idle 9.5% → 0.1%. Output is bit-identical except the
+    settling, which moves it by at most 1e-20.
+- Phase 5: done (2026-10-10). The decisions entry, the readmes, reference
+  sources and asset structure are updated. The roadmap item is replaced by
+  the [listening check](work-items/audio-listening-check.md) and the
+  follow-ups the phase lists. bb-port-plan step 8 already said the music
+  plays through the own SID stack, so it needed no change.
+
 ## Rules for the implementor
 
 - Read `AGENTS.md` first. UK spelling. Match the house style (file header
@@ -56,7 +112,7 @@ adds a SID player. Decisions taken with the maintainer:
   formulas and tables in this plan are from public hardware and format
   documentation and are what to use. This rule is about emulator and synth
   code only: porting the games' own routines and data (C64 Elite's sound
-  engine, 3.15 and 4.2) is how this repo always works.
+  engine, 3.2 and 4.2) is how this repo always works.
 - **Test runner:** `dotnet test` reports "Zero tests ran" in this sandbox. It is
   not a failure of the change. Build, then run the test exe directly:
 
@@ -76,19 +132,21 @@ adds a SID player. Decisions taken with the maintainer:
 AudioController.cs  AudioOptions.cs  ISound.cs  SfxSample.cs   (unchanged)
 SoftwareSound.cs                (loses Vorbis/MeltySynth; uses the below)
 Program.cs                      (InternalsVisibleTo)
-IMusicStream.cs  MusicStreams.cs  MusicPath.cs     (public: SDLSound uses them)
+IMusicSource.cs  MusicSources.cs  MusicPath.cs     (public: SDLSound uses them)
 Wav/WavDecoder.cs  Wav/SampleMusicStream.cs
 Midi/MidiFile.cs  Midi/MidiEvent.cs  Midi/MidiSequencer.cs  Midi/MidiMusicStream.cs
 Midi/Synthesizer.cs  Midi/MidiChannel.cs  Midi/Voice.cs  Midi/VolumeEnvelope.cs
 SoundFonts/SoundFont.cs  SoundFonts/SoundFontSample.cs  SoundFonts/Zone.cs
 SoundFonts/Preset.cs  SoundFonts/Instrument.cs  SoundFonts/GeneratorType.cs
 SoundFonts/VoiceParameters.cs
-Sid/PsidFile.cs  Sid/C64Bus.cs  Sid/Cpu6502.cs  Sid/Cpu6502.Opcodes.cs
-Sid/SidOscillator.cs  Sid/SidEnvelope.cs  Sid/SidFilter.cs  Sid/SidChip.cs
-Sid/SidPlayer.cs  Sid/SidMachine.cs
+SidSongPlayer.cs                (internal from 3.3: one song on a shared SidMachine)
 Sid/SidEffectFile.cs  Sid/SidEffectEngine.cs
 SidSound.cs                     (public: SoftwareSound and SDLSound share it)
 ```
+
+The 6502, the bus, the PSID reader and the SID chip are not in this library.
+They are in `src/useful/libs/SharpKind.Emulation` (`Cpu/`, `Sid/`), which
+Bubble Bobble's oracle tests also use.
 
 Outside the library: `tools/elite/export-c64-sfx.py` and the generated
 `src/elite/libs/EliteSharp.Renditions.EightBit/Assets/SFX/elite.sidfx`.
@@ -281,7 +339,7 @@ sequencer the same way it used MeltySynth. → verify: every existing
 
 **2.12 SDLSound streams music.** In `src/useful/libs/SharpKind.SDL/SDLSound.cs`:
 - `.wav`/other music keeps `MIX_LoadAudio`.
-- `.mid` goes through `MusicStreams.Open` (SID arrives in 3.16). Create an
+- `.mid` goes through `MusicStreams.Open` (SID arrives in 3.6). Create an
   `SDL_AudioStream` (F32, 2 ch, 44100 both sides) with
   `SDL_SetAudioStreamGetCallback`; the callback renders from the current
   `IMusicStream` under a lock and calls `SDL_PutAudioStreamData`. Copy the
@@ -306,146 +364,27 @@ against the pre-change build. Tune the master gain if needed.
 
 ## Phase 3 - C64 SID
 
-Facts both `.sid` files share (checked): PSID v2, speed 0 (50 Hz vertical
-blank), PAL, 6581, no data inside `$D000-$DFFF`.
-Bubble Bobble: load `$EA40-$FE87`, init `$EE50`, play `$F53C`, 12 songs,
-start 8. Elite: load `$B46F-$CCB7`, init `$B46F`, play `$B4B4`, 2 songs,
-start 1.
+### Already done (before this plan was worked)
 
-**3.1 PSID reader.** `Sid/PsidFile.cs`: `Read(byte[])`. Big-endian header:
-magic `PSID` or `RSID` (RSID throws "not supported"), version, dataOffset
-(0x06), loadAddress (0x08), initAddress (0x0A), playAddress (0x0C), songs
-(0x0E), startSong (0x10), speed (0x12, 32 bits), name/author/released (0x16,
-0x36, 0x56, 32 bytes each, Latin-1, NUL-trimmed), flags (0x76, v2+). If
-loadAddress is 0, the first two data bytes are the little-endian load
-address. Throw `SharpKindException` when playAddress is 0 or the speed bit
-for any song is set (CIA timing): neither shipped file needs them.
-Tests with an `AudioFixtures.BuildPsid(...)` builder: fields round-trip;
-load address from data; RSID and play = 0 throw.
+These steps of the first plan landed with Bubble Bobble's port, in
+`SharpKind.Emulation` rather than in this library. They stay as they are. Read
+them before starting, because the steps below build on them.
 
-**3.2 Bus.** `Sid/C64Bus.cs`: 64 KB RAM. `Read(ushort)`/`Write(ushort, byte)`.
-Addresses `$D400-$D7FF` go to the SID (register = address & 0x1F). Every
-other address is plain RAM (no ROMs, no other I/O; neither tune needs them).
-Tests: RAM round-trip; `$D418` write reaches the SID stub; `$D438` mirrors
-`$D418`.
+| First plan's step | Where it is | Tests |
+|---|---|---|
+| old 3.1 PSID reader | `Emulation/Sid/PsidFile.cs` | `SidMachineTests` (header, load address, refusals) |
+| old 3.2 Bus | `Emulation/Sid/C64Bus.cs` | through `SidMachineTests` |
+| old 3.3-3.6 CPU, `Call` | `Emulation/Cpu/Cpu6502.cs`, `.Opcodes.cs` | `Cpu6502Tests`; Bubble Bobble's oracle tests run the real game on it |
+| old 3.7-3.10 Oscillator, envelope, filter, chip | `Emulation/Sid/Sid*.cs` | `SidOscillatorTests`, `SidEnvelopeTests`, `SidChipTests` |
+| old 3.11-3.12 Player and machine | `Emulation/Sid/SidMachine.cs` (play routine each PAL frame; `IdleFrame` runs when no tune plays) | `SidMachineTests` |
+| old 3.13 Music paths | `Audio/MusicPath.cs`; `SidMachine.StartMusic` refuses song 0 and songs past the end | `MusicPathTests`, `SidMachineTests` |
+| part of old 3.16 | `Audio/SidSongPlayer.cs` (ends or repeats a song after 2 s of quiet); `MusicSources` opens `.sid` | `SidSongPlayerTests`, `SoftwareSoundSidTests` |
 
-**3.3 CPU skeleton.** `Sid/Cpu6502.cs`: A, X, Y, S, PC, flags N V - B D I Z C.
-`Step()` executes one instruction and returns its cycles. Implement the
-addressing modes (imm, zp, zp+X, zp+Y, abs, abs+X, abs+Y, (ind,X), (ind),Y,
-indirect JMP with the page-wrap bug, relative) and the load/store/transfer
-group: LDA LDX LDY STA STX STY TAX TAY TXA TYA TSX TXS, plus NOP. Put the
-opcode table in `Cpu6502.Opcodes.cs` (256 entries: operation, mode, base
-cycles, page-cross penalty). An undocumented opcode throws
-`SharpKindException` with the opcode and PC. Tests: each addressing mode, N/Z
-flags, zero-page wrap for zp+X, cycle count with page cross.
+What is still missing: the C64 Elite effects, and music and effects on one
+chip, as on the C64. Today every SID song gets a `SidMachine` of its own
+(`SidMusicStream`), and nothing plays SID effects.
 
-**3.4 CPU arithmetic.** ADC SBC (binary and decimal mode; in decimal mode set
-C correctly, and N/Z/V from the binary result as the NMOS part does), AND ORA
-EOR, CMP CPX CPY, BIT, INC DEC INX INY DEX DEY. Tests: the classic ADC
-overflow cases (0x50+0x50, 0xD0+0x90), SBC borrow, BCD 0x09+0x01 = 0x10,
-BCD 0x99+0x01 = 0x00 with C.
-
-**3.5 CPU control.** ASL LSR ROL ROR (A and memory), all branches (+1 cycle
-taken, +1 more on page cross), JMP JSR RTS RTI BRK, PHA PLA PHP PLP (B and
-bit 5 set when pushed), CLC SEC CLI SEI CLD SED CLV. Stack is page 1 and
-wraps. Tests: JSR/RTS round trip returns to PC+3; PHP pushes 0x30 bits;
-branch cycle counts.
-
-**3.6 Subroutine runner.** `Cpu6502.Call(ushort address, byte a, int maxCycles)`:
-push the return address `0xFFFF` (so RTS lands on `0x0000`) — i.e. push hi
-`0xFF`, lo `0xFF`; set PC; `Step()` until PC == 0x0000; return cycles used.
-Throw `SharpKindException` past `maxCycles` or on BRK. Tests: a tiny routine
-`LDA #$05 : STA $D418 : RTS` writes 5 to the SID register; an endless
-`JMP *` throws.
-
-**3.7 Oscillator.** `Sid/SidOscillator.cs`, clocked once per CPU cycle
-(PAL clock 985248 Hz). Registers: freq (16-bit), pulse width (12-bit),
-control (gate 0x01, sync 0x02, ring 0x04, test 0x08, tri 0x10, saw 0x20,
-pulse 0x40, noise 0x80).
-- accumulator: 24-bit, `acc = (acc + freq) & 0xFFFFFF`; test bit holds it at 0.
-- saw = `acc >> 12`.
-- tri = `((acc ^ (msb ? 0xFFFFFF : 0)) >> 11) & 0xFFF`, where msb is bit 23,
-  XORed with the **ring source's** bit 23 when ring is set.
-- pulse = `(acc >> 12) >= pw ? 0xFFF : 0` (test bit forces 0xFFF).
-- noise: 23-bit LFSR, initial `0x7FFFF8`, clocked when acc bit 19 rises:
-  `bit0 = bit22 ^ bit17`, shift left. Output = bits 22,20,16,13,11,7,4,2 as an
-  8-bit value, placed in bits 11-4 of the 12-bit output.
-- several waveform bits set: AND the selected outputs (an approximation; the
-  real chip differs). No waveform: 0.
-- sync: when the **sync source's** bit 23 rises this cycle, reset acc to 0.
-- source wiring: voice 1 ← voice 3, voice 2 ← voice 1, voice 3 ← voice 2.
-Tests: saw period = 2^24/freq cycles; pulse duty follows pw; test bit holds
-0; noise changes only on bit-19 rises; sync resets.
-
-**3.8 Envelope.** `Sid/SidEnvelope.cs`, clocked once per cycle. 8-bit level.
-Rate periods in cycles, index 0-15:
-`9, 32, 63, 95, 149, 220, 267, 313, 392, 977, 1954, 3126, 3907, 11720, 19532, 31251`.
-A rate counter counts cycles to the period of the current stage, then:
-attack adds 1 (at 0xFF go to decay); decay/release subtract 1 only every
-Nth period, where N = 1 above level 93, 2 at ≤93, 4 at ≤54, 8 at ≤26,
-16 at ≤14, 30 at ≤6, and they stop at 0 (release) or at sustain
-(`S * 0x11`, decay). Gate 0→1 starts attack; 1→0 starts release. Ignore the
-ADSR "delay bug". Tests: attack 0 reaches 0xFF in ≈ 255×9 cycles; sustain
-level holds; release reaches 0; re-gate from mid-release goes to attack.
-
-**3.9 Filter.** `Sid/SidFilter.cs`: Chamberlin state-variable filter,
-stepped once per cycle (stable at this rate).
-- cutoff register 11 bits: `$D415` bits 0-2 low, `$D416` high 8 bits.
-- 6581 cutoff in Hz: a table/formula in one place, first cut
-  `fc = 30 + cutoff * 5.8` (tune by ear in 3.12).
-- `f = 2 · sin(π · fc / 985248)`; `q = 1 / (0.707 + res/15 · 1.5)`.
-- per step: `lp += f·bp; hp = in − lp − q·bp; bp += f·hp`.
-- `$D417`: bits 0-2 route voices 1-3 through the filter, bits 4-7 resonance.
-- `$D418`: bit 4 LP, 5 BP, 6 HP (sum of the chosen outputs), bit 7 disconnects
-  voice 3 when it is not filtered, bits 0-3 master volume.
-Tests: LP with low cutoff attenuates a high saw; HP removes DC; routing bits
-choose which voices pass through.
-
-**3.10 Chip.** `Sid/SidChip.cs`: three oscillator+envelope voices, filter,
-`Write(int reg, byte value)`, `Read(int reg)` (`$1B` = voice 3 wave >> 4,
-`$1C` = voice 3 envelope, others 0). Voice output
-`(wave − 0x800) · level`; sum voices (filtered and unfiltered), apply
-volume/15, scale to about ±1 (divide by `3 · 0x800 · 0xFF`), then a one-pole
-DC-blocking high-pass at about 16 Hz.
-`Render(Span<float> stereo)`: for each 44.1 kHz frame, clock
-`985248 / 44100` cycles (carry the fraction), **average** the per-cycle output
-over those cycles (box decimation), write it to L and R. Register writes take
-effect at once and in order, so writing control `0x00` then `0x11` in one
-frame restarts the attack. Tests: silence with volume 0; a gated saw at freq
-0x1CD6 (≈440 Hz) gives ≈440 Hz zero crossings at 44.1 kHz; rendering 1 s
-takes the right number of cycles; gate off-then-on restarts the attack.
-
-**3.11 Player.** `Sid/SidPlayer.cs`: takes a `PsidFile`, a song number and
-the `SidChip` to write to (its `C64Bus` maps `$D400-$D7FF` onto that chip).
-Load the data at loadAddress in a zeroed bus;
-`Cpu.Call(init, a: song − 1, maxCycles: 2_000_000)`. `PlayFrame()` runs
-`Cpu.Call(play, a: 0, maxCycles: 100_000)`. The player does not render; the
-machine in 3.12 does. Tests: a hand-built PSID whose init stores A in RAM
-proves `song − 1` arrives; its play routine's SID writes reach the chip.
-
-**3.12 Machine.** `Sid/SidMachine.cs`: one `SidChip` shared by music and
-effects, as on the C64. PAL frames of 19656 cycles (312 × 63, ≈50.12 Hz).
-At the start of each frame: if music is playing, `player.PlayFrame()`;
-**otherwise** `effects.Tick()` (3.15). This matches C64 Elite's default: the
-interrupt handler runs `SOINT` only when no music plays (`MUSILLY` = 0,
-`elite-source.asm` around line 44102). Then clock the chip for the frame.
-`Render(Span<float>)` carries the partial frame across calls.
-- `StartMusic(PsidFile, int song)`: zero all SID registers, start a
-  `SidPlayer`.
-- `StopMusic()`: as the C64's `stopat` — flush the effect engine (every
-  voice counter set to 1, as `SOFLUSH`), zero SID registers `$00-$18`, write
-  `$D418 = 0x0F` (volume 15, no filter).
-- On construction, write `$D418 = 0x0F`.
-Tests: music frames call play and not the engine; after `StopMusic` the next
-tick silences any effect voice; volume register is 15 at start.
-
-**3.13 Music paths.** `MusicPath.cs` (public): `Parse(string path)` →
-`(string File, int? Song)`. A trailing `#<n>` selects the song, 1-based;
-without it the file's start song plays. Tests: `elite.sid#2` → song 2; no
-suffix → null; `#0` and a song above the file's count throw
-`SharpKindException` when the tune is started.
-
-**3.14 Effect file.** `Sid/SidEffectFile.cs` reads a `.sidfx` file (JSON):
+**3.1 Effect file.** `Sid/SidEffectFile.cs` reads a `.sidfx` file (JSON):
 
 ```json
 {
@@ -478,9 +417,11 @@ suffix → null; `#0` and a song above the file's count throw
 Validation throws `SharpKindException`: unknown effect name, one of
 Frequency/SustainRelease without the other, a value out of range.
 Use `System.Text.Json` with `UnmappedMemberHandling.Disallow`, as
-`AssetLocator` does. Tests: the example round-trips; each invalid case throws.
+`AssetLocator` does. The reader resolves every step to its effect row and the
+effect's index in the file, so the engine never sees names. Tests: the example
+round-trips; each invalid case throws.
 
-**3.15 Effect engine.** `Sid/SidEffectEngine.cs` is a port of C64 Elite's
+**3.2 Effect engine.** `Sid/SidEffectEngine.cs` is a port of C64 Elite's
 `NOISE`/`NOISE2` (`elite-source.asm` line 43384) and `SOINT` (line 44135).
 Read those routines alongside this spec. State per voice `v` = 0..2
 (the C64's `SOFLG SOCNT SOPR SOFRCH SOFRQ SOCR SOATK SOSUS SOVCH`): Flag,
@@ -493,7 +434,9 @@ field `r` is `7·v + r`.
 the queue. `Start(step)` (= `NOISE`):
 1. `e` = the step's effect. `chosen` = none.
 2. If not `Layer` and `e.Priority` bit 0 is clear: if a voice's Flag & 0x3F
-   equals `index(e) + 1`, `chosen` = that voice.
+   equals `index(e) + 1`, `chosen` = that voice. (With `Layer`, the C64 reads
+   `SFXPR` past the end of its table, so whether it checks depends on the game
+   code there. Always skipping the check is a deliberate simplification.)
 3. If `chosen` is none, find the lowest-priority voice exactly as `SOUX9`:
    `x = 0, a = pr[0]; if (!(pr[0] < pr[1])) { x = 1; a = pr[1]; } if (!(a < pr[2])) x = 2;`
    (ties go to the higher voice, so the first effect on an idle chip plays on
@@ -518,8 +461,10 @@ the queue. `Start(step)` (= `NOISE`):
 - After the three voices: PulseWidth ^= 4 (2 ↔ 6).
 - Then count down the delayed steps; start each that reaches 0 (it is
   processed as new on the next tick, as `HYPNOISE`'s `DELAY` does).
+- The engine writes to the `SidChip` it is given (`SidMachine.Chip`).
 
-`Flush()` (= `SOFLUSH`): every voice's Counter = 1.
+`Flush()` (= `SOFLUSH`): every voice's Counter = 1, and the delayed steps
+are dropped (a simplification: on the C64 `DELAY` waits whatever plays).
 Volume, pan and pitch from `ISound.Play` are ignored for SID effects.
 
 Tests, each traced by hand from the assembly:
@@ -536,36 +481,71 @@ Tests, each traced by hand from the assembly:
 - PulseWidth alternates 2, 6;
 - `Flush` then `Tick` gates every playing voice off.
 
-**3.16 SID sound for both backends.** `SidSound.cs` (public), used by both
-backends. Built from the `.sid` music entries and `.sidfx` effect entries of
-an `IAssetLocator`; owns one `SidMachine` and a lock.
-`PlayEffect(key)` → `engine.Trigger(key)` (the sound with the same name as
-the manifest key, in that entry's `.sidfx` file). `PlayMusic(key)` →
-`MusicPath.Parse`, then `machine.StartMusic`. `StopMusic()`.
-`Render(Span<float>)`. `Handles…` queries let the backends route.
-- `SoftwareSound`: `.sidfx` effects and `.sid` music go to `SidSound`
-  instead of the decoded-sample cache and `MusicStreams`; `Render` adds its
-  output. Playing non-SID music stops SID music and the reverse.
-- `SDLSound`: when the locator has any SID entry, create one extra track fed
-  for the whole session by an `SDL_AudioStream` whose get-callback calls
-  `SidSound.Render` (same pattern as 2.12). Route `Play`/`StopMusic` to it.
-Tests (`SoftwareSound` with a fixture `.sidfx` and a fixture PSID): a SID
-effect is non-silent; SID music is non-silent; `StopMusic` then an effect
-plays the effect.
+**3.3 Songs on a shared machine.** Change `SidSongPlayer` to play on a
+`SidMachine` it is given:
+`internal SidSongPlayer(SidMachine machine, PsidFile tune, int song, bool repeat)`.
+Its quiet detection stays. When a song that does not repeat ends, the player
+calls `machine.StopMusic()`, so the chip goes back to effects. Make the class
+`internal` (only `SidSound` will use it). Move `SidSongPlayerTests` to the new
+constructor and add: a finished song leaves `machine.IsPlaying` false.
 
-**3.17 Real tunes (manual, with the maintainer).** A console check in the test
-project, `[Fact(Explicit = true)]`, that renders 30 s of each shipped `.sid`
-(paths relative to the repo root) to WAV files in the temp folder, so the
-maintainer can listen. Then, optionally, the ground truth: VICE's `vsid.exe`
-(same folder as `x64sc.exe`, see `.claude/skills/vice-drive/SKILL.md`) with
-`-sounddev dump -soundarg <file>` logs every SID register write. Compare the
-first 500 frames of register writes with our player's (add a debug hook on
-`C64Bus` writes). Differences mean a CPU bug. Record what was found in
-`docs/decisions.md`.
+**3.4 SID sound.** `SidSound.cs` (public, an `IMusicSource`): one
+`SidMachine` for the whole session, a `SidEffectEngine` on its chip, and a
+lock.
+- It is built from an `IAssetLocator`: its `.sid` music entries, and its `Sfx`
+  entries whose file is a `.sidfx` (each key is the sound of that name in that
+  file; a missing name throws `SharpKindException` naming the key and file).
+- `machine.IdleFrame = engine.Tick`, so effects run only when no music plays
+  (C64 Elite's default, `MUSILLY` = 0, `elite-source.asm` around line 44102).
+- `PlayEffect(key)` calls `engine.Trigger`. Volume, pan and pitch from
+  `ISound.Play` are ignored.
+- `PlayMusic(key, repeat)`: `MusicPath.Parse`, read the `PsidFile` (cache it
+  per file), drop the engine's delayed steps, start a `SidSongPlayer`.
+- `StopMusic()`: `engine.Flush()`, then `machine.StopMusic()` (the C64's
+  `stopat`: `SOFLUSH`, then the chip silenced at volume 15).
+- `Render(Span<float>)` renders the player while a song plays, else the
+  machine (effects only).
+- `HandlesEffect(key)` and `HandlesMusic(key)` let the backends route.
+- `Dispose` does nothing (there are no unmanaged resources).
 
-**Check in with the maintainer:** they listen to both tunes against `vsid`,
-and say which Elite song is the theme and which is the Blue Danube, and which
-Bubble Bobble song plays in game (expected: start song 8).
+Tests with a fixture `.sidfx` and `SidFixtures.BuildTune()`: an effect is
+non-silent; a song is non-silent; an effect during a song is not heard (the
+song's output does not change); `StopMusic` then an effect plays the effect;
+the end of a song that does not repeat lets effects play again; an unknown
+sound name throws.
+
+**3.5 SoftwareSound routes SID.** When the locator has any `.sid` music or
+`.sidfx` effect, `SoftwareSound` owns one `SidSound`:
+- `.sidfx` entries are not decoded into the sample cache; `Play(sfx, ...)` for
+  them goes to `SidSound.PlayEffect`.
+- `.sid` music goes to `SidSound.PlayMusic`. Playing other music stops SID
+  music, and playing SID music stops other music.
+- `Render` adds the output of `SidSound` after the music.
+
+Remove `SidMusicStream` and the `.sid` branch of `MusicSources.Open` (a `.sid`
+there is then an unsupported format). Keep `SoftwareSoundSidTests` passing,
+and add: a SID effect is non-silent; `StopMusic` then an effect plays the
+effect.
+
+**3.6 SDLSound routes SID.** When the locator has any SID entry, `SDLSound`
+creates one `SidSound` and a second `MusicOutput` that plays it for the whole
+session. `.sid` music and `.sidfx` effects go to it, and `.sidfx` files are
+not loaded with `MIX_LoadAudio`. `.mid` music keeps its own `MusicOutput`.
+Playing either kind of music stops the other. → verify: build; run Bubble
+Bobble on the Hardware backend and hear the title tune.
+
+**3.7 Real tunes (manual, with the maintainer).** An explicit test
+(`[Fact(Explicit = true)]`) renders 30 s of each song of both shipped `.sid`
+files (paths from the repo root) to WAV files in the temp folder. Bubble
+Bobble's oracle tests already prove the CPU, so the first plan's `vsid`
+register-dump comparison is optional. Do it only if a tune sounds wrong
+(`vsid.exe` is beside `x64sc.exe`, see `.claude/skills/vice-drive/SKILL.md`;
+`-sounddev dump -soundarg <file>`; add a write hook on `C64Bus` and compare
+the first 500 frames). Record what was found in `docs/decisions.md`.
+
+**Check in with the maintainer:** they listen to Elite's two songs and say
+which is the theme and which is the Blue Danube. Bubble Bobble's songs are
+already mapped (bb-port-plan step 8).
 
 ---
 
@@ -619,7 +599,7 @@ script twice gives identical output; `SidEffectFile` loads it.
 `EliteSharp.Renditions.EightBit/Assets/AssetManifest.json`:
 `"Sfx"`: every `SoundEffect` name → `"elite.sidfx"`, and
 `"Music": { "EliteTheme": "elite.sid#1", "BlueDanube": "elite.sid#2" }` (swap
-if 3.17 found them the other way round). Tests in `EliteSharpLib.Tests`
+if 3.7 found them the other way round). Tests in `EliteSharpLib.Tests`
 (use `TestAssets.Locator(rendition)`): for each rendition, every
 `SoundEffect` and `MusicType` name resolves to an existing file (after
 `MusicPath.Parse`), and in the 8-bit rendition every `SoundEffect` name is a

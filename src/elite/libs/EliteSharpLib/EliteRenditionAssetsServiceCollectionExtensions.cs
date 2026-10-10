@@ -12,13 +12,13 @@ namespace EliteSharpLib;
 // limit on EliteServiceCollectionExtensions. Public because the app calls it directly, before the container exists.
 public static class EliteRenditionAssetsServiceCollectionExtensions
 {
-    // Registered over the one AddGameEngine put there, which knows only about the executable's own Assets folder.
+    // Registered over the one AddGameEngine put there, which looks in the executable's own Assets folder. Every Elite
+    // asset is the chosen rendition's - its sound and music too, since a tier's audio is part of its look and feel - and
+    // ships beside the rendition's assembly.
     public static IServiceCollection AddRenditionAssets(this IServiceCollection services, InstalledRenditions renditions)
     {
         ArgumentNullException.ThrowIfNull(renditions);
 
-        return services.AddSingleton<IAssetLocator>(_ => new RenditionAssets(
-            AssetLocator.CreateFrom(renditions.Folder, renditions.Chosen.Name),
-            AssetLocator.Create(renditions.Chosen.Name)));
+        return services.AddSingleton<IAssetLocator>(_ => AssetLocator.CreateFrom(renditions.Folder, renditions.Chosen.Name));
     }
 }

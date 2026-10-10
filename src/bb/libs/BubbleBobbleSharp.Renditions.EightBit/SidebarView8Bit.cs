@@ -25,13 +25,25 @@ internal sealed class SidebarView8Bit : IView<SidebarModel>
     private const string BlackColour = "0";
     private const string WhiteColour = "1";
 
+    // $ACFD: the ROUND and READY!! lines, from column 12 of rows 10 and 12, in colour RAM $09: white where the font is.
+    private const string ReadyFont = "Hud";
+    private const int ReadyColumn = 12;
+    private const int RoundRow = 10;
+    private const int ReadyRow = 12;
+
     private const string SidebarSheet = "Sidebars";
     private const string TileSheet = "LevelTiles";
+
+    // extend-chars.tga: E, X, T, N and D, one 8 by 16 block each, clear where the wall shows through.
+    private const string LetterSheet = "ExtendChars";
+    private const int LetterWidth = 8;
+    private const int LetterHeight = 16;
 
     private readonly IGraphics _graphics;
     private readonly BbViewLayout _layout;
     private readonly LevelSheets _sidebars;
     private readonly LevelSheets _tiles;
+    private readonly MulticolourSheet _letters;
     private readonly FastColor _black;
     private readonly FastColor _white;
 
@@ -43,6 +55,7 @@ internal sealed class SidebarView8Bit : IView<SidebarModel>
         _layout = surface.Layout;
         _sidebars = new(surface, SidebarSheet);
         _tiles = new(surface, TileSheet);
+        _letters = new(surface, LetterSheet);
         _black = surface.Palette[BlackColour];
         _white = surface.Palette[WhiteColour];
     }
@@ -68,6 +81,62 @@ internal sealed class SidebarView8Bit : IView<SidebarModel>
         {
             DrawNumber(model);
         }
+
+        DrawLetters(model, sheet, 0, model.PlayerOneLetters);
+        DrawLetters(model, sheet, _layout.PlayfieldColumns - BlockColumns, model.PlayerTwoLetters);
+
+        DrawReady(model);
+    }
+
+    // $E6CD: each letter a player holds replaces a block of the wall, from row 10 down, two rows a letter. $E658 made
+    // the block from the wall's four characters ($3940 copies them to $11-$14) taken a column at a time, so under a
+    // letter the wall's top-right and bottom-left characters change places.
+    private void DrawLetters(SidebarModel model, string sheet, int column, int letters)
+    {
+        if (letters == 0)
+        {
+            return;
+        }
+
+        _letters.Paint(model.Colours);
+
+        for (int letter = 0; letter < SidebarModel.LetterCount; letter++)
+        {
+            if ((letters & (1 << letter)) == 0)
+            {
+                continue;
+            }
+
+            int row = SidebarModel.FirstLetterRow + (letter * BlockRows);
+
+            for (int character = 0; character < BlockColumns * BlockRows; character++)
+            {
+                DrawCharacter(
+                    model,
+                    sheet,
+                    character,
+                    _layout.Playfield.Cell(column + (character / BlockRows), row + (character % BlockRows)));
+            }
+
+            _graphics.DrawImagePart(
+                _letters.Name,
+                _layout.Playfield.Cell(column, row),
+                new(LetterWidth * 2, LetterHeight),
+                new(SidebarModel.LetterPicture(letter) * LetterWidth, 0),
+                new(LetterWidth, LetterHeight));
+        }
+    }
+
+    // $3C01: the text is ORed into the characters under it, so the level shows through wherever the font is clear.
+    private void DrawReady(SidebarModel model)
+    {
+        if (model.Round <= 0)
+        {
+            return;
+        }
+
+        _graphics.DrawTextLeft(_layout.Playfield.Cell(ReadyColumn, RoundRow), model.RoundText, ReadyFont, _white);
+        _graphics.DrawTextLeft(_layout.Playfield.Cell(ReadyColumn, ReadyRow), model.ReadyText, ReadyFont, _white);
     }
 
     // $38E9: the level number's two characters ($1A, $1B) replace the top-left corner of the level.

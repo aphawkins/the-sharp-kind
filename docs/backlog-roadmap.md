@@ -43,6 +43,8 @@ Every open work item, in priority order. Each line links to a file in
 
 Steps from section 5 of [bb-port-plan.md](bb-port-plan.md), in order.
 
+- [ ] Bug: [the music restarts when a player loses a life](work-items/bb-music-restarts-on-life-lost.md)
+- [ ] Bug: [popped water flows too low along the platforms](work-items/bb-water-flow-too-low.md)
 - [ ] [6b: item effect 29, the six-sprite giant](work-items/bb-6b-giant-enemy-effect.md)
 - [ ] [6c: item effect 32, the super bonus room](work-items/bb-6c-super-bonus-room.md)
 - [ ] [7: super mode, bonus rounds and level 100](work-items/bb-7-super-mode-bonus-level-100.md)
@@ -52,7 +54,7 @@ Steps from section 5 of [bb-port-plan.md](bb-port-plan.md), in order.
 
 ### SharpKind
 
-- [ ] [Own audio stack: WAV, MIDI/SoundFont2 and C64 SID](work-items/audio-own-stack.md)
+- [ ] [Listen to the own audio stack](work-items/audio-listening-check.md)
 
 ## Could
 
@@ -69,6 +71,7 @@ Steps from section 5 of [bb-port-plan.md](bb-port-plan.md), in order.
 - [ ] **[LARGE]** [Resizeable window and native fullscreen for Modern](work-items/sdl-resizable-fullscreen.md) — blocked by the Modern rendition
 - [ ] **[DECISION]** [Is render resolution configurable independently of rendition?](work-items/render-resolution-decision.md)
 - [ ] [Spike: WASM build for Playwright visual testing](work-items/wasm-playwright-spike.md)
+- [ ] [SID: the 8580 model and CIA-timed tunes](work-items/sid-8580-and-cia-tunes.md)
 
 ### Elite
 
@@ -78,6 +81,10 @@ Steps from section 5 of [bb-port-plan.md](bb-port-plan.md), in order.
 - [ ] [Test with a rendition of arbitrary size](work-items/elite-arbitrary-size-test-rendition.md)
 - [ ] [Delete the square field-of-vision test](work-items/elite-remove-square-fov-test.md)
 - [ ] **[DECISION]** [Clip space 4/6: move ship rendering onto the clip-space path](work-items/elite-clip-space-path.md)
+- [ ] [8-bit: a sound for each laser](work-items/elite-per-laser-sounds.md)
+- [ ] [8-bit: explosions quieter with distance](work-items/elite-explosion-distance-volume.md)
+- [ ] [8-bit: the ECM sound stops when the ECM does](work-items/elite-ecm-sound-stops.md)
+- [ ] [8-bit: the "sounds during music" option](work-items/elite-sounds-during-music.md)
 
 ### Stunt Car Racer
 

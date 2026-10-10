@@ -4,6 +4,13 @@
 
 namespace BubbleBobbleSharp.Abstractions.Views;
 
-/// <summary>The title screen's text; the banner is the logo.</summary>
+/// <summary>A front-end screen's characters: its stars, its rules and its text. The banner is the logo.</summary>
 /// <param name="Lines">The credits and the prompt.</param>
-public sealed record TitleModel(IReadOnlyList<TitleText> Lines);
+public sealed record TitleModel(IReadOnlyList<TitleText> Lines)
+{
+    /// <summary>Gets the stars behind the text.</summary>
+    public IReadOnlyList<TitleStar> Stars { get; init; } = [];
+
+    /// <summary>Gets the rules across the screen.</summary>
+    public IReadOnlyList<TitleRule> Rules { get; init; } = [];
+}

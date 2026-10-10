@@ -19,6 +19,20 @@
             }
         },
         {
+            "name": "Bubble Bobble",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build bb",
+            "program": "${workspaceFolder}/src/bb/apps/BubbleBobbleSharp/bin/Debug/net10.0/BubbleBobbleSharp.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/src/bb/apps/BubbleBobbleSharp",
+            "console": "internalConsole",
+            "stopAtEntry": false,
+            "sourceFileMap": {
+                "/_": "${workspaceFolder}"
+            }
+        },
+        {
             "name": "Stunt Car Racer",
             "type": "coreclr",
             "request": "launch",

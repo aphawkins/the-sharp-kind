@@ -46,6 +46,18 @@ public interface IGamepad
     /// </remarks>
     public string? PreferredDevice { get; set; }
 
+    /// <summary>
+    /// Gets the first attached device that is not the active one, for a
+    /// second player, read with the same semantics as this one.
+    /// </summary>
+    /// <remarks>
+    /// Resolved per read, like the active device: it is disconnected, and
+    /// reads nothing, while fewer than two devices are attached. Its own
+    /// <see cref="Secondary"/> is itself, and its <see cref="PreferredDevice"/>
+    /// is this one's.
+    /// </remarks>
+    public IGamepad Secondary { get; }
+
     public void ClearPressed();
 
     /// <summary>

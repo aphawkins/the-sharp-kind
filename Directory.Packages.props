@@ -4,7 +4,6 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
-    <PackageVersion Include="MeltySynth" Version="2.4.1" />
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.12" />
@@ -16,8 +15,6 @@
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.0" />
     <PackageVersion Include="MinVer" Version="8.0.0" />
     <PackageVersion Include="Moq" Version="4.20.72" />
-    <PackageVersion Include="NVorbis" Version="0.10.5" />
-    <PackageVersion Include="OggVorbisEncoder" Version="1.2.2" />
     <PackageVersion Include="ppy.SDL3-CS" Version="2026.722.0" />
     <PackageVersion Include="ppy.SDL3_mixer-CS" Version="2026.722.0" />
     <PackageVersion Include="ppy.SDL3_ttf-CS" Version="2026.722.0" />

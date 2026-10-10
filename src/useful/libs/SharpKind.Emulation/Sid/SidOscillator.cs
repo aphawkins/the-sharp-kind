@@ -21,12 +21,14 @@ internal sealed class SidOscillator
     private const int NoiseMask = 0x7FFFFF;
     private const int Silent = 0;
     private const int FullScale = 0xFFF;
+    private const int NoiseClockShift = 19;
 
     // The LFSR bits that make up the 8-bit noise output, most significant first.
     private static readonly int[] s_noiseTaps = [22, 20, 16, 13, 11, 7, 4, 2];
 
     private int _accumulator;
     private int _noise = NoiseSeed;
+    private int _noiseOutput = NoiseOutput(NoiseSeed);
     private bool _noiseClockWasHigh;
 
     internal int Frequency { get; set; }
@@ -48,7 +50,7 @@ internal sealed class SidOscillator
         if ((value & TestBit) != 0 && (Control & TestBit) == 0)
         {
             _accumulator = 0;
-            _noise = NoiseSeed;
+            SetNoise(NoiseSeed);
         }
 
         Control = value;
@@ -66,11 +68,44 @@ internal sealed class SidOscillator
 
         if (clockHigh && !_noiseClockWasHigh)
         {
-            int feedback = ((_noise >> 22) ^ (_noise >> 17)) & 1;
-            _noise = ((_noise << 1) | feedback) & NoiseMask;
+            ShiftNoise();
         }
 
         _noiseClockWasHigh = clockHigh;
+    }
+
+    /// <summary>
+    /// Runs as many cycles as <see cref="Clock"/> would, at once, for a voice no other voice syncs: the accumulator moves
+    /// on by the frequency for each cycle, and the noise shifts once for each time bit 19 rose on the way.
+    /// </summary>
+    /// <param name="cycles">The cycles to run, at least 1.</param>
+    internal void Advance(int cycles)
+    {
+        // One cycle as Clock runs it leaves the noise clock's last state matching the accumulator, which the count needs.
+        Clock();
+
+        if (--cycles == 0 || (Control & TestBit) != 0)
+        {
+            return;
+        }
+
+        // A step is under 2^19, so the accumulator crosses each multiple of 2^19 on its own cycle, and bit 19 rises on
+        // entering every odd one. 2^24 holds an even number of them, so counting past the wrap keeps their parity.
+        long start = _accumulator;
+        long end = start + ((long)Frequency * cycles);
+        long first = (start >> NoiseClockShift) + 1;
+        long last = end >> NoiseClockShift;
+        long rises = ((last + 1) >> 1) - (first >> 1);
+
+        for (long i = 0; i < rises; i++)
+        {
+            ShiftNoise();
+        }
+
+        long previous = end - Frequency;
+        MsbRose = (previous & TopBit) == 0 && (end & TopBit) != 0;
+        _accumulator = (int)(end & AccumulatorMask);
+        _noiseClockWasHigh = (_accumulator & NoiseClockBit) != 0;
     }
 
     /// <summary>Restarts the accumulator when this voice is synced and its source has wrapped.</summary>
@@ -115,21 +150,34 @@ internal sealed class SidOscillator
 
         if ((Control & NoiseBit) != 0)
         {
-            wave &= NoiseOutput() << 4;
+            wave &= _noiseOutput << 4;
         }
 
         return wave;
     }
 
-    private int NoiseOutput()
+    private static int NoiseOutput(int noise)
     {
         int output = 0;
 
         foreach (int bit in s_noiseTaps)
         {
-            output = (output << 1) | ((_noise >> bit) & 1);
+            output = (output << 1) | ((noise >> bit) & 1);
         }
 
         return output;
+    }
+
+    private void ShiftNoise()
+    {
+        int feedback = ((_noise >> 22) ^ (_noise >> 17)) & 1;
+        SetNoise(((_noise << 1) | feedback) & NoiseMask);
+    }
+
+    // The output taps only change when the register does, so they are worked out then rather than every cycle.
+    private void SetNoise(int noise)
+    {
+        _noise = noise;
+        _noiseOutput = NoiseOutput(noise);
     }
 }

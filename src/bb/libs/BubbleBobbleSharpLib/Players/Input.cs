@@ -39,13 +39,33 @@ internal sealed class Input
 
     internal ReadOnlySpan<byte> Read()
     {
-        _ports[0] = (byte)(Port(Player1) & Pad());
-        _ports[1] = Port(Player2);
+        // The active gamepad is player 1's, and the next one attached player 2's.
+        _ports[0] = (byte)(Port(Player1) & Pad(_gamepad));
+        _ports[1] = (byte)(Port(Player2) & Pad(_gamepad.Secondary));
 
         return _ports;
     }
 
     private static byte Clear(byte port, byte bit, bool pushed) => pushed ? (byte)(port & ~bit) : port;
+
+    private static byte Pad(IGamepad gamepad)
+    {
+        if (!gamepad.IsConnected)
+        {
+            return Idle;
+        }
+
+        float x = gamepad.Axis(GamepadAxis.LeftX);
+        float y = gamepad.Axis(GamepadAxis.LeftY);
+
+        byte port = Idle;
+
+        port = Clear(port, Up, gamepad.IsHeld(GamepadButton.DPadUp) || y <= -AxisThreshold);
+        port = Clear(port, Down, gamepad.IsHeld(GamepadButton.DPadDown) || y >= AxisThreshold);
+        port = Clear(port, Left, gamepad.IsHeld(GamepadButton.DPadLeft) || x <= -AxisThreshold);
+        port = Clear(port, Right, gamepad.IsHeld(GamepadButton.DPadRight) || x >= AxisThreshold);
+        return Clear(port, Fire, gamepad.IsHeld(GamepadButton.A));
+    }
 
     private byte Port(in Keys keys)
     {
@@ -56,25 +76,6 @@ internal sealed class Input
         port = Clear(port, Left, _keyboard.IsHeld(keys.LeftKey));
         port = Clear(port, Right, _keyboard.IsHeld(keys.RightKey));
         return Clear(port, Fire, _keyboard.IsHeld(keys.FireKey));
-    }
-
-    private byte Pad()
-    {
-        if (!_gamepad.IsConnected)
-        {
-            return Idle;
-        }
-
-        float x = _gamepad.Axis(GamepadAxis.LeftX);
-        float y = _gamepad.Axis(GamepadAxis.LeftY);
-
-        byte port = Idle;
-
-        port = Clear(port, Up, _gamepad.IsHeld(GamepadButton.DPadUp) || y <= -AxisThreshold);
-        port = Clear(port, Down, _gamepad.IsHeld(GamepadButton.DPadDown) || y >= AxisThreshold);
-        port = Clear(port, Left, _gamepad.IsHeld(GamepadButton.DPadLeft) || x <= -AxisThreshold);
-        port = Clear(port, Right, _gamepad.IsHeld(GamepadButton.DPadRight) || x >= AxisThreshold);
-        return Clear(port, Fire, _gamepad.IsHeld(GamepadButton.A));
     }
 
     private readonly record struct Keys(

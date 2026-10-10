@@ -34,6 +34,11 @@ by feel.
   follows function for function. Nearer to hand than the assembly, but a
   rewrite rather than a transcription: read it first, then confirm against the
   BBC source before treating anything as settled.
+- **[markmoxon/elite-source-code-commodore-64](https://github.com/markmoxon/elite-source-code-commodore-64)**
+  - the annotated 6502 of the C64 version. The reference for the 8-bit tier's
+  audio only: its sound-effect tables and its `NOISE`/`SOINT` engine are what
+  `elite.sidfx` and `SidEffectEngine` are taken from. It has no say in
+  behaviour, where the BBC source stays golden.
 
 ## Bubble Bobble
 

@@ -26,6 +26,7 @@ public class SoftwareGamepad : IGamepad, IGamepadSink
 
         input.Register(this);
         _input = input;
+        Secondary = new SecondaryView(this);
     }
 
     public bool IsConnected => _arrivals.Count > 0;
@@ -33,6 +34,8 @@ public class SoftwareGamepad : IGamepad, IGamepadSink
     public string? PreferredDevice { get; set; }
 
     public string DeviceName => Active?.Name ?? string.Empty;
+
+    public IGamepad Secondary { get; }
 
     public IReadOnlyList<string> AttachedDevices
         => [.. _arrivals.Select(id => _devices[id].Name)];
@@ -59,6 +62,25 @@ public class SoftwareGamepad : IGamepad, IGamepadSink
             }
 
             return _devices[_arrivals[0]];
+        }
+    }
+
+    // The first device to arrive that is not the active one.
+    private Device? Second
+    {
+        get
+        {
+            Device? active = Active;
+
+            foreach (int id in _arrivals)
+            {
+                if (_devices[id] != active)
+                {
+                    return _devices[id];
+                }
+            }
+
+            return null;
         }
     }
 
@@ -142,6 +164,38 @@ public class SoftwareGamepad : IGamepad, IGamepadSink
     }
 
     public void Poll() => _input.Poll();
+
+    private sealed class SecondaryView(SoftwareGamepad owner) : IGamepad
+    {
+        public bool IsConnected => owner.Second is not null;
+
+        public string DeviceName => owner.Second?.Name ?? string.Empty;
+
+        public IReadOnlyList<string> AttachedDevices => owner.AttachedDevices;
+
+        public string? PreferredDevice
+        {
+            get => owner.PreferredDevice;
+            set => owner.PreferredDevice = value;
+        }
+
+        public IGamepad Secondary => this;
+
+        public void ClearPressed() => owner.Second?.ClearInput();
+
+        public bool IsPressed(GamepadButton button)
+            => button != GamepadButton.None && owner.Second?.PressedButtons.Remove(button) == true;
+
+        public bool IsHeld(GamepadButton button)
+            => button != GamepadButton.None && owner.Second?.HeldButtons.Contains(button) == true;
+
+        public float Axis(GamepadAxis axis)
+            => owner.Second is { } second && second.Axes.TryGetValue(axis, out float value) ? value : 0f;
+
+        public bool IsAnalog(GamepadAxis axis) => owner.Second?.AnalogAxes.Contains(axis) == true;
+
+        public void Poll() => owner.Poll();
+    }
 
     private sealed class Device(string name)
     {

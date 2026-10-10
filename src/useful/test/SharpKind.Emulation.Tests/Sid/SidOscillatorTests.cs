@@ -120,4 +120,78 @@ public class SidOscillatorTests
         // Assert
         Assert.InRange(peak, 0xFF0, 0xFFF);
     }
+
+    // Advance runs a sample's cycles at once for a silent chip; it has to leave the voice exactly where clocking would.
+    [Theory]
+    [InlineData(0x0000, 22)]
+    [InlineData(0x0001, 23)]
+    [InlineData(0x1D44, 22)]
+    [InlineData(0xFFFF, 23)]
+    [InlineData(0xFFFF, 1)]
+    [InlineData(0x7FFF, 5000)]
+    public void AdvanceLeavesTheVoiceWhereClockingWould(int frequency, int cycles)
+    {
+        // Arrange: both part way through, and both just restarted by the test bit, which leaves the noise clock's last
+        // state behind the accumulator's.
+        SidOscillator advanced = new() { Frequency = frequency };
+        SidOscillator clocked = new() { Frequency = frequency };
+        foreach (SidOscillator oscillator in new[] { advanced, clocked })
+        {
+            for (int i = 0; i < 300_000; i++)
+            {
+                oscillator.Clock();
+            }
+
+            oscillator.WriteControl(SidOscillator.TestBit);
+            oscillator.WriteControl(0);
+        }
+
+        // Act
+        for (int block = 0; block < 50; block++)
+        {
+            advanced.Advance(cycles);
+            for (int i = 0; i < cycles; i++)
+            {
+                clocked.Clock();
+            }
+
+            // Assert
+            Assert.Equal(clocked.MsbRose, advanced.MsbRose);
+            Assert.Equal(Waves(clocked), Waves(advanced));
+        }
+
+        for (int i = 0; i < 100_000; i++)
+        {
+            advanced.Clock();
+            clocked.Clock();
+            Assert.Equal(Waves(clocked), Waves(advanced));
+        }
+    }
+
+    [Fact]
+    public void AdvanceWithTheTestBitSetHoldsTheVoiceAtZero()
+    {
+        // Arrange
+        SidOscillator oscillator = new() { Frequency = 0x1234 };
+        oscillator.Advance(1000);
+        oscillator.WriteControl(SidOscillator.TestBit | SidOscillator.SawBit);
+
+        // Act
+        oscillator.Advance(1000);
+
+        // Assert
+        Assert.Equal(0, oscillator.Output(false));
+    }
+
+    // The saw shows the accumulator and the noise shows the shift register.
+    private static (int Saw, int Noise) Waves(SidOscillator oscillator)
+    {
+        byte control = oscillator.Control;
+        oscillator.Control = SidOscillator.SawBit;
+        int saw = oscillator.Output(false);
+        oscillator.Control = SidOscillator.NoiseBit;
+        int noise = oscillator.Output(false);
+        oscillator.Control = control;
+        return (saw, noise);
+    }
 }

@@ -78,4 +78,26 @@ public sealed class SidebarsTests
 
         Assert.Equal(text, model.NumberText);
     }
+
+    // $3C01, $A9A8: ROUND, a blank, the digits with a zero tens blank, and a blank; level 100 is all three digits.
+    [Theory]
+    [InlineData(1, "ROUND  1 ")]
+    [InlineData(42, "ROUND 42 ")]
+    [InlineData(100, "ROUND 100")]
+    public void SpellsTheRound(int round, string text)
+    {
+        SidebarModel model = new(SidebarModel.NoDesign, 0, 0) { Round = round };
+
+        Assert.Equal(text, model.RoundText);
+        Assert.Equal("READY !", model.ReadyText);
+    }
+
+    [Fact]
+    public void ShowsNoRoundOrReadyWithoutARound()
+    {
+        SidebarModel model = new(SidebarModel.NoDesign, 0, 0);
+
+        Assert.Empty(model.RoundText);
+        Assert.Empty(model.ReadyText);
+    }
 }

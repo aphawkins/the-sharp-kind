@@ -14,6 +14,9 @@ public sealed record SidebarModel(int Design, int HeaderTile, int Colours, int N
     // $38E3: level 100 has no room for three digits, so it is drawn as two brackets (glyphs $0A and $0B).
     private const int LastLevel = 100;
 
+    // $AD15, as far as $ACFD shows it: READY, a blank and the HUD font's double exclamation mark, which is its '!'.
+    private const string Ready = "READY !";
+
     /// <summary>Gets the design of a level that has none.</summary>
     public static int NoDesign => -1;
 
@@ -31,6 +34,34 @@ public sealed record SidebarModel(int Design, int HeaderTile, int Colours, int N
 
     /// <summary>Gets the screen row the decoration is drawn down to, not including it.</summary>
     public int EndRow { get; init; } = PlayfieldModel.Rows;
+
+    /// <summary>Gets the round the ROUND and READY!! text announces over the level, or 0 while it is not shown.</summary>
+    public int Round { get; init; }
+
+    /// <summary>Gets player one's EXTEND letters ($54), one bit a letter from E in bit 0; none while they are not shown.</summary>
+    public int PlayerOneLetters { get; init; }
+
+    /// <summary>Gets player two's EXTEND letters ($55), one bit a letter from E in bit 0; none while they are not shown.</summary>
+    public int PlayerTwoLetters { get; init; }
+
+    /// <summary>Gets how many letters EXTEND is.</summary>
+    public static int LetterCount => 6;
+
+    /// <summary>Gets the screen row the first letter is drawn on; the others are two rows apart below it ($E6CD).</summary>
+    public static int FirstLetterRow => 10;
+
+    /// <summary>Gets the ROUND line ($A9A8-$A9B0), or an empty string while the text is not shown.</summary>
+    /// <remarks>$3C01: a zero tens digit is blank, and level 100 is the three digits, with no blank after them.</remarks>
+    public string RoundText => Round switch
+    {
+        <= 0 => string.Empty,
+        LastLevel => "ROUND 100",
+        < 10 => $"ROUND  {Round} ",
+        _ => $"ROUND {Round} ",
+    };
+
+    /// <summary>Gets the READY!! line, or an empty string while the text is not shown.</summary>
+    public string ReadyText => Round <= 0 ? string.Empty : Ready;
 
     /// <summary>Gets a value indicating whether the level wears one of the designs.</summary>
     public bool HasDesign => Design != NoDesign;
@@ -56,4 +87,14 @@ public sealed record SidebarModel(int Design, int HeaderTile, int Colours, int N
             return $"{tens}{Number % 10}";
         }
     }
+
+    /// <summary>Which of the five letter pictures a letter of EXTEND is ($E73A): the two E's share one.</summary>
+    /// <param name="letter">The letter, 0 the first E.</param>
+    /// <returns>The picture: E, X, T, N, D.</returns>
+    public static int LetterPicture(int letter) => letter switch
+    {
+        0 or 3 => 0,
+        1 or 2 => letter,
+        _ => letter - 1,
+    };
 }

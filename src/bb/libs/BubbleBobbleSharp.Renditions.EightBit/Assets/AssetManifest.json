@@ -21,6 +21,7 @@
     "ObjectSprites": "object-sprites.tga",
     "ItemChars": "item-chars.tga",
     "EffectChars": "effect-chars.tga",
+    "ExtendChars": "extend-chars.tga",
     "GiantBubble": "giant-bubble.tga",
     "Banner": "banner.png"
   },
@@ -45,6 +46,13 @@
         "CellWidth": 8,
         "CellHeight": 8,
         "Columns": 16
+      },
+      "Hud": {
+        "File": "hud-font.tga",
+        "CellWidth": 4,
+        "CellHeight": 8,
+        "Columns": 16,
+        "WidthScale": 2
       },
       "LevelNumber": {
         "File": "level-number.tga",

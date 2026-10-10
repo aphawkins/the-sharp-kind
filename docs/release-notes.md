@@ -6,6 +6,9 @@
 
 #### Changes
 
+- The 8-bit rendition sounds like the Commodore 64 version — its music and its sound effects play on an emulated SID chip, and the effects fall silent while the music plays, as they did there
+- The 16-bit rendition's music is played by the game's own synthesiser rather than a library — the same two tunes, at the same level
+
 - The joystick hat and throttle lever now work — the hat picks the cockpit view, and a SideWinder's lever sets the speed outright
 - Controls can be rebound — every cockpit and view control is a line in `elite.controls.sharp`, written out on first run
 - More than one controller can be plugged in, and the Engine Settings screen picks which one flies the ship

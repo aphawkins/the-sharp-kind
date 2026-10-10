@@ -54,7 +54,8 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     private readonly Input _input;
     private readonly Random _random;
 
-    private readonly byte[] _highScore = new byte[HudModel.ScoreBytes];
+    // $0406-$0408, $040B: the top score, 20000 until it is beaten, and the round its player had reached, 20.
+    private readonly byte[] _highScore = [0x00, 0x20, 0x00];
 
     private LevelStore _levels;
     private PlayfieldModel _playfield;
@@ -155,6 +156,8 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
 
     internal ReadOnlySpan<byte> HighScore => _highScore;
 
+    internal byte TopRound { get; private set; } = 0x13;
+
     public void Run() => GameHost.Run(_abstraction, this, TickRate, TickRate);
 
     public void Update()
@@ -179,21 +182,28 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         Graphics.ScreenUpdate();
     }
 
-    // $F005: a new game, from the first level. The title's tune stops when the game's theme starts.
-    internal void StartGame() => StartGame(superMode: false);
+    // $45A1: fire on the title goes on to the choice of players.
+    internal void Select() => Select(superMode: false);
 
     // $45E3-$462A: the cheat makes every level's enemies harder, and the data stays so.
-    internal void StartGame(bool superMode)
+    internal void Select(bool superMode)
     {
         if (superMode)
         {
             _levels = _levels.Super();
         }
 
-        Loop = new GameLoop(new BbRandom(new RandomSource(_random)), PlayingPlayers);
+        _screens.Set(BbScreen.Select);
+    }
+
+    // $F0E3, $08E4: a new game for one or two, from the first level, after the story. The title's tune stops when the
+    // game's theme starts.
+    internal void StartGame(int players)
+    {
+        Loop = new GameLoop(new BbRandom(new RandomSource(_random)), players);
         _change = new(_levels);
         ShowLevel(FirstLevel);
-        _screens.Set(BbScreen.Play);
+        _screens.Set(BbScreen.Story);
     }
 
     // Goes to the game with the level it has, which is how a test sets one up.
@@ -263,10 +273,10 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         ShowColours();
         PlaySongs();
 
-        // $0AA3: with both players out and the wait over the game goes back to the title.
+        // $0AA3, $F0E8: with both players out and the wait over the game goes back to the choice of players.
         if (Loop.Finished)
         {
-            _screens.Set(BbScreen.Title);
+            _screens.Set(BbScreen.Select);
         }
     }
 
@@ -274,7 +284,18 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     {
         ScreenManager<BbScreen, IGameScreen> screens = new(Keyboard);
 
-        screens.Add(BbScreen.Title, new TitleScreen(TitleFire, SuperKeys, StartGame, PlaySong, titleView.Draw));
+        screens.Add(BbScreen.Title, new TitleScreen(TitleFire, SuperKeys, Select, PlaySong, titleView.Draw));
+        screens.Add(
+            BbScreen.Select,
+            new SelectScreen(
+                new RandomSource(_random),
+                () => Keyboard.IsPressed(ConsoleKey.D1),
+                () => Keyboard.IsPressed(ConsoleKey.D2),
+                StartGame,
+                () => SelectScreen.Build(Hud(), Loop.PlayerTable.Round, TopRound),
+                titleView.Draw,
+                _spriteView.Draw));
+        screens.Add(BbScreen.Story, new StoryScreen(new RandomSource(_random), PlaySongs, Play, titleView.Draw, _spriteView.Draw));
         screens.Add(BbScreen.Play, new PlayScreen(UpdateGame, () => (Loop.Ending.Blank ? endingLayers : layers).Draw()));
         screens.Set(BbScreen.Title);
 
@@ -322,7 +343,8 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
             new RenderLayer(hud, hudWidth, height, new HudLayer(this)));
     }
 
-    // $E3F5: a score above the high score becomes it. The scores are packed BCD, most significant byte first.
+    // $E3F5: a score above the high score becomes it, and its player's round ($0409) the top round. The scores are packed
+    // BCD, most significant byte first.
     private void KeepHighScore()
     {
         ReadOnlySpan<byte> scores = Loop.Scores.Bytes;
@@ -334,6 +356,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
             if (score.SequenceCompareTo(_highScore) > 0)
             {
                 score.CopyTo(_highScore);
+                TopRound = Loop.PlayerTable.Round[player];
             }
         }
     }
@@ -517,9 +540,21 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     {
         public void Draw()
         {
+            // $3C01-$3CB1, $1694: the ROUND and READY!! text is over the level while its seconds ($A9B1) last.
+            bool ready = !game._change.Active && game.Loop.Timer.Ready != LevelTimer.Stopped;
+
+            // $09EE, $E9AE: the EXTEND letters are drawn on the level once it is on the screen, and again as they change.
+            // Under VICE they stay up through the level's end, are gone while the screen scrolls, and are back on the
+            // new level while the players are still gliding in their bubbles.
+            ReadOnlySpan<byte> letters = game.Loop.PlayerTable.ExtendLetters;
+
             foreach (SidebarModel sidebar in game._change.Sidebars(game._sidebar))
             {
-                game._sidebarView.Draw(sidebar);
+                SidebarModel shown = game._change.Scroll is not null
+                    ? sidebar
+                    : sidebar with { PlayerOneLetters = letters[0], PlayerTwoLetters = letters[1] };
+
+                game._sidebarView.Draw(ready ? shown with { Round = game.CurrentLevel } : shown);
             }
         }
     }

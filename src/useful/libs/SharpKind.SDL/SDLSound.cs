@@ -1,6 +1,5 @@
 // 'SharpKind Libraries' - Andy Hawkins 2023-2026.
 
-using MeltySynth;
 using SDL;
 using SharpKind.Assets;
 using SharpKind.Audio;
@@ -13,9 +12,10 @@ namespace SharpKind.SDL;
 // SDL3_mixer's MIX_Track API. Unlike SDL2_mixer, SDL3_mixer exposes per-track pitch and panning
 // natively, so no resample-via-effect-callback trick is needed.
 //
-// .mid music is the one asset SDL3_mixer's bundled decoder can't open (its Timidity backend needs
-// a GUS patch set this project doesn't ship), so .mid tracks are predecoded with the same
-// MeltySynth + SoundFont2 path SoftwareSound uses and handed to the mixer as raw PCM.
+// .mid music and SID music and effects are the assets SDL3_mixer can't open (its Timidity backend
+// needs a GUS patch set this project doesn't ship), so they are rendered by the same SharpKind.Audio
+// code SoftwareSound uses and streamed on MusicOutputs: .mid tracks on one, and the SidSound, whose
+// music and effects share one emulated chip, on another for the whole session.
 public sealed unsafe class SDLSound : ISound, IDisposable
 {
     // Matches SoftwareSound's fixed pool of 16 concurrent one-shot voices; a
@@ -23,17 +23,12 @@ public sealed unsafe class SDLSound : ISound, IDisposable
     // pool is still playing.
     private const int OneShotVoiceCount = 16;
 
-    // Format MIX_LoadRawAudio is told the predecoded .mid PCM is in; matches
-    // the mixer device's own format so no further conversion is needed.
-    private const int SampleRate = 44100;
-    private const int Channels = 2;
-
-    // Guards only against a pathological source never going silent; must stay well above any real track's length or looping music truncates audibly.
-    private const int MaxDecodeSeconds = 300;
-
     private readonly Dictionary<string, nint> _music;
-    private readonly Dictionary<string, string> _sidPaths;
-    private readonly SidOutput? _sid;
+    private readonly Dictionary<string, string> _streamedPaths;
+    private readonly string? _soundFontPath;
+    private readonly MusicOutput? _streamed;
+    private readonly SidSound? _sid;
+    private readonly MusicOutput? _sidOutput;
     private readonly Dictionary<string, nint> _sfx;
     private readonly nint[] _oneShotTracks;
     private readonly nint _loopTrack;
@@ -51,18 +46,30 @@ public sealed unsafe class SDLSound : ISound, IDisposable
 
         _mixer = SDLGuard.Execute(() => (nint)MIX_CreateMixerDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, null));
 
-        string? soundFontPath = assetLocator.SoundFontPaths.Count > 0 ? assetLocator.SoundFontPaths.Values.First() : null;
+        _soundFontPath = assetLocator.SoundFontPaths.Values.FirstOrDefault();
 
-        _sidPaths = assetLocator.MusicPaths.Where(x => MusicPath.IsSid(x.Value)).ToDictionary(x => x.Key, x => x.Value);
+        SidSound sid = new(assetLocator);
+        if (sid.HasAny)
+        {
+            _sid = sid;
+            _sidOutput = new MusicOutput();
+            _sidOutput.Play(sid);
+        }
+        else
+        {
+            sid.Dispose();
+        }
 
-        // SID songs are played by SharpKind.Emulation on a device of their own, not loaded into the mixer.
-        _sid = _sidPaths.Count > 0 ? new SidOutput() : null;
+        _streamedPaths = assetLocator.MusicPaths.Where(x => IsMidi(x.Value)).ToDictionary(x => x.Key, x => x.Value);
+        _streamed = _streamedPaths.Count > 0 ? new MusicOutput() : null;
 
         _music = assetLocator.MusicPaths
-            .Where(x => !_sidPaths.ContainsKey(x.Key))
-            .ToDictionary(x => x.Key, x => LoadMusicAudio(x.Value, soundFontPath));
+            .Where(x => !_streamedPaths.ContainsKey(x.Key) && !MusicPath.IsSid(x.Value))
+            .ToDictionary(
+                x => x.Key,
+                x => SDLGuard.Execute(() => (nint)MIX_LoadAudio((MIX_Mixer*)_mixer, x.Value, predecode: false)));
 
-        _sfx = assetLocator.SfxPaths.ToDictionary(
+        _sfx = assetLocator.SfxPaths.Where(x => !SidSound.IsSidEffect(x.Value)).ToDictionary(
             x => x.Key,
             x => SDLGuard.Execute(() => (nint)MIX_LoadAudio((MIX_Mixer*)_mixer, x.Value, predecode: true)));
 
@@ -92,14 +99,25 @@ public sealed unsafe class SDLSound : ISound, IDisposable
 
     public void Play(string musicType, bool repeat)
     {
-        if (_sidPaths.TryGetValue(musicType, out string? sidPath))
+        if (_sid?.HandlesMusic(musicType) == true)
         {
             SDLGuard.Execute(() => MIX_StopTrack((MIX_Track*)_musicTrack, 0));
-            _sid!.Play(sidPath, repeat);
+            _streamed?.Stop();
+            _sid.PlayMusic(musicType, repeat);
             return;
         }
 
-        _sid?.Stop();
+        _sid?.StopMusic();
+
+        if (_streamedPaths.TryGetValue(musicType, out string? path))
+        {
+            IMusicSource music = MusicSources.Open(path, _soundFontPath, repeat);
+            SDLGuard.Execute(() => MIX_StopTrack((MIX_Track*)_musicTrack, 0));
+            _streamed!.Play(music);
+            return;
+        }
+
+        _streamed?.Stop();
 
         MIX_Track* track = (MIX_Track*)_musicTrack;
         SDLGuard.Execute(() => MIX_SetTrackAudio(track, (MIX_Audio*)_music[musicType]));
@@ -109,6 +127,13 @@ public sealed unsafe class SDLSound : ISound, IDisposable
 
     public void Play(string sfxType, float volume, float pan, double pitch)
     {
+        // A SID effect has its own volume and pitch, as on the C64.
+        if (_sid?.HandlesEffect(sfxType) == true)
+        {
+            _sid.PlayEffect(sfxType);
+            return;
+        }
+
         nint voicePtr = Array.Find(_oneShotTracks, t => !MIX_TrackPlaying((MIX_Track*)t));
         if (voicePtr == nint.Zero)
         {
@@ -131,7 +156,8 @@ public sealed unsafe class SDLSound : ISound, IDisposable
 
     public void StopMusic()
     {
-        _sid?.Stop();
+        _streamed?.Stop();
+        _sid?.StopMusic();
         SDLGuard.Execute(() => MIX_StopTrack((MIX_Track*)_musicTrack, 0));
     }
 
@@ -167,57 +193,6 @@ public sealed unsafe class SDLSound : ISound, IDisposable
 
     private static bool IsMidi(string path) => string.Equals(Path.GetExtension(path), ".mid", StringComparison.OrdinalIgnoreCase);
 
-    private static float[] DecodeMidiFully(string path, string soundFontPath)
-    {
-        SoundFont soundFont = new(soundFontPath);
-        Synthesizer synthesizer = new(soundFont, SampleRate);
-        MidiFile midiFile = new(path);
-        MidiFileSequencer sequencer = new(synthesizer);
-        sequencer.Play(midiFile, loop: false);
-
-        const int maxSamples = SampleRate * Channels * MaxDecodeSeconds;
-        List<float> samples = [];
-        float[] chunk = new float[SampleRate * Channels / 10];
-
-        // Keep rendering past the last message until every voice has
-        // finished its release tail, not just until the last MIDI event.
-        while ((!sequencer.EndOfSequence || synthesizer.ActiveVoiceCount > 0) && samples.Count < maxSamples)
-        {
-            sequencer.RenderInterleaved(chunk);
-            samples.AddRange(chunk);
-        }
-
-        return [.. samples];
-    }
-
-    private nint LoadMusicAudio(string path, string? soundFontPath)
-    {
-        if (!IsMidi(path))
-        {
-            return SDLGuard.Execute(() => (nint)MIX_LoadAudio((MIX_Mixer*)_mixer, path, predecode: false));
-        }
-
-        if (soundFontPath is null)
-        {
-            throw new SharpKindException("No SoundFont is configured in the asset manifest; cannot decode a .mid asset.");
-        }
-
-        float[] samples = DecodeMidiFully(path, soundFontPath);
-
-        return SDLGuard.Execute(() =>
-        {
-            SDL_AudioSpec spec = default;
-            spec.format = SDL_AUDIO_F32;
-            spec.channels = Channels;
-            spec.freq = SampleRate;
-
-            fixed (float* ptr = samples)
-            {
-                return (nint)MIX_LoadRawAudio((MIX_Mixer*)_mixer, (nint)ptr, (nuint)(samples.Length * sizeof(float)), &spec);
-            }
-        });
-    }
-
     private void Dispose(bool disposing)
     {
         if (!_isDisposed)
@@ -226,6 +201,8 @@ public sealed unsafe class SDLSound : ISound, IDisposable
 
             if (disposing)
             {
+                _streamed?.Dispose();
+                _sidOutput?.Dispose();
                 _sid?.Dispose();
             }
 

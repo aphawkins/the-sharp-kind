@@ -2,7 +2,6 @@
 // 'Elite - The New Kind' - C.J.Pinder 1999-2001.
 // Elite (C) I.Bell & D.Braben 1984.
 
-using EliteSharpLib.Renditions;
 using SharpKind.Assets;
 
 namespace EliteSharpLib.Benchmarks;
@@ -17,7 +16,6 @@ internal static class BenchmarkAssets
     private static readonly string s_renditionFolder =
         Path.Combine("Renditions", "EliteSharp.Renditions.SixteenBit");
 
-    internal static IAssetLocator Locator() => new RenditionAssets(
-        AssetLocator.CreateFrom(Path.Combine(AppContext.BaseDirectory, s_renditionFolder), Rendition),
-        AssetLocator.Create(Rendition));
+    internal static IAssetLocator Locator()
+        => AssetLocator.CreateFrom(Path.Combine(AppContext.BaseDirectory, s_renditionFolder), Rendition);
 }

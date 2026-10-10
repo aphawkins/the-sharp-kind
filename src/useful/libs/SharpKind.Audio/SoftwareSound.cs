@@ -1,15 +1,12 @@
 // 'SharpKind Libraries' - Andy Hawkins 2023-2026.
 
-using System.Buffers.Binary;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-using MeltySynth;
-using NVorbis;
 using SharpKind.Assets;
+using SharpKind.Audio.Midi;
+using SharpKind.Audio.Wav;
 
 namespace SharpKind.Audio;
 
-// Pure-managed equivalent of SDLSound: decode, mixing, resampling and pitch-shift in C# (MeltySynth .mid, NVorbis .ogg), exposing a pull-based Render for a thin SDL output shim to call.
+// Pure-managed equivalent of SDLSound: decode, mixing, resampling and pitch-shift in C# (.mid through a SoundFont, .wav, .sid), exposing a pull-based Render for a thin SDL output shim to call.
 public sealed class SoftwareSound : ISound, IDisposable
 {
     // Matches SDLSound's fixed pool of 16 concurrent one-shot voices; dropped (not queued) when the pool is full.
@@ -20,12 +17,14 @@ public sealed class SoftwareSound : ISound, IDisposable
 
     private readonly Lock _gate = new();
     private readonly IDictionary<string, string> _musicPaths;
-    private readonly IDictionary<string, string> _soundFontPaths;
+    private readonly string? _soundFontPath;
     private readonly Dictionary<string, float[]> _sfxSamples;
     private readonly OneShotVoice[] _oneShotVoices;
 
-    private SoundFont? _soundFont;
-    private IMusicStream? _music;
+    // SID music and effects share one emulated chip, so they are played apart from the samples.
+    private readonly SidSound? _sid;
+
+    private IMusicSource? _music;
     private float[] _musicScratch = [];
 
     private float[] _loopSamples = [];
@@ -39,22 +38,21 @@ public sealed class SoftwareSound : ISound, IDisposable
         ArgumentNullException.ThrowIfNull(assetLocator);
 
         _musicPaths = assetLocator.MusicPaths;
-        _soundFontPaths = assetLocator.SoundFontPaths;
+        _soundFontPath = assetLocator.SoundFontPaths.Values.FirstOrDefault();
+
+        SidSound sid = new(assetLocator);
+        _sid = sid.HasAny ? sid : null;
 
         // SFX (and the pitch-shiftable loop, reusing this cache) are decoded fully up front, matching SDLSound's predecode: true.
-        _sfxSamples = assetLocator.SfxPaths.ToDictionary(x => x.Key, x => DecodeFully(x.Value));
+        _sfxSamples = assetLocator.SfxPaths
+            .Where(x => !SidSound.IsSidEffect(x.Value))
+            .ToDictionary(x => x.Key, x => DecodeFully(x.Value));
 
         _oneShotVoices = new OneShotVoice[OneShotVoiceCount];
         for (int i = 0; i < OneShotVoiceCount; i++)
         {
             _oneShotVoices[i] = new OneShotVoice();
         }
-    }
-
-    // Streamed (not predecoded) interleaved stereo float32 audio for the current music track, shared by both backends.
-    private interface IMusicStream : IDisposable
-    {
-        public void Render(Span<float> buffer);
     }
 
     // Fixed contract shape shared with the downstream SDL output shim.
@@ -71,19 +69,38 @@ public sealed class SoftwareSound : ISound, IDisposable
 
     public void Play(string musicType, bool repeat)
     {
+        if (_sid?.HandlesMusic(musicType) == true)
+        {
+            lock (_gate)
+            {
+                StopMusicLocked();
+                _sid.PlayMusic(musicType, repeat);
+            }
+
+            return;
+        }
+
         // Building the stream involves blocking I/O (and, first Play() of a .mid, loading a SoundFont2), so it
         // happens outside _gate to avoid glitching Render() on the audio thread. Only the reference swap is locked.
-        IMusicStream newMusic = CreateMusicStream(_musicPaths[musicType], repeat);
+        IMusicSource newMusic = MusicSources.Open(_musicPaths[musicType], _soundFontPath, repeat);
 
         lock (_gate)
         {
             StopMusicLocked();
+            _sid?.StopMusic();
             _music = newMusic;
         }
     }
 
     public void Play(string sfxType, float volume, float pan, double pitch)
     {
+        // A SID effect has its own volume and pitch, as on the C64.
+        if (_sid?.HandlesEffect(sfxType) == true)
+        {
+            _sid.PlayEffect(sfxType);
+            return;
+        }
+
         lock (_gate)
         {
             OneShotVoice? voice = Array.Find(_oneShotVoices, v => !v.Active);
@@ -107,6 +124,7 @@ public sealed class SoftwareSound : ISound, IDisposable
         lock (_gate)
         {
             StopMusicLocked();
+            _sid?.StopMusic();
         }
     }
 
@@ -143,6 +161,7 @@ public sealed class SoftwareSound : ISound, IDisposable
             buffer.Clear();
 
             RenderMusic(buffer);
+            RenderSid(buffer);
             RenderLoop(buffer);
             RenderOneShots(buffer);
 
@@ -161,104 +180,6 @@ public sealed class SoftwareSound : ISound, IDisposable
     private static float ToRightGain(float pan) => Math.Clamp((1f + pan) / 2f, 0f, 1f);
 
     private static float Lerp(float a, float b, float t) => a + ((b - a) * t);
-
-    private static bool IsMidi(string path) => string.Equals(Path.GetExtension(path), ".mid", StringComparison.OrdinalIgnoreCase);
-
-    private static bool IsWav(string path) => string.Equals(Path.GetExtension(path), ".wav", StringComparison.OrdinalIgnoreCase);
-
-    private static float[] DecodeOggFully(string path)
-    {
-        using VorbisReader reader = new(path);
-
-        // No generic sample-rate/channel converter for .ogg; assets must already match the mixer's format.
-        Debug.Assert(reader.Channels == Channels, "SoftwareSound assumes .ogg assets are already encoded at the mixer's channel count.");
-        Debug.Assert(reader.SampleRate == SampleRate, "SoftwareSound assumes .ogg assets are already encoded at the mixer's sample rate.");
-
-        List<float> samples = [];
-        float[] chunk = new float[SampleRate * Channels / 10];
-        int read;
-        while ((read = reader.ReadSamples(chunk)) > 0)
-        {
-            samples.AddRange(chunk.AsSpan(0, read));
-        }
-
-        return [.. samples];
-    }
-
-    // Manual RIFF/WAVE chunk walk (not fixed 44-byte header) since some files carry extra chunks (e.g. LIST/INFO) before 'data'. Only PCM16 (tag 1) and float32 (tag 3) are supported.
-    private static float[] DecodeWavFully(string path)
-    {
-        ReadOnlySpan<byte> span = File.ReadAllBytes(path);
-
-        if (span.Length < 12 || !span[..4].SequenceEqual("RIFF"u8) || !span.Slice(8, 4).SequenceEqual("WAVE"u8))
-        {
-            throw new SharpKindException($"'{path}' is not a valid WAV file.");
-        }
-
-        ushort formatTag = 0;
-        ushort channels = 0;
-        uint sampleRate = 0;
-        ushort bitsPerSample = 0;
-        ReadOnlySpan<byte> data = default;
-
-        int offset = 12;
-        while (offset + 8 <= span.Length)
-        {
-            ReadOnlySpan<byte> chunkId = span.Slice(offset, 4);
-            uint chunkSize = BinaryPrimitives.ReadUInt32LittleEndian(span.Slice(offset + 4, 4));
-            int chunkStart = offset + 8;
-            int chunkLength = (int)Math.Min(chunkSize, (uint)Math.Max(span.Length - chunkStart, 0));
-
-            if (chunkId.SequenceEqual("fmt "u8))
-            {
-                ReadOnlySpan<byte> fmt = span.Slice(chunkStart, chunkLength);
-                if (fmt.Length < 16)
-                {
-                    throw new SharpKindException($"'{path}' has a truncated 'fmt ' chunk.");
-                }
-
-                formatTag = BinaryPrimitives.ReadUInt16LittleEndian(fmt);
-                channels = BinaryPrimitives.ReadUInt16LittleEndian(fmt[2..]);
-                sampleRate = BinaryPrimitives.ReadUInt32LittleEndian(fmt[4..]);
-                bitsPerSample = BinaryPrimitives.ReadUInt16LittleEndian(fmt[14..]);
-            }
-            else if (chunkId.SequenceEqual("data"u8))
-            {
-                data = span.Slice(chunkStart, chunkLength);
-            }
-
-            // Chunks are word-aligned: an odd-sized chunk is followed by a single pad byte.
-            offset = chunkStart + chunkLength + ((chunkSize % 2 == 1) ? 1 : 0);
-        }
-
-        if (data.IsEmpty)
-        {
-            throw new SharpKindException($"'{path}' has no 'data' chunk.");
-        }
-
-        // No generic sample-rate/channel converter for .wav; assets must already match the mixer's format.
-        Debug.Assert(channels == Channels, "SoftwareSound assumes .wav assets are already encoded at the mixer's channel count.");
-        Debug.Assert(sampleRate == SampleRate, "SoftwareSound assumes .wav assets are already encoded at the mixer's sample rate.");
-
-        return (formatTag, bitsPerSample) switch
-        {
-            (3, 32) => MemoryMarshal.Cast<byte, float>(data).ToArray(),
-            (1, 16) => DecodePcm16(data),
-            _ => throw new SharpKindException($"'{path}' uses an unsupported WAV format (tag {formatTag}, {bitsPerSample}-bit)."),
-        };
-    }
-
-    private static float[] DecodePcm16(in ReadOnlySpan<byte> data)
-    {
-        ReadOnlySpan<short> samples = MemoryMarshal.Cast<byte, short>(data);
-        float[] result = new float[samples.Length];
-        for (int i = 0; i < samples.Length; i++)
-        {
-            result[i] = samples[i] / 32768f;
-        }
-
-        return result;
-    }
 
     private static void RenderVoice(OneShotVoice voice, in Span<float> buffer)
     {
@@ -289,29 +210,14 @@ public sealed class SoftwareSound : ISound, IDisposable
     }
 
     private float[] DecodeFully(string path)
-        => IsMidi(path) ? DecodeMidiFully(path) : IsWav(path) ? DecodeWavFully(path) : DecodeOggFully(path);
-
-    private SoundFont GetSoundFont()
-    {
-        if (_soundFont is null)
-        {
-            if (_soundFontPaths.Count == 0)
-            {
-                throw new SharpKindException("No SoundFont is configured in the asset manifest; cannot decode a .mid asset.");
-            }
-
-            _soundFont = new SoundFont(_soundFontPaths.Values.First());
-        }
-
-        return _soundFont;
-    }
+        => MusicSources.HasExtension(path, ".mid")
+            ? DecodeMidiFully(path)
+            : MusicSources.HasExtension(path, ".wav") ? WavDecoder.Decode(path) : throw MusicSources.UnsupportedFormat(path);
 
     private float[] DecodeMidiFully(string path)
     {
-        Synthesizer synthesizer = new(GetSoundFont(), SampleRate);
-        MidiFile midiFile = new(path);
-        MidiFileSequencer sequencer = new(synthesizer);
-        sequencer.Play(midiFile, loop: false);
+        Synthesizer synthesizer = new(MusicSources.LoadSoundFont(_soundFontPath));
+        MidiSequencer sequencer = new(MidiFile.Read(path), synthesizer, repeat: false);
 
         int maxSamples = SampleRate * Channels * MaxDecodeSeconds;
         List<float> samples = [];
@@ -321,19 +227,12 @@ public sealed class SoftwareSound : ISound, IDisposable
         // finished its release tail, not just until the last MIDI event.
         while ((!sequencer.EndOfSequence || synthesizer.ActiveVoiceCount > 0) && samples.Count < maxSamples)
         {
-            sequencer.RenderInterleaved(chunk);
+            sequencer.Render(chunk);
             samples.AddRange(chunk);
         }
 
         return [.. samples];
     }
-
-    private IMusicStream CreateMusicStream(string path, bool repeat)
-        => MusicPath.IsSid(path)
-            ? new SidStream(path, repeat)
-            : IsMidi(path)
-                ? new MidiMusicStream(new MidiFile(path), new Synthesizer(GetSoundFont(), SampleRate), repeat)
-                : new OggMusicStream(path, repeat);
 
     private void StopMusicLocked()
     {
@@ -348,13 +247,34 @@ public sealed class SoftwareSound : ISound, IDisposable
             return;
         }
 
-        if (_musicScratch.Length < buffer.Length)
+        Span<float> scratch = Scratch(buffer.Length);
+        _music.Render(scratch);
+
+        for (int i = 0; i < buffer.Length; i++)
         {
-            _musicScratch = new float[buffer.Length];
+            buffer[i] += scratch[i];
+        }
+    }
+
+    private Span<float> Scratch(int length)
+    {
+        if (_musicScratch.Length < length)
+        {
+            _musicScratch = new float[length];
         }
 
-        Span<float> scratch = _musicScratch.AsSpan(0, buffer.Length);
-        _music.Render(scratch);
+        return _musicScratch.AsSpan(0, length);
+    }
+
+    private void RenderSid(in Span<float> buffer)
+    {
+        if (_sid is null)
+        {
+            return;
+        }
+
+        Span<float> scratch = Scratch(buffer.Length);
+        _sid.Render(scratch);
 
         for (int i = 0; i < buffer.Length; i++)
         {
@@ -412,6 +332,7 @@ public sealed class SoftwareSound : ISound, IDisposable
             {
                 _music?.Dispose();
                 _music = null;
+                _sid?.Dispose();
             }
 
             _isDisposed = true;
@@ -432,86 +353,5 @@ public sealed class SoftwareSound : ISound, IDisposable
         public float RightGain { get; set; }
 
         public bool Active { get; set; }
-    }
-
-    // A C64 SID tune, played by SharpKind.Emulation.
-    private sealed class SidStream(string path, bool repeat) : IMusicStream
-    {
-        private readonly SidSongPlayer _player = new(path, repeat);
-
-        public void Render(Span<float> buffer) => _player.Render(buffer);
-
-        // A SID song holds no unmanaged resources.
-        public void Dispose()
-        {
-        }
-    }
-
-    // MeltySynth's own sequencer handles looping (via the loop flag) and goes silent once a non-looping track's tails are exhausted.
-    private sealed class MidiMusicStream : IMusicStream
-    {
-        private readonly MidiFileSequencer _sequencer;
-
-        public MidiMusicStream(MidiFile midiFile, Synthesizer synthesizer, bool repeat)
-        {
-            _sequencer = new(synthesizer);
-            _sequencer.Play(midiFile, repeat);
-        }
-
-        public void Render(Span<float> buffer) => _sequencer.RenderInterleaved(buffer);
-
-        // MeltySynth's MIDI objects hold no unmanaged/disposable resources.
-        public void Dispose()
-        {
-        }
-    }
-
-    // NVorbis has no built-in looping, so end-of-stream seeks back to the start when repeat is requested.
-    private sealed class OggMusicStream : IMusicStream
-    {
-        // Bounds seek-back retries per Render call, guarding against an infinite loop on a degenerate (e.g. zero-length) source.
-        private const int MaxSeekRetries = 4;
-
-        private readonly VorbisReader _reader;
-        private readonly bool _repeat;
-
-        public OggMusicStream(string path, bool repeat)
-        {
-            _reader = new(path);
-            _repeat = repeat;
-
-            Debug.Assert(
-                _reader.Channels == Channels,
-                "SoftwareSound assumes .ogg assets are already encoded at the mixer's channel count.");
-            Debug.Assert(
-                _reader.SampleRate == SampleRate,
-                "SoftwareSound assumes .ogg assets are already encoded at the mixer's sample rate.");
-        }
-
-        public void Render(Span<float> buffer)
-        {
-            int filled = 0;
-            int retries = 0;
-
-            while (filled < buffer.Length)
-            {
-                int read = _reader.ReadSamples(buffer[filled..]);
-                if (read == 0)
-                {
-                    if (_repeat && retries++ < MaxSeekRetries)
-                    {
-                        _reader.SamplePosition = 0;
-                        continue;
-                    }
-
-                    buffer[filled..].Clear();
-                    break;
-                }
-
-                filled += read;
-            }
-        }
-
-        public void Dispose() => _reader.Dispose();
     }
 }

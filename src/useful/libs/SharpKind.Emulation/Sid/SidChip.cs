@@ -105,16 +105,17 @@ public sealed class SidChip
 
             _cycleCarry -= cycles;
 
-            float sum = 0;
-
-            for (int cycle = 0; cycle < cycles; cycle++)
-            {
-                sum += Clock();
-            }
-
+            float sum = IsSilent() ? ClockSilent(cycles) : ClockSounding(cycles);
             float sample = sum / cycles;
             float blocked = sample - _dcInput + (HighPass * _dcOutput);
 
+            // The DC blocker and the filter decay towards zero for ever; they are stopped once nothing can be heard.
+            if (sample == 0 && Math.Abs(blocked) < SidFilter.Inaudible)
+            {
+                blocked = 0;
+            }
+
+            _filter.Settle();
             _dcInput = sample;
             _dcOutput = blocked;
             stereo[frame] = blocked;
@@ -131,8 +132,6 @@ public sealed class SidChip
             Clock();
         }
     }
-
-    private static int SourceOf(int voice) => (voice + Voices - 1) % Voices;
 
     private void WriteVoice(int voice, int register, byte value)
     {
@@ -168,41 +167,106 @@ public sealed class SidChip
         }
     }
 
+    // Every voice is at level 0, so each puts out exactly 0 until a register is written, and no voice is synced, so none
+    // moves another's accumulator.
+    private bool IsSilent()
+    {
+        for (int voice = 0; voice < Voices; voice++)
+        {
+            if (!_envelopes[voice].IsSilent || (_oscillators[voice].Control & SidOscillator.SyncBit) != 0)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    // The voices move on a sample's cycles at once; only the filter, still ringing from what was played, is stepped, and
+    // its sum is worked out exactly as Clock works it out.
+    private float ClockSilent(int cycles)
+    {
+        Cycles += cycles;
+
+        for (int voice = 0; voice < Voices; voice++)
+        {
+            _oscillators[voice].Advance(cycles);
+            _envelopes[voice].Advance(cycles);
+        }
+
+        if (_filter.IsAtRest)
+        {
+            return 0;
+        }
+
+        float sum = 0;
+
+        for (int cycle = 0; cycle < cycles; cycle++)
+        {
+            float mixed = 0f + _filter.Clock(0f, _modeVolume);
+            sum += mixed * MixScale * (_modeVolume & VolumeMask) / VolumeMask;
+        }
+
+        return sum;
+    }
+
+    private float ClockSounding(int cycles)
+    {
+        float sum = 0;
+
+        for (int cycle = 0; cycle < cycles; cycle++)
+        {
+            sum += Clock();
+        }
+
+        return sum;
+    }
+
+    // Each voice is synced and ring-modulated by the one before it: voice 1 by voice 3, voice 2 by 1, voice 3 by 2.
     private float Clock()
     {
         Cycles++;
 
-        for (int voice = 0; voice < Voices; voice++)
-        {
-            _oscillators[voice].Clock();
-            _envelopes[voice].Clock();
-        }
+        SidOscillator first = _oscillators[0];
+        SidOscillator second = _oscillators[1];
+        SidOscillator third = _oscillators[2];
+
+        first.Clock();
+        second.Clock();
+        third.Clock();
 
         for (int voice = 0; voice < Voices; voice++)
         {
-            _oscillators[voice].Synchronise(_oscillators[SourceOf(voice)].MsbRose);
+            _envelopes[voice].Clock();
         }
+
+        first.Synchronise(third.MsbRose);
+        second.Synchronise(first.MsbRose);
+        third.Synchronise(second.MsbRose);
 
         float filtered = 0;
         float direct = 0;
 
-        for (int voice = 0; voice < Voices; voice++)
-        {
-            int wave = _oscillators[voice].Output(_oscillators[SourceOf(voice)].Msb);
-            float level = (wave - 0x800) * _envelopes[voice].Level * VoiceScale;
-
-            if ((_routing & (1 << voice)) != 0)
-            {
-                filtered += level;
-            }
-            else if (voice != 2 || (_modeVolume & VoiceThreeOff) == 0)
-            {
-                direct += level;
-            }
-        }
+        Mix(0, first.Output(third.Msb), ref filtered, ref direct);
+        Mix(1, second.Output(first.Msb), ref filtered, ref direct);
+        Mix(2, third.Output(second.Msb), ref filtered, ref direct);
 
         float mixed = direct + _filter.Clock(filtered, _modeVolume);
 
         return mixed * MixScale * (_modeVolume & VolumeMask) / VolumeMask;
+    }
+
+    private void Mix(int voice, int wave, ref float filtered, ref float direct)
+    {
+        float level = (wave - 0x800) * _envelopes[voice].Level * VoiceScale;
+
+        if ((_routing & (1 << voice)) != 0)
+        {
+            filtered += level;
+        }
+        else if (voice != 2 || (_modeVolume & VoiceThreeOff) == 0)
+        {
+            direct += level;
+        }
     }
 }

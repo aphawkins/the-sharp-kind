@@ -24,17 +24,6 @@
 	</ItemGroup>
 
   <ItemGroup>
-    <!-- Assets are copied wholesale; the uncompressed sources below are kept
-         in source control but stay out of the build output. -->
-    <None Update="Assets\**\*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Assets\SFX\*.wav;Assets\Music\*.ogg">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
-  <ItemGroup>
     <!-- The ship table, which travels with the assembly and is read from
          beside it - Content rather than None, so the apps and the tests that
          reference this project get the file in their own output too. -->
