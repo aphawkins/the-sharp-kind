@@ -7,7 +7,7 @@ namespace SharpKind.Audio.Tests;
 internal static class SidFixtures
 {
     // Rows of C64 Elite's effect tables (elite-source.asm, SFXPR to SFXVCH) and sounds made of them.
-    internal const string EffectFile = """
+    internal const string EffectFile = /*lang=json,strict*/ """
         {
           "Effects": {
             "sfxplas": { "Priority": 114, "Frames": 20, "Frequency": 69, "Control": 65, "AttackDecay": 1, "SustainRelease": 209, "FrequencyChange": -2, "VolumeMask": 3 },

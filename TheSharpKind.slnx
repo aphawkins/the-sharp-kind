@@ -25,7 +25,7 @@
     <File Path="docs/images/elite-screenshot-16-bit.png" />
     <File Path="docs/images/elite-screenshot-8-bit.png" />
     <File Path="docs/images/nuget-icon.png" />
-    <File Path="docs/images/scr-screenshot.png" />
+    <File Path="docs/images/scr-screenshot-16-bit.png" />
   </Folder>
   <Folder Name="/docs/work-items/">
     <File Path="docs/work-items/audio-listening-check.md" />
@@ -95,6 +95,7 @@
   <Folder Name="/scripts/">
     <File Path="scripts/test-case-sensitive.ps1" />
   </Folder>
+  <Folder Name="/tools/" />
   <Folder Name="/tools/bb/">
     <File Path="tools/bb/dis6502.py" />
     <File Path="tools/bb/export-csharp-assets.py" />

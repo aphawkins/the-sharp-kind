@@ -45,7 +45,7 @@ public sealed class SidEffectFileTests
     [InlineData(1, -129, "FrequencyChange")]
     public void AValueOutOfRangeThrowsSharpKindException(int priority, int frequencyChange, string expected)
     {
-        string json = $$"""
+        string json = /*lang=json,strict*/ $$"""
             { "Effects": { "x": { "Priority": {{priority}}, "Frames": 5, "Frequency": 240, "Control": 17, "AttackDecay": 0,
               "SustainRelease": 240, "FrequencyChange": {{frequencyChange}}, "VolumeMask": 255 } }, "Sounds": {} }
             """;
@@ -56,11 +56,21 @@ public sealed class SidEffectFileTests
     }
 
     [Theory]
-    [InlineData("""{ "Effects": {}, "Sounds": { "Beep": [ { "Effect": "sfxbeep" } ] } }""", "no effect 'sfxbeep'")]
-    [InlineData("""{ "Effects": { BEEP }, "Sounds": { "Beep": [ { "Effect": "sfxbeep", "Frequency": 9 } ] } }""", "both")]
-    [InlineData("""{ "Effects": { BEEP }, "Sounds": { "Beep": [ { "Effect": "sfxbeep", "DelayFrames": 256 } ] } }""", "DelayFrames")]
-    [InlineData("""{ "Effects": { BEEP }, "Sounds": {}, "Extra": 1 }""", "not a valid")]
-    [InlineData("""{ "Effects": { "x": { "Priority": 1 } }, "Sounds": {} }""", "not a valid")]
+    [InlineData(
+        /*lang=json,strict*/ """{ "Effects": {}, "Sounds": { "Beep": [ { "Effect": "sfxbeep" } ] } }""",
+        "no effect 'sfxbeep'")]
+    [InlineData(
+        """{ "Effects": { BEEP }, "Sounds": { "Beep": [ { "Effect": "sfxbeep", "Frequency": 9 } ] } }""",
+        "both")]
+    [InlineData(
+        """{ "Effects": { BEEP }, "Sounds": { "Beep": [ { "Effect": "sfxbeep", "DelayFrames": 256 } ] } }""",
+        "DelayFrames")]
+    [InlineData(
+        """{ "Effects": { BEEP }, "Sounds": {}, "Extra": 1 }""",
+        "not a valid")]
+    [InlineData(
+        /*lang=json,strict*/ """{ "Effects": { "x": { "Priority": 1 } }, "Sounds": {} }""",
+        "not a valid")]
     public void AnInvalidFileThrowsSharpKindException(string json, string expected)
     {
         SharpKindException exception = Assert.Throws<SharpKindException>(

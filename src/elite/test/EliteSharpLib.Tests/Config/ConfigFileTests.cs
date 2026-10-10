@@ -187,7 +187,7 @@ public class ConfigFileTests
     public void ReadConfigWithAnUnusableWindowScaleRepairsThatSettingAlone(int scale)
     {
         EliteConfig config = ReadWritten(
-            $"{{\"engine\": {{\"windowScale\": {scale}, \"tier\": \"8Bit\"}}}}");
+            /*lang=json,strict*/ $"{{\"engine\": {{\"windowScale\": {scale}, \"tier\": \"8Bit\"}}}}");
 
         Assert.Null(config.Engine.WindowScale);
         Assert.Equal("8-bit", config.Engine.Rendition);

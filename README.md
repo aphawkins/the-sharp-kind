@@ -5,11 +5,11 @@
 [![Latest release](https://img.shields.io/github/v/release/aphawkins/the-sharp-kind)](https://github.com/aphawkins/the-sharp-kind/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Classic 8/16-bit computer games re-engineered in C# / .NET to look, feel and play like the originals while running cross-platform on modern systems.  
+Classic 8/16-bit computer games re-engineered in C# / .NET to look, feel and play like the originals while running cross-platform on modern systems.
 
-A games engine build like a buisiness application, that nobody asked for, but might be just what you need!
+A games engine built like a business application, that nobody asked for, but might be just what you need!
 
-* Choose you era of game front end (8-bit, 16-bit, or Modern)
+* Choose your era of game front end (8-bit, 16-bit, or Modern)
 * Choose your graphics rendering style (wireframe, solid, shaded)
 * Authentic sound and music (C64 SID, MIDI, WAVE)
 * Keyboard, Controller, and Joystick support (analog and digital)
@@ -32,7 +32,7 @@ Status: Playable, feature-complete - 8-bit version
 
 ### [Stunt Car Racer - The Sharp Kind](docs/scr-readme.md)
 
-![Stunt Car Racer - The Sharp Kind - Screenshot](docs/images/scr-screenshot.png)
+![Stunt Car Racer - The Sharp Kind - Screenshot](docs/images/scr-screenshot-16-bit.png)
 
 Status: Playable, preview.
 

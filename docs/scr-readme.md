@@ -1,6 +1,6 @@
 # Stunt Car Racer - The Sharp Kind
 
-![Stunt Car Racer - The Sharp Kind - Screenshot](images/scr-screenshot.png)
+![Stunt Car Racer - The Sharp Kind - Screenshot](images/scr-screenshot-16-bit.png)
 
 A C# port of Geoff Crammond's 'Stunt Car Racer', converted from the C++/DirectX9 Windows remake of the Amiga version. Race the clock and an AI opponent over elevated tracks, with the original Amiga track data and physics.
 

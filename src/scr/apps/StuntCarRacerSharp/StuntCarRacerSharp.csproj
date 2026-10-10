@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <ApplicationIcon>stunt.ico</ApplicationIcon>
-    <PackageIcon>stunt.ico</PackageIcon>
+    <ApplicationIcon>stunt-car-racer.ico</ApplicationIcon>
+    <PackageIcon>stunt-car-racer.ico</PackageIcon>
   </PropertyGroup>
 
 	<ItemGroup>
