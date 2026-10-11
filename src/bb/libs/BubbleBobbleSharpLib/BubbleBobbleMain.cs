@@ -405,7 +405,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         if (Loop.SuperRoom.Active && !_superRoomShown)
         {
             _superRoomShown = true;
-            _playfield = Playfield.Build(SuperBonusRoom.Map(CurrentLevel));
+            _playfield = SuperBonusRoom.Picture();
         }
     }
 

@@ -710,8 +710,9 @@ Each item ends with how it is proved.
         Y `$DD` once the count is below 14, and with the count at 1 and a player down there, sixteen turns of `$1C` bit 2 five
         frames apart, ten frames on a cleared screen, and `dec $21` with the resume song. Each item is `$12` to the hundreds
         (`$3200`). The routine never returns to the pass that took the item. Proved against the game: `SuperBonusRoomOracleTests`
-        (the build on two levels, map, items, art and colours; the taking; the hook; the end and the level after). The room's
-        own characters are not drawn yet (`bb-super-bonus-room-picture`).
+        (the build on two levels, map, items, art and colours; the picture's screen codes and characters; the taking; the hook;
+        the end and the level after). The room is drawn in its own characters (`$A660` at `$60`-`$7F`, super-room-chars.tga).
+        What `$BC`, `$BD`, `$C0`, `$2BBD` and `$2C32` set up is not (`bb-super-bonus-room-sprites`).
       - [x] 33 (`$7C37`, the last milestone's item at level 50: to level `$45`, counting up a byte at a time as `$7FD4` does) and
         34 (`$7C3C`, the last level's crystal: the taker's `$37C7` goes negative).
 - [ ] **7. Super mode, bonus rounds and level 100** (`SUBFLG` `$63`).

@@ -17,12 +17,13 @@ internal sealed class LevelSheets(IViewSurface surface, string source)
     /// <summary>Gets the sheet painted in a level's colours.</summary>
     /// <param name="colours">The level's colour byte.</param>
     /// <param name="incoming">Whether the level is the one coming in under the split.</param>
+    /// <param name="colourRam">The cells' colour RAM byte.</param>
     /// <returns>The name to draw from.</returns>
-    internal string Paint(int colours, bool incoming)
+    internal string Paint(int colours, bool incoming, int colourRam = MulticolourSheet.PlayfieldColourRam)
     {
         MulticolourSheet sheet = incoming ? _incoming : _sheet;
 
-        sheet.Paint(colours);
+        sheet.Paint(colours, colourRam);
 
         return sheet.Name;
     }

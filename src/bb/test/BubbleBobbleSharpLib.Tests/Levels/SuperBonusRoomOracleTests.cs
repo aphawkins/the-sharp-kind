@@ -2,6 +2,7 @@
 // 'rebb64' - github.com/zaidka/rebb64.
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
+using BubbleBobbleSharp.Abstractions.Views;
 using BubbleBobbleSharpLib.Items;
 using BubbleBobbleSharpLib.Levels;
 using BubbleBobbleSharpLib.Players;
@@ -74,6 +75,58 @@ public sealed class SuperBonusRoomOracleTests
                 Assert.True(map[row, column] == platform, $"row {row}, column {column}: ${character:X2}");
             }
         }
+    }
+
+    // The room's picture: every screen code of the playfield as the game has it at its loop, without the items ($5400), and the
+    // characters $60-$7F ($4300) as super-room-chars.tga holds them, a bit-pair to a pixel.
+    [Theory]
+    [InlineData(1)]
+    [InlineData(12)]
+    public void DrawsThePictureAsTheGameDoes(int level)
+    {
+        Assert.SkipUnless(Rebb64Machine.Available, "rebb64-raw.prg is not available.");
+
+        Rebb64Machine machine = Enter(level, out _);
+        PlayfieldModel picture = SuperBonusRoom.Picture();
+
+        Assert.Equal(SuperBonusRoom.Colours, picture.Colours);
+
+        for (int row = 0; row < PlayfieldModel.Rows; row++)
+        {
+            for (int column = 0; column < PlayfieldModel.Columns; column++)
+            {
+                Assert.True(
+                    machine.Peek(0x5400 + (row * 40) + column) == picture.Character(column, row),
+                    $"row {row}, column {column}");
+            }
+        }
+
+        // An uncompressed colour-mapped TGA of four 32-bit entries, then one index a pixel: 32 cells of 4x8.
+        byte[] sheet = File.ReadAllBytes(Path.Combine(
+            AppContext.BaseDirectory,
+            "Renditions",
+            "BubbleBobbleSharp.Renditions.EightBit",
+            "Assets",
+            "Images",
+            "super-room-chars.tga"));
+        const int pixels = 18 + (4 * 4);
+        const int width = 32 * 4;
+
+        for (int character = 0; character < 32; character++)
+        {
+            for (int y = 0; y < 8; y++)
+            {
+                byte bits = machine.Peek(0x4300 + (character * 8) + y);
+
+                for (int x = 0; x < 4; x++)
+                {
+                    Assert.Equal((bits >> (6 - (x * 2))) & 0x03, sheet[pixels + (y * width) + (character * 4) + x]);
+                }
+            }
+        }
+
+        // The walls, $10-$14, are $60-$64 again.
+        Assert.True(machine.Ram.Slice(0x4080, 40).SequenceEqual(machine.Ram.Slice(0x4300, 40)));
     }
 
     // A turn of the loop, with player 1 put on an item (an intervention), against the port's from the bytes before.

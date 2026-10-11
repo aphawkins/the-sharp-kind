@@ -43,7 +43,7 @@ Every open work item, in priority order. Each line links to a file in
 
 Steps from section 5 of [bb-port-plan.md](bb-port-plan.md), in order.
 
-- [ ] [The super bonus room's own picture and tile](work-items/bb-super-bonus-room-picture.md)
+- [ ] [The super bonus room's sprites](work-items/bb-super-bonus-room-sprites.md)
 - [ ] [7: super mode, bonus rounds and level 100](work-items/bb-7-super-mode-bonus-level-100.md)
 - [ ] [The Barons' call waits frame by frame](work-items/bb-baron-slot-wait-hold.md)
 - [ ] [The HURRY UP! scroll and its pause](work-items/bb-hurry-up-scroll-hold.md)

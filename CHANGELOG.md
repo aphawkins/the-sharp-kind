@@ -7,6 +7,15 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Added (Bubble Bobble's super bonus room picture, 2026-10-11)
+
+- **The super bonus room is drawn in its own characters.** `$3639` copies `$A660` over characters `$60`-`$7F` and `$3644`
+  makes `$76`-`$78` plain patterns: exported as super-room-chars.tga by `export_super_room_chars`. The room's screen codes are
+  the game's own at `$31A2`: the chambers, the door, the floor rows, the walls in `$60`-`$64` and the two blocks of item art
+  `$2A` at the top (`$370C`), in colour RAM `$09` (`$0F` for the blocks), with the edges blank as `$3665` leaves them.
+  `SuperBonusRoom.Picture`, `PlayfieldModel.SuperBonusRoom`; proved against the game's screen and characters in
+  `SuperBonusRoomOracleTests`.
+
 ### Added (Bubble Bobble's super bonus room, 2026-10-11)
 
 - **Item effect 32 (`$3621`), the super bonus room.** The level is cleared and the room of the game's own making takes its place:

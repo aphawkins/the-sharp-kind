@@ -147,6 +147,78 @@ public sealed class PlayfieldView8BitTests
         Assert.DoesNotContain(graphics.FilledRectangles, r => r.Position.X is < 16 or >= 240);
     }
 
+    // $3621: the super bonus room's characters $60-$7F, and its walls $10-$14 (the same as $60-$64), come from its own sheet in
+    // its colour RAM ($09: 1). Its edges are blank, and $1A and $1B are the scroll's.
+    [Theory]
+    [InlineData(0x60, 0)]
+    [InlineData(0x77, 0x17 * 4)]
+    [InlineData(0x7F, 0x1F * 4)]
+    [InlineData(0x10, 0)]
+    [InlineData(0x14, 16)]
+    public void TakesTheSuperRoomsCharactersFromItsOwnSheet(byte character, float sourceX)
+    {
+        byte[] characters = Empty();
+        characters[(3 * PlayfieldModel.Columns) + 5] = character;
+
+        RecordingGraphics graphics = Draw(PlayfieldModel.SuperBonusRoom(Colours, characters));
+
+        (string sheet, Vector2 position, Vector2 size, Vector2 sourcePosition, _) = Assert.Single(graphics.ImageParts);
+
+        Assert.Equal("SuperRoomChars.Recoloured", sheet);
+        Assert.Equal(new(sourceX, 0), sourcePosition);
+        Assert.Equal(new(40, 24), position);
+        Assert.Equal(s_screenSize, size);
+        Assert.Equal(TestSurface.Colour(PlayfieldModel.SuperRoomColourRam & 0x07), graphics.Images[sheet].GetPixel(3, 0));
+    }
+
+    [Theory]
+    [InlineData(0x0A)]
+    [InlineData(0x0F)]
+    [InlineData(0x15)]
+    [InlineData(0x1A)]
+    [InlineData(0x1B)]
+    [InlineData(0x47)]
+    public void DrawsNothingForTheSuperRoomsOtherCharacters(byte character)
+    {
+        byte[] characters = Empty();
+        characters[0] = character;
+
+        RecordingGraphics graphics = Draw(PlayfieldModel.SuperBonusRoom(Colours, characters));
+
+        Assert.Empty(graphics.ImageParts);
+    }
+
+    // $370C: a block of item art $2A at the cell of $46, in colour RAM $0F (7).
+    [Fact]
+    public void DrawsTheSuperRoomsBlocksFromTheItemArt()
+    {
+        byte[] characters = Empty();
+        characters[(2 * PlayfieldModel.Columns) + 2] = PlayfieldModel.SuperRoomBlock;
+
+        RecordingGraphics graphics = Draw(PlayfieldModel.SuperBonusRoom(Colours, characters));
+
+        (string sheet, Vector2 position, Vector2 size, Vector2 sourcePosition, Vector2 sourceSize) =
+            Assert.Single(graphics.ImageParts);
+
+        Assert.Equal("ItemChars.SuperRoom.Recoloured", sheet);
+        Assert.Equal(new(0x2A * 8, 0), sourcePosition);
+        Assert.Equal(new(8, 16), sourceSize);
+        Assert.Equal(new(16, 16), position);
+        Assert.Equal(new(16, 16), size);
+    }
+
+    // The room keeps being the room in other colours and as the scroll moves it.
+    [Fact]
+    public void KeepsTheSuperRoomThroughColoursAndTheScroll()
+    {
+        PlayfieldModel room = PlayfieldModel.SuperBonusRoom(Colours, Empty());
+
+        Assert.True(room.WithColours(0x12).SuperRoom);
+        Assert.True(room.Scrolled(3, 2, 20).SuperRoom);
+        Assert.True(room.Wiped(1).SuperRoom);
+        Assert.False(new PlayfieldModel(0, Colours, Empty()).SuperRoom);
+    }
+
     private static byte[] Empty()
     {
         byte[] characters = new byte[PlayfieldModel.Columns * PlayfieldModel.Rows];
@@ -160,7 +232,7 @@ public sealed class PlayfieldView8BitTests
         RecordingGraphics graphics = new(320, 200);
         EightBitRendition rendition = new();
 
-        rendition.CreatePlayfieldView(new TestSurface(graphics, "LevelTiles", "TileEdges")).Draw(model);
+        rendition.CreatePlayfieldView(new TestSurface(graphics, "LevelTiles", "TileEdges", "SuperRoomChars", "ItemChars")).Draw(model);
 
         return graphics;
     }

@@ -25,7 +25,10 @@ public sealed class BubbleBobbleMainTests
     // playfield's two, in the sprite's own colour for the players' - before it draws, so the surface
     // has to be holding them by the time a frame is composed.
     private static readonly string[] s_sheets =
-        ["LevelTiles", "TileEdges", "Sidebars", "SpritesGame", "ObjectSprites", "ItemChars", "EffectChars", "ExtendChars"];
+        [
+            "LevelTiles", "TileEdges", "Sidebars", "SpritesGame", "ObjectSprites", "ItemChars", "EffectChars", "ExtendChars",
+            "SuperRoomChars",
+        ];
 
     private static readonly LevelStore s_levels = LevelStore.Read(Path.Combine(
         AppContext.BaseDirectory,

@@ -897,6 +897,74 @@ def export_effect_chars(out_dir, canonical):
 
 
 # =============================================================================
+# The super bonus room's characters
+# =============================================================================
+#
+# $3639 copies the 256 bytes from D_A660 (game-tables-1.s) over screen codes
+# $60-$7F, running on through the tables after it, and $3644 then makes $76,
+# $77 and $78 plain patterns on every row. They are plain multicolour bytes,
+# so each is read as four bit-pairs. $3660 also puts the first bytes in $15-$1B,
+# which $392A copies to $10-$14: those are $60-$64 again, and the view reads
+# them from here. Entry 00 is the screen's background, drawn transparent.
+
+SUPER_ROOM_CHARS = 0x20
+SUPER_ROOM_PATCH = {0x16: 0x40, 0x17: 0x55, 0x18: 0x95}
+
+
+def parse_super_room_bytes(src):
+    """The 256 bytes from D_A660 on, through whatever labels follow it."""
+    path = os.path.join(src, "game-tables-1.s")
+    with open(path, encoding="utf-8") as f:
+        lines = f.read().splitlines()
+
+    start = next(i for i, line in enumerate(lines) if line.startswith("D_A660:"))
+    data = bytearray()
+
+    for line in lines[start + 1 :]:
+        line = line.split(";", 1)[0].strip()
+
+        if not line or line.endswith(":"):
+            continue
+
+        if not line.startswith(".byte"):
+            raise SystemExit(f"Unexpected line after D_A660: {line!r}")
+
+        data.extend(int(a.strip().lstrip("$"), 16) for a in line[len(".byte") :].split(","))
+
+        if len(data) >= SUPER_ROOM_CHARS * CELL:
+            break
+
+    data = data[: SUPER_ROOM_CHARS * CELL]
+
+    for cell, value in SUPER_ROOM_PATCH.items():
+        data[cell * CELL : (cell + 1) * CELL] = bytes([value]) * CELL
+
+    return data
+
+
+def export_super_room_chars(out_dir, canonical):
+    """D_A660, as $3639 and $3644 leave it in screen codes $60-$7F -> 4x8 multicolour cells."""
+    data = parse_super_room_bytes(SRC)
+
+    width = SUPER_ROOM_CHARS * TILE_EDGE_WIDTH
+    pixels = bytearray(width * CELL)
+
+    for cell in range(SUPER_ROOM_CHARS):
+        for y in range(CELL):
+            for x, pair in enumerate(_bit_pairs(data[(cell * CELL) + y])):
+                pixels[(y * width) + (cell * TILE_EDGE_WIDTH) + x] = pair
+
+    write_tga(
+        os.path.join(out_dir, "Images", "super-room-chars.tga"),
+        {"width": width, "height": CELL, "pixels": pixels, "palette": [None] * 4},
+        0,
+        canonical,
+    )
+
+    return SUPER_ROOM_CHARS
+
+
+# =============================================================================
 # EXTEND letters
 # =============================================================================
 #
@@ -1201,6 +1269,12 @@ def main():
     print(
         f"Wrote {count} EXTEND letters -> "
         f"{os.path.join(args.out, 'Images', 'extend-chars.tga')}"
+    )
+
+    count = export_super_room_chars(args.out, canonical)
+    print(
+        f"Wrote {count} super bonus room characters -> "
+        f"{os.path.join(args.out, 'Images', 'super-room-chars.tga')}"
     )
 
 

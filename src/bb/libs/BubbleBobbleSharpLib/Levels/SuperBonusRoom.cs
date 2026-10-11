@@ -2,6 +2,7 @@
 // 'rebb64' - github.com/zaidka/rebb64.
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
+using BubbleBobbleSharp.Abstractions.Views;
 using BubbleBobbleSharpLib.Enemies;
 using BubbleBobbleSharpLib.Items;
 using BubbleBobbleSharpLib.Players;
@@ -13,9 +14,6 @@ namespace BubbleBobbleSharpLib.Levels;
 // floor, and the game waits in `$3193`'s loop for them. Its hook (`$3771`, in place of the clock) lets a player standing at
 // X `$8C` down into the room under the floor once no more than 12 items are left, and when the last is taken and a player is
 // down there at X `$8C` the screen flashes and the level is over, one level on: the routine has counted SUBFLG up (`$3690`).
-//
-// The room's own picture and tile (characters `$60`-`$7F` and `$10`-`$1B`, from `$A660`) are not drawn: the level's tile
-// stands in for them (see work-items/bb-super-bonus-room-picture.md).
 internal sealed class SuperBonusRoom
 {
     internal const int Effect = 32;
@@ -89,6 +87,38 @@ internal sealed class SuperBonusRoom
         "##............................##",
     ];
 
+    // The room's screen codes as the game has them at `$31A2` (`$5400`, without the items): `$E2C3`'s chambers (`$65`-`$6F`) and
+    // door (`$70`-`$75`), `$36A2`'s rows of `$77` and `$78`, `$370C`'s blocks of `$46`-`$49`, and the walls in `$10`-`$14`
+    // and their edges, which `$3665` has blanked. `$1A` and `$1B`, top left, are the scroll's (`$3870`).
+    private static readonly string[] s_screen =
+    [
+        "1A1B101010101010101010101010101010101010101010101010101010101112",
+        "13140F0D100F0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D0D100F0D1314",
+        "11124648100E2020202020202020202020202020202020202020201046481112",
+        "13144749100E2020202020202020202020202020202020202020201047491314",
+        "111210101010101010100C202020202020202020202010101010101010101112",
+        "13140F0D0D0D0D0D0D0D0B20202020202020202020200A0D0D0D0D0D0D0D1314",
+        "11120E2020202020202020202020202020202020202020202020202020201112",
+        "13140E202010101010100C202020202020202020202010101010100C20201314",
+        "11120E20200A0D0D0D0D0B6A6B7777777777772076200A0D0D0D0D0B20201112",
+        "13140E2020202020202020202065666767686920202020202020202020201314",
+        "11121010101010101010100C6A6B777777772076201010101010101010101112",
+        "13140F0D0D0D0D0D0D0D0D0B6566676767676869200A0D0D0D0D0D0D0D0D1314",
+        "11120E20202020202020206A6B77777777777720762020202020202020201112",
+        "13141010101010101010106A6B77777777777720761010101010101010101314",
+        "11120F0D0D0D0D0D0D0D0D6A6B77776C6E777720760A0D0D0D0D0D0D0D0D1112",
+        "13140E2020202020202020656667676D6F676768692020202020202020201314",
+        "1112101010101010101010101010101010101010101010101010101010101112",
+        "1314787777777777777777777777777777777777777777777777777777771314",
+        "1112787777777777777777777777777777777777777777777777777777771112",
+        "1314787777777777777777777777777777777777777777777777777777771314",
+        "1112787777777777777777777777777777777777777777777777777777771112",
+        "1314787777777777777777777777777777777777777777777777777777771314",
+        "11120E2020202020202020202020707274702020202020202020202020201112",
+        "13140E2020202020202020202020717375712020202020202020202020201314",
+        "1112101010101010101010101010101010101010101010101010101010101112",
+    ];
+
     private readonly EntityTable _entities;
     private readonly Scores _scores;
     private readonly LevelTimer _timer;
@@ -151,6 +181,9 @@ internal sealed class SuperBonusRoom
         Colours = Colours,
         Bitmap = s_bitmap,
     };
+
+    // The room's picture, in its colours.
+    internal static PlayfieldModel Picture() => PlayfieldModel.SuperBonusRoom(Colours, Convert.FromHexString(string.Concat(s_screen)));
 
     // `$3748`-`$3762` and `$3421`: from the tables' last entry to their first, an item at the column and its mirror.
     internal static List<RoomItem> Place()

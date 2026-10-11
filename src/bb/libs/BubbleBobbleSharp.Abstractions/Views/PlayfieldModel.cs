@@ -54,11 +54,35 @@ public sealed class PlayfieldModel
     /// <summary>Gets how many of those there are.</summary>
     public static int TileEdgeCount => 6;
 
+    /// <summary>Gets the colour RAM of the super bonus room's own characters (<c>$3621</c>).</summary>
+    public static int SuperRoomColourRam => 0x09;
+
+    /// <summary>Gets the first of the super bonus room's own characters, <c>$60</c>-<c>$7F</c>, from <c>$A660</c>.</summary>
+    public static byte FirstSuperRoomCharacter => 0x60;
+
+    /// <summary>Gets the first of the super bonus room's wall characters, <c>$10</c>-<c>$14</c>: <c>$60</c>-<c>$64</c> again.</summary>
+    public static byte FirstSuperRoomWall => 0x10;
+
+    /// <summary>Gets the top-left of the 2x2 blocks of item art the super bonus room puts in its top corners (<c>$370C</c>).</summary>
+    public static byte SuperRoomBlock => 0x46;
+
+    /// <summary>Gets which block of the item art those are.</summary>
+    public static int SuperRoomBlockArt => 0x2A;
+
+    /// <summary>Gets the colour RAM of those blocks.</summary>
+    public static int SuperRoomBlockColourRam => 0x0F;
+
     /// <summary>Gets which of the hundred tiles is this level's, counted from zero.</summary>
     public int Tile { get; }
 
     /// <summary>Gets the level's colour byte.</summary>
     public int Colours { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether this is the super bonus room, whose screen codes are the game's own characters rather
+    /// than the level's tile and its edges.
+    /// </summary>
+    public bool SuperRoom { get; private init; }
 
     /// <summary>Gets how many rows down the level is drawn, negative being up. Past its top and bottom its edge rows go on.</summary>
     public int Shift { get; private init; }
@@ -72,10 +96,17 @@ public sealed class PlayfieldModel
     /// <summary>Gets how many rows, from the bottom, the special item of type 8 has wiped (<c>$2E15</c>).</summary>
     public int WipedRows { get; private init; }
 
+    /// <summary>Gets the super bonus room, as the game's screen codes.</summary>
+    /// <param name="colours">The room's colour byte.</param>
+    /// <param name="characters">The screen codes, row by row.</param>
+    /// <returns>The new model.</returns>
+    public static PlayfieldModel SuperBonusRoom(int colours, ReadOnlySpan<byte> characters)
+        => new(0, colours, characters) { SuperRoom = true };
+
     /// <summary>Gets the same level in other colours.</summary>
     /// <param name="colours">The level's colour byte.</param>
     /// <returns>The new model.</returns>
-    public PlayfieldModel WithColours(int colours) => new(Tile, colours, _characters) { WipedRows = WipedRows };
+    public PlayfieldModel WithColours(int colours) => new(Tile, colours, _characters) { SuperRoom = SuperRoom, WipedRows = WipedRows };
 
     /// <summary>
     /// Gets the same level with its bottom rows wiped: in the 28 cells inside the walls everything but the level's tile
@@ -83,7 +114,7 @@ public sealed class PlayfieldModel
     /// </summary>
     /// <param name="rows">How many rows, from the bottom.</param>
     /// <returns>The new model.</returns>
-    public PlayfieldModel Wiped(int rows) => new(Tile, Colours, _characters) { WipedRows = rows };
+    public PlayfieldModel Wiped(int rows) => new(Tile, Colours, _characters) { SuperRoom = SuperRoom, WipedRows = rows };
 
     /// <summary>Whether a row of the level is wiped.</summary>
     /// <param name="row">The row, 0 being the topmost.</param>
@@ -102,7 +133,14 @@ public sealed class PlayfieldModel
     /// <param name="endRow">The screen row it is drawn down to, not including it.</param>
     /// <returns>The new model.</returns>
     public PlayfieldModel Scrolled(int shift, int firstRow, int endRow)
-        => new(Tile, Colours, _characters) { Shift = shift, FirstRow = firstRow, EndRow = endRow, WipedRows = WipedRows };
+        => new(Tile, Colours, _characters)
+        {
+            SuperRoom = SuperRoom,
+            Shift = shift,
+            FirstRow = firstRow,
+            EndRow = endRow,
+            WipedRows = WipedRows,
+        };
 
     /// <summary>Gets the row of the level drawn on a screen row: past its edges, the edge row.</summary>
     /// <param name="screenRow">The screen row.</param>
