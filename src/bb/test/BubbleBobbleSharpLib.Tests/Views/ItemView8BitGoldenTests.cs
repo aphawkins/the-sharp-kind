@@ -88,6 +88,12 @@ public sealed class ItemView8BitGoldenTests
 
     private static char Index(IPaletteCollection palette, uint argb)
     {
+        // Bit-pair 00 is drawn transparent: what shows through is the screen's background, black.
+        if (argb >> 24 == 0)
+        {
+            return '0';
+        }
+
         for (int i = 0; i < 16; i++)
         {
             if (palette[i.ToString(CultureInfo.InvariantCulture)].Argb == argb)
