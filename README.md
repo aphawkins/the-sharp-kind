@@ -14,6 +14,14 @@ A games engine built like a business application, that nobody asked for, but mig
 * Authentic sound and music (C64 SID, MIDI, WAVE)
 * Keyboard, Controller, and Joystick support (analog and digital)
 
+> [!IMPORTANT]
+> **How you can help**
+>
+> - Are you a talented 2D or 3D artist, musician, or sound designer?
+> - Do you have experience of 2D or 3D game development, or C#/.NET programming?
+>
+> Reach out via [GitHub Discussions](https://github.com/aphawkins/the-sharp-kind/discussions).
+
 [Project site](https://aphawkins.github.io/the-sharp-kind/)
 
 ## Games
