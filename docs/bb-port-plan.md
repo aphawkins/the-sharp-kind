@@ -180,7 +180,7 @@ Each item ends with how it is proved.
       the reference's order; `BubbleBobbleMain` holds it, and the HUD shows
       `Scores`.
       - Level start (`$09DC`–`$0A05`): map, enemy spawn, players, and
-        `LevelItems.Setup` (not on level 100, whose items throw).
+        `LevelItems.Setup` (level 100's are `BossFight`'s).
       - A pass (`$0A07`): `$1578`, `$0A28`, `$E90E` pop, `$0CF2`, `$13BE`,
         `$2CB7`; `$06C6` every 25 passes; then `$1CBD`, enemies then players.
       - **The game runs at 25 passes a second.** The main loop waits two
@@ -556,7 +556,7 @@ Each item ends with how it is proved.
         is kept in `$AA42` and made a pop, `$2D` goes to `$FF`, `$2B` to `$32`
         and `$2A` to 9. `$68`, the bonus round due after the level (level 1,
         then 5, 10, 16 and 23: `$59BF`/`$59FF`, `$0688`), makes `$04`/`$38`-`$41`
-        objects `$4C` and ends in `$3517`, which throws until step 7. The carry
+        objects `$4C` and ends in `$3517` (step 7). The carry
         into the `$58` add is `$F1AC`'s last compare; it was clear in all 16
         VICE clears, and is taken as clear. `$58FF` (cleared) is the giant
         bubble's sweeps and `$69` the super bonus, both since modelled. Proved
@@ -572,7 +572,7 @@ Each item ends with how it is proved.
         (`$0A6E`-`$0A96`, `GameLoop.EndLevel`): SUBFLG + 1, the round reached
         (`$0409`) for the players in the game, and the next `Start(next:
         true)`, which keeps the players' states, lives and scores. Level 100
-        throws (`$A5B7`, step 7). Proved **against VICE**:
+        ends in `$A5B7` (step 7). Proved **against VICE**:
         `Levels/Captures/spawn-level-1.txt` (11 calls, an intervention: the
         clock and `$2D` written, the players' states, colours and flashes
         junked) in `LevelEndGoldenTests`; and `nextlevel-level-1.txt`
@@ -716,7 +716,7 @@ Each item ends with how it is proved.
         `$2BBD` and `$2C32` are the level's item set-up, with item types `$29` and `$22` forced.
       - [x] 33 (`$7C37`, the last milestone's item at level 50: to level `$45`, counting up a byte at a time as `$7FD4` does) and
         34 (`$7C3C`, the last level's crystal: the taker's `$37C7` goes negative).
-- [ ] **7. Super mode, bonus rounds and level 100** (`SUBFLG` `$63`).
+- [x] **7. Super mode, bonus rounds and level 100** (`SUBFLG` `$63`).
       - [x] The last level's items, food and player reset, and the giant (`BossFight`, `$1134`, `$1D84`), with the crystal's
         thunder bubbles (`RoundState.ThunderBlow`). Proved against the game in `BossFightOracleTests`.
       - [x] The ending (`$A5B7`, `GameEnding`): the winner paid a million (`$10` a frame for a hundred frames, `$7C26`), fifty

@@ -7,6 +7,12 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Changed (Bubble Bobble's step 7 closed, 2026-10-11)
+
+- **Super mode, bonus rounds and level 100 are complete.** Every part of step 7 of the port plan had landed (super mode,
+  the scheduled and item-made bonus rounds with `$3517`'s art and colour, the super bonus room, the last level's giant and
+  the ending), so the step is ticked and the plan's notes that `$3517`, level 100 and the ending throw are corrected.
+
 ### Added (Bubble Bobble's super bonus room giant, 2026-10-11)
 
 - **The giant stands over the super bonus room.** `$3700`-`$3711` set the last level's giant (`$BC`-`$C0`, `$5AFF`) at X `$74`,
