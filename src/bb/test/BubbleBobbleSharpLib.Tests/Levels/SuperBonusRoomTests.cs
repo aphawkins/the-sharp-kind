@@ -38,6 +38,26 @@ public sealed class SuperBonusRoomTests
     }
 
     [Fact]
+    public void TheGiantStandsOverTheRoomUntilTheNextLevel()
+    {
+        GameLoop loop = Take();
+
+        Assert.True(loop.Boss.Active);
+        Assert.Equal(0x74, loop.Boss.X);
+        Assert.Equal(0x35, loop.Boss.Y);
+        Assert.Equal(0x06, loop.Boss.Colour);
+
+        loop.Pass([Idle, Idle]);
+
+        Assert.Equal(0x74, loop.Boss.X);
+        Assert.Equal(0x35, loop.Boss.Y);
+
+        loop.Start(s_levels.Level(3), s_zones.Zones(3), 1);
+
+        Assert.False(loop.Boss.Active);
+    }
+
+    [Fact]
     public void ThePlayersStandOnTheFloor()
     {
         GameLoop loop = Take();

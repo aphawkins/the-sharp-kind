@@ -7,6 +7,13 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Added (Bubble Bobble's super bonus room giant, 2026-10-11)
+
+- **The giant stands over the super bonus room.** `$3700`-`$3711` set the last level's giant (`$BC`-`$C0`, `$5AFF`) at X `$74`,
+  Y `$35`, frame 0, in colour 6, and the room's loop never moves it, so it is a still picture until the next level's start
+  clears it. `$2BBD` and `$2C32`, called after, are the level's item set-up, not sprites. `BossFight.SuperRoom`; proved
+  against the game in `SuperBonusRoomOracleTests`.
+
 ### Added (Bubble Bobble's super bonus room picture, 2026-10-11)
 
 - **The super bonus room is drawn in its own characters.** `$3639` copies `$A660` over characters `$60`-`$7F` and `$3644`

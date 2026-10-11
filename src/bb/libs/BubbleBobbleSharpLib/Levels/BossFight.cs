@@ -36,6 +36,9 @@ internal sealed class BossFight
     private const byte PresentY = 0xB3;
     private const byte ParadeLimit = 0x23;
     private const byte AngryColour = 0x0A;
+    private const byte RoomX = 0x74;
+    private const byte RoomY = 0x35;
+    private const byte RoomColour = 0x06;
 
     private const byte LeftLimit = 0x28;
     private const byte RightLimit = 0xC0;
@@ -163,6 +166,17 @@ internal sealed class BossFight
         Frame = 0;
         Direction = 0;
         Colour = AppearColour;
+        Active = true;
+        Shown = true;
+    }
+
+    // `$3700`-`$3711`: the giant of the super bonus room, which stands still over it, as the room's loop never moves it.
+    internal void SuperRoom()
+    {
+        X = RoomX;
+        Y = RoomY;
+        Colour = RoomColour;
+        Frame = 0;
         Active = true;
         Shown = true;
     }

@@ -712,7 +712,8 @@ Each item ends with how it is proved.
         (`$3200`). The routine never returns to the pass that took the item. Proved against the game: `SuperBonusRoomOracleTests`
         (the build on two levels, map, items, art and colours; the picture's screen codes and characters; the taking; the hook;
         the end and the level after). The room is drawn in its own characters (`$A660` at `$60`-`$7F`, super-room-chars.tga).
-        What `$BC`, `$BD`, `$C0`, `$2BBD` and `$2C32` set up is not (`bb-super-bonus-room-sprites`).
+        `$3700`-`$3711` stand the last level's giant over the room, still, at X `$74`, Y `$35` in colour 6 (`BossFight.SuperRoom`);
+        `$2BBD` and `$2C32` are the level's item set-up, with item types `$29` and `$22` forced.
       - [x] 33 (`$7C37`, the last milestone's item at level 50: to level `$45`, counting up a byte at a time as `$7FD4` does) and
         34 (`$7C3C`, the last level's crystal: the taker's `$37C7` goes negative).
 - [ ] **7. Super mode, bonus rounds and level 100** (`SUBFLG` `$63`).

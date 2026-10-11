@@ -622,6 +622,7 @@ internal sealed class GameLoop
     private void StartSuperRoom()
     {
         SuperRoom.Begin();
+        Boss.SuperRoom();
         _map = SolidMap.Build(SuperBonusRoom.Map(_subflg + 1), [], Entities);
         Pop.Drawn.Fill(BubblePop.NotDrawn);
         Water.Mask = 0;

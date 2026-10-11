@@ -7,6 +7,7 @@ using BubbleBobbleSharpLib.Items;
 using BubbleBobbleSharpLib.Levels;
 using BubbleBobbleSharpLib.Players;
 using BubbleBobbleSharpLib.Tests.Oracle;
+using SharpKind;
 using Xunit;
 
 namespace BubbleBobbleSharpLib.Tests.Levels;
@@ -127,6 +128,30 @@ public sealed class SuperBonusRoomOracleTests
 
         // The walls, $10-$14, are $60-$64 again.
         Assert.True(machine.Ram.Slice(0x4080, 40).SequenceEqual(machine.Ram.Slice(0x4300, 40)));
+    }
+
+    // The giant over the room (`$3700`-`$3711`): its place, frame and colour, and `$5AFF` set, as the port's.
+    [Fact]
+    public void ShowsTheGiantAsTheGameDoes()
+    {
+        Assert.SkipUnless(Rebb64Machine.Available, "rebb64-raw.prg is not available.");
+
+        Rebb64Machine machine = Enter(1, out _);
+        GameLoop loop = new(new(new RandomSource(new Random(1))), 1);
+        loop.Boss.SuperRoom();
+
+        Assert.NotEqual(0, machine.Peek(0x5AFF));
+        Assert.True(loop.Boss.Active);
+        Assert.Equal(machine.Peek(0xBC), loop.Boss.X);
+        Assert.Equal(machine.Peek(0xBD), loop.Boss.Y);
+        Assert.Equal(machine.Peek(0xBE), loop.Boss.Frame);
+        Assert.Equal(machine.Peek(0xC0), loop.Boss.Colour);
+
+        // The room's loop leaves it where it is.
+        machine.RunFrames(50);
+
+        Assert.Equal(loop.Boss.X, machine.Peek(0xBC));
+        Assert.Equal(loop.Boss.Y, machine.Peek(0xBD));
     }
 
     // A turn of the loop, with player 1 put on an item (an intervention), against the port's from the bytes before.
