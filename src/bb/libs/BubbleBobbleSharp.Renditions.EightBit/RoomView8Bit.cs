@@ -39,7 +39,7 @@ internal sealed class RoomView8Bit : IView<RoomModel>
         _surface = surface;
         _layout = surface.Layout;
         _graphics = surface.Graphics;
-        _items = new(surface, ItemSheet, ItemSheet + ".Room");
+        _items = new(surface, ItemSheet, ItemSheet + ".Room", transparent: true);
         _tiles = new(surface, TileSheet, TileSheet + ".Room");
     }
 

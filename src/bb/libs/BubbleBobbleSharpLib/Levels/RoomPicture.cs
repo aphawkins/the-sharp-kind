@@ -9,13 +9,15 @@ namespace BubbleBobbleSharpLib.Levels;
 // What the room view draws, from the game.
 internal static class RoomPicture
 {
-    // `$3234`: where a room shows its clock, at the top, and each player's count, along the bottom, and in what colours.
+    // `$3234`: where a room shows its clock, at the top, and each player's count, along the bottom, and the colour RAM bytes
+    // they are written with. Bit 3 makes them multicolour characters, whose own colour is the low three bits.
     private const int RoomClockColumn = 15;
     private const int RoomClockColour = 9;
     private const int RoomCountRow = 24;
     private const int RoomSecondColumn = 30;
     private const int RoomFirstColour = 13;
     private const int RoomSecondColour = 11;
+    private const int CharacterColour = 0x07;
 
     // A bonus room over the level: the clock and the counts while it lasts, and the results after.
     internal static RoomModel Build(GameLoop loop, PlayfieldModel playfield)
@@ -36,9 +38,9 @@ internal static class RoomPicture
 
         if (room.Phase == ItemRoom.Stage.Playing)
         {
-            lines.Add(new(RoomClockColumn, 0, RoomClockColour, $"{loop.Timer.Seconds:D2}"));
-            lines.Add(new(0, RoomCountRow, RoomFirstColour, $"{room.Counts[0]:D2}"));
-            lines.Add(new(RoomSecondColumn, RoomCountRow, RoomSecondColour, $"{room.Counts[1]:D2}"));
+            lines.Add(new(RoomClockColumn, 0, RoomClockColour & CharacterColour, $"{loop.Timer.Seconds:D2}"));
+            lines.Add(new(0, RoomCountRow, RoomFirstColour & CharacterColour, $"{room.Counts[0]:D2}"));
+            lines.Add(new(RoomSecondColumn, RoomCountRow, RoomSecondColour & CharacterColour, $"{room.Counts[1]:D2}"));
         }
 
         lines.AddRange(room.Lines);

@@ -25,7 +25,7 @@ internal sealed class ItemView8Bit : IView<ItemsModel>
 
         _graphics = surface.Graphics;
         _layout = surface.Layout;
-        _sheets = [new(surface, Sheet, Sheet + ".Food"), new(surface, Sheet, Sheet + ".Special")];
+        _sheets = [new(surface, Sheet, Sheet + ".Food", transparent: true), new(surface, Sheet, Sheet + ".Special", transparent: true)];
     }
 
     public void Draw(ItemsModel model)

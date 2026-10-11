@@ -22,15 +22,17 @@ internal sealed class MulticolourSheet
     private readonly IGraphics _graphics;
     private readonly IPaletteCollection _palette;
     private readonly string _source;
+    private readonly bool _transparent;
 
     private int _colours = NotPainted;
     private int _colourRam = NotPainted;
 
-    internal MulticolourSheet(IViewSurface surface, string source, string? name = null)
+    internal MulticolourSheet(IViewSurface surface, string source, string? name = null, bool transparent = false)
     {
         _graphics = surface.Graphics;
         _palette = surface.Palette;
         _source = source;
+        _transparent = transparent;
 
         Name = (name ?? source) + Suffix;
     }
@@ -53,12 +55,23 @@ internal sealed class MulticolourSheet
         _colourRam = colourRam;
     }
 
-    private Dictionary<uint, FastColor> Entries(int colours, int colourRam) => new()
+    private Dictionary<uint, FastColor> Entries(int colours, int colourRam)
     {
-        [Colour(1).Argb] = Colour((colours >> 4) & 0x0F),
-        [Colour(2).Argb] = Colour(colours & 0x0F),
-        [Colour(3).Argb] = Colour(colourRam & 0x07),
-    };
+        Dictionary<uint, FastColor> entries = new()
+        {
+            [Colour(1).Argb] = Colour((colours >> 4) & 0x0F),
+            [Colour(2).Argb] = Colour(colours & 0x0F),
+            [Colour(3).Argb] = Colour(colourRam & 0x07),
+        };
+
+        // The art's 00 is the screen's black; drawn over what is already there, it lets that show through.
+        if (_transparent)
+        {
+            entries[Colour(0).Argb] = BaseColors.TransparentBlack;
+        }
+
+        return entries;
+    }
 
     private FastColor Colour(int index) => _palette[index.ToString(CultureInfo.InvariantCulture)];
 }
