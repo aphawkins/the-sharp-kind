@@ -65,6 +65,9 @@ internal sealed class GameLoop
     private IGameHold? _hold;
     private Resume _resume;
 
+    // `$2D` as the pass found it, for the hurry-up's tune.
+    private byte _hurry;
+
     internal GameLoop(BbRandom random, int playing)
     {
         ArgumentNullException.ThrowIfNull(random);
@@ -125,6 +128,7 @@ internal sealed class GameLoop
         Start = 0,
         AfterGiant = 1,
         AfterCollect = 2,
+        AfterBarons = 3,
     }
 
     internal EntityTable Entities { get; } = new();
@@ -403,7 +407,12 @@ internal sealed class GameLoop
     // The pass from where it is to go on from: its start, or after a routine that waited.
     private void Run(ReadOnlySpan<byte> ports, SolidMap map, Resume from)
     {
-        if (from == Resume.Start)
+        if (from == Resume.Start && Check())
+        {
+            return;
+        }
+
+        if (from is Resume.Start or Resume.AfterBarons)
         {
             Head(map);
 
@@ -441,26 +450,41 @@ internal sealed class GameLoop
         Tail(ports, map);
     }
 
-    private void Head(SolidMap map)
+    // The pass's start, to the level's check. Returns whether it is waiting on the Barons' call.
+    private bool Check()
     {
         Items.Update();
-
-        byte hurry = Timer.Hurry;
+        _hurry = Timer.Hurry;
 
         // $15E1: with time on the clock the level is checked for its last enemy.
-        if (Flow.Update())
+        if (!Flow.Update())
         {
-            if (Timer.Seconds != 0)
-            {
-                Clear.Update();
-            }
-            else
-            {
-                End.Update();
-            }
+            return false;
         }
 
-        NoteSongs(hurry);
+        if (Timer.Seconds != 0)
+        {
+            Clear.Update();
+            return false;
+        }
+
+        End.Update();
+
+        // $1621: the Barons' call waits in itself, with the round start's tune asked for before it does.
+        if (End.Hold is not IGameHold barons)
+        {
+            return false;
+        }
+
+        NoteLives();
+        End.Hold = null;
+        Wait(barons, Resume.AfterBarons);
+        return true;
+    }
+
+    private void Head(SolidMap map)
+    {
+        NoteSongs(_hurry);
 
         // $0A19: the fire on the platforms burns.
         Fire.Update(Pop.Counter);

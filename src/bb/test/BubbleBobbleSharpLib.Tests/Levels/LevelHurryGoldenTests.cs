@@ -67,7 +67,7 @@ public sealed class LevelHurryGoldenTests
         EndRig rig = new(ScriptedRandomSource.For(before[RandomAt], before[RandomAt + 1], rolls));
         Load(rig, before);
 
-        rig.End.Update();
+        rig.Expire();
 
         Assert.Equal(after[Seconds], rig.Timer.Seconds);
         Assert.Equal(after[Hurry], rig.Timer.Hurry);

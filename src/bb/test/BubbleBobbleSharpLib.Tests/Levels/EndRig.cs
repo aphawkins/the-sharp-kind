@@ -44,4 +44,25 @@ internal sealed class EndRig
     internal BubblePop Pop { get; }
 
     internal LevelEnd End { get; }
+
+    // The clock running out, with any wait of `$1621`'s run to its end.
+    internal void Expire()
+    {
+        End.Update();
+
+        if (End.Hold is { } hold)
+        {
+            End.Hold = null;
+
+            bool waiting;
+
+            do
+            {
+                waiting = hold.Frame();
+            }
+            while (waiting);
+
+            hold.Finish(0);
+        }
+    }
 }

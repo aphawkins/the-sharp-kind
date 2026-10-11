@@ -73,6 +73,9 @@ internal sealed class LevelEnd
     // `$1621`: the Barons' call puts the giant bubble's sweeps (`$58FF`) to nothing.
     internal GiantBubble? Giant { get; set; }
 
+    // `$1621`'s waits, left for the game to run once the clock has run out a second time.
+    internal IGameHold? Hold { get; set; }
+
     // How many times the Barons have been called, for the song ($1621's `ldy #$43`, the round start's).
     internal int BaronCalls { get; private set; }
 
@@ -110,17 +113,22 @@ internal sealed class LevelEnd
     // $1621-$1693. Whatever is in the Barons' two object slots pops first, and the game waits for it to go. Then
     // each slot has a column and a row chosen by chance, and the slot of each player in the game gets a Baron there.
     // The clock stops, with the level's time on it, until the last Baron goes ($1490).
+    //
+    // The waits are the game's own, with the pause flag up ($15E5): the routine is left in `Hold` for the game to run, a
+    // frame at a time. The wait for the round start's tune to end ($1685) is not modelled.
     private void SpawnBarons()
     {
         BaronCalls++;
         _slots.Pop();
-        _slots.Wait();
+        Hold = new BaronHold(this);
+    }
+
+    // `$1633`-`$1666`, once the slots are free: a place for each slot, and a pop in the slot of each player in the game.
+    private void PlaceBarons(Span<byte> column, Span<byte> row)
+    {
         Giant?.Cancel();
 
         _items.FoodBase = BaronFoodSeed;
-
-        Span<byte> column = stackalloc byte[PlayerTable.Capacity];
-        Span<byte> row = stackalloc byte[PlayerTable.Capacity];
 
         for (int slot = PlayerTable.Capacity - 1; slot >= 0; slot--)
         {
@@ -139,9 +147,11 @@ internal sealed class LevelEnd
                 _objects.Type[slot] = PopType;
             }
         }
+    }
 
-        _slots.Wait();
-
+    // `$1669`-`$1693`, after the second wait: the Barons, and the clock stopped.
+    private void BringBarons(ReadOnlySpan<byte> column, ReadOnlySpan<byte> row)
+    {
         for (int slot = PlayerTable.Capacity - 1; slot >= 0; slot--)
         {
             if (_entities.State[slot] != 0)
@@ -181,5 +191,51 @@ internal sealed class LevelEnd
         }
 
         Complete++;
+    }
+
+    // `$1B02`-`$1B18` twice: an object update a frame, at least one, until both slots are free; the Barons' places are
+    // chosen between the two waits.
+    private sealed class BaronHold(LevelEnd end) : IGameHold
+    {
+        private readonly byte[] _column = new byte[PlayerTable.Capacity];
+        private readonly byte[] _row = new byte[PlayerTable.Capacity];
+
+        private int _waits = 2;
+
+        public bool Paused => true;
+
+        public int? Border => null;
+
+        public bool Frame()
+        {
+            if (_waits == 0)
+            {
+                return false;
+            }
+
+            end._slots.Update();
+
+            if (end._slots.Free())
+            {
+                _waits--;
+
+                if (_waits == 1)
+                {
+                    end.PlaceBarons(_column, _row);
+                }
+            }
+
+            return true;
+        }
+
+        public void Pass()
+        {
+        }
+
+        public byte Finish(byte counter)
+        {
+            end.BringBarons(_column, _row);
+            return counter;
+        }
     }
 }

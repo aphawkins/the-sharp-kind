@@ -7,6 +7,14 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Changed (Bubble Bobble's Barons' call waits, 2026-10-11)
+
+- **The Barons' call waits frame by frame.** `$1621` pauses the game (`$37`) and waits twice at `$1B02` for the players' object
+  slots to free: once for what was in them to pop, and again, after the Barons' places are rolled, for the pops put there. The
+  waits ran all at once and threw their frames away; they are now an `IGameHold`, an object update a frame, and the pass goes on
+  from after the level's check once the Barons are in. The round start's tune is asked for before the wait, as `$1621` does.
+  `SlotPop.Wait` is gone. The wait at `$1685` for that tune to end is not modelled.
+
 ### Changed (Bubble Bobble's step 7 closed, 2026-10-11)
 
 - **Super mode, bonus rounds and level 100 are complete.** Every part of step 7 of the port plan had landed (super mode,

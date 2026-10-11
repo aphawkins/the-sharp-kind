@@ -108,6 +108,31 @@ public sealed class GameHoldTests
         Assert.DoesNotContain(borders, b => b is not (null or 7));
     }
 
+    // $1621: the Barons' call waits, paused, for the slots to pop twice, a frame at a time, and only then do the Barons come.
+    [Fact]
+    public void TheBaronsWaitFrameByFrameWithNothingMoving()
+    {
+        GameLoop loop = Start();
+        loop.Timer.Seconds = 0;
+        loop.Timer.Hurry = 1;
+        byte[] before = loop.Entities.X.ToArray();
+        int passes = 0;
+
+        loop.Pass([Idle, Idle]);
+
+        while (loop.Objects.Type[0] != 0x2E && passes < 100)
+        {
+            Assert.Equal(1, loop.Timer.Hurry);
+            Assert.Equal(Convert.ToHexString(before), Convert.ToHexString(loop.Entities.X));
+            loop.Pass([Idle, Idle]);
+            passes++;
+        }
+
+        Assert.InRange(passes, 1, 99);
+        Assert.Equal(0, loop.Timer.Hurry);
+        Assert.Equal(LevelTimer.Stopped, loop.Timer.Frames);
+    }
+
     private static GameLoop Start()
     {
         GameLoop loop = new(new(new RandomSource(new Random(1))), 1);

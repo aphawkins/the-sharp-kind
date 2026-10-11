@@ -17,7 +17,7 @@ public sealed class LevelEndTests
     public void ALevelStartsNotOver()
     {
         EndRig rig = Arranged(0xFF);
-        rig.End.Update();
+        rig.Expire();
 
         Assert.Equal(1, rig.End.Complete);
 
@@ -37,7 +37,7 @@ public sealed class LevelEndTests
         rig.Entities.FlashTimer[1] = 0x33;
         rig.End.SavedFlash[1] = 0x04;
 
-        rig.End.Update();
+        rig.Expire();
 
         Assert.Equal(PlayerFrame.PlayingState, rig.Entities.State[1]);
         Assert.Equal(0x03, rig.Entities.Colour[1]);
@@ -56,7 +56,7 @@ public sealed class LevelEndTests
         rig.Entities.State[1] = PlayerRespawn.RespawningState;
         rig.Entities.State[0] = state;
 
-        rig.End.Update();
+        rig.Expire();
 
         Assert.Equal(0, rig.End.Complete);
         Assert.Equal(PlayerFrame.PlayingState, rig.Entities.State[1]);
@@ -73,7 +73,7 @@ public sealed class LevelEndTests
         rig.Entities.State[3] = 0x0B;
         rig.Entities.State[4] = 0x0A;
 
-        rig.End.Update();
+        rig.Expire();
 
         Assert.Equal(1, rig.Timer.Hurry);
         Assert.Equal(0x0A, rig.Timer.Seconds);
@@ -102,7 +102,7 @@ public sealed class LevelEndTests
         rig.Objects.Variant[0] = 0x11;
         rig.Objects.EnemyType[1] = 0x14;
 
-        rig.End.Update();
+        rig.Expire();
 
         Assert.Equal(0x2E, rig.Objects.Type[0]);
         Assert.Equal(0x30, rig.Objects.Type[1]);
@@ -128,7 +128,7 @@ public sealed class LevelEndTests
         rig.Entities.State[0] = 0;
         rig.Entities.State[1] = PlayerFrame.PlayingState;
 
-        rig.End.Update();
+        rig.Expire();
 
         Assert.Equal(ObjectTable.FreeType, rig.Objects.Type[0]);
         Assert.Equal(0x30, rig.Objects.Type[1]);
@@ -146,7 +146,7 @@ public sealed class LevelEndTests
         rig.Objects.Column[0] = 6;
         rig.Objects.Row[0] = 7;
 
-        rig.End.Update();
+        rig.Expire();
 
         Assert.Equal(0x2E, rig.Objects.Type[0]);
     }

@@ -15,8 +15,6 @@ internal sealed class SlotPop
     private const byte FirstMovableType = 0x18;
     private const byte AfterMovableType = 0x24;
 
-    private const int WaitLimit = 0x4000;
-
     private readonly ObjectTable _objects;
     private readonly BubblePop _pop;
 
@@ -44,22 +42,6 @@ internal sealed class SlotPop
             _objects.EnemyType[slot] = type is >= FirstMovableType and < AfterMovableType ? type : (byte)0;
             _objects.Type[slot] = PopType;
         }
-    }
-
-    // `$1B02-$1B18`: the objects go on being updated, at least once, until both slots are free. Returns how many updates it took,
-    // each of which is a frame of the game's wait.
-    internal int Wait()
-    {
-        int updates = 0;
-
-        do
-        {
-            _pop.Update();
-            updates++;
-        }
-        while (!Free() && updates < WaitLimit);
-
-        return Free() ? updates : throw new InvalidOperationException("the players' object slots never freed at $1B02");
     }
 
     // `$1B02`: one update of the objects while the game waits, which is a frame.
