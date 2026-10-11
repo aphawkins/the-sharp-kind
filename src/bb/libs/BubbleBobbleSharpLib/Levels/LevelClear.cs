@@ -130,7 +130,7 @@ internal sealed class LevelClear
     // $16DA-$1750, and $1751-$1772 for a level with nothing left in it.
     internal void Update()
     {
-        // $1694-$16B5: the READY!! text has run out and comes off the screen, which is not modelled.
+        // $1694-$16B5: the READY!! text has run out and comes off the screen.
         if (_timer.Ready == 0)
         {
             _timer.Ready = LevelTimer.Stopped;

@@ -184,13 +184,14 @@ public sealed class BubbleBobbleMainTests
     // All are the full height of the screen, after the whole screen the banner is drawn across. The players share the decoration's band because a sprite
     // may be anywhere on the level, including over its outermost columns.
     [Fact]
-    public void ComposesTheFlashLevelItsItemsEffectsBubblesDecorationRoomPlayersAndHudAsNineLayers()
+    public void ComposesTheFlashLevelItsItemsEffectsWipeBubblesDecorationRoomPlayersAndHudAsTenLayers()
     {
         RecordingGraphics graphics = Draw();
 
         Assert.Equal(
             [(new Vector2(0, 0), 320f, 200f),
              (new Vector2(0, 0), 320f, 200f),
+             (new Vector2(16, 0), 224f, 200f),
              (new Vector2(16, 0), 224f, 200f),
              (new Vector2(16, 0), 224f, 200f),
              (new Vector2(16, 0), 224f, 200f),

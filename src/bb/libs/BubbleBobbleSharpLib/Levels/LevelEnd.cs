@@ -99,7 +99,7 @@ internal sealed class LevelEnd
         }
     }
 
-    // $15E8-$15F4, and $3AB8 for the anger. The HURRY UP! scroll and its tune are not modelled.
+    // $15E8-$15F4, and $3AB8 for the anger. The HURRY UP! scroll and its pause are not modelled.
     private void HurryUp()
     {
         _entities.SetAnger(AngryFully);

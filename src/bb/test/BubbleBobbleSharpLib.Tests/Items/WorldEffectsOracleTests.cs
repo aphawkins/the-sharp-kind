@@ -16,8 +16,8 @@ namespace BubbleBobbleSharpLib.Tests.Items;
 // **Each effect's routine is called directly** (`Invoke`, an intervention) at the first pass of level 1, with X the player,
 // as `$2D51`'s `jsr` would. The effect then runs on the bytes before in the port, and the bytes it can write are compared:
 // `$68`, `$69` and `$6A` (the bonus round scheduled), `$1C`, `$1E`, `$67` and `$2B` (the freeze), and the player's blow
-// state (`$A77B` to `$A784`). The effects that wait for frames or never return (`$2DD7`, `$2ECC`, `$7FA4`, `$7FA7`) are
-// proved by hand.
+// state (`$A77B` to `$A784`). The effects that wait for frames have oracle tests of their own (`ScreenWipeOracleTests`,
+// `SpriteShowOracleTests`); the skips (`$7FA4`, `$7FA7`), which never return, are proved by hand.
 [Trait("Level", "Integration")]
 public sealed class WorldEffectsOracleTests
 {
@@ -73,7 +73,17 @@ public sealed class WorldEffectsOracleTests
             };
 
             FoodDrop food = new(entities, new Scores(), new(new ScriptedRandomSource([])));
-            WorldEffects world = new(clear, flow, timer, entities, new(), food, Items(entities));
+            WorldEffects world = new(
+                clear,
+                flow,
+                timer,
+                entities,
+                new(),
+                food,
+                Items(entities),
+                new(entities, food),
+                new(entities, new(new ScriptedRandomSource([]))),
+                new(entities, timer));
 
             flow.Freeze = before[Freeze];
             world.Apply(type, player);

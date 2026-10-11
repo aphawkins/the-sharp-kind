@@ -151,6 +151,50 @@ public sealed class SpriteModelTests
     }
 
     // Slot 0 holds the byte given; the other seven are zero.
+    // $7D00: sprites $F4 to $F9 are built by the game, so a slot whose pointer names one is drawn from its bytes, and only
+    // while there are any.
+    [Theory]
+    [InlineData(0xF4, 0x00, 0)]
+    [InlineData(0xF4, 0x05, 5)]
+    [InlineData(0xF2, 0x02, 0)]
+    [InlineData(0xF4, 0x06, -1)]
+    [InlineData(0x60, 0x00, -1)]
+    public void APointerFromF4IsAPictureTheGameBuilt(byte spriteBase, byte frame, int picture)
+    {
+        SpriteModel model = new(
+            Slots(0x14),
+            Slots(0x78),
+            Slots(0x7C),
+            Slots(frame),
+            Slots(spriteBase),
+            Slots(0x07),
+            Slots(0x00),
+            0xFF)
+        {
+            Pictures = new byte[6 * SpriteModel.PictureBytes],
+        };
+
+        Assert.Equal(picture, model.Picture(0));
+        Assert.Equal(picture >= 0 || spriteBase == 0x60, model.IsDrawn(0));
+    }
+
+    [Fact]
+    public void WithoutPicturesAPointerFromF4IsNotDrawn()
+        => Assert.Equal(-1, Model(frame: Slots(0x00), spriteBase: Slots(0xF4)).Picture(0));
+
+    // $D017 and $D01D: a bit a slot.
+    [Fact]
+    public void ASlotIsExpandedByItsBit()
+    {
+        SpriteModel model = new(Slots(0x14), Slots(0), Slots(0), Slots(0), Slots(0xF4), Slots(7), Slots(0), 0xFF)
+        {
+            Expanded = 0x04,
+        };
+
+        Assert.True(model.IsExpanded(2));
+        Assert.False(model.IsExpanded(3));
+    }
+
     private static byte[] Slots(byte first)
     {
         byte[] slots = new byte[SpriteModel.Capacity];

@@ -126,6 +126,27 @@ public sealed class PlayfieldView8BitTests
         Assert.NotSame(painted, graphics.Image("LevelTiles.Recoloured"));
     }
 
+    // $2E15: a wiped row's cells inside the walls are solid blocks in the colour RAM's low three bits ($0B: 3), and the level's
+    // tile stays, painted with $0B as its colour RAM. The walls' columns and the rows above are as they were.
+    [Fact]
+    public void DrawsAWipedRowAsBlocksAndTheTileInTheWipedColours()
+    {
+        byte[] characters = Empty();
+        characters[(24 * PlayfieldModel.Columns) + 5] = PlayfieldModel.LevelTile;
+
+        RecordingGraphics graphics = Draw(new PlayfieldModel(0, Colours, characters).Wiped(1));
+
+        (string sheet, Vector2 position, _, _, _) = Assert.Single(graphics.ImageParts);
+
+        Assert.Equal("LevelTilesWiped.Recoloured", sheet);
+        Assert.Equal(new(40, 192), position);
+        Assert.Equal(TestSurface.Colour(0x0B & 0x07), graphics.Images[sheet].GetPixel(3, 0));
+        Assert.Equal(27, graphics.FilledRectangles.Count);
+        Assert.All(graphics.FilledRectangles, r => Assert.Equal(TestSurface.Colour(3), r.Colour));
+        Assert.All(graphics.FilledRectangles, r => Assert.Equal(192f, r.Position.Y));
+        Assert.DoesNotContain(graphics.FilledRectangles, r => r.Position.X is < 16 or >= 240);
+    }
+
     private static byte[] Empty()
     {
         byte[] characters = new byte[PlayfieldModel.Columns * PlayfieldModel.Rows];

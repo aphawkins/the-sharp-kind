@@ -43,9 +43,11 @@ Every open work item, in priority order. Each line links to a file in
 
 Steps from section 5 of [bb-port-plan.md](bb-port-plan.md), in order.
 
-- [ ] [6b: item effect 29, the six-sprite giant](work-items/bb-6b-giant-enemy-effect.md)
 - [ ] [6c: item effect 32, the super bonus room](work-items/bb-6c-super-bonus-room.md)
 - [ ] [7: super mode, bonus rounds and level 100](work-items/bb-7-super-mode-bonus-level-100.md)
+- [ ] [The Barons' call waits frame by frame](work-items/bb-baron-slot-wait-hold.md)
+- [ ] [The HURRY UP! scroll and its pause](work-items/bb-hurry-up-scroll-hold.md)
+- [ ] [The EXTEND fanfare and screen of fruit](work-items/bb-extend-fanfare-hold.md)
 - [ ] [10: join the repo](work-items/bb-10-join-the-repo.md)
 
 ## Should

@@ -12,6 +12,7 @@ internal sealed class LevelSheets(IViewSurface surface, string source)
 {
     private readonly MulticolourSheet _sheet = new(surface, source);
     private readonly MulticolourSheet _incoming = new(surface, source, source + "Incoming");
+    private readonly MulticolourSheet _wiped = new(surface, source, source + "Wiped");
 
     /// <summary>Gets the sheet painted in a level's colours.</summary>
     /// <param name="colours">The level's colour byte.</param>
@@ -24,5 +25,15 @@ internal sealed class LevelSheets(IViewSurface surface, string source)
         sheet.Paint(colours);
 
         return sheet.Name;
+    }
+
+    /// <summary>Gets the sheet painted in a level's colours with a wiped row's colour RAM.</summary>
+    /// <param name="colours">The level's colour byte.</param>
+    /// <returns>The name to draw from.</returns>
+    internal string PaintWiped(int colours)
+    {
+        _wiped.Paint(colours, PlayfieldModel.WipedColourRam);
+
+        return _wiped.Name;
     }
 }

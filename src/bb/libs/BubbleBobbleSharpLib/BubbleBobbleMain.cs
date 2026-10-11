@@ -60,6 +60,8 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     private LevelStore _levels;
     private PlayfieldModel _playfield;
     private SidebarModel _sidebar;
+    private ItemsModel? _shownItems;
+    private EffectsModel? _shownEffects;
     private LevelChange _change;
 
     public BubbleBobbleMain(
@@ -271,6 +273,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         }
 
         ShowColours();
+        ShowWipe();
         PlaySongs();
 
         // $0AA3, $F0E8: with both players out and the wait over the game goes back to the choice of players.
@@ -336,6 +339,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
                 // So are its fire and water, which stand still while it does.
                 Offset = Scrolled,
             },
+            new RenderLayer(interior, interiorWidth, height, new WipeLayer(this, surface)),
             new RenderLayer(whole, wholeWidth, height, new ObjectLayer(this)),
             new RenderLayer(whole, wholeWidth, height, new SidebarLayer(this)),
             new RenderLayer(whole, wholeWidth, height, new RoomLayer(this)),
@@ -404,6 +408,39 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         }
     }
 
+    // $2E15: the special item of type 8 wipes the level a row at a time, and it stays so until the next.
+    private void ShowWipe()
+    {
+        int wiped = Loop.WipedRows;
+
+        if (wiped != _playfield.WipedRows)
+        {
+            _playfield = _playfield.Wiped(wiped);
+        }
+    }
+
+    // While the wipe goes up the screen the game draws nothing, and the items and the effects stay as they were drawn until
+    // a row of blocks covers them.
+    private ItemsModel ShownItems()
+    {
+        if (!Loop.Wiping || _shownItems is null)
+        {
+            _shownItems = Items();
+        }
+
+        return _shownItems;
+    }
+
+    private EffectsModel ShownEffects()
+    {
+        if (!Loop.Wiping || _shownEffects is null)
+        {
+            _shownEffects = Effects();
+        }
+
+        return _shownEffects;
+    }
+
     private SpriteModel Sprites() => new(
         Loop.Entities.State,
         Loop.Entities.X,
@@ -417,6 +454,8 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         FoodArt = Loop.FoodArt(),
         BonusStage = Loop.Clear.SuperBonus is { Showing: true } ? Loop.Clear.BonusStage : -1,
         Boss = Loop.Boss is { Active: true, Shown: true } boss ? new(boss.X, boss.Y, boss.Frame, boss.Colour) : null,
+        Pictures = Loop.Show.On ? Loop.Show.Pictures.ToArray() : [],
+        Expanded = Loop.Entities.SpriteExpand,
     };
 
     private HudModel Hud() => new(
@@ -461,22 +500,58 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         Loop.Items.Colour,
         _playfield.Colours);
 
-    // $7FB2-$7FD1: before a skip the border and background flash red ($00 EOR $02), under everything on the screen.
+    // $7FB2-$7FD1: before a skip the border and background flash red ($00 EOR $02), under everything on the screen; and so
+    // do they in the colours a routine that waits puts in them ($1AC0, $2F2D).
     private sealed class FlashLayer(BubbleBobbleMain game, BbViewSurface surface) : ILayerDrawer
     {
-        private const string Red = "2";
+        private const int Red = 2;
 
-        private readonly FastColor _red = surface.Palette[Red];
+        private static readonly string[] s_colours =
+            ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"];
 
         public void Draw()
         {
-            if (game._change.FlashShows)
+            int? colour = game._change.FlashShows ? Red : game.Loop.Border;
+
+            if (colour is int shown)
             {
                 surface.Graphics.DrawRectangleFilled(
                     surface.Layout.Screen.Cell(0, 0),
                     surface.Layout.ScreenWidth,
                     surface.Layout.ScreenRows * surface.Layout.CellHeight,
-                    _red);
+                    surface.Palette[s_colours[shown]]);
+            }
+        }
+    }
+
+    // $2E2E: while the wipe goes up the screen, its blocks are characters that take the place of the items and the effects.
+    private sealed class WipeLayer(BubbleBobbleMain game, BbViewSurface surface) : ILayerDrawer
+    {
+        // A multicolour block is all 11: the colour RAM's low three bits.
+        private const string BlockColour = "3";
+
+        private readonly FastColor _block = surface.Palette[BlockColour];
+
+        public void Draw()
+        {
+            if (!game.Loop.Wiping)
+            {
+                return;
+            }
+
+            for (int row = 0; row < PlayfieldModel.Rows; row++)
+            {
+                for (int column = 0; column < PlayfieldModel.Columns; column++)
+                {
+                    if (game._playfield.Character(column, row) == PlayfieldModel.Block)
+                    {
+                        surface.Graphics.DrawRectangleFilled(
+                            surface.Layout.Playfield.Cell(column, row),
+                            surface.Layout.CellWidth,
+                            surface.Layout.CellHeight,
+                            _block);
+                    }
+                }
             }
         }
     }
@@ -498,7 +573,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         {
             if (!game._change.Gliding)
             {
-                game._effectsView.Draw(game.Effects());
+                game._effectsView.Draw(game.ShownEffects());
             }
         }
     }
@@ -509,7 +584,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         {
             if (!game._change.Gliding)
             {
-                game._itemView.Draw(game.Items());
+                game._itemView.Draw(game.ShownItems());
             }
         }
     }

@@ -6,6 +6,7 @@ using BubbleBobbleSharpLib.Bubbles;
 using BubbleBobbleSharpLib.Items;
 using BubbleBobbleSharpLib.Levels;
 using BubbleBobbleSharpLib.Players;
+using BubbleBobbleSharpLib.Specials;
 using BubbleBobbleSharpLib.Tests.Levels;
 using Xunit;
 
@@ -43,7 +44,8 @@ public sealed class WorldEffectsTests
         Assert.Equal(0x45, rig.World.SkipTo);
     }
 
-    // $2E61: every enemy in state 1 to $0A, or $0D, is killed, and the count is left at zero.
+    // $2E61: every enemy in state 1 to $0A, or $0D, is killed, and the count is left at zero; `$2ECC` then keeps the
+    // states for the show's end, makes the slots state $13 and counts one enemy, the show.
     [Fact]
     public void ClearingKillsEveryEnemyThatIsLeft()
     {
@@ -53,8 +55,10 @@ public sealed class WorldEffectsTests
 
         rig.World.Apply(11, 0);
 
-        Assert.Equal([0x0B, 0x0B, 0x0B, 0x0B, 0x00, 0x0B], rig.Entities.State[2..].ToArray());
-        Assert.Equal(0, rig.Entities.EnemyCount);
+        Assert.Equal([0x0B, 0x0B, 0x0B, 0x0B, 0x00, 0x0B], rig.Show.KeptState.ToArray());
+        Assert.All(rig.Entities.State[2..].ToArray(), state => Assert.Equal(SpriteShow.DiamondState, state));
+        Assert.Equal(1, rig.Entities.EnemyCount);
+        Assert.NotNull(rig.World.Hold);
     }
 
     // $2E79: an enemy in a bubble ($18-$23) is let out, and killed with the rest; every object becomes a $4A.
@@ -75,12 +79,11 @@ public sealed class WorldEffectsTests
         Assert.All(rig.Objects.Type.ToArray(), type => Assert.Equal(0x4A, type));
         Assert.Equal(0, rig.Objects.Column[4]);
         Assert.Equal(0, rig.Objects.Row[4]);
-        Assert.Equal(0x0B, rig.Entities.State[3]);
-        Assert.Equal(0, rig.Entities.EnemyCount);
+        Assert.Equal(0x0B, rig.Show.KeptState[1]);
     }
 
-    // $2DD7: the same, and the food and the special item are gone from the level; a second clear does nothing to the
-    // objects, since `$58BF` is set.
+    // $2DD7: the objects are reset, and the food and the special item are gone from the level; a second clear does nothing
+    // to the objects, since `$58BF` is set.
     [Fact]
     public void ClearingWithTheWipeAlsoHidesTheItemsAndOnlyResetsOnce()
     {
@@ -97,6 +100,57 @@ public sealed class WorldEffectsTests
         Assert.Equal(0xFF, rig.Items.Type[1]);
         Assert.Equal(0x04, rig.Objects.Type[0]);
         Assert.True(rig.World.Cleared);
+    }
+
+    // $7BA6: the wipe puts the fire out and stops the water before anything else.
+    [Fact]
+    public void TheWipeStopsTheFireAndTheWater()
+    {
+        Rig rig = new();
+        rig.Water.Mask = 0xFF;
+        rig.Fire.Light(2, 4, 5, 6);
+
+        rig.World.Apply(8, 0);
+
+        Assert.Equal(0, rig.Water.Mask);
+        Assert.All(rig.Fire.Timers.ToArray(), timer => Assert.Equal(FireStrips.Free, timer));
+    }
+
+    // $2E15-$2E78: twenty-five rows, two frames each, from the bottom, and only then are the enemies killed and a player in the
+    // water put on its feet.
+    [Fact]
+    public void TheWipeTakesTwoFramesARowAndKillsTheEnemiesAfterIt()
+    {
+        Rig rig = new();
+        rig.Entities.State[0] = WaterFlow.CarriedState;
+        rig.Entities.State[1] = 0x01;
+        rig.Entities.State[4] = 0x02;
+        rig.Entities.EnemyCount = 1;
+
+        rig.World.Apply(8, 0);
+        IGameHold hold = rig.World.Hold!;
+        int frames = 0;
+
+        while (hold.Frame())
+        {
+            frames++;
+
+            if (frames % 2 == 0)
+            {
+                hold.Pass();
+                Assert.Equal(frames / 2, rig.World.Wipe.Wiped);
+                Assert.Equal(0x02, rig.Entities.State[4]);
+            }
+        }
+
+        hold.Finish(0);
+
+        Assert.Equal(50, frames);
+        Assert.Equal(ScreenWipe.Rows, rig.World.Wipe.Wiped);
+        Assert.False(hold.Paused);
+        Assert.Equal(0x01, rig.Entities.State[0]);
+        Assert.Equal(FoodDrop.FlyingState, rig.Entities.State[4]);
+        Assert.Equal(0, rig.Entities.EnemyCount);
     }
 
     // $2F68-$2F7C.
@@ -135,8 +189,18 @@ public sealed class WorldEffectsTests
             Flow = new(Timer);
             Items = new(Entities, new Scores(), new ItemEffects(new PlayerTable(), Entities), Random);
             Clear = new(Timer, Entities, Objects, Items, Random);
-            World = new(Clear, Flow, Timer, Entities, Objects, new(Entities, new Scores(), Random), Items);
+            FoodDrop food = new(Entities, new Scores(), Random);
+            Fire = new(Entities, food);
+            Water = new(Entities, Random);
+            Show = new(Entities, Timer);
+            World = new(Clear, Flow, Timer, Entities, Objects, food, Items, Fire, Water, Show);
         }
+
+        internal FireStrips Fire { get; }
+
+        internal WaterFlow Water { get; }
+
+        internal SpriteShow Show { get; }
 
         internal EntityTable Entities { get; } = new();
 

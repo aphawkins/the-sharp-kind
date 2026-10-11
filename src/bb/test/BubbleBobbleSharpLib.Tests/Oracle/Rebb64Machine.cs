@@ -134,6 +134,8 @@ internal sealed class Rebb64Machine : IBus
     // A VIC-II register, which the game reads and writes apart from the RAM under it.
     internal byte PeekVic(int register) => _vic[register];
 
+    internal byte PeekColour(int offset) => _colour[offset];
+
     internal void PokeVic(int register, byte value) => _vic[register] = value;
 
     // One key, or none: column and row as the keyboard matrix numbers them (the '1' key is column 7, row 0).

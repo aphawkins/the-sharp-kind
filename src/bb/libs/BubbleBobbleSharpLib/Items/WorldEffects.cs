@@ -5,13 +5,14 @@
 using BubbleBobbleSharpLib.Bubbles;
 using BubbleBobbleSharpLib.Levels;
 using BubbleBobbleSharpLib.Players;
+using BubbleBobbleSharpLib.Specials;
 
 namespace BubbleBobbleSharpLib.Items;
 
 // The special items whose effects act on the level rather than on the player who took them: the `$2D65` handlers that
 // order the giant bubble (`$A653`), schedule a bonus round (`$348A`-`$350C`), start one (`$34A0`), freeze the level (`$2F68`), skip levels (`$7FA4`, `$7FA7`) and clear it of
-// enemies (`$2DD7`, `$2ECC`). What they draw (the wipe, the flashes, the scattering sprites) and how long they hold the game
-// for (the IRQ runs on through it) is not modelled.
+// enemies (`$2DD7`, with the wipe; `$2ECC` and `$35B0`, with the sprites' show). Those three wait in themselves while the IRQ
+// goes on, and leave the wait in `Hold` for the game to run.
 internal sealed class WorldEffects
 {
     private const byte FreezePasses = 0x87;
@@ -35,6 +36,8 @@ internal sealed class WorldEffects
 
     private const int FirstEnemy = 2;
 
+    private const byte PlayingState = 0x01;
+
     private readonly LevelClear _clear;
     private readonly LevelFlow _flow;
     private readonly LevelTimer _timer;
@@ -42,6 +45,9 @@ internal sealed class WorldEffects
     private readonly ObjectTable _objects;
     private readonly FoodDrop _food;
     private readonly LevelItems _items;
+    private readonly FireStrips _fire;
+    private readonly WaterFlow _water;
+    private readonly SpriteShow _show;
     private readonly BonusRound? _bonus;
     private readonly GiantBubble? _giant;
 
@@ -53,6 +59,9 @@ internal sealed class WorldEffects
         ObjectTable objects,
         FoodDrop food,
         LevelItems items,
+        FireStrips fire,
+        WaterFlow water,
+        SpriteShow show,
         BonusRound? bonus = null,
         GiantBubble? giant = null)
     {
@@ -63,6 +72,9 @@ internal sealed class WorldEffects
         ArgumentNullException.ThrowIfNull(objects);
         ArgumentNullException.ThrowIfNull(food);
         ArgumentNullException.ThrowIfNull(items);
+        ArgumentNullException.ThrowIfNull(fire);
+        ArgumentNullException.ThrowIfNull(water);
+        ArgumentNullException.ThrowIfNull(show);
 
         _clear = clear;
         _flow = flow;
@@ -71,6 +83,10 @@ internal sealed class WorldEffects
         _objects = objects;
         _food = food;
         _items = items;
+        _fire = fire;
+        _water = water;
+        _show = show;
+        Wipe = new(EndWipe);
         _bonus = bonus;
         _giant = giant;
     }
@@ -87,9 +103,15 @@ internal sealed class WorldEffects
     // `$58BF`, set by `$2DD7`: the entity reset has been done, and `$2E79` does nothing more until the next level.
     internal bool Cleared { get; set; }
 
+    // The special item of type 8's wipe of the level, which a level's start puts away.
+    internal ScreenWipe Wipe { get; }
+
+    // The wait the last effect is in, for the game to run before it goes on with the pass, or none.
+    internal IGameHold? Hold { get; set; }
+
     // Whether the item's effect is one of these.
     internal static bool Handles(int type)
-        => type is 1 or 2 or 7 or 8 or 11 or 15 or (>= 16 and <= 28) or 30 or 31 or 33;
+        => type is 1 or 2 or 7 or 8 or 11 or 15 or (>= 16 and <= 31) or 33;
 
     // `player` is the one who took the item, which none of these use.
     internal void Apply(int type, int player)
@@ -142,14 +164,17 @@ internal sealed class WorldEffects
                 _giant?.Order();
                 break;
             case 8:
-                _items.Type[FoodSlot] = FoodGone;
-                _items.Type[SpecialSlot] = FoodGone;
-                Cleared = false;
-                ClearEnemies();
-                Cleared = true;
+                StartWipe();
                 break;
             case 11:
                 ClearEnemies();
+                _show.Diamonds();
+                Hold = _show.Flash;
+                break;
+            case 29:
+                ClearEnemies();
+                _show.Giant();
+                Hold = _show.Flash;
                 break;
             default:
                 // 19, 28, 30 and 31 are a bare `rts`.
@@ -195,11 +220,44 @@ internal sealed class WorldEffects
     // `$7FA4`-`$7FB2`: three or seven levels on, no further than the last.
     private void Skip(byte levels) => SkipTo = Math.Min(Level + levels, LastLevel);
 
+    // `$2DD7`-`$2E15`: the water and the fire stop (`$7BA6`), every object is reset (`$2E79`) and no more until the next level
+    // (`$58BF`), and the level's two items are hidden (`$52`, `$46`). Then the wipe.
+    private void StartWipe()
+    {
+        _water.Mask = 0;
+        _fire.Timers.Fill(FireStrips.Free);
+        ResetObjects();
+        Cleared = true;
+        _items.Type[FoodSlot] = FoodGone;
+        _items.Type[SpecialSlot] = FoodGone;
+        Wipe.Begin();
+        Hold = Wipe;
+    }
+
+    // `$2E52`-`$2E78`, after the wipe: a player the water carries is put on its feet, and every enemy killed.
+    private void EndWipe()
+    {
+        for (int player = PlayerTable.Capacity - 1; player >= 0; player--)
+        {
+            if (_entities.State[player] == CarriedState)
+            {
+                _entities.State[player] = PlayingState;
+            }
+        }
+
+        KillEnemies();
+    }
+
     // `$2E79` then `$2E61`: every object is reset, a caught enemy let out to die, and every enemy that is left killed.
     private void ClearEnemies()
     {
         ResetObjects();
+        KillEnemies();
+    }
 
+    // `$2E61`.
+    private void KillEnemies()
+    {
         for (int slot = EntityTable.Capacity - 1; slot >= FirstEnemy; slot--)
         {
             byte state = _entities.State[slot];

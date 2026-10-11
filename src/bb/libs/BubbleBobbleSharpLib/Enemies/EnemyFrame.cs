@@ -87,6 +87,9 @@ internal sealed class EnemyFrame
     // The giant bonus a cleared level drops (state $15), which the game wires in.
     internal SuperBonus? SuperBonus { get; set; }
 
+    // The sprites' show of the special items of types 11 and 29 (states $13 and $14), which the game wires in.
+    internal SpriteShow? Show { get; set; }
+
     internal void Enter()
     {
         for (int slot = FirstEnemy; slot < EntityTable.Capacity; slot++)
@@ -157,7 +160,7 @@ internal sealed class EnemyFrame
 
         if (_entities.FlashTimer[slot] != 0 && (counter & AngerFrames) == 0)
         {
-            Dispatch(slot, target, map);
+            Dispatch(slot, target, counter, map);
         }
 
         if (_entities.HoldTimer[slot] != 0)
@@ -167,7 +170,7 @@ internal sealed class EnemyFrame
             return;
         }
 
-        Dispatch(slot, target, map);
+        Dispatch(slot, target, counter, map);
     }
 
     private int Target(int slot)
@@ -207,7 +210,7 @@ internal sealed class EnemyFrame
         }
     }
 
-    private void Dispatch(int slot, int target, SolidMap map)
+    private void Dispatch(int slot, int target, byte counter, SolidMap map)
     {
         PlayerCell cell = PlayerCell.Of(_entities.X[slot], _entities.Y[slot]);
 
@@ -253,6 +256,10 @@ internal sealed class EnemyFrame
                 break;
             case SuperBonus.State:
                 SuperBonus?.Step();
+                break;
+            case SpriteShow.DiamondState:
+            case SpriteShow.GiantState:
+                Show?.Step(slot, counter);
                 break;
             case EnemyTumble.TumbleState:
                 _tumble.Step(slot, cell, map);

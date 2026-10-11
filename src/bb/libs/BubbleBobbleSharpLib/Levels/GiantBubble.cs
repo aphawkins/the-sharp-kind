@@ -14,10 +14,10 @@ namespace BubbleBobbleSharpLib.Levels;
 // on the right (`$1AB6`). Each pass of the game then moves it a cell left and a cell down (`$19CF`) and takes what is within
 // `$30` of it: a caught enemy (`$1A6F`) and a free one. It leaves at row `$16`, and the next sweep starts.
 //
-// Not modelled: the border's flash when a sweep starts, which is `$7BC3`'s frames a time, and the wait of the start, which is
-// not drawn either. `Start` returns the frames it took so the game can go on with the clock. What the giant is drawn with is
-// `$3F28`'s ten characters, a picture the view has.
-internal sealed class GiantBubble
+// A sweep's start waits in itself, with the game paused: an object update a frame until the slots are free, and then four
+// flashes of the border and the background, yellow and black, five frames each (`$7BC3`). The game runs it as a hold. What
+// the giant is drawn with is `$3F28`'s ten characters, a picture the view has.
+internal sealed class GiantBubble : IGameHold
 {
     internal const byte Type = 0x46;
 
@@ -29,6 +29,8 @@ internal sealed class GiantBubble
 
     private const byte StartPhase = 4;
     private const byte FlashFrames = 5;
+    private const int StartFrames = StartPhase * FlashFrames;
+    private const byte FlashColour = 0x07;
 
     private const byte FirstColumn = 0x16;
     private const byte ColumnMask = 0x07;
@@ -55,6 +57,9 @@ internal sealed class GiantBubble
     private readonly BbRandom _random;
     private readonly SlotPop _slots;
 
+    private bool _waiting;
+    private int _flash = StartFrames + 1;
+
     internal GiantBubble(EntityTable entities, ObjectTable objects, BubblePop pop, FoodDrop food, BbRandom random)
     {
         ArgumentNullException.ThrowIfNull(entities);
@@ -70,6 +75,19 @@ internal sealed class GiantBubble
         _slots = new(objects, pop);
     }
 
+    public bool Paused => true;
+
+    // `$1AC0`: the border EOR 7 at each flash, from black.
+    public int? Border
+    {
+        get
+        {
+            int flash = (_flash - 1) / FlashFrames;
+
+            return _flash is > 0 and <= StartFrames && flash % 2 == 0 ? FlashColour : null;
+        }
+    }
+
     // `$58FF`: the sweeps still to make, which a cleared level (`$16F7`) and a new one take away.
     internal byte Sweeps { get; set; }
 
@@ -83,6 +101,47 @@ internal sealed class GiantBubble
 
     internal int Row => _objects.Row[0];
 
+    // `$1B02`-`$1B18`, an update of the objects a frame, at least one, until both slots are free; then `$1ABB`-`$1AC9`.
+    public bool Frame()
+    {
+        if (_waiting)
+        {
+            _slots.Update();
+
+            if (_slots.Free())
+            {
+                _waiting = false;
+                Phase = StartPhase;
+            }
+
+            return true;
+        }
+
+        if (_flash >= StartFrames)
+        {
+            return false;
+        }
+
+        _flash++;
+        return true;
+    }
+
+    public void Pass()
+    {
+    }
+
+    // `$1ACA`-`$1AE7`: the giant goes in.
+    public byte Finish(byte counter)
+    {
+        _flash = StartFrames + 1;
+        _objects.Type[0] = Type;
+        _objects.Type[1] = Type;
+        _objects.Row[0] = FirstRow;
+        _objects.Column[0] = (byte)((_random.Next() & ColumnMask) + FirstColumn);
+
+        return counter;
+    }
+
     // `$A653`: two to five sweeps.
     internal void Order() => Sweeps = (byte)((_random.Next() & SweepMask) + FirstSweeps);
 
@@ -91,34 +150,45 @@ internal sealed class GiantBubble
     {
         Sweeps = 0;
         Phase = 0;
+        _waiting = false;
+        _flash = StartFrames + 1;
     }
 
     // `$16F7`, `$1621`: the sweeps to come are cancelled, and the one under way finishes.
     internal void Cancel() => Sweeps = 0;
 
-    // `$0A3B`-`$0A45`, `$1AB6`-`$1AE7`: while there are sweeps to make and none is under way, one starts. Returns how many frames of the
-    // game's own waiting it took, for the clock, or none.
+    // `$0A3B`-`$0A45`, `$1AB6`-`$1AE7`: the whole of a start, with how many frames it waited, or none when it does not start.
     internal int Start()
     {
-        if (Sweeps == 0 || Phase != 0)
+        if (!Begin())
         {
             return 0;
         }
 
-        _slots.Pop();
-        int frames = _slots.Wait();
+        int frames = 0;
 
-        Phase = StartPhase;
+        while (Frame())
+        {
+            frames++;
+        }
 
-        // `$1AC0`: four flashes of the border, five frames each.
-        frames += StartPhase * FlashFrames;
-
-        _objects.Type[0] = Type;
-        _objects.Type[1] = Type;
-        _objects.Row[0] = FirstRow;
-        _objects.Column[0] = (byte)((_random.Next() & ColumnMask) + FirstColumn);
-
+        Finish(0);
         return frames;
+    }
+
+    // `$0A3B`-`$0A45`, `$1AE8`-`$1B01`: while there are sweeps to make and none is under way, one starts, and the players'
+    // slots are popped. Returns whether it started; the wait is to run.
+    internal bool Begin()
+    {
+        if (Sweeps == 0 || Phase != 0)
+        {
+            return false;
+        }
+
+        _slots.Pop();
+        _waiting = true;
+        _flash = 0;
+        return true;
     }
 
     // `$198A`-`$1A5E`, in the pass's render: the giant goes on a cell, or, when it has gone, the sweep is over.

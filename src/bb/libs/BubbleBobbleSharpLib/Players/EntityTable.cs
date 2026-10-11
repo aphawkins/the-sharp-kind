@@ -93,6 +93,9 @@ internal sealed class EntityTable : IRowTails
 
     internal byte SpriteEnable { get; set; }
 
+    // `$D017` and `$D01D`, which the game only ever writes together: the sprites drawn twice the size, a bit a slot.
+    internal byte SpriteExpand { get; set; }
+
     public bool Solid(int row, int index) => (Tail(row, index) & 0x80) != 0;
 
     // $16E4: the enemies not yet out of their bubbles ($01 to $0A) take an anger. $16EF is its operand: $FF makes

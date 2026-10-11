@@ -20,6 +20,7 @@ public sealed class SpriteModel
     private readonly byte[] _x;
     private readonly byte[] _y;
     private readonly int[] _sprite;
+    private readonly int[] _pointer;
     private readonly int[] _colour;
 
     /// <summary>Initializes a new instance of the <see cref="SpriteModel"/> class.</summary>
@@ -54,14 +55,17 @@ public sealed class SpriteModel
         _x = x[..Capacity].ToArray();
         _y = y[..Capacity].ToArray();
         _sprite = new int[Capacity];
+        _pointer = new int[Capacity];
         _colour = new int[Capacity];
 
         for (int slot = 0; slot < Capacity; slot++)
         {
-            int sprite = (byte)((frame[slot] & FrameMask) + spriteBase[slot]) - FirstPointer;
+            int pointer = (byte)((frame[slot] & FrameMask) + spriteBase[slot]);
+            int sprite = pointer - FirstPointer;
 
             _drawn[slot] = (enabled & (1 << slot)) != 0 && sprite is >= 0 and < SheetSprites;
             _sprite[slot] = sprite;
+            _pointer[slot] = pointer;
 
             bool flashing = state[slot] is not 0 and < FlashStates && flashTimer[slot] != 0;
             _colour[slot] = (flashing ? s_flashColour[slot] : colour[slot]) & ColourMask;
@@ -76,6 +80,21 @@ public sealed class SpriteModel
 
     /// <summary>Gets the mask on a sprite's colour.</summary>
     public static int ColourMask => 0x0F;
+
+    /// <summary>Gets the first of the sprites the game builds at run time (<c>$7D00</c>), which the sheet does not have.</summary>
+    public static int FirstPicture => 0xF4;
+
+    /// <summary>Gets how many bytes each of those has.</summary>
+    public static int PictureBytes => 0x40;
+
+    /// <summary>
+    /// Gets the sprites <c>$F4</c> onwards as the game has built them (<c>$7D00</c>): the diamonds of the special item of type
+    /// 11 and the giant of type 29, 64 bytes each, three to a row of 21 multicolour rows. Empty when there are none.
+    /// </summary>
+    public IReadOnlyList<byte> Pictures { get; init; } = [];
+
+    /// <summary>Gets the sprites drawn twice the size (<c>$D017</c>, <c>$D01D</c>), a bit a slot.</summary>
+    public byte Expanded { get; init; }
 
     /// <summary>
     /// Gets the block of item art each slot is drawn from when it is food, or -1. The game builds a food's sprite at run time
@@ -103,7 +122,22 @@ public sealed class SpriteModel
     /// <summary>Whether a slot is drawn at all.</summary>
     /// <param name="slot">The slot, 0 to 7.</param>
     /// <returns>Whether that slot is drawn.</returns>
-    public bool IsDrawn(int slot) => _drawn[slot];
+    public bool IsDrawn(int slot) => _drawn[slot] || Picture(slot) >= 0;
+
+    /// <summary>Which of the sprites the game builds at run time a slot is drawn as, or -1.</summary>
+    /// <param name="slot">The slot, 0 to 7.</param>
+    /// <returns>The picture's index in <see cref="Pictures"/>, counted in sprites.</returns>
+    public int Picture(int slot)
+    {
+        int picture = _pointer[slot] - FirstPicture;
+
+        return (_enabled & (1 << slot)) != 0 && picture >= 0 && (picture + 1) * PictureBytes <= Pictures.Count ? picture : -1;
+    }
+
+    /// <summary>Whether a slot is drawn twice the size.</summary>
+    /// <param name="slot">The slot, 0 to 7.</param>
+    /// <returns>Whether it is.</returns>
+    public bool IsExpanded(int slot) => (Expanded & (1 << slot)) != 0;
 
     /// <summary>A slot's X position.</summary>
     /// <param name="slot">The slot, 0 to 7.</param>

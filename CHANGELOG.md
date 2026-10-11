@@ -7,6 +7,26 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Added (Bubble Bobble's item effects that wait in themselves, 2026-10-11)
+
+- **Item effect 29 (`$35B0`), the giant.** With the enemies killed, the six enemy slots keep what they were (`$4700`), the
+  border and background flash six times, and the slots become a giant of six sprites the game builds at `$7D00` (`$A877`), which
+  swells and shrinks (`$D017`, `$D01D`) until `$08` reaches `$3C`, when the slots come back as food (`$2A3F`). `SpriteShow`;
+  proved against the game in `SpriteShowOracleTests`, the start and every turn of the show to the hand-back. Only effect 32 is
+  still untranslated.
+- **Item effect 11 (`$2ECC`) puts on its show too:** six diamonds (`$A854`) in state `$13` fly apart (`$A7A3`, `$A7A8`) and are
+  handed back the same way. It used to stop at the kill.
+- **Item effect 8 (`$2DD7`) wipes the level.** From the bottom row up, a row every two frames with the IRQ running on, every cell
+  inside the walls but the level's tile becomes a solid block (character `$FF`, which the effect makes) and the colour RAM `$0B`;
+  the level stays so until the next. It also puts the fire out and stops the water (`$7BA6`), puts a player the water carries back
+  on its feet, and kills the enemies only after the wipe. `ScreenWipe`; proved against the game in `ScreenWipeOracleTests`.
+- **The giant bubble's start (effect 7) flashes the border and background yellow** four times, after the frames it waits for the
+  players' slots, which now animate.
+- **A routine that waits is a hold (`IGameHold`).** The pass that called it stops, its frames run two a pass with the IRQ's work
+  (the clock and `$08`, and with the game not paused what the IRQ moves and `$045C`), and the pass goes on once it returns. The
+  8-bit rendition draws the flashes' colours, the sprites the game builds (doubled when expanded) and the wipe's blocks, over the
+  items and effects that were on the screen until the blocks reach them.
+
 ### Fixed (Bubble Bobble's water flows along the platforms, 2026-10-11)
 
 - **Popped water is drawn on the rows it runs along.** `$1B7D` finds a water cell's screen address through `$AD1E`, whose row 4

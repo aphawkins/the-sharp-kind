@@ -2,8 +2,10 @@
 // 'rebb64' - github.com/zaidka/rebb64.
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
+using System.Globalization;
 using System.Numerics;
 using BubbleBobbleSharp.Abstractions.Views;
+using SharpKind;
 using SharpKind.Graphics;
 
 namespace BubbleBobbleSharp.Renditions.EightBit;
@@ -23,6 +25,7 @@ internal sealed class PlayfieldView8Bit : IView<PlayfieldModel>
     private readonly BbViewLayout _layout;
     private readonly LevelSheets _tiles;
     private readonly LevelSheets _edges;
+    private readonly FastColor _block;
 
     internal PlayfieldView8Bit(IViewSurface surface)
     {
@@ -32,6 +35,9 @@ internal sealed class PlayfieldView8Bit : IView<PlayfieldModel>
         _layout = surface.Layout;
         _tiles = new(surface, TileSheet);
         _edges = new(surface, EdgeSheet);
+
+        // A multicolour block is all 11: the colour RAM's low three bits.
+        _block = surface.Palette[(PlayfieldModel.WipedColourRam & 0x07).ToString(CultureInfo.InvariantCulture)];
     }
 
     public void Draw(PlayfieldModel model)
@@ -56,7 +62,15 @@ internal sealed class PlayfieldView8Bit : IView<PlayfieldModel>
                     continue;
                 }
 
-                DrawCharacter(model, character, tiles, edges, _layout.Playfield.Cell(column, row));
+                if (character == PlayfieldModel.Block)
+                {
+                    _graphics.DrawRectangleFilled(_layout.Playfield.Cell(column, row), _layout.CellWidth, _layout.CellHeight, _block);
+                    continue;
+                }
+
+                string wipedTiles = model.IsWiped(column, sourceRow) ? _tiles.PaintWiped(model.Colours) : tiles;
+
+                DrawCharacter(model, character, wipedTiles, edges, _layout.Playfield.Cell(column, row));
             }
         }
     }

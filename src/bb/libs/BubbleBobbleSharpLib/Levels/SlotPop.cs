@@ -62,7 +62,11 @@ internal sealed class SlotPop
         return Free() ? updates : throw new InvalidOperationException("the players' object slots never freed at $1B02");
     }
 
-    private bool Free()
+    // `$1B02`: one update of the objects while the game waits, which is a frame.
+    internal void Update() => _pop.Update();
+
+    // Whether both slots are free.
+    internal bool Free()
     {
         for (int slot = PlayerTable.Capacity - 1; slot >= 0; slot--)
         {

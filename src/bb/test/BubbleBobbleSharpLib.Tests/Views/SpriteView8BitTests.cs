@@ -201,6 +201,47 @@ public sealed class SpriteView8BitTests
     [Fact]
     public void DrawsNoGiantBonusWhenThereIsNone() => Assert.Empty(Draw(BonusModel(-1)).ImageParts);
 
+    // $7D00: a sprite the game built is drawn from its bytes, three to a row, four multicolour pixels to a byte: 01 the first
+    // shared colour (2), 10 the sprite's own and 11 the second shared colour (1). Expanded, it is twice the size.
+    [Theory]
+    [InlineData(0x00, 24, 21)]
+    [InlineData(0x04, 48, 42)]
+    public void DrawsASpriteTheGameBuiltFromItsBytes(byte expanded, float width, float height)
+    {
+        byte[] pictures = new byte[6 * SpriteModel.PictureBytes];
+        pictures[SpriteModel.PictureBytes] = 0x1B;
+
+        SpriteModel model = new(
+            [0, 0, 0x14, 0, 0, 0, 0, 0],
+            [0, 0, 0x78, 0, 0, 0, 0, 0],
+            [0, 0, 0x7C, 0, 0, 0, 0, 0],
+            new byte[8],
+            [0, 0, 0xF5, 0, 0, 0, 0, 0],
+            [0, 0, EnemyColour, 0, 0, 0, 0, 0],
+            new byte[8],
+            0x04)
+        {
+            Pictures = pictures,
+            Expanded = expanded,
+        };
+
+        RecordingGraphics graphics = Draw(model);
+
+        (string image, Vector2 position, Vector2 size, Vector2 sourcePosition, Vector2 sourceSize) =
+            Assert.Single(graphics.ImageParts);
+        FastBitmap bitmap = graphics.Images[image];
+
+        Assert.Equal(new(0x78 - OriginX, 0x7C - OriginY), position);
+        Assert.Equal(new(width, height), size);
+        Assert.Equal(Vector2.Zero, sourcePosition);
+        Assert.Equal(s_sourceSize, sourceSize);
+        Assert.Equal(0u, bitmap.GetPixel(0, 0).Argb >> 24);
+        Assert.Equal(TestSurface.Colour(2), bitmap.GetPixel(1, 0));
+        Assert.Equal(TestSurface.Colour(EnemyColour), bitmap.GetPixel(2, 0));
+        Assert.Equal(TestSurface.Colour(1), bitmap.GetPixel(3, 0));
+        Assert.Equal(0u, bitmap.GetPixel(0, 1).Argb >> 24);
+    }
+
     // The two players in slots 0 and 1, with the six enemy slots empty. A slot given a state is
     // enabled in $D015 and the rest are not.
     private static SpriteModel Model(byte[]? state = null, byte[]? frame = null)

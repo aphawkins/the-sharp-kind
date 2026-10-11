@@ -467,9 +467,10 @@ Each item ends with how it is proved.
         anger of every free enemy when `$4A` is 2 or more. The HUD reads
         `PlayerTable.Lives`, three from `$0956`. Throws: the game over
         (`$04F0`: `$0409`, `$7BE8`, 3e) and a death on level `$63` (`$7F77`,
-        7). Not modelled, since the port has no state for them yet: the music
-        restart (`$04A3`, 8), the bonus round's state 0 (`$5A7F`, 7), the
-        level timer's `$2A`-`$2D` (`$0504`, 4), and `$A783`, `$37C7`, `$A813`.
+        7). Since modelled: the music restart (`$04A3`, step 8), the bonus
+        round's state (`$5A7F`, `RoundState`), the level timer's restart
+        (`$0504`, `LevelTimer.Restart`) and `$37C7` (`PlayerTable.BossBlow`).
+        `$A783` and `$A813` feed arms the level's setup gates off.
         Proved **against VICE**: `Players/Captures/respawn-level-1.txt` (level
         1, one idle player, no intervention; three respawns bracketed
         `$04A0`-`$0A1F`, their 222 state `$10` turns `$1CDB`-`$1D24` with
@@ -510,8 +511,8 @@ Each item ends with how it is proved.
           the constant are read from the byte-exact image
           (`a5 b2 05 b3 f0 2f` at `$0A64`, `a9 96 4c c8 7b` at `$0AA3`) and
           proved by hand in `GameLoopTests` and `BubbleBobbleMainTests`. The
-          tune (`$05AD`, step 8) and the pause flag (`$37`, which stops
-          `$1CBD`) are not modelled: nothing runs after the game over.
+          tune is `Song.GameOver` (step 8); the pause flag (`$37`, which stops
+          `$1CBD`) is the loop running nothing after the game over.
         - State `$18`: `$28FA`, set only by `$34D3` (the bonus-round entry).
           It moves to step 6.
         - `$F1AC` (extra lives from the score, `$0A10`) is untranslated and
@@ -557,8 +558,8 @@ Each item ends with how it is proved.
         then 5, 10, 16 and 23: `$59BF`/`$59FF`, `$0688`), makes `$04`/`$38`-`$41`
         objects `$4C` and ends in `$3517`, which throws until step 7. The carry
         into the `$58` add is `$F1AC`'s last compare; it was clear in all 16
-        VICE clears, and is taken as clear. Not modelled: `$58FF` (cleared)
-        and `$69` (`$1E2E`'s wave, set only by the bonus round). Proved
+        VICE clears, and is taken as clear. `$58FF` (cleared) is the giant
+        bubble's sweeps and `$69` the super bonus, both since modelled. Proved
         **against VICE**: `Levels/Captures/clear-level-1.txt` (17 clears, an
         intervention: `$4A` written 0 and the state junked) in
         `LevelClearGoldenTests`, with `$E9EA`'s timer byte recovered.
@@ -611,10 +612,10 @@ Each item ends with how it is proved.
         decoration and the split at each even row of a level 1 to 2 scroll.
       - [x] **4e. The hurry-up.** `LevelEnd.HurryUp` (`$15E8`-`$15F4`, `$3AB8`):
         the first time the clock runs out, every enemy in state 1 to `$0A` is
-        angry (`$16E4`), `$2D` becomes 1 and `$2A` 10. The scroll, the tune and
-        the pause are not modelled, and the clock goes on in them on the C64.
+        angry (`$16E4`), `$2D` becomes 1 and `$2A` 10. The tune is
+        `Song.HurryUp` (step 8); the scroll and the pause are a backlog item.
         `LevelClear` also takes the READY!! text off (`$A9B1` 0 to `$FF`,
-        `$1694`; the drawing is not modelled). Proved **against VICE**: three
+        `$1694`), which the sidebar layer stops drawing. Proved **against VICE**: three
         of the eight lines of `Levels/Captures/hurry-level-1.txt`
         (`LevelHurryGoldenTests`; an intervention: `$2A`, `$2D` and the
         enemies written).
@@ -670,9 +671,17 @@ Each item ends with how it is proved.
         `$A783`), which `BubbleBlow` (`$23B8`) blows as `$44` objects and `ObjectAi` moves as bolts (proved on two scenes).
       - [x] 20, 22 (`$7FA4`, `$7FA7`): three or seven levels on, no further than the last (`WorldEffects.SkipTo`,
         `GameLoop.SkipLevel`); the levels between are not set up, beyond the bonus rounds' schedule. By hand.
-      - [x] 8, 11 (`$2DD7`, `$2ECC`): every object is reset (`$4A`), caught enemies are let out and every enemy killed
-        (`$2E79`, `$2E61`); 8 also hides the level's two items. The row-by-row wipe, the scattering sprites and the flashes are
-        not modelled. By hand.
+      - [x] 8 (`$2DD7`, `ScreenWipe`): the fire out and the water stopped (`$7BA6`), every object reset (`$2E79`), the level's two
+        items hidden, and the wipe: a row every two frames from the bottom, the IRQ running on and `$045C` before each row, every
+        cell inside the walls but `$10`-`$1E` made character `$FF` (a solid block, `$47F8`/`$4FF8`) and colour RAM `$0B`; then a
+        player the water carries put on its feet and every enemy killed (`$2E61`). Proved against the game:
+        `ScreenWipeOracleTests` (both screens and the colour RAM).
+      - [x] 11 and 29 (`$2ECC`, `$35B0`, `SpriteShow`): the enemies killed (`$2E79`, `$2E61`), the six slots kept (`$2EEA`,
+        `$4700`-`$4730`) and made a show of sprites built at `$7D00` after six flashes of the border and background, three
+        frames apart. 11: six diamonds (`$A854`, state `$13`, `$2A18`) fly apart until slot 2 is above `$50`. 29: a giant of six
+        (`$A877`, state `$14`, `$2A74`) swells and shrinks (`$D017`, `$D01D`) every fourth frame, and goes at a shrink once `$08`
+        is `$3C`. `$2A3F` hands back every slot kept below `$11`. rebb64's `$A7B0` and `$A7BC` labels are the other way round.
+        Proved against the game: `SpriteShowOracleTests` (the start, and every turn of the show to the hand-back).
       - [x] 24 (`$34A0`, the bonus round proper): `BonusRound.Start` sends every loose enemy into state `$16`
         (`EnemyTumble`, `$2785`: it drops through the platforms) and then `$17` (`$27CB`: it waits until a player is within
         `$10`, and then goes as food, entry `$0A`), and the players into state `$18` (`PlayerFrame.InBonusRound`, `$28FA`:
@@ -692,8 +701,9 @@ Each item ends with how it is proved.
         `item-chars.tga`, the clock and counts, the results' window).
       - [x] 7 (`$A653`, `GiantBubble`): sets `$58FF` for `$1AB6`, a diagonal flight of a giant bubble down the level that turns what it
         passes to food. Proved against the game (`GiantBubbleOracleTests`); drawn from `giant-bubble.tga`, the ten characters of `$3F28`.
-      - [ ] **Not translated, so they do nothing** (`ItemEffects.Untranslated` is told, and the game goes on): 29 (`$35B0`) and 32
-        (`$3621`, the super bonus room).
+        A start is a hold: the slots' wait a frame an update, and four yellow flashes of five frames (`$1AC0`).
+      - [ ] **Not translated, so it does nothing** (`ItemEffects.Untranslated` is told, and the game goes on): 32 (`$3621`, the
+        super bonus room).
       - [x] 33 (`$7C37`, the last milestone's item at level 50: to level `$45`, counting up a byte at a time as `$7FD4` does) and
         34 (`$7C3C`, the last level's crystal: the taker's `$37C7` goes negative).
 - [ ] **7. Super mode, bonus rounds and level 100** (`SUBFLG` `$63`).

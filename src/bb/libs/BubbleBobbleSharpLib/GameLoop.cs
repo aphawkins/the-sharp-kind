@@ -61,6 +61,10 @@ internal sealed class GameLoop
     // $5C3F: the last song the game started, which $05C5 looks at.
     private Song? _song;
 
+    // The wait a routine of the game's is in, and where the pass that called it goes on from once it is over.
+    private IGameHold? _hold;
+    private Resume _resume;
+
     internal GameLoop(BbRandom random, int playing)
     {
         ArgumentNullException.ThrowIfNull(random);
@@ -115,6 +119,13 @@ internal sealed class GameLoop
         PlayerTable.Credits = playing == PlayerTable.Capacity ? TwoPlayerCredits : (byte)(TwoPlayerCredits + 1);
     }
 
+    private enum Resume
+    {
+        Start = 0,
+        AfterGiant = 1,
+        AfterCollect = 2,
+    }
+
     internal EntityTable Entities { get; } = new();
 
     // $0A64: both players out of the game.
@@ -146,6 +157,16 @@ internal sealed class GameLoop
     internal BonusRound Bonus { get; }
 
     internal GiantBubble Giant { get; private set; }
+
+    internal SpriteShow Show { get; private set; }
+
+    // The colour a routine of the game's has put in the border and the background while it waits, or none.
+    internal int? Border => _hold?.Border;
+
+    // The special item of type 8's wipe: how many rows of the level, from the bottom, and whether it is still going up.
+    internal int WipedRows => World.Wipe.Wiped;
+
+    internal bool Wiping => World.Wipe.Wiping;
 
     internal RoundState Round { get; } = new();
 
@@ -233,6 +254,7 @@ internal sealed class GameLoop
         World.Level = _subflg;
         World.Cleared = false;
         World.SkipTo = null;
+        World.Wipe.Reset();
         PlayerTable.Shots.Fill(0xFF);
 
         Items.Setup(level, _subflg);
@@ -279,7 +301,7 @@ internal sealed class GameLoop
     {
         SolidMap map = _map ?? throw new InvalidOperationException("Start a level before the first pass.");
 
-        // $0A99: the pause flag ($37) stops the players and the game waits. The tune (step 8) is not modelled.
+        // $0A99: the pause flag ($37) stops the players and the game waits, to the game over's song.
         if (IsOver)
         {
             if (!_wasOver)
@@ -298,80 +320,13 @@ internal sealed class GameLoop
             return;
         }
 
-        Items.Update();
-
-        byte hurry = Timer.Hurry;
-
-        // $15E1: with time on the clock the level is checked for its last enemy.
-        if (Flow.Update())
+        if (_hold is not null)
         {
-            if (Timer.Seconds != 0)
-            {
-                Clear.Update();
-            }
-            else
-            {
-                End.Update();
-            }
+            HoldPass(ports, map);
+            return;
         }
 
-        NoteSongs(hurry);
-
-        // $0A19: the fire on the platforms burns.
-        Fire.Update(Pop.Counter);
-
-        _blow.Tick();
-
-        // $198A: the giant bubble's sweep is in the render, which is the first thing a pass does.
-        Giant.Sweep();
-
-        if (_subflg == BossFight.Level)
-        {
-            Boss.Hit();
-        }
-        else
-        {
-            _bubbles.Update(map);
-        }
-
-        // $0A3B: a sweep of the giant bubble starts, with the pause flag up and the clock on.
-        RunFrames(Giant.Start());
-
-        Pop.FruitArt = LevelItems.FoodArt(Clear.BonusType);
-        Pop.Update();
-        _push.Update(map);
-        _ai.Update(map);
-        _timers.Update(Round.Release);
-        Items.Collect(_subflg);
-        _extend.Update();
-        _respawn.Update(_subflg);
-        NoteLives();
-        _join.Update(ports);
-
-        for (int frame = 0; frame < FramesPerPass; frame++)
-        {
-            if (Timer.Advance())
-            {
-                Items.Tick();
-            }
-        }
-
-        // $06AB: the IRQ moves the water before $1CBD moves anything that is in it.
-        if (Water.Mask != 0)
-        {
-            Water.Update(map);
-        }
-
-        _enemies.Step(_counter, map);
-        _players.Step(ports, _counter, map);
-
-        if (Boss.Active)
-        {
-            Boss.Move();
-        }
-
-        _death.Update();
-        _counter += 2;
+        Run(ports, map, Resume.Start);
     }
 
     private static PlayerFrame BuildPlayers(EntityTable entities, BubbleBlow blow, Rings rings, WaterFlow water)
@@ -436,27 +391,180 @@ internal sealed class GameLoop
             water);
     }
 
-    // The frames a routine of the game waits in, which the IRQ goes on through: the clock.
-    private void RunFrames(int frames)
+    // The pass from where it is to go on from: its start, or after a routine that waited.
+    private void Run(ReadOnlySpan<byte> ports, SolidMap map, Resume from)
     {
-        for (int frame = 0; frame < frames; frame++)
+        if (from == Resume.Start)
+        {
+            Head(map);
+
+            // $0A3B: a sweep of the giant bubble starts, with the pause flag up.
+            if (Giant.Begin())
+            {
+                Wait(Giant, Resume.AfterGiant);
+                return;
+            }
+        }
+
+        if (from != Resume.AfterCollect)
+        {
+            Pop.FruitArt = LevelItems.FoodArt(Clear.BonusType);
+            Pop.Update();
+            _push.Update(map);
+            _ai.Update(map);
+            _timers.Update(Round.Release);
+            Items.Collect(_subflg);
+
+            if (World.Hold is IGameHold hold)
+            {
+                World.Hold = null;
+                Wait(hold, Resume.AfterCollect);
+                return;
+            }
+        }
+
+        Tail(ports, map);
+    }
+
+    private void Head(SolidMap map)
+    {
+        Items.Update();
+
+        byte hurry = Timer.Hurry;
+
+        // $15E1: with time on the clock the level is checked for its last enemy.
+        if (Flow.Update())
+        {
+            if (Timer.Seconds != 0)
+            {
+                Clear.Update();
+            }
+            else
+            {
+                End.Update();
+            }
+        }
+
+        NoteSongs(hurry);
+
+        // $0A19: the fire on the platforms burns.
+        Fire.Update(Pop.Counter);
+
+        _blow.Tick();
+
+        // $198A: the giant bubble's sweep is in the render, which is the first thing a pass does.
+        Giant.Sweep();
+
+        if (_subflg == BossFight.Level)
+        {
+            Boss.Hit();
+        }
+        else
+        {
+            _bubbles.Update(map);
+        }
+    }
+
+    private void Tail(ReadOnlySpan<byte> ports, SolidMap map)
+    {
+        _extend.Update();
+        _respawn.Update(_subflg);
+        NoteLives();
+        _join.Update(ports);
+
+        for (int frame = 0; frame < FramesPerPass; frame++)
         {
             if (Timer.Advance())
             {
                 Items.Tick();
             }
         }
+
+        // $06AB: the IRQ moves the water before $1CBD moves anything that is in it.
+        if (Water.Mask != 0)
+        {
+            Water.Update(map);
+        }
+
+        _enemies.Step(_counter, map);
+        _players.Step(ports, _counter, map);
+
+        if (Boss.Active)
+        {
+            Boss.Move();
+        }
+
+        _death.Update();
+        _counter += 2;
+    }
+
+    private void Wait(IGameHold hold, Resume resume)
+    {
+        _hold = hold;
+        _resume = resume;
+    }
+
+    // Two frames of a routine's wait, with the IRQ's work: the clock and its counter, and, unless the game is paused, what
+    // the IRQ moves (`$1CBD`) and the routine's own look at the players (`$045C`). Once the routine is over, the pass that
+    // called it goes on.
+    private void HoldPass(ReadOnlySpan<byte> ports, SolidMap map)
+    {
+        IGameHold hold = _hold!;
+        bool waiting = true;
+
+        for (int frame = 0; frame < FramesPerPass && waiting; frame++)
+        {
+            waiting = hold.Frame();
+
+            if (waiting)
+            {
+                if (Timer.Advance())
+                {
+                    Items.Tick();
+                }
+
+                _counter++;
+            }
+        }
+
+        if (!hold.Paused)
+        {
+            if (Water.Mask != 0)
+            {
+                Water.Update(map);
+            }
+
+            _enemies.Step(_counter, map);
+            _players.Step(ports, _counter, map);
+            _death.Update();
+            _respawn.Update(_subflg);
+            NoteLives();
+            _join.Update(ports);
+        }
+
+        hold.Pass();
+
+        if (waiting)
+        {
+            return;
+        }
+
+        _hold = null;
+        _counter = hold.Finish(_counter);
+        Run(ports, map, _resume);
     }
 
     // The effects that act on the level, with the giant bubble the effect of type 7 orders and a cleared level cancels.
-    [MemberNotNull(nameof(Giant))]
+    [MemberNotNull(nameof(Giant), nameof(Show))]
     private WorldEffects BuildWorld(BbRandom random, FoodDrop food)
     {
         Giant = new(Entities, Objects, Pop, food, random);
         Clear.Giant = Giant;
         End.Giant = Giant;
+        Show = new(Entities, Timer);
+        _enemies.Show = Show;
 
-        return new(Clear, Flow, Timer, Entities, Objects, food, Items, Bonus, Giant);
+        return new(Clear, Flow, Timer, Entities, Objects, food, Items, Fire, Water, Show, Bonus, Giant);
     }
 
     // The item's routine waits for the room, and the IRQ goes on without it: the clock, and the players when it is
