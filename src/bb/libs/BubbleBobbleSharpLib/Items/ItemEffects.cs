@@ -39,7 +39,7 @@ internal sealed class ItemEffects
     internal Action<int, int>? World { get; set; }
 
     // Told of an effect nothing has translated yet, with its type and the address of its routine. The effect does nothing,
-    // and the game goes on: 32 is the one a level's items can reach.
+    // and the game goes on. With the world's effects wired in, none a level's items can reach is left.
     internal Action<int, ushort>? Untranslated { get; set; }
 
     internal void Apply(int type, int player)

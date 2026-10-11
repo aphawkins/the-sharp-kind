@@ -29,6 +29,20 @@ internal static class RoomPicture
             return new([], 0, 0, playfield.Colours, playfield.Tile, loop.Ending.Lines, false);
         }
 
+        SuperBonusRoom super = loop.SuperRoom;
+
+        if (super.Phase == SuperBonusRoom.Stage.Playing)
+        {
+            return new(
+                [.. super.Items.Where(item => item.X != 0 || item.Y != 0).Select(item => (item.Column, item.Row))],
+                SuperBonusRoom.Art,
+                SuperBonusRoom.Colour,
+                playfield.Colours,
+                playfield.Tile,
+                [],
+                false);
+        }
+
         if (!room.Active)
         {
             return new([], 0, 0, playfield.Colours, playfield.Tile, [], false);

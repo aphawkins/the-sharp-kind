@@ -7,6 +7,17 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Added (Bubble Bobble's super bonus room, 2026-10-11)
+
+- **Item effect 32 (`$3621`), the super bonus room.** The level is cleared and the room of the game's own making takes its place:
+  its platforms as the map, 36 items in mirrored pairs (`$A710`, `$A722`), the players on its floor and the super bonus song.
+  Each item is 1,200 points. With no more than twelve left, a player at the middle of the floor drops into the room below it
+  (`$3771`); with every item taken and a player down there, the colours flash sixteen times and the level ends, one level on,
+  as the routine counted SUBFLG up. `SuperBonusRoom`; proved against the game in `SuperBonusRoomOracleTests`. Every effect a
+  level's items can reach is now translated. The room's own picture and tile are not drawn yet: the level's tile stands in.
+- **The rest of a pass is not run after item 32.** The routine never returns to the pass that took the item, so the players are
+  not moved on the old level's map.
+
 ### Added (Bubble Bobble's item effects that wait in themselves, 2026-10-11)
 
 - **Item effect 29 (`$35B0`), the giant.** With the enemies killed, the six enemy slots keep what they were (`$4700`), the

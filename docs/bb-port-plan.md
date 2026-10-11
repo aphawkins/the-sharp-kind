@@ -664,7 +664,7 @@ Each item ends with how it is proved.
       `effect-chars.tga` holds the water's and the fire's characters (`$1C`, `$1F`, `$40`, `$41`), drawn by `EffectsView8Bit`
       in a layer above the items. Types `$44`-`$4C` are made by steps 6 and 7 and are drawn with them. Not compared with
       VICE screenshots.
-- [ ] **6. The other special-item effects** (`$2D65`'s table, called with X the player). Done, and proved against the
+- [x] **6. The other special-item effects** (`$2D65`'s table, called with X the player). Done, and proved against the
       game with `Invoke` (the routine called directly at the first pass of level 1) where the effect only sets bytes:
       - [x] 1, 2, 21, 23, 25, 26, 27 (`$348A`-`$350C`): a bonus round is made due (`LevelClear.Schedule`: `$68`, `$69`, `$6A`);
         15 (`$2F68`): the freeze; 19, 28, 30, 31: a bare `rts`; 6 (`$A64D`): eighteen thunder shots (`PlayerTable.Shots`,
@@ -702,8 +702,16 @@ Each item ends with how it is proved.
       - [x] 7 (`$A653`, `GiantBubble`): sets `$58FF` for `$1AB6`, a diagonal flight of a giant bubble down the level that turns what it
         passes to food. Proved against the game (`GiantBubbleOracleTests`); drawn from `giant-bubble.tga`, the ten characters of `$3F28`.
         A start is a hold: the slots' wait a frame an update, and four yellow flashes of five frames (`$1AC0`).
-      - [ ] **Not translated, so it does nothing** (`ItemEffects.Untranslated` is told, and the game goes on): 32 (`$3621`, the
-        super bonus room).
+      - [x] 32 (`$3621`, `SuperBonusRoom`): the super bonus room. The level is cleared (`$A428`), SUBFLG counted on (`$3690`),
+        a room of the game's own drawn (`$E2C3` from `$8C00`; its platforms are the room's map) with 36 items in mirrored pairs
+        (`$3748`, `$3421`: the columns `$A710`, the rows `$A722`, X = column x 8 + `$14`, Y = row x 8 + `$35`; block 7 of the item
+        art, colour `$0B`), the players on its floor (Y `$9D`) and song 11. `$597F` starts at `$25`, one more than the items, so
+        `$31A2`'s loop runs until its hook (`$3771`, in place of the clock) ends it: a player at X `$8C` on the floor goes down to
+        Y `$DD` once the count is below 14, and with the count at 1 and a player down there, sixteen turns of `$1C` bit 2 five
+        frames apart, ten frames on a cleared screen, and `dec $21` with the resume song. Each item is `$12` to the hundreds
+        (`$3200`). The routine never returns to the pass that took the item. Proved against the game: `SuperBonusRoomOracleTests`
+        (the build on two levels, map, items, art and colours; the taking; the hook; the end and the level after). The room's
+        own characters are not drawn yet (`bb-super-bonus-room-picture`).
       - [x] 33 (`$7C37`, the last milestone's item at level 50: to level `$45`, counting up a byte at a time as `$7FD4` does) and
         34 (`$7C3C`, the last level's crystal: the taker's `$37C7` goes negative).
 - [ ] **7. Super mode, bonus rounds and level 100** (`SUBFLG` `$63`).

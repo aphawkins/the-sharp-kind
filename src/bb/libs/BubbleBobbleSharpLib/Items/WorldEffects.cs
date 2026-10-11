@@ -97,6 +97,9 @@ internal sealed class WorldEffects
     // The bonus room of items 16, 17 and 18, which the game starts.
     internal Action<int>? Room { get; set; }
 
+    // The super bonus room of item 32, which the game starts.
+    internal Action? SuperRoom { get; set; }
+
     // `$587F`: the level index (from 0) a skip goes to, or none.
     internal int? SkipTo { get; set; }
 
@@ -111,7 +114,7 @@ internal sealed class WorldEffects
 
     // Whether the item's effect is one of these.
     internal static bool Handles(int type)
-        => type is 1 or 2 or 7 or 8 or 11 or 15 or (>= 16 and <= 31) or 33;
+        => type is 1 or 2 or 7 or 8 or 11 or 15 or (>= 16 and <= 33);
 
     // `player` is the one who took the item, which none of these use.
     internal void Apply(int type, int player)
@@ -146,6 +149,9 @@ internal sealed class WorldEffects
                 break;
             case >= ItemRoom.FirstEffect and <= ItemRoom.LastEffect:
                 Room?.Invoke(type);
+                break;
+            case SuperBonusRoom.Effect:
+                SuperRoom?.Invoke();
                 break;
             case 24:
                 _bonus?.Start();

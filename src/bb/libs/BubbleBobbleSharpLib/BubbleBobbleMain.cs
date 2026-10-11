@@ -59,6 +59,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
 
     private LevelStore _levels;
     private PlayfieldModel _playfield;
+    private bool _superRoomShown;
     private SidebarModel _sidebar;
     private ItemsModel? _shownItems;
     private EffectsModel? _shownEffects;
@@ -217,6 +218,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         Level level = _levels.Level(number);
 
         _playfield = Playfield.Build(level);
+        _superRoomShown = false;
         _sidebar = Sidebars.Select(level);
         CurrentLevel = number;
 
@@ -272,6 +274,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
             return;
         }
 
+        ShowSuperRoom();
         ShowColours();
         ShowWipe();
         PlaySongs();
@@ -396,6 +399,16 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         }
     }
 
+    // `$3621`: the super bonus room is drawn in place of the level, until the level ends.
+    private void ShowSuperRoom()
+    {
+        if (Loop.SuperRoom.Active && !_superRoomShown)
+        {
+            _superRoomShown = true;
+            _playfield = Playfield.Build(SuperBonusRoom.Map(CurrentLevel));
+        }
+    }
+
     // $1C and $1E are the level's background colours, and the freeze swaps them ($15CF, $2F68).
     private void ShowColours()
     {
@@ -493,7 +506,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
 
     // A room clears the screen and the render pass that draws the level's items is not run while it lasts.
     private ItemsModel Items() => new(
-        Loop.Room.Active ? s_hiddenItems : Loop.Items.Type,
+        Loop.Room.Active || Loop.SuperRoom.Active ? s_hiddenItems : Loop.Items.Type,
         Loop.Items.Column,
         Loop.Items.Row,
         Loop.Items.Art,

@@ -113,6 +113,7 @@ internal sealed class GameLoop
         effects.World = World.Apply;
         Room = new(Entities, Scores, Timer, Items, World.ResetObjects);
         World.Room = StartRoom;
+        ConnectSuperRoom();
 
         // $0956-$0977.
         PlayerTable.Lives.Fill(StartingLives);
@@ -149,6 +150,8 @@ internal sealed class GameLoop
     internal FoodDrop Food { get; }
 
     internal ItemRoom Room { get; }
+
+    internal SuperBonusRoom SuperRoom { get; private set; }
 
     internal BossFight Boss { get; }
 
@@ -320,6 +323,12 @@ internal sealed class GameLoop
             return;
         }
 
+        if (SuperRoom.Active)
+        {
+            SuperRoomPass(ports, map);
+            return;
+        }
+
         if (_hold is not null)
         {
             HoldPass(ports, map);
@@ -414,6 +423,12 @@ internal sealed class GameLoop
             _ai.Update(map);
             _timers.Update(Round.Release);
             Items.Collect(_subflg);
+
+            // `$3621` never comes back to the pass: its end pops it (`$37BB`).
+            if (SuperRoom.Active)
+            {
+                return;
+            }
 
             if (World.Hold is IGameHold hold)
             {
@@ -594,6 +609,43 @@ internal sealed class GameLoop
         Room.Begin(type, _subflg, map);
         Pop.Drawn.Fill(BubblePop.NotDrawn);
         Water.Mask = 0;
+    }
+
+    [MemberNotNull(nameof(SuperRoom))]
+    private void ConnectSuperRoom()
+    {
+        SuperRoom = new(Entities, Scores, Timer, Items, Flow, World.ResetObjects);
+        World.SuperRoom = StartSuperRoom;
+    }
+
+    // `$3621`: the room is the level's map until the level ends, SUBFLG has been counted on (`$3690`), and the song is its own.
+    private void StartSuperRoom()
+    {
+        SuperRoom.Begin();
+        _map = SolidMap.Build(SuperBonusRoom.Map(_subflg + 1), [], Entities);
+        Pop.Drawn.Fill(BubblePop.NotDrawn);
+        Water.Mask = 0;
+        _subflg++;
+        World.Level = _subflg;
+        Ask(Song.SuperBonus);
+    }
+
+    // As a bonus room's pass. The room's end is the level's (`$37C1`), with the level's tune back.
+    private void SuperRoomPass(ReadOnlySpan<byte> ports, SolidMap map)
+    {
+        for (int frame = 0; frame < FramesPerPass; frame++)
+        {
+            if (SuperRoom.Frame())
+            {
+                End.Skip();
+                Ask(Song.Resume);
+                return;
+            }
+        }
+
+        _players.Step(ports, _counter, map);
+        _death.Update();
+        _counter += 2;
     }
 
     private void StartPlayers(bool next)

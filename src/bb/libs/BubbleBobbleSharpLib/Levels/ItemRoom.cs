@@ -178,6 +178,29 @@ internal sealed class ItemRoom
         return items;
     }
 
+    // `$A428`: everything but the players goes.
+    internal static void ClearLevel(EntityTable entities, LevelItems items, LevelTimer timer, Action resetObjects)
+    {
+        ArgumentNullException.ThrowIfNull(entities);
+        ArgumentNullException.ThrowIfNull(items);
+        ArgumentNullException.ThrowIfNull(timer);
+        ArgumentNullException.ThrowIfNull(resetObjects);
+
+        resetObjects();
+
+        for (int slot = FirstEnemy; slot < EntityTable.Capacity; slot++)
+        {
+            entities.State[slot] = 0;
+            entities.X[slot] = 0;
+            entities.Y[slot] = 0;
+        }
+
+        items.Timer[0] = 0xFF;
+        items.Timer[1] = 0xFF;
+        items.Type[0] = 0;
+        timer.Seconds = 0xFF;
+    }
+
     // `$2F7D`-`$3062`. Everything but the players goes, the items are placed, and the art comes in.
     internal void Begin(int effect, byte level, SolidMap map)
     {
@@ -185,20 +208,7 @@ internal sealed class ItemRoom
 
         (Art, Colour) = s_kinds[effect - FirstEffect];
 
-        // $A428.
-        _resetObjects();
-
-        for (int slot = FirstEnemy; slot < EntityTable.Capacity; slot++)
-        {
-            _entities.State[slot] = 0;
-            _entities.X[slot] = 0;
-            _entities.Y[slot] = 0;
-        }
-
-        _items.Timer[0] = 0xFF;
-        _items.Timer[1] = 0xFF;
-        _items.Type[0] = 0;
-        _timer.Seconds = 0xFF;
+        ClearLevel(_entities, _items, _timer, _resetObjects);
 
         _placed = Place(map, level);
         Remaining = _placed.Count;
