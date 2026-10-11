@@ -22,7 +22,8 @@ public sealed class EffectsView8BitTests
     [Fact]
     public void DrawsNothingWithNoWaterAndNoFire() => Assert.Empty(Draw(false, s_none, s_none, s_none, s_none).ImageParts);
 
-    // The tail is not drawn; the other ten cells are, head first.
+    // The tail is not drawn; the other ten cells are, head first. `$AD1E` puts row 4 at the top of the screen, so row 8 is
+    // drawn on the screen's fifth row.
     [Fact]
     public void DrawsTenWaterCellsButNotTheTail()
     {
@@ -31,8 +32,8 @@ public sealed class EffectsView8BitTests
 
         Assert.Equal(10, graphics.ImageParts.Count);
         Assert.All(graphics.ImageParts, part => Assert.Equal("EffectChars.Water.Recoloured", part.ImageType));
-        Assert.Equal(layout.Playfield.Cell(19, 8), graphics.ImageParts[0].Position);
-        Assert.Equal(layout.Playfield.Cell(10, 8), graphics.ImageParts[9].Position);
+        Assert.Equal(layout.Playfield.Cell(19, 4), graphics.ImageParts[0].Position);
+        Assert.Equal(layout.Playfield.Cell(10, 4), graphics.ImageParts[9].Position);
         Assert.Equal(new Vector2(8, 8), graphics.ImageParts[0].Size);
         Assert.Equal(new Vector2(4, 0), graphics.ImageParts[0].SourcePosition);
         Assert.Equal(new Vector2(4, 8), graphics.ImageParts[0].SourceSize);

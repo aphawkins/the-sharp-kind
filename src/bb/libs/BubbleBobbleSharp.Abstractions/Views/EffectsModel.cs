@@ -7,6 +7,9 @@ namespace BubbleBobbleSharp.Abstractions.Views;
 /// <summary>The characters the water, the fire and the giant bubble draw into the level.</summary>
 public sealed class EffectsModel
 {
+    // `$AD1E`'s row 4 is the screen's first, so a water row is four more than the screen row it is drawn on.
+    private const int WaterFirstRow = 4;
+
     private readonly byte[] _waterColumns;
     private readonly byte[] _waterRows;
     private readonly byte[] _fireColumns;
@@ -70,17 +73,17 @@ public sealed class EffectsModel
     /// <summary>Gets a value indicating whether a water cell is drawn: not the tail, and only within the level.</summary>
     /// <param name="cell">The cell, 0 the tail to 10 the head.</param>
     /// <returns>Whether it is drawn.</returns>
-    public bool ShowsWater(int cell) => WaterRunning && cell > 0 && _waterRows[cell] is >= 4 and < 0x1D;
+    public bool ShowsWater(int cell) => WaterRunning && cell > 0 && _waterRows[cell] is >= WaterFirstRow and < 0x1D;
 
     /// <summary>Gets a water cell's level column.</summary>
     /// <param name="cell">The cell.</param>
     /// <returns>The column.</returns>
     public byte WaterColumn(int cell) => _waterColumns[cell];
 
-    /// <summary>Gets a water cell's level row.</summary>
+    /// <summary>Gets a water cell's screen row.</summary>
     /// <param name="cell">The cell.</param>
     /// <returns>The row.</returns>
-    public byte WaterRow(int cell) => _waterRows[cell];
+    public int WaterRow(int cell) => _waterRows[cell] - WaterFirstRow;
 
     /// <summary>Gets the screen code a strip is drawn with, which is 0 when it is not burning.</summary>
     /// <param name="strip">The strip.</param>

@@ -7,6 +7,12 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Fixed (Bubble Bobble's water flows along the platforms, 2026-10-11)
+
+- **Popped water is drawn on the rows it runs along.** `$1B7D` finds a water cell's screen address through `$AD1E`, whose row 4
+  is the screen's first, so the stream's rows are four more than the screen rows. The view drew them as screen rows, four rows
+  below the platforms the water was walking.
+
 ### Fixed (Bubble Bobble's music carries on through a lost life, 2026-10-10)
 
 - **A lost life no longer restarts the level's tune.** As `$04A0` does, a death asks for the resume tune only over a song from the
