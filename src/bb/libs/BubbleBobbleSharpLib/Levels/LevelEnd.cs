@@ -76,11 +76,21 @@ internal sealed class LevelEnd
     // `$1621`'s waits, left for the game to run once the clock has run out a second time.
     internal IGameHold? Hold { get; set; }
 
+    // `$05AD`, for the songs the hurry-up's scroll asks for as it goes.
+    internal Action<Song>? Play { get; set; }
+
+    // The last hurry-up's scroll, for its text.
+    internal HurryHold? Hurrying { get; private set; }
+
     // How many times the Barons have been called, for the song ($1621's `ldy #$43`, the round start's).
     internal int BaronCalls { get; private set; }
 
     // $05C5 clears $21 at each level's start.
-    internal void Begin() => Complete = 0;
+    internal void Begin()
+    {
+        Complete = 0;
+        Hurrying = null;
+    }
 
     // $32E9's `dec $21` (`ExtendBonus`): the level is over, whatever the enemies say.
     internal void Skip() => Complete--;
@@ -102,12 +112,12 @@ internal sealed class LevelEnd
         }
     }
 
-    // $15E8-$15F4, and $3AB8 for the anger. The HURRY UP! scroll and its pause are not modelled.
+    // $15E8-$15F4. The HURRY UP! scroll (`$3AB8`) waits in itself, with the pause flag up: the routine is left in `Hold` for
+    // the game to run, a frame at a time, and the hurry-up and its ten seconds come once it is over.
     private void HurryUp()
     {
-        _entities.SetAnger(AngryFully);
-        _timer.Hurry++;
-        _timer.Seconds = HurryUpSeconds;
+        Hurrying = new(this);
+        Hold = Hurrying;
     }
 
     // $1621-$1693. Whatever is in the Barons' two object slots pops first, and the game waits for it to go. Then
@@ -191,6 +201,103 @@ internal sealed class LevelEnd
         }
 
         Complete++;
+    }
+
+    // `$3AB8`-`$3BFE`: a frame and the anger (`$16E4`); the text up a row a frame to row 11, where the hurry-up's tune starts and
+    // the text flashes six times eight frames (`$3B93`); the wait for the tune to end (`$3BB1`), and the level's tune again
+    // (song 6, `$3BB7`); then the text up the rest of the way, a row a frame, a last frame, and the sidebar's text redrawn. The
+    // songs' starts take a frame each.
+    internal sealed class HurryHold(LevelEnd end) : IGameHold
+    {
+        // The frame and the 14 rows to row 11.
+        private const int TuneFrame = 1 + 14;
+
+        private const int FlashFrames = 6 * 8;
+
+        // How long `$F960`'s tune keeps `$A4` up, in IRQ frames, as the sound driver plays it.
+        private const int TuneFrames = 86;
+
+        // The frame song 6's start takes, rows 10 to 0, and the last frame.
+        private const int AfterFrames = 1 + 11 + 1;
+
+        // Row 11's last frame.
+        private const int HeldFrame = EndFrame + 1;
+
+        private const int EndFrame = TuneFrame + (FlashFrames > TuneFrames ? FlashFrames : TuneFrames);
+
+        private const int FirstRow = 24;
+        private const int TuneRow = 11;
+        private const int FlashLength = 8;
+        private const int Flashes = 6;
+
+        private const byte White = 0x0F;
+        private const byte Grey = 0x0C;
+
+        private int _frames;
+
+        public bool Paused => true;
+
+        // The screen row the text is on, or none before it is drawn and once `$3BD8` has put the level back.
+        public int? Row => _frames switch
+        {
+            >= 2 and < TuneFrame => FirstRow + 2 - _frames,
+            >= TuneFrame and <= HeldFrame => TuneRow,
+            > HeldFrame and <= HeldFrame + TuneRow => HeldFrame + TuneRow - _frames,
+            _ => null,
+        };
+
+        // Row 11's text is cleared around its letters to black (`$3B8B`).
+        public bool Backed => _frames is >= TuneFrame and <= HeldFrame;
+
+        // The text's colour RAM: white (`$3B39`), and at row 11 grey EOR 3 eight frames at a time (`$3B9A`), grey last. The
+        // flashes start a frame after the tune does, which music_start takes.
+        public byte ColourRam
+        {
+            get
+            {
+                int flashes = Math.Min((_frames - TuneFrame - 1) / FlashLength, Flashes);
+
+                return Backed && flashes > 0 && (flashes & 1) == 0 ? Grey : White;
+            }
+        }
+
+        public int? Border => null;
+
+        public bool Frame()
+        {
+            if (_frames == EndFrame + AfterFrames)
+            {
+                return false;
+            }
+
+            _frames++;
+
+            switch (_frames)
+            {
+                case 1:
+                    end._entities.SetAnger(AngryFully);
+                    break;
+                case TuneFrame:
+                    end.Play?.Invoke(Song.HurryUp);
+                    break;
+                case EndFrame:
+                    end.Play?.Invoke(Song.LevelComplete);
+                    break;
+            }
+
+            return true;
+        }
+
+        public void Pass()
+        {
+        }
+
+        public byte Finish(byte counter)
+        {
+            end._timer.Hurry++;
+            end._timer.Seconds = HurryUpSeconds;
+            return counter;
+        }
     }
 
     // `$1B02`-`$1B18` twice: an object update a frame, at least one, until both slots are free; the Barons' places are

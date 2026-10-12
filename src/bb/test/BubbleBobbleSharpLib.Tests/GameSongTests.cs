@@ -56,7 +56,7 @@ public sealed class GameSongTests
         GameLoop loop = Start(1, next: false);
         loop.Timer.Seconds = 0;
         loop.Timer.Hurry = 0;
-        loop.Pass([Idle, Idle]);
+        HurryUp(loop);
         _ = Drain(loop);
 
         loop.Start(s_levels.Level(2), s_zones.Zones(2), 2, next: true);
@@ -86,11 +86,10 @@ public sealed class GameSongTests
         _ = loop.TakeSong();
         loop.Timer.Seconds = 0;
         loop.Timer.Hurry = 0;
-        loop.Timer.Seconds = 0;
 
-        loop.Pass([Idle, Idle]);
+        HurryUp(loop);
 
-        Assert.Contains(Song.HurryUp, Drain(loop));
+        Assert.Equal([Song.HurryUp, Song.LevelComplete], Drain(loop));
     }
 
     // $1621's `ldy #$43`: the Barons come, and song 10 (the round start's) plays.
@@ -127,7 +126,7 @@ public sealed class GameSongTests
         GameLoop loop = Start(1, next: false);
         loop.Timer.Seconds = 0;
         loop.Timer.Hurry = 0;
-        loop.Pass([Idle, Idle]);
+        HurryUp(loop);
         _ = Drain(loop);
         loop.Entities.State[0] = PlayerFrame.DeadState;
 
@@ -169,6 +168,17 @@ public sealed class GameSongTests
         }
 
         Assert.True(File.Exists(Path.Combine(s_assets, "Music", "bubble-bobble.sid")));
+    }
+
+    // $3AB8: the scroll asks for the hurry-up's tune at row 11, and for song 6 once it has ended.
+    private static void HurryUp(GameLoop loop)
+    {
+        for (int pass = 0; loop.Timer.Hurry == 0 && pass < 100; pass++)
+        {
+            loop.Pass([Idle, Idle]);
+        }
+
+        Assert.Equal(1, loop.Timer.Hurry);
     }
 
     private static List<Song> Drain(GameLoop loop)

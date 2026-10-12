@@ -22,6 +22,7 @@
     "ItemChars": "item-chars.tga",
     "EffectChars": "effect-chars.tga",
     "ExtendChars": "extend-chars.tga",
+    "HurryChars": "hurry-chars.tga",
     "SuperRoomChars": "super-room-chars.tga",
     "GiantBubble": "giant-bubble.tga",
     "Banner": "banner.png"

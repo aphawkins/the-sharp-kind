@@ -277,6 +277,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         ShowSuperRoom();
         ShowColours();
         ShowWipe();
+        ShowHurry();
         PlaySongs();
 
         // $0AA3, $F0E8: with both players out and the wait over the game goes back to the choice of players.
@@ -431,6 +432,9 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
             _playfield = _playfield.Wiped(wiped);
         }
     }
+
+    // $3AB8: the HURRY UP! text goes up the level, in characters of its own.
+    private void ShowHurry() => _playfield = Loop.Hurried(_playfield);
 
     // While the wipe goes up the screen the game draws nothing, and the items and the effects stay as they were drawn until
     // a row of blocks covers them.

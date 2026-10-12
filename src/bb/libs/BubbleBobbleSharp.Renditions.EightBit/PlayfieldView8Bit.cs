@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Numerics;
 using BubbleBobbleSharp.Abstractions.Views;
 using SharpKind;
+using SharpKind.Assets.Palettes;
 using SharpKind.Graphics;
 
 namespace BubbleBobbleSharp.Renditions.EightBit;
@@ -27,6 +28,10 @@ internal sealed class PlayfieldView8Bit : IView<PlayfieldModel>
     private const string EdgeSheet = "TileEdges";
     private const string SuperRoomSheet = "SuperRoomChars";
     private const string ItemSheet = "ItemChars";
+    private const string HurrySheet = "HurryChars";
+
+    // Entry 11 black, for the backing of the HURRY UP! text at row 11.
+    private const int BackingColourRam = 0x08;
 
     private readonly IGraphics _graphics;
     private readonly BbViewLayout _layout;
@@ -35,6 +40,11 @@ internal sealed class PlayfieldView8Bit : IView<PlayfieldModel>
     private readonly LevelSheets _superRoom;
     private readonly MulticolourSheet _blocks;
     private readonly FastColor _block;
+    private readonly IPaletteCollection _palette;
+    private readonly MulticolourSheet _hurryTiles;
+    private readonly MulticolourSheet _hurryEdges;
+    private readonly MulticolourSheet _letters;
+    private readonly MulticolourSheet _backing;
 
     internal PlayfieldView8Bit(IViewSurface surface)
     {
@@ -48,7 +58,13 @@ internal sealed class PlayfieldView8Bit : IView<PlayfieldModel>
         _blocks = new(surface, ItemSheet, ItemSheet + ".SuperRoom", transparent: true);
 
         // A multicolour block is all 11: the colour RAM's low three bits.
-        _block = surface.Palette[(PlayfieldModel.WipedColourRam & 0x07).ToString(CultureInfo.InvariantCulture)];
+        _palette = surface.Palette;
+        _block = Colour(PlayfieldModel.WipedColourRam);
+
+        _hurryTiles = new(surface, TileSheet, TileSheet + "Hurry");
+        _hurryEdges = new(surface, EdgeSheet, EdgeSheet + "Hurry");
+        _letters = new(surface, HurrySheet, HurrySheet + ".Letters", transparent: true);
+        _backing = new(surface, HurrySheet, HurrySheet + ".Backing", transparent: true);
     }
 
     public void Draw(PlayfieldModel model)
@@ -91,7 +107,58 @@ internal sealed class PlayfieldView8Bit : IView<PlayfieldModel>
                 DrawCharacter(model, character, wipedTiles, edges, _layout.Playfield.Cell(column, row));
             }
         }
+
+        DrawHurry(model);
     }
+
+    // `$3AB8`'s characters $37-$3F: the level's characters under the text, with the text's colour RAM, ORed with its letters; at
+    // row 11 cleared to black around them first.
+    private void DrawHurry(PlayfieldModel model)
+    {
+        if (model.Hurry is not HurryText hurry || hurry.Row < model.FirstRow || hurry.Row >= model.EndRow)
+        {
+            return;
+        }
+
+        _hurryTiles.Paint(model.Colours, hurry.ColourRam);
+        _hurryEdges.Paint(model.Colours, hurry.ColourRam);
+        _letters.Paint(model.Colours, hurry.ColourRam);
+        _backing.Paint(model.Colours, BackingColourRam);
+
+        int sourceRow = model.SourceRow(hurry.Row);
+
+        for (int letter = 0; letter < HurryText.Length; letter++)
+        {
+            int column = HurryText.FirstColumn + letter;
+            byte character = model.Character(column, sourceRow);
+            Vector2 position = _layout.Playfield.Cell(column, hurry.Row);
+
+            if (character == PlayfieldModel.Block)
+            {
+                _graphics.DrawRectangleFilled(position, _layout.CellWidth, _layout.CellHeight, Colour(hurry.ColourRam));
+            }
+            else if (character != PlayfieldModel.Space)
+            {
+                DrawCharacter(model, character, _hurryTiles.Name, _hurryEdges.Name, position);
+            }
+
+            if (hurry.Backed)
+            {
+                DrawLetter(_backing.Name, letter, CharacterHeight, position);
+            }
+
+            DrawLetter(_letters.Name, letter, 0, position);
+        }
+    }
+
+    private void DrawLetter(string sheet, int letter, int sheetY, Vector2 position) => _graphics.DrawImagePart(
+        sheet,
+        position,
+        new(SourceCharacterWidth * 2, CharacterHeight),
+        new(letter * SourceCharacterWidth, sheetY),
+        new(SourceCharacterWidth, CharacterHeight));
+
+    private FastColor Colour(int colourRam) => _palette[(colourRam & 0x07).ToString(CultureInfo.InvariantCulture)];
 
     // The room's own characters, and its two blocks of item art. Its edges are blank (`$3665`), and `$1A` and `$1B` are the
     // scroll's.

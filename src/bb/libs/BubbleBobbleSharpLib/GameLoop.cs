@@ -3,6 +3,7 @@
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
 using System.Diagnostics.CodeAnalysis;
+using BubbleBobbleSharp.Abstractions.Views;
 using BubbleBobbleSharpLib.Bubbles;
 using BubbleBobbleSharpLib.Enemies;
 using BubbleBobbleSharpLib.Items;
@@ -65,9 +66,6 @@ internal sealed class GameLoop
     private IGameHold? _hold;
     private Resume _resume;
 
-    // `$2D` as the pass found it, for the hurry-up's tune.
-    private byte _hurry;
-
     internal GameLoop(BbRandom random, int playing)
     {
         ArgumentNullException.ThrowIfNull(random);
@@ -128,7 +126,7 @@ internal sealed class GameLoop
         Start = 0,
         AfterGiant = 1,
         AfterCollect = 2,
-        AfterBarons = 3,
+        AfterCheck = 3,
     }
 
     internal EntityTable Entities { get; } = new();
@@ -169,6 +167,9 @@ internal sealed class GameLoop
 
     // The colour a routine of the game's has put in the border and the background while it waits, or none.
     internal int? Border => _hold?.Border;
+
+    // The HURRY UP! scroll's text, while it is on the screen.
+    internal HurryText? Hurry => End.Hurrying is { Row: int row } scroll ? new(row, scroll.ColourRam, scroll.Backed) : null;
 
     // The special item of type 8's wipe: how many rows of the level, from the bottom, and whether it is still going up.
     internal int WipedRows => World.Wipe.Wiped;
@@ -304,6 +305,14 @@ internal sealed class GameLoop
         return art;
     }
 
+    // The level with the HURRY UP! text on it as it is now.
+    internal PlayfieldModel Hurried(PlayfieldModel playfield)
+    {
+        ArgumentNullException.ThrowIfNull(playfield);
+
+        return playfield.WithHurry(Hurry);
+    }
+
     internal void Pass(ReadOnlySpan<byte> ports)
     {
         SolidMap map = _map ?? throw new InvalidOperationException("Start a level before the first pass.");
@@ -412,7 +421,7 @@ internal sealed class GameLoop
             return;
         }
 
-        if (from is Resume.Start or Resume.AfterBarons)
+        if (from is Resume.Start or Resume.AfterCheck)
         {
             Head(map);
 
@@ -450,11 +459,10 @@ internal sealed class GameLoop
         Tail(ports, map);
     }
 
-    // The pass's start, to the level's check. Returns whether it is waiting on the Barons' call.
+    // The pass's start, to the level's check. Returns whether it is waiting on the hurry-up or the Barons' call.
     private bool Check()
     {
         Items.Update();
-        _hurry = Timer.Hurry;
 
         // $15E1: with time on the clock the level is checked for its last enemy.
         if (!Flow.Update())
@@ -470,22 +478,21 @@ internal sealed class GameLoop
 
         End.Update();
 
-        // $1621: the Barons' call waits in itself, with the round start's tune asked for before it does.
-        if (End.Hold is not IGameHold barons)
+        // $3AB8 and $1621: the hurry-up and the Barons' call wait in themselves, the call with the round start's tune asked for
+        // before it does.
+        if (End.Hold is not IGameHold hold)
         {
             return false;
         }
 
         NoteLives();
         End.Hold = null;
-        Wait(barons, Resume.AfterBarons);
+        Wait(hold, Resume.AfterCheck);
         return true;
     }
 
     private void Head(SolidMap map)
     {
-        NoteSongs(_hurry);
-
         // $0A19: the fire on the platforms burns.
         Fire.Update(Pop.Counter);
 
@@ -600,6 +607,7 @@ internal sealed class GameLoop
         Giant = new(Entities, Objects, Pop, food, random);
         Clear.Giant = Giant;
         End.Giant = Giant;
+        End.Play = Ask;
         Show = new(Entities, Timer);
         _enemies.Show = Show;
 
@@ -745,17 +753,6 @@ internal sealed class GameLoop
     private bool ResumesOnDeath() => _song is >= Song.GameOver and not Song.SuperBonus;
 
     private Song LevelSong() => _subflg == BonusLevel ? Song.FinalTheme : Song.Resume;
-
-    // The tune that goes with the clock running out ($15E8). Clearing the level does not change the music: the level
-    // complete tune (song 6) is asked for only as the screen scrolls to the next level ($168A, $3BA2), and the next level's
-    // own tune follows at once, so it is not played.
-    private void NoteSongs(byte hurry)
-    {
-        if (hurry == 0 && Timer.Hurry == 1)
-        {
-            Ask(Song.HurryUp);
-        }
-    }
 
     private void NoteLives()
     {

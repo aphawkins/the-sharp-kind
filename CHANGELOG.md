@@ -7,6 +7,17 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Added (Bubble Bobble's HURRY UP! scroll, 2026-10-12)
+
+- **The HURRY UP! scroll and its pause.** `$3AB8` waits in itself for 114 IRQs with the game paused (`$37`) while the clock runs
+  on: the text goes up columns 12-20 a row a frame, stops at row 11 cleared to black around its letters, starts the hurry-up
+  tune (song 9) and flashes white and grey six times, waits for the tune's 86 frames to end, starts song 6, and goes on up to
+  row 0. It is now an `IGameHold` (`LevelEnd.HurryHold`); `$2D` and the ten seconds come at its end, not at once. Song 6 after
+  the hurry-up was never played before, and `GameLoop`'s note that `$3BA2` belonged to the scroll to the next level was wrong.
+  The 8-bit rendition draws the text from `D_ADB1` and `D_ADF9` (`hurry-chars.tga`, exported by `export-csharp-assets.py`)
+  over the level's characters in the text's colour RAM. Proved against the real game in `HurryUpOracleTests`, and checked
+  against a VICE screenshot.
+
 ### Changed (Bubble Bobble's Barons' call waits, 2026-10-11)
 
 - **The Barons' call waits frame by frame.** `$1621` pauses the game (`$37`) and waits twice at `$1B02` for the players' object

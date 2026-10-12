@@ -1040,6 +1040,77 @@ def export_extend_chars(out_dir, canonical):
 
 
 # =============================================================================
+# HURRY UP! characters
+# =============================================================================
+#
+# $3AB8 scrolls HURRY UP! up the playfield in screen codes $37-$3F, columns 12
+# to 20. Each is the level's character under it ORed with $ADB1's letter; at
+# row 11 it is ANDed with $ADF9 as well, which clears the level around the
+# letters to black, and ORed with the letter again. Both tables are whole bit-
+# pairs, so the sheet's top row is the letters and its bottom row the black
+# backing, each as entry 11 over entry 00, which is drawn transparent: the view
+# paints 11 the text's colour RAM for the letters and black for the backing.
+
+HURRY_CHARS = 9
+
+
+def _table_bytes(src, filename, label, length):
+    """`length` bytes of .byte data from `label` on, through whatever labels follow it."""
+    with open(os.path.join(src, filename), encoding="utf-8") as f:
+        lines = f.read().splitlines()
+
+    start = next(i for i, line in enumerate(lines) if line.startswith(label + ":"))
+    data = bytearray()
+
+    for line in lines[start + 1 :]:
+        line = line.split(";", 1)[0].strip()
+
+        if not line or line.endswith(":"):
+            continue
+
+        if not line.startswith(".byte"):
+            raise SystemExit(f"Unexpected line after {label}: {line!r}")
+
+        data.extend(int(a.strip().lstrip("$"), 16) for a in line[len(".byte") :].split(","))
+
+        if len(data) >= length:
+            return data[:length]
+
+    raise SystemExit(f"{label} has fewer than {length} bytes.")
+
+
+def export_hurry_chars(out_dir, canonical):
+    """$ADB1's letters over $ADF9's backing -> 4x8 multicolour cells, two rows of nine."""
+    letters = _table_bytes(SRC, "game-tables-3.s", "D_ADB1", HURRY_CHARS * CELL)
+    backing = _table_bytes(SRC, "game-tables-3.s", "D_ADF9", HURRY_CHARS * CELL)
+
+    width = HURRY_CHARS * TILE_EDGE_WIDTH
+    pixels = bytearray(width * CELL * 2)
+
+    for cell in range(HURRY_CHARS):
+        for y in range(CELL):
+            at = (cell * CELL) + y
+            pairs = zip(_bit_pairs(letters[at]), _bit_pairs(backing[at]))
+
+            for x, (ink, keep) in enumerate(pairs):
+                if ink not in (0, 3) or keep not in (0, 3):
+                    raise SystemExit(f"HURRY UP! cell {cell}, row {y}, pixel {x}: {ink}, {keep} is not a whole pair.")
+
+                column = (cell * TILE_EDGE_WIDTH) + x
+                pixels[(y * width) + column] = ink
+                pixels[((CELL + y) * width) + column] = 3 if keep == 0 else 0
+
+    write_tga(
+        os.path.join(out_dir, "Images", "hurry-chars.tga"),
+        {"width": width, "height": CELL * 2, "pixels": pixels, "palette": [None] * 4},
+        0,
+        canonical,
+    )
+
+    return HURRY_CHARS
+
+
+# =============================================================================
 # Levels
 # =============================================================================
 
@@ -1269,6 +1340,12 @@ def main():
     print(
         f"Wrote {count} EXTEND letters -> "
         f"{os.path.join(args.out, 'Images', 'extend-chars.tga')}"
+    )
+
+    count = export_hurry_chars(args.out, canonical)
+    print(
+        f"Wrote {count} HURRY UP! characters -> "
+        f"{os.path.join(args.out, 'Images', 'hurry-chars.tga')}"
     )
 
     count = export_super_room_chars(args.out, canonical)

@@ -219,6 +219,51 @@ public sealed class PlayfieldView8BitTests
         Assert.False(new PlayfieldModel(0, Colours, Empty()).SuperRoom);
     }
 
+    // $3AB8: the HURRY UP! text's nine letters across columns 12-20 of its row, each over the level's character under it, which
+    // is drawn again in the text's colour RAM; at row 11 the level is cleared to black around the letters first.
+    [Fact]
+    public void DrawsTheHurryUpTextOverTheLevel()
+    {
+        byte[] characters = Empty();
+        characters[(11 * PlayfieldModel.Columns) + 12] = PlayfieldModel.LevelTile;
+
+        RecordingGraphics graphics = Draw(new PlayfieldModel(23, Colours, characters).WithHurry(new(11, 0x0C, Backed: true)));
+
+        Assert.Equal(
+            [
+                "LevelTiles.Recoloured",
+                "LevelTilesHurry.Recoloured",
+                "HurryChars.Backing.Recoloured",
+                "HurryChars.Letters.Recoloured",
+            ],
+            graphics.ImageParts.Take(4).Select(part => part.ImageType));
+        Assert.All(graphics.ImageParts.Take(4).Skip(1), part => Assert.Equal(new(96, 88), part.Position));
+
+        List<(string ImageType, Vector2 Position, Vector2 Size, Vector2 SourcePosition, Vector2 SourceSize)> letters =
+            [.. graphics.ImageParts.Where(part => part.ImageType == "HurryChars.Letters.Recoloured")];
+        Assert.Equal(9, letters.Count);
+        Assert.Equal(new(160, 88), letters[^1].Position);
+        Assert.Equal(new(32, 0), letters[^1].SourcePosition);
+        Assert.Equal(
+            new(32, 8),
+            graphics.ImageParts.Last(part => part.ImageType == "HurryChars.Backing.Recoloured").SourcePosition);
+
+        Assert.Equal(TestSurface.Colour(4), graphics.Image("HurryChars.Letters.Recoloured").GetPixel(3, 0));
+        Assert.Equal(TestSurface.Colour(0), graphics.Image("HurryChars.Backing.Recoloured").GetPixel(3, 0));
+        Assert.Equal(TestSurface.Colour(4), graphics.Image("LevelTilesHurry.Recoloured").GetPixel(3, 0));
+    }
+
+    // Off row 11 the letters are only ORed in.
+    [Fact]
+    public void DrawsTheHurryUpTextWithoutItsBackingOffRowEleven()
+    {
+        RecordingGraphics graphics = Draw(new PlayfieldModel(0, Colours, Empty()).WithHurry(new(24, 0x0F, Backed: false)));
+
+        Assert.Equal(9, graphics.ImageParts.Count);
+        Assert.All(graphics.ImageParts, part => Assert.Equal("HurryChars.Letters.Recoloured", part.ImageType));
+        Assert.Equal(new(96, 192), graphics.ImageParts[0].Position);
+    }
+
     private static byte[] Empty()
     {
         byte[] characters = new byte[PlayfieldModel.Columns * PlayfieldModel.Rows];
@@ -232,7 +277,9 @@ public sealed class PlayfieldView8BitTests
         RecordingGraphics graphics = new(320, 200);
         EightBitRendition rendition = new();
 
-        rendition.CreatePlayfieldView(new TestSurface(graphics, "LevelTiles", "TileEdges", "SuperRoomChars", "ItemChars")).Draw(model);
+        rendition
+            .CreatePlayfieldView(new TestSurface(graphics, "LevelTiles", "TileEdges", "SuperRoomChars", "ItemChars", "HurryChars"))
+            .Draw(model);
 
         return graphics;
     }

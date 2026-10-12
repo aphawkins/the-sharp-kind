@@ -612,8 +612,14 @@ Each item ends with how it is proved.
         decoration and the split at each even row of a level 1 to 2 scroll.
       - [x] **4e. The hurry-up.** `LevelEnd.HurryUp` (`$15E8`-`$15F4`, `$3AB8`):
         the first time the clock runs out, every enemy in state 1 to `$0A` is
-        angry (`$16E4`), `$2D` becomes 1 and `$2A` 10. The tune is
-        `Song.HurryUp` (step 8); the scroll and the pause are a backlog item.
+        angry (`$16E4`), `$2D` becomes 1 and `$2A` 10. The scroll is a hold
+        (`LevelEnd.HurryHold`): 114 IRQs with the game paused and the clock
+        running, the text up a row a frame, song 9 at row 11 and its six
+        flashes, the wait for its 86 frames to end, song 6, then on to row 0;
+        `$2D` and `$2A` come after. Drawn from `D_ADB1` and `D_ADF9`
+        (`hurry-chars.tga`). Proved **against the oracle**
+        (`HurryUpOracleTests`: the length, the songs' frames, `$2B` after, and
+        the text's row, colour RAM and backing at every IRQ).
         `LevelClear` also takes the READY!! text off (`$A9B1` 0 to `$FF`,
         `$1694`), which the sidebar layer stops drawing. Proved **against VICE**: three
         of the eight lines of `Levels/Captures/hurry-level-1.txt`
