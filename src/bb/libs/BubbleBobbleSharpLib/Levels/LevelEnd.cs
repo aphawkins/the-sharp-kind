@@ -125,7 +125,7 @@ internal sealed class LevelEnd
     // The clock stops, with the level's time on it, until the last Baron goes ($1490).
     //
     // The waits are the game's own, with the pause flag up ($15E5): the routine is left in `Hold` for the game to run, a
-    // frame at a time. The wait for the round start's tune to end ($1685) is not modelled.
+    // frame at a time, and the last waits for the round start's tune to end ($1685).
     private void SpawnBarons()
     {
         BaronCalls++;
@@ -301,13 +301,19 @@ internal sealed class LevelEnd
     }
 
     // `$1B02`-`$1B18` twice: an object update a frame, at least one, until both slots are free; the Barons' places are
-    // chosen between the two waits.
+    // chosen between the two waits. Then `$1685` waits for the round start's tune, asked for on the call's frame, to end, and
+    // the level's tune (song 6, `$1688`) is asked for again; its start takes a frame.
     private sealed class BaronHold(LevelEnd end) : IGameHold
     {
+        // How long song `$43` keeps `$A4` up, in IRQ frames from its ask, as the sound driver plays it.
+        private const int TuneFrames = 107;
+
         private readonly byte[] _column = new byte[PlayerTable.Capacity];
         private readonly byte[] _row = new byte[PlayerTable.Capacity];
 
         private int _waits = 2;
+        private int _frames;
+        private int _asked;
 
         public bool Paused => true;
 
@@ -315,21 +321,37 @@ internal sealed class LevelEnd
 
         public bool Frame()
         {
-            if (_waits == 0)
+            if (_asked != 0 && _frames > _asked)
             {
                 return false;
             }
 
-            end._slots.Update();
+            _frames++;
 
-            if (end._slots.Free())
+            if (_waits > 0)
             {
-                _waits--;
+                end._slots.Update();
 
-                if (_waits == 1)
+                if (end._slots.Free())
                 {
-                    end.PlaceBarons(_column, _row);
+                    _waits--;
+
+                    if (_waits == 1)
+                    {
+                        end.PlaceBarons(_column, _row);
+                    }
                 }
+
+                if (_waits > 0)
+                {
+                    return true;
+                }
+            }
+
+            if (_asked == 0 && _frames >= TuneFrames)
+            {
+                _asked = _frames;
+                end.Play?.Invoke(Song.LevelComplete);
             }
 
             return true;

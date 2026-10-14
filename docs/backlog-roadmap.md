@@ -43,7 +43,6 @@ Every open work item, in priority order. Each line links to a file in
 
 Steps from section 5 of [bb-port-plan.md](bb-port-plan.md), in order.
 
-- [ ] [The Barons' call waits for its tune to end](work-items/bb-baron-song-wait.md)
 - [ ] [10: join the repo](work-items/bb-10-join-the-repo.md)
 
 ## Should

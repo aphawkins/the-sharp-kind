@@ -133,6 +133,28 @@ public sealed class GameHoldTests
         Assert.Equal(LevelTimer.Stopped, loop.Timer.Frames);
     }
 
+    // $1685: once the slots are free the call waits on, paused, for the round start's tune to end, 107 frames from its ask on
+    // the call's pass; then the level's tune is asked for, and its start takes a frame.
+    [Fact]
+    public void TheBaronsWaitForTheRoundStartsTuneToEnd()
+    {
+        GameLoop loop = Start();
+        loop.Timer.Seconds = 0;
+        loop.Timer.Hurry = 1;
+        int passes = 0;
+
+        loop.Pass([Idle, Idle]);
+
+        while (loop.Objects.Type[0] != 0x2E && passes < 100)
+        {
+            loop.Pass([Idle, Idle]);
+            passes++;
+        }
+
+        // 108 frames, two a pass, and the pass that finds the wait over brings the Barons.
+        Assert.Equal((108 / 2) + 1, passes);
+    }
+
     private static GameLoop Start()
     {
         GameLoop loop = new(new(new RandomSource(new Random(1))), 1);

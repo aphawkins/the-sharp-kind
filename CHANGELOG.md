@@ -7,6 +7,13 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Added (Bubble Bobble's Barons wait for the round start's tune, 2026-10-14)
+
+- **The Barons' call waits for its tune to end.** After the two slot waits, `$1685` waits, paused, for the round start's tune
+  (song `$43`), asked for on the call's frame, to end 107 IRQs later; then song 6 (`$27`) is asked for again, and its start
+  takes a frame. The call now lasts 108 IRQs, and song 6 after the Barons was never played before. `LevelEnd`'s `BaronHold`
+  has the third phase. Proved against the real game in `BaronCallOracleTests`.
+
 ### Added (Bubble Bobble's EXTEND fanfare and screen of fruit, 2026-10-14)
 
 - **The EXTEND bonus waits, and shows its screens.** `$32CD` pauses the game (`$37`) for 460 IRQs, about nine seconds, while
