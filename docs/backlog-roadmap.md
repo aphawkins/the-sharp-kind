@@ -39,12 +39,6 @@ Every open work item, in priority order. Each line links to a file in
 
 ## Must
 
-### Bubble Bobble
-
-Steps from section 5 of [bb-port-plan.md](bb-port-plan.md), in order.
-
-- [ ] [10: join the repo](work-items/bb-10-join-the-repo.md)
-
 ## Should
 
 ## Could

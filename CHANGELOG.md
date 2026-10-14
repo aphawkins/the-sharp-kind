@@ -7,6 +7,12 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Changed (Bubble Bobble's step 10 closed, 2026-10-14)
+
+- **Bubble Bobble has joined the repo.** Every part of step 10 of the port plan had landed (the 56-line banner at 320x256,
+  golden frames for all 100 levels, the docs, a screenshot and the decision on the banner). The full solution builds with
+  zero warnings and every game's tests pass, so the step is ticked and its backlog line and work item are gone.
+
 ### Added (Bubble Bobble's Barons wait for the round start's tune, 2026-10-14)
 
 - **The Barons' call waits for its tune to end.** After the two slot waits, `$1685` waits, paused, for the round start's tune

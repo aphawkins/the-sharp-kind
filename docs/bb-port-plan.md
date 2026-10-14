@@ -764,7 +764,7 @@ Each item ends with how it is proved.
       (`LevelStore.Super`: every enemy's class 0 becomes 1 and 6 becomes 5,
       `$45F4`-`$4617`). Not done: a table of scores (the reference keeps one
       high score only).
-- [ ] **10. Join the repo.** Done: the banner (320x256; the layout's
+- [x] **10. Join the repo.** Done: the banner (320x256; the layout's
       `BannerHeight` moves the screen grid down, rather than `PlayfieldRow`, and
       `SpriteView8Bit` adds it), `decisions.md`, `bb-readme.md`,
       `reference-sources.md`, `index.md`, `toc.yml`, `README.md`, a screenshot
@@ -785,8 +785,8 @@ Each item ends with how it is proved.
         three games in `docs/index.md`, `docs/toc.yml` and `README.md`, a
         screenshot, and a `CHANGELOG.md` line.
 
-      Verify: the solution builds with zero warnings and every game's tests
-      pass.
+      Verified (2026-10-14): the solution builds with zero warnings and every
+      game's tests pass.
 
 ## 6. Open questions
 
