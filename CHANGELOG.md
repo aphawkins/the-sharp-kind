@@ -7,6 +7,20 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Added (Bubble Bobble's EXTEND fanfare and screen of fruit, 2026-10-14)
+
+- **The EXTEND bonus waits, and shows its screens.** `$32CD` pauses the game (`$37`) for 460 IRQs, about nine seconds, while
+  the clock runs on: the player's six letters on the wall are drawn again at random twenty times, every object is reset
+  (`$2E79`), the screen is cleared with the sprites off, the screen of fruit comes up with a box, "PLAYER n", "GETS" and a big
+  EXTEND, then turns eleven times with a screen of the text alone, and the screen is cleared again. Only then does the player
+  get the life, lose the letters and skip the level. It is now an `IGameHold` (`ExtendBonus.ExtendHold`), and after it the
+  other player is looked at again, as `jmp $32C3` does. The fruit's characters are its art times four ORed with `$60`, so some
+  blocks show other art than their food's, as on the C64. The work item's "about five seconds" was wrong. The 8-bit rendition
+  draws the screens (`ExtendView8Bit`) and the rolled letters (`SidebarModel.PlayerOneRoll`, `PlayerTwoRoll`). Proved against
+  the real game in `ExtendBonusOracleTests` and `ExtendPictureOracleTests`. Not modelled: `$2E79` and the fill take a frame
+  more on some runs, as long as their work does; the two frames before the banner, on the other screen, show the fruit; the
+  pause flag stays up after the routine on the C64.
+
 ### Added (Bubble Bobble's HURRY UP! scroll, 2026-10-12)
 
 - **The HURRY UP! scroll and its pause.** `$3AB8` waits in itself for 114 IRQs with the game paused (`$37`) while the clock runs

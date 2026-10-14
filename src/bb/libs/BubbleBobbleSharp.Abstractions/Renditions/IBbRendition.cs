@@ -1,4 +1,4 @@
-// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
+﻿// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
 // 'rebb64' - github.com/zaidka/rebb64.
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
@@ -67,6 +67,11 @@ public interface IBbRendition
     /// <param name="surface">Everything the view draws with.</param>
     /// <returns>The view.</returns>
     public IView<RoomModel> CreateRoomView(IViewSurface surface);
+
+    /// <summary>Creates the view that draws the EXTEND bonus's screens in place of the level.</summary>
+    /// <param name="surface">Everything the view draws with.</param>
+    /// <returns>The view.</returns>
+    public IView<ExtendPicture> CreateExtendView(IViewSurface surface);
 
     /// <summary>Creates the view that draws the title screen.</summary>
     /// <param name="surface">Everything the view draws with.</param>

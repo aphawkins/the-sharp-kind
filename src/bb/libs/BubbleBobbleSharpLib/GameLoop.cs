@@ -109,8 +109,8 @@ internal sealed class GameLoop
         _respawn.Boss = Boss;
         Clear.ReadyEnded = AppearBoss;
         Bonus = new(Entities, Round, End.SavedFlash);
-        _extend = new(PlayerTable, End);
         World = BuildWorld(random, food);
+        _extend = new(PlayerTable, End, World.ResetObjects, random);
         effects.World = World.Apply;
         Room = new(Entities, Scores, Timer, Items, World.ResetObjects);
         World.Room = StartRoom;
@@ -127,6 +127,7 @@ internal sealed class GameLoop
         AfterGiant = 1,
         AfterCollect = 2,
         AfterCheck = 3,
+        AfterExtend = 4,
     }
 
     internal EntityTable Entities { get; } = new();
@@ -305,6 +306,29 @@ internal sealed class GameLoop
         return art;
     }
 
+    // The sidebar with the EXTEND bonus's rolled letters in its player's places while they are, and then none.
+    internal SidebarModel Rolled(SidebarModel sidebar)
+    {
+        ArgumentNullException.ThrowIfNull(sidebar);
+
+        return _extend.Running switch
+        {
+            { Roll: IReadOnlyList<int> roll, Player: 0 } => sidebar with { PlayerOneRoll = roll },
+            { Roll: IReadOnlyList<int> roll } => sidebar with { PlayerTwoRoll = roll },
+            { Unlettered: true, Player: 0 } => sidebar with { PlayerOneLetters = 0 },
+            { Unlettered: true } => sidebar with { PlayerTwoLetters = 0 },
+            _ => sidebar,
+        };
+    }
+
+    // The EXTEND bonus's screen in place of the level, or none.
+    internal ExtendPicture? ExtendShown(PlayfieldModel playfield)
+    {
+        ArgumentNullException.ThrowIfNull(playfield);
+
+        return _extend.Picture(playfield.Tile, playfield.Colours);
+    }
+
     // The level with the HURRY UP! text on it as it is now.
     internal PlayfieldModel Hurried(PlayfieldModel playfield)
     {
@@ -421,6 +445,12 @@ internal sealed class GameLoop
             return;
         }
 
+        if (from == Resume.AfterExtend)
+        {
+            Tail(ports, map);
+            return;
+        }
+
         if (from is Resume.Start or Resume.AfterCheck)
         {
             Head(map);
@@ -513,7 +543,17 @@ internal sealed class GameLoop
 
     private void Tail(ReadOnlySpan<byte> ports, SolidMap map)
     {
+        // $0A57: the EXTEND bonus waits in itself, and is looked at again for the other player once it is over.
         _extend.Update();
+
+        if (_extend.Hold is IGameHold hold)
+        {
+            _extend.Hold = null;
+            NoteLives();
+            Wait(hold, Resume.AfterExtend);
+            return;
+        }
+
         _respawn.Update(_subflg);
         NoteLives();
         _join.Update(ports);

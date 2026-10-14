@@ -191,6 +191,7 @@ public sealed class BubbleBobbleMainTests
     {
         RecordingGraphics graphics = Draw();
 
+        // The HUD's layer is the whole screen wide: the EXTEND bonus's screens are drawn over everything from it.
         Assert.Equal(
             [(new Vector2(0, 0), 320f, 200f),
              (new Vector2(0, 0), 320f, 200f),
@@ -202,7 +203,7 @@ public sealed class BubbleBobbleMainTests
              (new Vector2(0, 0), 256f, 200f),
              (new Vector2(0, 0), 256f, 200f),
              (new Vector2(0, 0), 256f, 200f),
-             (new Vector2(256, 0), 64f, 200f)],
+             (new Vector2(0, 0), 320f, 200f)],
             graphics.ClipRegions);
     }
 

@@ -44,6 +44,15 @@ public sealed record SidebarModel(int Design, int HeaderTile, int Colours, int N
     /// <summary>Gets player two's EXTEND letters ($55), one bit a letter from E in bit 0; none while they are not shown.</summary>
     public int PlayerTwoLetters { get; init; }
 
+    /// <summary>
+    /// Gets the letter pictures the EXTEND bonus (<c>$32EE</c>) has drawn at random in player one's six places, in place of
+    /// the letters, or none.
+    /// </summary>
+    public IReadOnlyList<int>? PlayerOneRoll { get; init; }
+
+    /// <summary>Gets the same for player two, or none.</summary>
+    public IReadOnlyList<int>? PlayerTwoRoll { get; init; }
+
     /// <summary>Gets how many letters EXTEND is.</summary>
     public static int LetterCount => 6;
 

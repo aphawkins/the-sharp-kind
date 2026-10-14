@@ -149,6 +149,20 @@ public sealed class SidebarView8BitTests
         Assert.Equal([new(0, 24), new(4, 24), new(8, 24), new(12, 24)], under.Select(x => x.SourcePosition));
     }
 
+    // $32EE: the EXTEND bonus puts a letter in each of the six places, whatever the player holds.
+    [Fact]
+    public void DrawsARollInAllSixPlaces()
+    {
+        RecordingGraphics graphics = Draw(new(3, 7, Colours) { PlayerTwoRoll = [4, 0, 3, 1, 2, 4] });
+
+        (string ImageType, Vector2 Position, Vector2 Size, Vector2 SourcePosition, Vector2 SourceSize)[] letters =
+            [.. graphics.ImageParts.Where(x => x.ImageType == "ExtendChars.Recoloured")];
+
+        Assert.Equal([32f, 0f, 24f, 8f, 16f, 32f], letters.Select(x => x.SourcePosition.X));
+        Assert.Equal([80f, 96f, 112f, 128f, 144f, 160f], letters.Select(x => x.Position.Y));
+        Assert.All(letters, x => Assert.Equal(240f, x.Position.X));
+    }
+
     private static RecordingGraphics Draw(SidebarModel model)
     {
         RecordingGraphics graphics = new(320, 200);

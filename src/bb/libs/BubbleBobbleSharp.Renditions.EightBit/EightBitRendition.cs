@@ -1,4 +1,4 @@
-// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
+﻿// 'Bubble Bobble - The Sharp Kind' - Andy Hawkins 2026.
 // 'rebb64' - github.com/zaidka/rebb64.
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
@@ -36,6 +36,8 @@ public sealed class EightBitRendition : IBbRendition
     public IView<EffectsModel> CreateEffectsView(IViewSurface surface) => new EffectsView8Bit(surface);
 
     public IView<RoomModel> CreateRoomView(IViewSurface surface) => new RoomView8Bit(surface);
+
+    public IView<ExtendPicture> CreateExtendView(IViewSurface surface) => new ExtendView8Bit(surface);
 
     public IView<TitleModel> CreateTitleView(IViewSurface surface) => new TitleView8Bit(surface);
 

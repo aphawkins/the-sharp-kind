@@ -82,18 +82,21 @@ internal sealed class SidebarView8Bit : IView<SidebarModel>
             DrawNumber(model);
         }
 
-        DrawLetters(model, sheet, 0, model.PlayerOneLetters);
-        DrawLetters(model, sheet, _layout.PlayfieldColumns - BlockColumns, model.PlayerTwoLetters);
+        DrawLetters(model, sheet, 0, model.PlayerOneLetters, model.PlayerOneRoll);
+        DrawLetters(model, sheet, _layout.PlayfieldColumns - BlockColumns, model.PlayerTwoLetters, model.PlayerTwoRoll);
 
         DrawReady(model);
     }
 
     // $E6CD: each letter a player holds replaces a block of the wall, from row 10 down, two rows a letter. $E658 made
     // the block from the wall's four characters ($3940 copies them to $11-$14) taken a column at a time, so under a
-    // letter the wall's top-right and bottom-left characters change places.
-    private void DrawLetters(SidebarModel model, string sheet, int column, int letters)
+    // letter the wall's top-right and bottom-left characters change places. The EXTEND bonus's roll ($32EE) puts a letter in
+    // all six places.
+    private void DrawLetters(SidebarModel model, string sheet, int column, int letters, IReadOnlyList<int>? roll)
     {
-        if (letters == 0)
+        int shown = roll is null ? letters : (1 << SidebarModel.LetterCount) - 1;
+
+        if (shown == 0)
         {
             return;
         }
@@ -102,7 +105,7 @@ internal sealed class SidebarView8Bit : IView<SidebarModel>
 
         for (int letter = 0; letter < SidebarModel.LetterCount; letter++)
         {
-            if ((letters & (1 << letter)) == 0)
+            if ((shown & (1 << letter)) == 0)
             {
                 continue;
             }
@@ -122,7 +125,7 @@ internal sealed class SidebarView8Bit : IView<SidebarModel>
                 _letters.Name,
                 _layout.Playfield.Cell(column, row),
                 new(LetterWidth * 2, LetterHeight),
-                new(SidebarModel.LetterPicture(letter) * LetterWidth, 0),
+                new((roll?[letter] ?? SidebarModel.LetterPicture(letter)) * LetterWidth, 0),
                 new(LetterWidth, LetterHeight));
         }
     }

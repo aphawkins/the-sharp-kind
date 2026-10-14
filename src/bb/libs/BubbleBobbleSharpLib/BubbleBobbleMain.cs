@@ -134,7 +134,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         _change = new(_levels);
         ShowLevel(FirstLevel);
 
-        _screens = CreateScreens(rendition.CreateTitleView(surface), CreateLayers(surface), CreateEndingLayers(surface));
+        _screens = CreateScreens(rendition.CreateTitleView(surface), CreateLayers(rendition, surface), CreateEndingLayers(surface));
     }
 
     public bool IsRunning { get; private set; } = true;
@@ -320,11 +320,10 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
             new RenderLayer(whole, wholeWidth, height, new SpriteLayer(this)));
     }
 
-    private LayerRunner CreateLayers(BbViewSurface surface)
+    private LayerRunner CreateLayers(IBbRendition rendition, BbViewSurface surface)
     {
         (Vector2 interior, float interiorWidth, float height) = surface.Layout.PlayfieldInterior;
         (Vector2 whole, float wholeWidth, _) = surface.Layout.PlayfieldArea;
-        (Vector2 hud, float hudWidth, _) = surface.Layout.HudArea;
 
         // How far the old level has gone up the screen as it scrolls to the next.
         Vector2 Scrolled() => new(0, -_change.Rows * surface.Layout.CellHeight);
@@ -348,7 +347,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
             new RenderLayer(whole, wholeWidth, height, new SidebarLayer(this)),
             new RenderLayer(whole, wholeWidth, height, new RoomLayer(this)),
             new RenderLayer(whole, wholeWidth, height, new SpriteLayer(this)),
-            new RenderLayer(hud, hudWidth, height, new HudLayer(this)));
+            new RenderLayer(whole, surface.Layout.ScreenWidth, height, new HudLayer(this, rendition, surface)));
     }
 
     // $E3F5: a score above the high score becomes it, and its player's round ($0409) the top round. The scores are packed
@@ -646,6 +645,9 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
                     ? sidebar
                     : sidebar with { PlayerOneLetters = letters[0], PlayerTwoLetters = letters[1] };
 
+                // $32EE: the EXTEND bonus rolls its player's letters.
+                shown = game.Loop.Rolled(shown);
+
                 game._sidebarView.Draw(ready ? shown with { Round = game.CurrentLevel } : shown);
             }
         }
@@ -658,8 +660,19 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
                 game._change.Sprites(game.Loop.Entities) ?? game.Sprites());
     }
 
-    private sealed class HudLayer(BubbleBobbleMain game) : ILayerDrawer
+    // The score panel; and over everything, the EXTEND bonus's screens ($32CD).
+    private sealed class HudLayer(BubbleBobbleMain game, IBbRendition rendition, BbViewSurface surface) : ILayerDrawer
     {
-        public void Draw() => game._hudView.Draw(game.Hud());
+        private readonly IView<ExtendPicture> _extend = rendition.CreateExtendView(surface);
+
+        public void Draw()
+        {
+            game._hudView.Draw(game.Hud());
+
+            if (game.Loop.ExtendShown(game._playfield) is ExtendPicture picture)
+            {
+                _extend.Draw(picture);
+            }
+        }
     }
 }
