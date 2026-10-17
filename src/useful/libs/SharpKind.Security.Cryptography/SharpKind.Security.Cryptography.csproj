@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <PackageId>SharpKind.Security.Cryptography</PackageId>
-    <Description>Classical cipher implementations (Caesar, Vigenere, Atbash, Enigma, ROT13, monoalphabetic) with settings, generators and cryptanalysis helpers.</Description>
+    <Description>Classical cipher implementations (Caesar, Vigenere, Atbash, Enigma, ROT13, monoalphabetic, Playfair, homophonic, ADFGVX-style and book ciphers) with settings, settings generators and Caesar cryptanalysis.</Description>
   </PropertyGroup>
 
 </Project>
