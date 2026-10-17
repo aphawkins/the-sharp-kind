@@ -27,7 +27,7 @@ public sealed class PlayerJoinTests
 
         rig.Join.Update(Fire(player));
 
-        Assert.Equal(PlayerFrame.DeadState, rig.Entities.State[player]);
+        Assert.Equal(PlayerFrame.DeadState, rig.Entities.Slot(player).State);
         Assert.Equal(4, rig.Players.Lives[player]);
         Assert.All(rig.Scores.Bytes[(last - 2)..(last + 1)].ToArray(), b => Assert.Equal(0, b));
         Assert.Equal(0, rig.Players.ExtraLifeStep[player]);
@@ -57,8 +57,8 @@ public sealed class PlayerJoinTests
 
         rig.Join.Update([Input.Idle, Input.Idle]);
 
-        Assert.Equal(0, rig.Entities.State[0]);
-        Assert.Equal(0, rig.Entities.State[1]);
+        Assert.Equal(0, rig.Entities.Slot(0).State);
+        Assert.Equal(0, rig.Entities.Slot(1).State);
         Assert.Equal(7, rig.Players.Credits);
     }
 
@@ -71,12 +71,12 @@ public sealed class PlayerJoinTests
     public void APlayerInTheGameCannotJoinAgain(byte state)
     {
         Rig rig = new();
-        rig.Entities.State[0] = state;
+        rig.Entities.Slot(0).State = state;
         rig.Players.Lives[0] = 2;
 
         rig.Join.Update(Fire(0));
 
-        Assert.Equal(state, rig.Entities.State[0]);
+        Assert.Equal(state, rig.Entities.Slot(0).State);
         Assert.Equal(2, rig.Players.Lives[0]);
         Assert.Equal(7, rig.Players.Credits);
     }
@@ -89,8 +89,8 @@ public sealed class PlayerJoinTests
 
         rig.Join.Update(s_fireOnly);
 
-        Assert.Equal(PlayerFrame.DeadState, rig.Entities.State[0]);
-        Assert.Equal(PlayerFrame.DeadState, rig.Entities.State[1]);
+        Assert.Equal(PlayerFrame.DeadState, rig.Entities.Slot(0).State);
+        Assert.Equal(PlayerFrame.DeadState, rig.Entities.Slot(1).State);
         Assert.Equal(5, rig.Players.Credits);
     }
 
@@ -103,14 +103,14 @@ public sealed class PlayerJoinTests
 
         rig.Join.Update(s_fireOnly);
 
-        Assert.Equal(PlayerFrame.DeadState, rig.Entities.State[0]);
-        Assert.Equal(PlayerFrame.DeadState, rig.Entities.State[1]);
+        Assert.Equal(PlayerFrame.DeadState, rig.Entities.Slot(0).State);
+        Assert.Equal(PlayerFrame.DeadState, rig.Entities.Slot(1).State);
         Assert.Equal(0xFF, rig.Players.Credits);
 
-        rig.Entities.State[1] = 0;
+        rig.Entities.Slot(1).State = 0;
         rig.Join.Update(Fire(1));
 
-        Assert.Equal(0, rig.Entities.State[1]);
+        Assert.Equal(0, rig.Entities.Slot(1).State);
         Assert.Equal(0xFF, rig.Players.Credits);
     }
 

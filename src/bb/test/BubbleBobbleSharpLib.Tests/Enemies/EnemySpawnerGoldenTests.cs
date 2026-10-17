@@ -85,20 +85,20 @@ public sealed class EnemySpawnerGoldenTests
 
             byte[] actual =
             [
-                entities.State[slot],
-                entities.X[slot],
-                entities.Y[slot],
-                entities.Frame[slot],
-                entities.Colour[slot],
-                entities.SpriteBase[slot],
-                entities.Heading[slot],
-                entities.HoldTimer[slot],
-                entities.FrameCount[slot],
-                entities.FrameMask[slot],
+                entities.Slot(slot).State,
+                entities.Slot(slot).X,
+                entities.Slot(slot).Y,
+                entities.Slot(slot).Frame,
+                entities.Slot(slot).Colour,
+                entities.Slot(slot).SpriteBase,
+                entities.Slot(slot).Heading,
+                entities.Slot(slot).HoldTimer,
+                entities.Slot(slot).FrameCount,
+                entities.Slot(slot).FrameMask,
             ];
 
             Assert.Equal(expected[..^1], actual);
-            Assert.InRange(expected[^1] - entities.TurnTimer[slot], 0, 0x1F);
+            Assert.InRange(expected[^1] - entities.Slot(slot).TurnTimer, 0, 0x1F);
         }
     }
 }

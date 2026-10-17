@@ -38,7 +38,7 @@ public sealed class PlayerFireTests
 
         frame.Step(0, Fire, Floor());
 
-        Assert.Equal(BubbleBlow.BlowFrames, entities.BubbleTimer[0]);
+        Assert.Equal(BubbleBlow.BlowFrames, entities.Slot(0).BubbleTimer);
     }
 
     // $220C's arms are all taken in one pass, so a player walking and firing does both.
@@ -49,8 +49,8 @@ public sealed class PlayerFireTests
 
         frame.Step(0, RightAndFire, Floor());
 
-        Assert.Equal(StandX + 2, entities.X[0]);
-        Assert.Equal(BubbleBlow.BlowFrames, entities.BubbleTimer[0]);
+        Assert.Equal(StandX + 2, entities.Slot(0).X);
+        Assert.Equal(BubbleBlow.BlowFrames, entities.Slot(0).BubbleTimer);
     }
 
     // $220F. Up is a jmp to $222B rather than a jsr, so the fire arm is never reached on the frame
@@ -62,8 +62,8 @@ public sealed class PlayerFireTests
 
         frame.Step(0, UpAndFire, Floor());
 
-        Assert.Equal(0x0F, entities.RiseCounter[0]);
-        Assert.Equal(0xFF, entities.BubbleTimer[0]);
+        Assert.Equal(0x0F, entities.Slot(0).RiseCounter);
+        Assert.Equal(0xFF, entities.Slot(0).BubbleTimer);
     }
 
     // $25F5. The steer's own fire arm, which is a jsr - a player blows and carries on steering. It
@@ -77,7 +77,7 @@ public sealed class PlayerFireTests
 
         steer.Step(0, Fire, Floor());
 
-        Assert.Equal(BubbleBlow.BlowFrames, entities.BubbleTimer[0]);
+        Assert.Equal(BubbleBlow.BlowFrames, entities.Slot(0).BubbleTimer);
     }
 
     // $2165, and the whole chain end to end: one press, then nothing but the driver, and a bubble
@@ -92,11 +92,11 @@ public sealed class PlayerFireTests
         frame.Step(0, Input.Idle, floor);
         frame.Step(0, Input.Idle, floor);
 
-        Assert.Equal(ObjectTable.FreeType, objects.Type[FirstSlot]);
+        Assert.Equal(ObjectTable.FreeType, objects.Slot(FirstSlot).Type);
 
         frame.Step(0, Input.Idle, floor);
 
-        Assert.Equal(BubbleBlow.BubbleType, objects.Type[FirstSlot]);
+        Assert.Equal(BubbleBlow.BubbleType, objects.Slot(FirstSlot).Type);
     }
 
     // And the blow ends: seven frames after the press the timer is back at its idle, so the next
@@ -114,8 +114,8 @@ public sealed class PlayerFireTests
             frame.Step(0, Input.Idle, floor);
         }
 
-        Assert.Equal(0xFF, entities.BubbleTimer[0]);
-        Assert.Equal(0x00, entities.Frame[0]);
+        Assert.Equal(0xFF, entities.Slot(0).BubbleTimer);
+        Assert.Equal(0x00, entities.Slot(0).Frame);
     }
 
     private static (EntityTable Entities, ObjectTable Objects, PlayerFrame Frame) Standing()
@@ -123,14 +123,14 @@ public sealed class PlayerFireTests
         EntityTable entities = new();
         ObjectTable objects = new();
 
-        entities.State[0] = PlayerFrame.PlayingState;
-        entities.X[0] = StandX;
-        entities.Y[0] = StandY;
+        entities.Slot(0).State = PlayerFrame.PlayingState;
+        entities.Slot(0).X = StandX;
+        entities.Slot(0).Y = StandY;
 
-        entities.RiseCounter[0] = 0xFF;
-        entities.FallCounter[0] = 0xFF;
-        entities.GroundState[0] = 0xFF;
-        entities.BubbleTimer[0] = 0xFF;
+        entities.Slot(0).RiseCounter = 0xFF;
+        entities.Slot(0).FallCounter = 0xFF;
+        entities.Slot(0).GroundState = 0xFF;
+        entities.Slot(0).BubbleTimer = 0xFF;
 
         BubbleBlow blow = new(new PlayerTable(), entities, objects, TestBlow.NoRings());
         PlayerSteer steer = new(entities, blow);

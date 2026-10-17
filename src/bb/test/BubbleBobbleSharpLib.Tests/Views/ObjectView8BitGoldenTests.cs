@@ -146,13 +146,13 @@ public sealed class ObjectView8BitGoldenTests
             scores,
             new(entities, new(new FakeRandomSource())));
 
-        objects.Type[@case.Slot] = @case.Type;
-        objects.Column[@case.Slot] = @case.Column;
-        objects.Row[@case.Slot] = @case.Row;
-        objects.SubX[@case.Slot] = @case.SubX;
-        objects.SubY[@case.Slot] = @case.SubY;
-        objects.X[@case.Slot] = @case.X;
-        objects.Y[@case.Slot] = @case.Y;
+        objects.Slot(@case.Slot).Type = @case.Type;
+        objects.Slot(@case.Slot).Column = @case.Column;
+        objects.Slot(@case.Slot).Row = @case.Row;
+        objects.Slot(@case.Slot).SubX = @case.SubX;
+        objects.Slot(@case.Slot).SubY = @case.SubY;
+        objects.Slot(@case.Slot).X = @case.X;
+        objects.Slot(@case.Slot).Y = @case.Y;
         pop.Counter = (byte)(@case.Counter - 1);
         pop.Update();
 

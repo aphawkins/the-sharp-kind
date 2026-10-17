@@ -234,7 +234,7 @@ public sealed class LevelItemsTests
         Rig rig = new();
         Show(rig, 0, type);
         Player(rig, 0, state);
-        rig.Entities.X[0] = (byte)(rig.Entities.X[0] + offset);
+        rig.Entities.Slot(0).X = (byte)(rig.Entities.Slot(0).X + offset);
 
         rig.Items.Collect(0);
 
@@ -266,9 +266,9 @@ public sealed class LevelItemsTests
 
     private static void Player(Rig rig, int player, byte state)
     {
-        rig.Entities.State[player] = state;
-        rig.Entities.X[player] = 0x8F;
-        rig.Entities.Y[player] = 0x71;
+        rig.Entities.Slot(player).State = state;
+        rig.Entities.Slot(player).X = 0x8F;
+        rig.Entities.Slot(player).Y = 0x71;
     }
 
     private sealed class Rig

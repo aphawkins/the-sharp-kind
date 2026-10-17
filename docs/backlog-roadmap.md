@@ -46,11 +46,10 @@ Every open work item, in priority order. Each line links to a file in
 
 ### Bubble Bobble
 
-- [ ] [Entity records 3/3: retire the column views](work-items/bb-retire-slot-shims.md)
-- [ ] [Enums and behaviour objects for entity state and type](work-items/bb-state-types.md) — blocked by entity records 3/3
+- [ ] [Enums and behaviour objects for entity state and type](work-items/bb-state-types.md)
 - [ ] [A view model free of C64 hardware](work-items/bb-model-hardware-free.md)
 - [ ] **[DECISION]** [A fixed-timestep loop in place of the IRQ phases](work-items/bb-fixed-timestep-loop.md)
-- [ ] **[DECISION]** [Plain coordinates, directions and random](work-items/bb-plain-arithmetic.md) — blocked by entity records 3/3
+- [ ] **[DECISION]** [Plain coordinates, directions and random](work-items/bb-plain-arithmetic.md)
 
 ## Could
 

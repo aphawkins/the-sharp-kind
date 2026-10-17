@@ -109,10 +109,10 @@ public sealed class LevelItemsPassGoldenTests
             items.Y[i] = b[Y + i];
             items.Timer[i] = b[Timers + i];
 
-            entities.State[i] = b[States + i];
-            entities.X[i] = b[PlayerX + i];
-            entities.Y[i] = b[PlayerY + i];
-            entities.FlashTimer[i] = b[Flash + i];
+            entities.Slot(i).State = b[States + i];
+            entities.Slot(i).X = b[PlayerX + i];
+            entities.Slot(i).Y = b[PlayerY + i];
+            entities.Slot(i).FlashTimer = b[Flash + i];
 
             players.DriftRing[i] = b[Rings + i];
             players.WalkRing[i] = b[Rings + 2 + i];
@@ -140,7 +140,7 @@ public sealed class LevelItemsPassGoldenTests
             b[X + i] = items.X[i];
             b[Y + i] = items.Y[i];
             b[Timers + i] = items.Timer[i];
-            b[Flash + i] = entities.FlashTimer[i];
+            b[Flash + i] = entities.Slot(i).FlashTimer;
             b[Rings + i] = players.DriftRing[i];
             b[Rings + 2 + i] = players.WalkRing[i];
             b[Rings + 4 + i] = players.BlowRing[i];

@@ -114,42 +114,42 @@ public sealed class EnemyWalkerGoldenTests
     {
         Assert.Equal(Fields, b.Length);
 
-        entities.State[0] = b[0];
-        entities.State[1] = b[1];
-        entities.Y[0] = b[2];
-        entities.Y[1] = b[3];
-        entities.Mode[slot] = 0xFF;
-        entities.FlashTimer[slot] = 0;
-        entities.HoldTimer[slot] = 0;
+        entities.Slot(0).State = b[0];
+        entities.Slot(1).State = b[1];
+        entities.Slot(0).Y = b[2];
+        entities.Slot(1).Y = b[3];
+        entities.Slot(slot).Mode = 0xFF;
+        entities.Slot(slot).FlashTimer = 0;
+        entities.Slot(slot).HoldTimer = 0;
 
-        entities.State[slot] = b[4];
-        entities.X[slot] = b[5];
-        entities.Y[slot] = b[6];
-        entities.Frame[slot] = b[7];
-        entities.AnimationTimer[slot] = b[8];
-        entities.Heading[slot] = b[9];
-        entities.RiseCounter[slot] = b[10];
-        entities.FallCounter[slot] = b[11];
-        entities.GroundState[slot] = b[12];
-        entities.LeftFlag[slot] = b[13];
-        entities.RightFlag[slot] = b[14];
-        entities.TurnTimer[slot] = b[15];
-        entities.TurnInterval[slot] = b[16];
-        entities.ClimbNext[slot] = ClimbNext(slot, b[17]);
-        entities.LeapFlag[slot] = b[18];
-        entities.ClimbFlag[slot] = b[19];
-        entities.FrameCount[slot] = b[20];
-        entities.FrameMask[slot] = b[21];
+        entities.Slot(slot).State = b[4];
+        entities.Slot(slot).X = b[5];
+        entities.Slot(slot).Y = b[6];
+        entities.Slot(slot).Frame = b[7];
+        entities.Slot(slot).AnimationTimer = b[8];
+        entities.Slot(slot).Heading = b[9];
+        entities.Slot(slot).RiseCounter = b[10];
+        entities.Slot(slot).FallCounter = b[11];
+        entities.Slot(slot).GroundState = b[12];
+        entities.Slot(slot).LeftFlag = b[13];
+        entities.Slot(slot).RightFlag = b[14];
+        entities.Slot(slot).TurnTimer = b[15];
+        entities.Slot(slot).TurnInterval = b[16];
+        entities.Slot(slot).ClimbNext = ClimbNext(slot, b[17]);
+        entities.Slot(slot).LeapFlag = b[18];
+        entities.Slot(slot).ClimbFlag = b[19];
+        entities.Slot(slot).FrameCount = b[20];
+        entities.Slot(slot).FrameMask = b[21];
     }
 
     private static byte[] Save(EntityTable entities, int slot) => [
-        entities.State[0], entities.State[1], entities.Y[0], entities.Y[1],
-        entities.State[slot], entities.X[slot], entities.Y[slot], entities.Frame[slot],
-        entities.AnimationTimer[slot], entities.Heading[slot], entities.RiseCounter[slot],
-        entities.FallCounter[slot], entities.GroundState[slot], entities.LeftFlag[slot],
-        entities.RightFlag[slot], entities.TurnTimer[slot], entities.TurnInterval[slot],
-        (byte)(slot + (entities.ClimbNext[slot] ? 0x28 : 0x00)), entities.LeapFlag[slot],
-        entities.ClimbFlag[slot], entities.FrameCount[slot], entities.FrameMask[slot],
+        entities.Slot(0).State, entities.Slot(1).State, entities.Slot(0).Y, entities.Slot(1).Y,
+        entities.Slot(slot).State, entities.Slot(slot).X, entities.Slot(slot).Y, entities.Slot(slot).Frame,
+        entities.Slot(slot).AnimationTimer, entities.Slot(slot).Heading, entities.Slot(slot).RiseCounter,
+        entities.Slot(slot).FallCounter, entities.Slot(slot).GroundState, entities.Slot(slot).LeftFlag,
+        entities.Slot(slot).RightFlag, entities.Slot(slot).TurnTimer, entities.Slot(slot).TurnInterval,
+        (byte)(slot + (entities.Slot(slot).ClimbNext ? 0x28 : 0x00)), entities.Slot(slot).LeapFlag,
+        entities.Slot(slot).ClimbFlag, entities.Slot(slot).FrameCount, entities.Slot(slot).FrameMask,
     ];
 
     // $86B0 holds the slot, or the slot plus $28. Nothing else is a value it can hold.

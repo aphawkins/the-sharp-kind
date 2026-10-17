@@ -78,8 +78,8 @@ public sealed class TitleScreenTests
         keyboard.KeyDown(ConsoleKey.D1, ConsoleModifiers.None);
         game.Update();
 
-        Assert.Contains(Enumerable.Range(2, 6), slot => game.Loop.Entities.State[slot] == 3);
-        Assert.DoesNotContain(Enumerable.Range(2, 6), slot => game.Loop.Entities.State[slot] == 2);
+        Assert.Contains(Enumerable.Range(2, 6), slot => game.Loop.Entities.Slot(slot).State == 3);
+        Assert.DoesNotContain(Enumerable.Range(2, 6), slot => game.Loop.Entities.Slot(slot).State == 2);
     }
 
     [Fact]

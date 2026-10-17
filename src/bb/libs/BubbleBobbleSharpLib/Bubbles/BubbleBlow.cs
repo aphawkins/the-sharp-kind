@@ -65,27 +65,27 @@ internal sealed class BubbleBlow
             return;
         }
 
-        if ((_entities.BubbleTimer[player] & 0x80) == 0)
+        if ((_entities.Slot(player).BubbleTimer & 0x80) == 0)
         {
             return;
         }
 
-        _entities.BubbleTimer[player] = BlowFrames;
+        _entities.Slot(player).BubbleTimer = BlowFrames;
 
-        _players.BlowFacing[player] = (byte)((_entities.Frame[player] & 0x04) >> 1);
+        _players.BlowFacing[player] = (byte)((_entities.Slot(player).Frame & 0x04) >> 1);
     }
 
     internal void Step(int player, byte timer, in PlayerCell cell)
     {
         if (timer == 0)
         {
-            _entities.Frame[player] = (byte)(_players.BlowFacing[player] << 1);
-            _entities.BubbleTimer[player]--;
+            _entities.Slot(player).Frame = (byte)(_players.BlowFacing[player] << 1);
+            _entities.Slot(player).BubbleTimer--;
             return;
         }
 
-        _entities.Frame[player] = (byte)(_players.BlowFacing[player] + s_blowSprite[timer]);
-        _entities.BubbleTimer[player]--;
+        _entities.Slot(player).Frame = (byte)(_players.BlowFacing[player] + s_blowSprite[timer]);
+        _entities.Slot(player).BubbleTimer--;
 
         if (timer != SpawnTimer)
         {
@@ -104,34 +104,34 @@ internal sealed class BubbleBlow
             return;
         }
 
-        byte x = _entities.X[player];
+        byte x = _entities.Slot(player).X;
         byte acrossX = (byte)(x - LeftEdge);
 
-        _objects.X[slot] = x;
-        _objects.SubX[slot] = (byte)((acrossX & 0x06) >> 1);
-        _objects.Column[slot] = (byte)(acrossX >> 3);
+        _objects.Slot(slot).X = x;
+        _objects.Slot(slot).SubX = (byte)((acrossX & 0x06) >> 1);
+        _objects.Slot(slot).Column = (byte)(acrossX >> 3);
 
-        byte y = _entities.Y[player];
+        byte y = _entities.Slot(player).Y;
         int downY = y - TopEdge;
 
-        _objects.Y[slot] = y;
+        _objects.Slot(slot).Y = y;
 
         if (downY < 0)
         {
             return;
         }
 
-        _objects.SubY[slot] = (byte)(downY & 0x06);
-        _objects.Row[slot] = (byte)(downY >> 3);
+        _objects.Slot(slot).SubY = (byte)(downY & 0x06);
+        _objects.Slot(slot).Row = (byte)(downY >> 3);
 
-        _objects.Type[slot] = BubbleType;
-        _objects.Flags[slot] = 0x7D;
-        _objects.Behaviour[slot] = 0x7D;
+        _objects.Slot(slot).Type = BubbleType;
+        _objects.Slot(slot).Flags = 0x7D;
+        _objects.Slot(slot).Behaviour = 0x7D;
 
         _players.Reload[player] = _players.BlowReload[player];
-        _objects.EnemyType[slot] = _players.BlowType[player];
-        _objects.State[slot] = _players.BlowState[player];
-        _objects.Variant[slot] = _players.BlowVariant[player];
+        _objects.Slot(slot).EnemyType = _players.BlowType[player];
+        _objects.Slot(slot).State = _players.BlowState[player];
+        _objects.Slot(slot).Variant = _players.BlowVariant[player];
 
         Place(player, slot, cell);
         Thunder(player, slot);
@@ -141,7 +141,7 @@ internal sealed class BubbleBlow
         // $23DE-$23E6, once the last level has patched it in: a marked player's bubble lives $08 or $09 more turns.
         if (_round.ThunderBlow && (sbyte)_players.BossBlow[player] < 0)
         {
-            _objects.Flags[slot] = (byte)(player | 0x08);
+            _objects.Slot(slot).Flags = (byte)(player | 0x08);
         }
     }
 
@@ -154,30 +154,30 @@ internal sealed class BubbleBlow
         }
 
         _players.Shots[player]--;
-        _objects.SubX[slot] = (byte)((_objects.Direction[slot] & 0x80) != 0 ? 0 : 2);
-        _objects.State[slot] = 0;
-        _objects.Type[slot] = ThunderType;
+        _objects.Slot(slot).SubX = (byte)((_objects.Slot(slot).Direction & 0x80) != 0 ? 0 : 2);
+        _objects.Slot(slot).State = 0;
+        _objects.Slot(slot).Type = ThunderType;
     }
 
     private void Place(int player, int slot, in PlayerCell cell)
     {
-        if (_entities.Frame[player] == FacingRightSprite)
+        if (_entities.Slot(player).Frame == FacingRightSprite)
         {
-            _objects.Column[slot]++;
-            _objects.X[slot] += 8;
-            _objects.Direction[slot] = 0x00;
+            _objects.Slot(slot).Column++;
+            _objects.Slot(slot).X += 8;
+            _objects.Slot(slot).Direction = 0x00;
         }
         else
         {
-            _objects.Direction[slot] = 0x80;
+            _objects.Slot(slot).Direction = 0x80;
         }
 
-        if ((_entities.RiseCounter[player] & 0x80) != 0 || cell.FineY < LowInCell)
+        if ((_entities.Slot(player).RiseCounter & 0x80) != 0 || cell.FineY < LowInCell)
         {
             return;
         }
 
-        _objects.Row[slot]++;
-        _objects.Y[slot] += 8;
+        _objects.Slot(slot).Row++;
+        _objects.Slot(slot).Y += 8;
     }
 }

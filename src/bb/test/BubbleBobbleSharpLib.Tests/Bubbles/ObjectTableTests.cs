@@ -51,8 +51,8 @@ public sealed class ObjectTableTests
     public void WorksDownwardsAsSlotsFill()
     {
         ObjectTable objects = new();
-        objects.Type[17] = BubbleBlow.BubbleType;
-        objects.Type[16] = BubbleBlow.BubbleType;
+        objects.Slot(17).Type = BubbleBlow.BubbleType;
+        objects.Slot(16).Type = BubbleBlow.BubbleType;
 
         Assert.Equal(15, objects.FindFree());
     }
@@ -64,8 +64,8 @@ public sealed class ObjectTableTests
     {
         ObjectTable objects = new();
         objects.Type.Fill(BubbleBlow.BubbleType);
-        objects.Type[3] = ObjectTable.FreeType;
-        objects.Type[12] = ObjectTable.FreeType;
+        objects.Slot(3).Type = ObjectTable.FreeType;
+        objects.Slot(12).Type = ObjectTable.FreeType;
 
         Assert.Equal(12, objects.FindFree());
     }
@@ -89,7 +89,7 @@ public sealed class ObjectTableTests
     {
         ObjectTable objects = new();
         objects.Type.Clear();
-        objects.Type[5] = 0x80;
+        objects.Slot(5).Type = 0x80;
 
         Assert.Equal(5, objects.FindFree());
     }
@@ -101,13 +101,13 @@ public sealed class ObjectTableTests
     {
         ObjectTable objects = new();
         objects.Type.Fill(BubbleBlow.BubbleType);
-        objects.Column[4] = 9;
-        objects.Row[4] = 7;
+        objects.Slot(4).Column = 9;
+        objects.Slot(4).Row = 7;
 
         objects.Reset();
 
         Assert.Equal(17, objects.FindFree());
-        Assert.Equal(0, objects.Column[4]);
-        Assert.Equal(0, objects.Row[4]);
+        Assert.Equal(0, objects.Slot(4).Column);
+        Assert.Equal(0, objects.Slot(4).Row);
     }
 }

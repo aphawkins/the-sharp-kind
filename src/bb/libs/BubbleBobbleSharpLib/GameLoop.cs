@@ -136,7 +136,7 @@ internal sealed class GameLoop
     internal EntityTable Entities { get; } = new();
 
     // $0A64: both players out of the game.
-    internal bool IsOver => (Entities.State[0] | Entities.State[1]) == 0;
+    internal bool IsOver => (Entities.Slot(0).State | Entities.Slot(1).State) == 0;
 
     // $0A99-$0AA5: the game over has waited its time, and the game goes back to the front end (step 9).
     internal bool Finished => _overPasses >= GameOverPasses;
@@ -213,7 +213,7 @@ internal sealed class GameLoop
 
         for (int player = 0; player < PlayerTable.Capacity; player++)
         {
-            if (Entities.State[player] != 0)
+            if (Entities.Slot(player).State != 0)
             {
                 PlayerTable.Round[player] = _subflg;
             }
@@ -304,7 +304,7 @@ internal sealed class GameLoop
 
         for (int slot = 0; slot < art.Length; slot++)
         {
-            byte food = Entities.State[slot] == FoodDrop.FoodState ? Food.Number(slot) : byte.MaxValue;
+            byte food = Entities.Slot(slot).State == FoodDrop.FoodState ? Food.Number(slot) : byte.MaxValue;
 
             art[slot] = food < LevelItems.FoodKinds ? LevelItems.FoodArt(food) : -1;
         }
@@ -768,17 +768,17 @@ internal sealed class GameLoop
 
         for (int slot = 0; slot < EntityTable.Capacity; slot++)
         {
-            Entities.RiseCounter[slot] = 0xFF;
-            Entities.FallCounter[slot] = 0xFF;
-            Entities.GroundState[slot] = 0xFF;
-            Entities.BubbleTimer[slot] = 0xFF;
-            Entities.LeapFlag[slot] = 0;
-            Entities.ClimbFlag[slot] = 0;
-            Entities.ClimbNext[slot] = false;
+            Entities.Slot(slot).RiseCounter = 0xFF;
+            Entities.Slot(slot).FallCounter = 0xFF;
+            Entities.Slot(slot).GroundState = 0xFF;
+            Entities.Slot(slot).BubbleTimer = 0xFF;
+            Entities.Slot(slot).LeapFlag = 0;
+            Entities.Slot(slot).ClimbFlag = 0;
+            Entities.Slot(slot).ClimbNext = false;
 
             if (slot >= PlayerTable.Capacity)
             {
-                Entities.FlashTimer[slot] = 0;
+                Entities.Slot(slot).FlashTimer = 0;
             }
         }
 
@@ -786,18 +786,18 @@ internal sealed class GameLoop
         {
             if (!next)
             {
-                Entities.State[player] = player < _playing ? PlayerFrame.PlayingState : (byte)0;
+                Entities.Slot(player).State = player < _playing ? PlayerFrame.PlayingState : (byte)0;
             }
 
             // $E56D-$E58F: only a player in the game is brought to its starting place; the other stays where it was, which
             // is (0, 0) ($0986, $0988, $04F0), off the screen.
-            bool inGame = Entities.State[player] != 0;
+            bool inGame = Entities.Slot(player).State != 0;
 
-            Entities.X[player] = inGame ? PlayerRespawn.SpawnX[player] : (byte)0;
-            Entities.Y[player] = inGame ? PlayerRespawn.SpawnY : (byte)0;
-            Entities.Frame[player] = PlayerRespawn.SpawnFrame[player];
-            Entities.Colour[player] = LevelEnd.SpawnColour[player];
-            Entities.SpriteBase[player] = PlayerSpriteBase;
+            Entities.Slot(player).X = inGame ? PlayerRespawn.SpawnX[player] : (byte)0;
+            Entities.Slot(player).Y = inGame ? PlayerRespawn.SpawnY : (byte)0;
+            Entities.Slot(player).Frame = PlayerRespawn.SpawnFrame[player];
+            Entities.Slot(player).Colour = LevelEnd.SpawnColour[player];
+            Entities.Slot(player).SpriteBase = PlayerSpriteBase;
 
             PlayerTable.DriftRing[player] = 0;
             PlayerTable.WalkRing[player] = 0;

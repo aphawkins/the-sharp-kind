@@ -21,8 +21,8 @@ internal sealed class EnemyChase
 
     internal void Step(int slot, int target)
     {
-        byte player = _entities.Y[target];
-        byte self = _entities.Y[slot];
+        byte player = _entities.Slot(target).Y;
+        byte self = _entities.Slot(slot).Y;
 
         if (player < self)
         {
@@ -30,25 +30,25 @@ internal sealed class EnemyChase
             return;
         }
 
-        _entities.LeapFlag[slot] = player == self ? (byte)0xFF : (byte)0x00;
-        _entities.ClimbFlag[slot] = 0;
-        _entities.Heading[slot] &= ChaseMask;
+        _entities.Slot(slot).LeapFlag = player == self ? (byte)0xFF : (byte)0x00;
+        _entities.Slot(slot).ClimbFlag = 0;
+        _entities.Slot(slot).Heading &= ChaseMask;
     }
 
     private void Alternate(int slot)
     {
-        _entities.TurnTimer[slot]--;
+        _entities.Slot(slot).TurnTimer--;
 
-        if (_entities.TurnTimer[slot] != 0)
+        if (_entities.Slot(slot).TurnTimer != 0)
         {
             return;
         }
 
-        bool climb = _entities.ClimbNext[slot];
+        bool climb = _entities.Slot(slot).ClimbNext;
 
-        _entities.LeapFlag[slot] = climb ? (byte)0x00 : (byte)0xFF;
-        _entities.ClimbFlag[slot] = climb ? (byte)0xFF : (byte)0x00;
-        _entities.ClimbNext[slot] = !climb;
-        _entities.TurnTimer[slot] = _entities.TurnInterval[slot];
+        _entities.Slot(slot).LeapFlag = climb ? (byte)0x00 : (byte)0xFF;
+        _entities.Slot(slot).ClimbFlag = climb ? (byte)0xFF : (byte)0x00;
+        _entities.Slot(slot).ClimbNext = !climb;
+        _entities.Slot(slot).TurnTimer = _entities.Slot(slot).TurnInterval;
     }
 }

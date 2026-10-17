@@ -37,12 +37,12 @@ public sealed class EntityMoverTests
     {
         (ObjectTable objects, EntityMover mover) = Bubble(0x74, s_capturedRise[0]);
         byte[] actual = new byte[s_capturedRise.Length];
-        actual[0] = objects.Y[Slot];
+        actual[0] = objects.Slot(Slot).Y;
 
         for (int step = 1; step < s_capturedRise.Length; step++)
         {
             mover.Step(Slot, EntityMover.Up);
-            actual[step] = objects.Y[Slot];
+            actual[step] = objects.Slot(Slot).Y;
         }
 
         Assert.Equal(s_capturedRise, actual);
@@ -60,7 +60,7 @@ public sealed class EntityMoverTests
             mover.Step(Slot, EntityMover.Up);
         }
 
-        Assert.Equal(0x74, objects.X[Slot]);
+        Assert.Equal(0x74, objects.Slot(Slot).X);
     }
 
     // $0E33's mask. Two below zero is $FE, and masked to three bits it is six - so the sub-position
@@ -69,15 +69,15 @@ public sealed class EntityMoverTests
     public void StepsTheRowEveryFourthCallGoingUp()
     {
         (ObjectTable objects, EntityMover mover) = Bubble(0x74, 0xDD);
-        objects.Row[Slot] = 0x19;
+        objects.Slot(Slot).Row = 0x19;
 
         byte[] expected = [6, 4, 2, 0];
 
         for (int step = 0; step < 4; step++)
         {
             mover.Step(Slot, EntityMover.Up);
-            Assert.Equal(expected[step], objects.SubY[Slot]);
-            Assert.Equal(step == 3 ? 0x18 : 0x19, objects.Row[Slot]);
+            Assert.Equal(expected[step], objects.Slot(Slot).SubY);
+            Assert.Equal(step == 3 ? 0x18 : 0x19, objects.Slot(Slot).Row);
         }
     }
 
@@ -86,12 +86,12 @@ public sealed class EntityMoverTests
     public void WrapsFromTheTopRowToTheBottom()
     {
         (ObjectTable objects, EntityMover mover) = Bubble(0x74, 0x20);
-        objects.Row[Slot] = 0x00;
-        objects.SubY[Slot] = 0x02;
+        objects.Slot(Slot).Row = 0x00;
+        objects.Slot(Slot).SubY = 0x02;
 
         mover.Step(Slot, EntityMover.Up);
 
-        Assert.Equal(0x1A, objects.Row[Slot]);
+        Assert.Equal(0x1A, objects.Slot(Slot).Row);
     }
 
     // $0E41. A thing that wraps becomes type $38, unless it is already a high type.
@@ -99,26 +99,26 @@ public sealed class EntityMoverTests
     public void RetypesAWrappedThing()
     {
         (ObjectTable objects, EntityMover mover) = Bubble(0x74, 0x20);
-        objects.Row[Slot] = 0x00;
-        objects.SubY[Slot] = 0x02;
-        objects.Type[Slot] = 0x04;
+        objects.Slot(Slot).Row = 0x00;
+        objects.Slot(Slot).SubY = 0x02;
+        objects.Slot(Slot).Type = 0x04;
 
         mover.Step(Slot, EntityMover.Up);
 
-        Assert.Equal(0x38, objects.Type[Slot]);
+        Assert.Equal(0x38, objects.Slot(Slot).Type);
     }
 
     [Fact]
     public void LeavesAHighTypeAloneOnWrapping()
     {
         (ObjectTable objects, EntityMover mover) = Bubble(0x74, 0x20);
-        objects.Row[Slot] = 0x00;
-        objects.SubY[Slot] = 0x02;
-        objects.Type[Slot] = 0x1A;
+        objects.Slot(Slot).Row = 0x00;
+        objects.Slot(Slot).SubY = 0x02;
+        objects.Slot(Slot).Type = 0x1A;
 
         mover.Step(Slot, EntityMover.Up);
 
-        Assert.Equal(0x1A, objects.Type[Slot]);
+        Assert.Equal(0x1A, objects.Slot(Slot).Type);
     }
 
     // $0E75. Down is two pixels as well.
@@ -129,8 +129,8 @@ public sealed class EntityMoverTests
 
         mover.Step(Slot, EntityMover.Down);
 
-        Assert.Equal(0x42, objects.Y[Slot]);
-        Assert.Equal(0x02, objects.SubY[Slot]);
+        Assert.Equal(0x42, objects.Slot(Slot).Y);
+        Assert.Equal(0x02, objects.Slot(Slot).SubY);
     }
 
     // $0E90, and the asymmetry worth having a test of its own. Going down the row steps when the
@@ -140,20 +140,20 @@ public sealed class EntityMoverTests
     public void StepsTheRowAtTwoGoingDownRatherThanAtTheWrap()
     {
         (ObjectTable objects, EntityMover mover) = Bubble(0x74, 0x40);
-        objects.Row[Slot] = 0x10;
-        objects.SubY[Slot] = 0x06;
+        objects.Slot(Slot).Row = 0x10;
+        objects.Slot(Slot).SubY = 0x06;
 
         // Six to eight: the sub-position wraps and the row does not move.
         mover.Step(Slot, EntityMover.Down);
 
-        Assert.Equal(0x00, objects.SubY[Slot]);
-        Assert.Equal(0x10, objects.Row[Slot]);
+        Assert.Equal(0x00, objects.Slot(Slot).SubY);
+        Assert.Equal(0x10, objects.Slot(Slot).Row);
 
         // Zero to two: the row moves now.
         mover.Step(Slot, EntityMover.Down);
 
-        Assert.Equal(0x02, objects.SubY[Slot]);
-        Assert.Equal(0x11, objects.Row[Slot]);
+        Assert.Equal(0x02, objects.Slot(Slot).SubY);
+        Assert.Equal(0x11, objects.Slot(Slot).Row);
     }
 
     // $0E9A. Off the bottom and back on at the top.
@@ -161,14 +161,14 @@ public sealed class EntityMoverTests
     public void WrapsFromTheBottomRowToTheTop()
     {
         (ObjectTable objects, EntityMover mover) = Bubble(0x74, 0x40);
-        objects.Row[Slot] = 0x1C;
-        objects.SubY[Slot] = 0x00;
-        objects.Type[Slot] = 0x04;
+        objects.Slot(Slot).Row = 0x1C;
+        objects.Slot(Slot).SubY = 0x00;
+        objects.Slot(Slot).Type = 0x04;
 
         mover.Step(Slot, EntityMover.Down);
 
-        Assert.Equal(0x00, objects.Row[Slot]);
-        Assert.Equal(0x38, objects.Type[Slot]);
+        Assert.Equal(0x00, objects.Slot(Slot).Row);
+        Assert.Equal(0x38, objects.Slot(Slot).Type);
     }
 
     // $0E56. Two pixels, because $0E52's compare leaves the carry set and the add picks it up.
@@ -180,8 +180,8 @@ public sealed class EntityMoverTests
 
         mover.Step(Slot, EntityMover.Right);
 
-        Assert.Equal(0x76, objects.X[Slot]);
-        Assert.Equal(0x01, objects.SubX[Slot]);
+        Assert.Equal(0x76, objects.Slot(Slot).X);
+        Assert.Equal(0x01, objects.Slot(Slot).SubX);
     }
 
     // $0E5F. Four quarter-cells to a column, which is the eight pixels a column is wide.
@@ -189,21 +189,21 @@ public sealed class EntityMoverTests
     public void StepsTheColumnEveryFourthCallGoingRight()
     {
         (ObjectTable objects, EntityMover mover) = Bubble(0x74, 0x40);
-        objects.Column[Slot] = 0x0C;
+        objects.Slot(Slot).Column = 0x0C;
 
         for (int step = 0; step < 3; step++)
         {
             mover.Step(Slot, EntityMover.Right);
         }
 
-        Assert.Equal(0x03, objects.SubX[Slot]);
-        Assert.Equal(0x0C, objects.Column[Slot]);
+        Assert.Equal(0x03, objects.Slot(Slot).SubX);
+        Assert.Equal(0x0C, objects.Slot(Slot).Column);
 
         mover.Step(Slot, EntityMover.Right);
 
-        Assert.Equal(0x00, objects.SubX[Slot]);
-        Assert.Equal(0x0D, objects.Column[Slot]);
-        Assert.Equal(0x7C, objects.X[Slot]);
+        Assert.Equal(0x00, objects.Slot(Slot).SubX);
+        Assert.Equal(0x0D, objects.Slot(Slot).Column);
+        Assert.Equal(0x7C, objects.Slot(Slot).X);
     }
 
     // $0EAD, the mirror of the right arm - and this one really is a mirror.
@@ -211,12 +211,12 @@ public sealed class EntityMoverTests
     public void MovesTwoPixelsLeft()
     {
         (ObjectTable objects, EntityMover mover) = Bubble(0x74, 0x40);
-        objects.SubX[Slot] = 0x02;
+        objects.Slot(Slot).SubX = 0x02;
 
         mover.Step(Slot, EntityMover.Left);
 
-        Assert.Equal(0x72, objects.X[Slot]);
-        Assert.Equal(0x01, objects.SubX[Slot]);
+        Assert.Equal(0x72, objects.Slot(Slot).X);
+        Assert.Equal(0x01, objects.Slot(Slot).SubX);
     }
 
     // $0EB4. The sub-position borrows into the column below.
@@ -224,13 +224,13 @@ public sealed class EntityMoverTests
     public void StepsTheColumnDownGoingLeft()
     {
         (ObjectTable objects, EntityMover mover) = Bubble(0x74, 0x40);
-        objects.Column[Slot] = 0x0C;
-        objects.SubX[Slot] = 0x00;
+        objects.Slot(Slot).Column = 0x0C;
+        objects.Slot(Slot).SubX = 0x00;
 
         mover.Step(Slot, EntityMover.Left);
 
-        Assert.Equal(0x03, objects.SubX[Slot]);
-        Assert.Equal(0x0B, objects.Column[Slot]);
+        Assert.Equal(0x03, objects.Slot(Slot).SubX);
+        Assert.Equal(0x0B, objects.Slot(Slot).Column);
     }
 
     // $0E23's own mask. The reference takes a whole byte and uses its low two bits, so a caller
@@ -244,16 +244,16 @@ public sealed class EntityMoverTests
 
         mover.Step(Slot, direction);
 
-        Assert.Equal(expectedY, objects.Y[Slot]);
+        Assert.Equal(expectedY, objects.Slot(Slot).Y);
     }
 
     private static (ObjectTable Objects, EntityMover Mover) Bubble(byte x, byte y)
     {
         ObjectTable objects = new();
 
-        objects.Type[Slot] = BubbleBlow.BubbleType;
-        objects.X[Slot] = x;
-        objects.Y[Slot] = y;
+        objects.Slot(Slot).Type = BubbleBlow.BubbleType;
+        objects.Slot(Slot).X = x;
+        objects.Slot(Slot).Y = y;
 
         return (objects, new EntityMover(objects));
     }

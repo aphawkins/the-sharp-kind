@@ -48,11 +48,11 @@ public sealed class EnemyDispatcherTests
     public void IndexesWithTheCounterFromBeforeTheDecrement()
     {
         (ObjectTable objects, _, EnemyDispatcher dispatcher) = Entity();
-        objects.State[Slot] = 0x06;
+        objects.Slot(Slot).State = 0x06;
 
         dispatcher.Step(Slot, Open());
 
-        Assert.Equal(TypeAtSix, objects.Type[Slot]);
+        Assert.Equal(TypeAtSix, objects.Slot(Slot).Type);
     }
 
     // $0F62's `dec`. One of the counter is spent per step, and $1001 clears its top bit on a step
@@ -61,11 +61,11 @@ public sealed class EnemyDispatcherTests
     public void SpendsOneOfTheCounter()
     {
         (ObjectTable objects, _, EnemyDispatcher dispatcher) = Entity();
-        objects.State[Slot] = 0x06;
+        objects.Slot(Slot).State = 0x06;
 
         dispatcher.Step(Slot, Open());
 
-        Assert.Equal(0x05, objects.State[Slot]);
+        Assert.Equal(0x05, objects.Slot(Slot).State);
     }
 
     // $0FD1. Eight pixels and one column to the right, because $0193 is positive.
@@ -73,12 +73,12 @@ public sealed class EnemyDispatcherTests
     public void StepsRightWhenTheDirectionByteIsPositive()
     {
         (ObjectTable objects, _, EnemyDispatcher dispatcher) = Entity();
-        objects.State[Slot] = 0x06;
+        objects.Slot(Slot).State = 0x06;
 
         dispatcher.Step(Slot, Open());
 
-        Assert.Equal(StartX + 8, objects.X[Slot]);
-        Assert.Equal(StartColumn + 1, objects.Column[Slot]);
+        Assert.Equal(StartX + 8, objects.Slot(Slot).X);
+        Assert.Equal(StartColumn + 1, objects.Slot(Slot).Column);
     }
 
     // $0FA6. The same, the other way, when $0193 has its top bit set.
@@ -86,13 +86,13 @@ public sealed class EnemyDispatcherTests
     public void StepsLeftWhenTheDirectionByteIsNegative()
     {
         (ObjectTable objects, _, EnemyDispatcher dispatcher) = Entity();
-        objects.State[Slot] = 0x06;
-        objects.Direction[Slot] = 0x80;
+        objects.Slot(Slot).State = 0x06;
+        objects.Slot(Slot).Direction = 0x80;
 
         dispatcher.Step(Slot, Open());
 
-        Assert.Equal(StartX - 8, objects.X[Slot]);
-        Assert.Equal(StartColumn - 1, objects.Column[Slot]);
+        Assert.Equal(StartX - 8, objects.Slot(Slot).X);
+        Assert.Equal(StartColumn - 1, objects.Slot(Slot).Column);
     }
 
     // $0F53. A slot whose enemy type byte is negative steps twice in one call, so it covers two
@@ -101,14 +101,14 @@ public sealed class EnemyDispatcherTests
     public void StepsTwiceForANegativeEnemyType()
     {
         (ObjectTable objects, _, EnemyDispatcher dispatcher) = Entity();
-        objects.State[Slot] = 0x06;
-        objects.EnemyType[Slot] = 0x80;
+        objects.Slot(Slot).State = 0x06;
+        objects.Slot(Slot).EnemyType = 0x80;
 
         dispatcher.Step(Slot, Open());
 
-        Assert.Equal(StartColumn + 2, objects.Column[Slot]);
-        Assert.Equal(0x04, objects.State[Slot]);
-        Assert.Equal(TypeAtFive, objects.Type[Slot]);
+        Assert.Equal(StartColumn + 2, objects.Slot(Slot).Column);
+        Assert.Equal(0x04, objects.Slot(Slot).State);
+        Assert.Equal(TypeAtFive, objects.Slot(Slot).Type);
     }
 
     // $0F66. A slot whose $AA30 is negative halves its index before it reads the table, so a
@@ -117,12 +117,12 @@ public sealed class EnemyDispatcherTests
     public void HalvesTheIndexForANegativeVariant()
     {
         (ObjectTable objects, _, EnemyDispatcher dispatcher) = Entity();
-        objects.State[Slot] = 0x06;
-        objects.Variant[Slot] = 0x80;
+        objects.Slot(Slot).State = 0x06;
+        objects.Slot(Slot).Variant = 0x80;
 
         dispatcher.Step(Slot, Open());
 
-        Assert.Equal(TypeAtThree, objects.Type[Slot]);
+        Assert.Equal(TypeAtThree, objects.Slot(Slot).Type);
     }
 
     // $0F6E. A half that reaches zero is held at one instead, so the table's first byte is never
@@ -131,12 +131,12 @@ public sealed class EnemyDispatcherTests
     public void HoldsAHalvedIndexAtOne()
     {
         (ObjectTable objects, _, EnemyDispatcher dispatcher) = Entity();
-        objects.State[Slot] = 0x01;
-        objects.Variant[Slot] = 0x80;
+        objects.Slot(Slot).State = 0x01;
+        objects.Slot(Slot).Variant = 0x80;
 
         dispatcher.Step(Slot, Open());
 
-        Assert.Equal(TypeAtOne, objects.Type[Slot]);
+        Assert.Equal(TypeAtOne, objects.Slot(Slot).Type);
     }
 
     // A bubble is blown with $88 in its counter, so its first step indexes eight - past $ACB6's seven
@@ -147,11 +147,11 @@ public sealed class EnemyDispatcherTests
     public void ReadsOnIntoTheNextTableForAFreshBubble(byte counter)
     {
         (ObjectTable objects, _, EnemyDispatcher dispatcher) = Entity();
-        objects.State[Slot] = counter;
+        objects.Slot(Slot).State = counter;
 
         dispatcher.Step(Slot, Open());
 
-        Assert.Equal(0x00, objects.Type[Slot]);
+        Assert.Equal(0x00, objects.Slot(Slot).Type);
     }
 
     // $0F91 indexes with a masked counter that can be up to $7F, and the 6502 would read whatever
@@ -160,7 +160,7 @@ public sealed class EnemyDispatcherTests
     public void ThrowsRatherThanReadPastTheTable()
     {
         (ObjectTable objects, _, EnemyDispatcher dispatcher) = Entity();
-        objects.State[Slot] = 0x10;
+        objects.Slot(Slot).State = 0x10;
         SolidMap map = Open();
 
         _ = Assert.Throws<IndexOutOfRangeException>(() => dispatcher.Step(Slot, map));
@@ -172,14 +172,14 @@ public sealed class EnemyDispatcherTests
     public void WillNotStepPastTheLastColumn()
     {
         (ObjectTable objects, _, EnemyDispatcher dispatcher) = Entity();
-        objects.State[Slot] = 0x06;
-        objects.Column[Slot] = 0x1C;
+        objects.Slot(Slot).State = 0x06;
+        objects.Slot(Slot).Column = 0x1C;
 
         dispatcher.Step(Slot, Open());
 
-        Assert.Equal(0x1C, objects.Column[Slot]);
-        Assert.Equal(MovedType, objects.Type[Slot]);
-        Assert.Equal(0, objects.State[Slot]);
+        Assert.Equal(0x1C, objects.Slot(Slot).Column);
+        Assert.Equal(MovedType, objects.Slot(Slot).Type);
+        Assert.Equal(0, objects.Slot(Slot).State);
     }
 
     // $100E. The blocked thing is put back on the eight pixel grid. The `adc #$13` runs with the
@@ -188,13 +188,13 @@ public sealed class EnemyDispatcherTests
     public void SnapsABlockedThingBackToItsCell()
     {
         (ObjectTable objects, _, EnemyDispatcher dispatcher) = Entity();
-        objects.State[Slot] = 0x06;
-        objects.Column[Slot] = 0x1C;
-        objects.X[Slot] = 0x45;
+        objects.Slot(Slot).State = 0x06;
+        objects.Slot(Slot).Column = 0x1C;
+        objects.Slot(Slot).X = 0x45;
 
         dispatcher.Step(Slot, Open());
 
-        Assert.Equal(0x44, objects.X[Slot]);
+        Assert.Equal(0x44, objects.Slot(Slot).X);
     }
 
     // $0FF6's `ldy #$28`, the cell below the one just stepped into. A solid cell there puts the
@@ -203,13 +203,13 @@ public sealed class EnemyDispatcherTests
     public void IsBlockedByASolidCellBelowTheStep()
     {
         (ObjectTable objects, _, EnemyDispatcher dispatcher) = Entity();
-        objects.State[Slot] = 0x06;
+        objects.Slot(Slot).State = 0x06;
 
         dispatcher.Step(Slot, Solid(MapRow + 1, StartColumn + 1));
 
-        Assert.Equal(StartColumn, objects.Column[Slot]);
-        Assert.Equal(StartX, objects.X[Slot]);
-        Assert.Equal(MovedType, objects.Type[Slot]);
+        Assert.Equal(StartColumn, objects.Slot(Slot).Column);
+        Assert.Equal(StartX, objects.Slot(Slot).X);
+        Assert.Equal(MovedType, objects.Slot(Slot).Type);
     }
 
     // $0FB4's `beq L0FC7`. The first of the three probes is skipped when the vertical sub-position
@@ -224,12 +224,12 @@ public sealed class EnemyDispatcherTests
     public void SkipsTheFirstProbeOnACellBoundary(byte subY, int column)
     {
         (ObjectTable objects, _, EnemyDispatcher dispatcher) = Entity();
-        objects.State[Slot] = 0x06;
-        objects.SubY[Slot] = subY;
+        objects.Slot(Slot).State = 0x06;
+        objects.Slot(Slot).SubY = subY;
 
         dispatcher.Step(Slot, Solid(MapRow, StartColumn + 2));
 
-        Assert.Equal(column, objects.Column[Slot]);
+        Assert.Equal(column, objects.Slot(Slot).Column);
     }
 
     // $1016. A blocked thing whose counter is still negative after the decrement is caught, and the
@@ -239,14 +239,14 @@ public sealed class EnemyDispatcherTests
     public void CatchesABlockedThingWithANegativeCounter()
     {
         (ObjectTable objects, _, EnemyDispatcher dispatcher) = Entity();
-        objects.State[Slot] = 0x81;
-        objects.Column[Slot] = 0x1C;
+        objects.Slot(Slot).State = 0x81;
+        objects.Slot(Slot).Column = 0x1C;
 
         dispatcher.Step(Slot, Open());
 
-        Assert.Equal(CaughtType, objects.Type[Slot]);
-        Assert.Equal(MovedType, objects.EnemyType[Slot]);
-        Assert.Equal(0, objects.State[Slot]);
+        Assert.Equal(CaughtType, objects.Slot(Slot).Type);
+        Assert.Equal(MovedType, objects.Slot(Slot).EnemyType);
+        Assert.Equal(0, objects.Slot(Slot).State);
     }
 
     // $101C. The proximity test is against player two and nobody else - $BB and $C3 are the second
@@ -258,15 +258,15 @@ public sealed class EnemyDispatcherTests
     public void RecordsWhetherPlayerTwoWasNear(byte playerX, byte direction)
     {
         (ObjectTable objects, EntityTable entities, EnemyDispatcher dispatcher) = Entity();
-        objects.State[Slot] = 0x81;
-        objects.Column[Slot] = 0x1C;
-        entities.X[1] = playerX;
-        entities.Y[1] = StartY;
+        objects.Slot(Slot).State = 0x81;
+        objects.Slot(Slot).Column = 0x1C;
+        entities.Slot(1).X = playerX;
+        entities.Slot(1).Y = StartY;
 
         dispatcher.Step(Slot, Open());
 
-        Assert.Equal(direction, objects.Direction[Slot]);
-        Assert.Equal(CaughtType, objects.Type[Slot]);
+        Assert.Equal(direction, objects.Slot(Slot).Direction);
+        Assert.Equal(CaughtType, objects.Slot(Slot).Type);
     }
 
     // $101C again, this time proving player one has no say. Player one is put right on top of the
@@ -275,16 +275,16 @@ public sealed class EnemyDispatcherTests
     public void IgnoresPlayerOneEntirely()
     {
         (ObjectTable objects, EntityTable entities, EnemyDispatcher dispatcher) = Entity();
-        objects.State[Slot] = 0x81;
-        objects.Column[Slot] = 0x1C;
-        entities.X[0] = 0x44;
-        entities.Y[0] = StartY;
-        entities.X[1] = 0x00;
-        entities.Y[1] = 0x00;
+        objects.Slot(Slot).State = 0x81;
+        objects.Slot(Slot).Column = 0x1C;
+        entities.Slot(0).X = 0x44;
+        entities.Slot(0).Y = StartY;
+        entities.Slot(1).X = 0x00;
+        entities.Slot(1).Y = 0x00;
 
         dispatcher.Step(Slot, Open());
 
-        Assert.Equal(0, objects.Direction[Slot]);
+        Assert.Equal(0, objects.Slot(Slot).Direction);
     }
 
     private static SolidMap Open() => SolidMap.Build(Level(), []);
@@ -309,11 +309,11 @@ public sealed class EnemyDispatcherTests
     private static (ObjectTable Objects, EntityTable Entities, EnemyDispatcher Dispatcher) Entity()
     {
         ObjectTable objects = new();
-        objects.Type[Slot] = 0x00;
-        objects.Row[Slot] = EntityRow;
-        objects.Column[Slot] = StartColumn;
-        objects.X[Slot] = StartX;
-        objects.Y[Slot] = StartY;
+        objects.Slot(Slot).Type = 0x00;
+        objects.Slot(Slot).Row = EntityRow;
+        objects.Slot(Slot).Column = StartColumn;
+        objects.Slot(Slot).X = StartX;
+        objects.Slot(Slot).Y = StartY;
 
         EntityTable entities = new();
 

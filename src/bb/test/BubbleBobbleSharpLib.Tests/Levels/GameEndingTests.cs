@@ -122,9 +122,9 @@ public sealed class GameEndingTests
         }
 
         loop.Boss.Frame = BossFight.StunnedFrame;
-        loop.Entities.State[winner] = PlayerFrame.PlayingState;
-        loop.Entities.X[winner] = loop.Boss.X;
-        loop.Entities.Y[winner] = loop.Boss.Y;
+        loop.Entities.Slot(winner).State = PlayerFrame.PlayingState;
+        loop.Entities.Slot(winner).X = loop.Boss.X;
+        loop.Entities.Slot(winner).Y = loop.Boss.Y;
         loop.Boss.Move();
 
         return loop;

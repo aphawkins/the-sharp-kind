@@ -2,9 +2,9 @@
 // 'rebb64' - github.com/zaidka/rebb64.
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
-namespace BubbleBobbleSharpLib;
+namespace BubbleBobbleSharpLib.Tests;
 
-// One field of every slot, indexed by slot: a view over the slots, so `objects.X[slot]` reads and writes the slot's X.
+// One field of every slot, indexed by slot: a view over the slots, so `objects.Slot(slot).X` reads and writes the slot's X.
 // Goes when callers work on a whole slot (see `ObjectTable.Slot`).
 internal readonly ref struct SlotColumn<TSlot>(TSlot[] slots, SlotField<TSlot> field, int start, int length)
 {
@@ -66,7 +66,7 @@ internal readonly ref struct SlotColumn<TSlot>(TSlot[] slots, SlotField<TSlot> f
 
     public Enumerator GetEnumerator() => new(this);
 
-    public ref struct Enumerator(SlotColumn<TSlot> column)
+    internal ref struct Enumerator(SlotColumn<TSlot> column)
     {
         private readonly SlotColumn<TSlot> _column = column;
         private int _slot = -1;

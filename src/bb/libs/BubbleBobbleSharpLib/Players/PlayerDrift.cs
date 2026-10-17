@@ -49,11 +49,11 @@ internal sealed class PlayerDrift
     {
         ArgumentNullException.ThrowIfNull(map);
 
-        if ((_entities.LeftFlag[player] & 0x80) != 0)
+        if ((_entities.Slot(player).LeftFlag & 0x80) != 0)
         {
             Left(player, cell, map);
         }
-        else if ((_entities.RightFlag[player] & 0x80) != 0)
+        else if ((_entities.Slot(player).RightFlag & 0x80) != 0)
         {
             Right(player, cell, map);
         }
@@ -66,10 +66,10 @@ internal sealed class PlayerDrift
 
     private void Left(int player, in PlayerCell cell, SolidMap map)
     {
-        if (_entities.X[player] < LeftEdgeLimit)
+        if (_entities.Slot(player).X < LeftEdgeLimit)
         {
-            _entities.X[player] = LeftEdge;
-            _entities.LeftFlag[player] = 0x00;
+            _entities.Slot(player).X = LeftEdge;
+            _entities.Slot(player).LeftFlag = 0x00;
             return;
         }
 
@@ -77,19 +77,19 @@ internal sealed class PlayerDrift
 
         if (Open(player, cell, map, probe, probe + 1))
         {
-            _entities.X[player]--;
+            _entities.Slot(player).X--;
             return;
         }
 
-        _entities.LeftFlag[player] = 0x00;
+        _entities.Slot(player).LeftFlag = 0x00;
     }
 
     private void Right(int player, in PlayerCell cell, SolidMap map)
     {
-        if (_entities.X[player] >= RightEdge)
+        if (_entities.Slot(player).X >= RightEdge)
         {
-            _entities.X[player] = RightEdge;
-            _entities.RightFlag[player] = 0x00;
+            _entities.Slot(player).X = RightEdge;
+            _entities.Slot(player).RightFlag = 0x00;
             return;
         }
 
@@ -97,37 +97,37 @@ internal sealed class PlayerDrift
 
         if (Open(player, cell, map, probe, probe - 1))
         {
-            _entities.X[player]++;
+            _entities.Slot(player).X++;
             return;
         }
 
-        _entities.RightFlag[player] = 0x00;
+        _entities.Slot(player).RightFlag = 0x00;
     }
 
     private bool Open(int player, in PlayerCell cell, SolidMap map, int probe, int beyond)
-        => _entities.Y[player] < WallCheckFloor
+        => _entities.Slot(player).Y < WallCheckFloor
             || cell.FineX != 0
             || Clear(cell, map, probe, beyond);
 
     private void Animate(int player, byte port, SolidMap map)
     {
-        _entities.AnimationTimer[player]++;
+        _entities.Slot(player).AnimationTimer++;
 
-        if (_entities.AnimationTimer[player] < AnimationPeriod)
+        if (_entities.Slot(player).AnimationTimer < AnimationPeriod)
         {
             return;
         }
 
-        _entities.AnimationTimer[player] = 0;
+        _entities.Slot(player).AnimationTimer = 0;
 
-        byte frame = _entities.Frame[player];
+        byte frame = _entities.Slot(player).Frame;
 
         if (frame >= AnimationCeiling)
         {
             return;
         }
 
-        _entities.Frame[player] = (byte)(frame ^ 0x01);
+        _entities.Slot(player).Frame = (byte)(frame ^ 0x01);
 
         _steer.Step(player, port, map);
     }

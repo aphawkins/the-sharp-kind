@@ -62,10 +62,10 @@ public sealed class SuperBonusRoomTests
     {
         GameLoop loop = Take();
 
-        Assert.Equal(0x2C, loop.Entities.X[0]);
-        Assert.Equal(0x9D, loop.Entities.Y[0]);
-        Assert.Equal(0, loop.Entities.X[1]);
-        Assert.Equal(0, loop.Entities.Y[1]);
+        Assert.Equal(0x2C, loop.Entities.Slot(0).X);
+        Assert.Equal(0x9D, loop.Entities.Slot(0).Y);
+        Assert.Equal(0, loop.Entities.Slot(1).X);
+        Assert.Equal(0, loop.Entities.Slot(1).Y);
     }
 
     [Fact]
@@ -93,8 +93,8 @@ public sealed class SuperBonusRoomTests
         while (loop.SuperRoom.Remaining > 1)
         {
             RoomItem next = loop.SuperRoom.Items.First(item => item.X != 0 || item.Y != 0);
-            loop.Entities.X[0] = next.X;
-            loop.Entities.Y[0] = next.Y;
+            loop.Entities.Slot(0).X = next.X;
+            loop.Entities.Slot(0).Y = next.Y;
             loop.Pass([Idle, Idle]);
         }
 
@@ -103,14 +103,14 @@ public sealed class SuperBonusRoomTests
         Assert.Equal(expected.Bytes[..6].ToArray(), loop.Scores.Bytes[..6].ToArray());
         Assert.False(loop.IsComplete);
 
-        loop.Entities.X[0] = 0x8C;
-        loop.Entities.Y[0] = 0xDD;
+        loop.Entities.Slot(0).X = 0x8C;
+        loop.Entities.Slot(0).Y = 0xDD;
         _ = Songs(loop);
 
         for (int pass = 0; pass < 60 && loop.SuperRoom.Active; pass++)
         {
-            loop.Entities.X[0] = 0x8C;
-            loop.Entities.Y[0] = 0xDD;
+            loop.Entities.Slot(0).X = 0x8C;
+            loop.Entities.Slot(0).Y = 0xDD;
             loop.Pass([Idle, Idle]);
         }
 
@@ -133,12 +133,12 @@ public sealed class SuperBonusRoomTests
         byte[] ys = [.. room.Items.Select(item => item.Y)];
 
         room.Restore(xs, ys, remaining, 0, 0);
-        loop.Entities.X[0] = 0x8C;
-        loop.Entities.Y[0] = 0x9D;
+        loop.Entities.Slot(0).X = 0x8C;
+        loop.Entities.Slot(0).Y = 0x9D;
 
         room.Frame();
 
-        Assert.Equal(y, loop.Entities.Y[0]);
+        Assert.Equal(y, loop.Entities.Slot(0).Y);
     }
 
     private static List<Song> Songs(GameLoop loop)
@@ -160,8 +160,8 @@ public sealed class SuperBonusRoomTests
         loop.Start(s_levels.Level(1), s_zones.Zones(1), 1);
 
         loop.Items.Type[1] = SuperBonusRoom.Effect;
-        loop.Items.X[1] = loop.Entities.X[0];
-        loop.Items.Y[1] = loop.Entities.Y[0];
+        loop.Items.X[1] = loop.Entities.Slot(0).X;
+        loop.Items.Y[1] = loop.Entities.Slot(0).Y;
         loop.Items.Timer[1] = 0x20;
 
         loop.Pass([Idle, Idle]);

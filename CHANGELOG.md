@@ -7,6 +7,13 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Changed (Bubble Bobble's entity records 3/3, 2026-10-17)
+
+- **The column views are gone from the library.** Code reads `table.Slot(i).Field` (a ref property, so it assigns too) in
+  place of `table.Field[i]`: about 1,000 sites in 54 files. `SlotColumn` and `TableColumns` moved to the tests, which
+  still load and compare whole fields. `EntitySlot.ClimbNext` is a `bool` on the slot. `EntityTable.Snapshot(field)`
+  copies one field for the sprite model and the bubble glide. All 18,265 tests pass.
+
 ### Changed (Bubble Bobble's entity records 2/3, 2026-10-17)
 
 - **`EntityTable` holds an array of `EntitySlot` objects, like `ObjectTable`.** The column view is now the generic

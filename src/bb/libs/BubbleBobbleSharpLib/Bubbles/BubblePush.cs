@@ -76,7 +76,7 @@ internal sealed class BubblePush
 
         for (int slot = ObjectTable.Capacity - 1; slot >= 0; slot--)
         {
-            if (_objects.State[slot] != 0 || _objects.Type[slot] >= SpecialType)
+            if (_objects.Slot(slot).State != 0 || _objects.Slot(slot).Type >= SpecialType)
             {
                 continue;
             }
@@ -96,13 +96,13 @@ internal sealed class BubblePush
 
     private byte Peek(int address) => address switch
     {
-        >= StateBase and < XBase => _entities.State[address - StateBase],
-        >= XBase and < YBase => _entities.X[address - XBase],
-        >= YBase and < TypeBase => _entities.Y[address - YBase],
-        >= TypeBase and < ColumnBase => _objects.Type[address - TypeBase],
-        >= ColumnBase and < RowBase => _objects.Column[address - ColumnBase],
-        >= RowBase and < RowBase + ObjectTable.Capacity => _objects.Row[address - RowBase],
-        >= FrameBase and < FrameBase + EntityTable.Capacity => _entities.Frame[address - FrameBase],
+        >= StateBase and < XBase => _entities.Slot(address - StateBase).State,
+        >= XBase and < YBase => _entities.Slot(address - XBase).X,
+        >= YBase and < TypeBase => _entities.Slot(address - YBase).Y,
+        >= TypeBase and < ColumnBase => _objects.Slot(address - TypeBase).Type,
+        >= ColumnBase and < RowBase => _objects.Slot(address - ColumnBase).Column,
+        >= RowBase and < RowBase + ObjectTable.Capacity => _objects.Slot(address - RowBase).Row,
+        >= FrameBase and < FrameBase + EntityTable.Capacity => _entities.Slot(address - FrameBase).Frame,
         _ => throw new NotSupportedException($"$0AAB reading ${address:X4} with the row in Y is not translated"),
     };
 
@@ -114,9 +114,9 @@ internal sealed class BubblePush
         }
 
         byte py = Peek(YBase + y);
-        byte dy = (byte)(py - _objects.Y[slot]);
+        byte dy = (byte)(py - _objects.Slot(slot).Y);
 
-        if (py < _objects.Y[slot])
+        if (py < _objects.Slot(slot).Y)
         {
             dy = (byte)(~dy + 1);
         }
@@ -126,27 +126,27 @@ internal sealed class BubblePush
 
     private byte PushLeft(byte y, int slot, SolidMap map)
     {
-        byte x = _objects.X[slot];
+        byte x = _objects.Slot(slot).X;
 
         if (!Near(y, slot, (byte)(Peek(XBase + y) - x), LeftRange))
         {
             return y;
         }
 
-        _objects.X[slot] = (byte)(x - 4);
+        _objects.Slot(slot).X = (byte)(x - 4);
         int borrow = x >= 4 ? 0 : 1;
 
-        int sub = _objects.SubX[slot] - 2 - borrow;
+        int sub = _objects.Slot(slot).SubX - 2 - borrow;
 
         if (sub < 0)
         {
             sub &= 0x03;
-            _objects.Column[slot]--;
+            _objects.Slot(slot).Column--;
         }
 
-        _objects.SubX[slot] = (byte)sub;
+        _objects.Slot(slot).SubX = (byte)sub;
 
-        byte row = _objects.Row[slot];
+        byte row = _objects.Slot(slot).Row;
 
         if (row is < TopRow or >= BottomRow)
         {
@@ -155,14 +155,14 @@ internal sealed class BubblePush
 
         if (Walled(slot, map, 0))
         {
-            _objects.Column[slot]++;
-            _objects.SubX[slot] = 0;
+            _objects.Slot(slot).Column++;
+            _objects.Slot(slot).SubX = 0;
 
-            int a = (byte)(_objects.X[slot] - 0x14);
-            int carry = _objects.X[slot] >= 0x14 ? 1 : 0;
+            int a = (byte)(_objects.Slot(slot).X - 0x14);
+            int carry = _objects.Slot(slot).X >= 0x14 ? 1 : 0;
             a += 0x07 + carry;
             carry = a > 0xFF ? 1 : 0;
-            _objects.X[slot] = (byte)((a & 0xF8) + 0x14 + carry);
+            _objects.Slot(slot).X = (byte)((a & 0xF8) + 0x14 + carry);
         }
 
         return y;
@@ -170,7 +170,7 @@ internal sealed class BubblePush
 
     private void PushRight(byte y, int slot, SolidMap map)
     {
-        byte x = _objects.X[slot];
+        byte x = _objects.Slot(slot).X;
 
         if (!Near(y, slot, (byte)(x - Peek(XBase + y)), RightRange))
         {
@@ -178,40 +178,40 @@ internal sealed class BubblePush
         }
 
         int sum = x + 4;
-        _objects.X[slot] = (byte)sum;
+        _objects.Slot(slot).X = (byte)sum;
 
-        byte old = _objects.SubX[slot];
+        byte old = _objects.Slot(slot).SubX;
         byte sub = (byte)((old + 2 + (sum > 0xFF ? 1 : 0)) & 0x03);
 
         if (sub < old)
         {
-            _objects.Column[slot]++;
+            _objects.Slot(slot).Column++;
         }
 
-        _objects.SubX[slot] = sub;
+        _objects.Slot(slot).SubX = sub;
 
-        if (!Walled(slot, map, 1, Math.Clamp(_objects.Row[slot], TopRow, (byte)(BottomRow - 1))))
+        if (!Walled(slot, map, 1, Math.Clamp(_objects.Slot(slot).Row, TopRow, (byte)(BottomRow - 1))))
         {
             return;
         }
 
-        _objects.Column[slot]--;
-        _objects.SubX[slot] = 0;
+        _objects.Slot(slot).Column--;
+        _objects.Slot(slot).SubX = 0;
 
-        byte pushed = _objects.X[slot];
+        byte pushed = _objects.Slot(slot).X;
         int carry = pushed >= 0x1C ? 1 : 0;
-        _objects.X[slot] = (byte)((((byte)(pushed - 0x1C)) & 0xF8) + 0x13 + carry);
+        _objects.Slot(slot).X = (byte)((((byte)(pushed - 0x1C)) & 0xF8) + 0x13 + carry);
     }
 
-    private bool Walled(int slot, SolidMap map, int column) => Walled(slot, map, column, _objects.Row[slot]);
+    private bool Walled(int slot, SolidMap map, int column) => Walled(slot, map, column, _objects.Slot(slot).Row);
 
     private bool Walled(int slot, SolidMap map, int column, int row)
     {
-        int offset = _objects.Column[slot] + column;
+        int offset = _objects.Slot(slot).Column + column;
         int mapRow = row - RowBias + (offset / Stride);
         int mapColumn = offset % Stride;
 
-        return (_objects.SubY[slot] != 0 && map[mapRow, mapColumn])
+        return (_objects.Slot(slot).SubY != 0 && map[mapRow, mapColumn])
             || map[mapRow + 1, mapColumn]
             || map[mapRow + 2, mapColumn];
     }

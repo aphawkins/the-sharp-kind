@@ -44,12 +44,12 @@ internal sealed class PlayerFall
     {
         ArgumentNullException.ThrowIfNull(map);
 
-        byte y = unchecked((byte)(_entities.Y[player] + Drop));
-        _entities.Y[player] = y;
+        byte y = unchecked((byte)(_entities.Slot(player).Y + Drop));
+        _entities.Slot(player).Y = y;
 
         if (y == BottomWrap)
         {
-            _entities.Y[player] = TopRow;
+            _entities.Slot(player).Y = TopRow;
             return;
         }
 
@@ -75,26 +75,26 @@ internal sealed class PlayerFall
 
     private void Land(int player)
     {
-        _entities.GroundState[player]--;
+        _entities.Slot(player).GroundState--;
 
-        byte x = _entities.X[player];
-        byte frame = _entities.Frame[player];
+        byte x = _entities.Slot(player).X;
+        byte frame = _entities.Slot(player).Frame;
 
-        _entities.X[player] = frame is (>= 0x04 and < 0x08) or >= 0x0A
+        _entities.Slot(player).X = frame is (>= 0x04 and < 0x08) or >= 0x0A
             ? (byte)(x & ColumnMask)
             : unchecked((byte)((x + 1) & ColumnMask));
     }
 
     private void Animate(int player, byte port, SolidMap map)
     {
-        _entities.AnimationTimer[player]++;
+        _entities.Slot(player).AnimationTimer++;
 
-        if (_entities.AnimationTimer[player] < AnimationPeriod)
+        if (_entities.Slot(player).AnimationTimer < AnimationPeriod)
         {
             return;
         }
 
-        _entities.AnimationTimer[player] = 0;
+        _entities.Slot(player).AnimationTimer = 0;
         _steer.Step(player, port, map);
     }
 }

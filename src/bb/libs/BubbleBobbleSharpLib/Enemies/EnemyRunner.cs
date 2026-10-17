@@ -63,9 +63,9 @@ internal sealed class EnemyRunner
 
         Throw(slot);
 
-        byte heading = _entities.Heading[slot];
+        byte heading = _entities.Slot(slot).Heading;
 
-        if ((_entities.GroundState[slot] & 0x80) == 0)
+        if ((_entities.Slot(slot).GroundState & 0x80) == 0)
         {
             Descend(slot, target, cell, map);
             return;
@@ -73,7 +73,7 @@ internal sealed class EnemyRunner
 
         if (!EnemyProbes.Blocked(cell, map, FloorLeft, FloorMiddle, FloorRight))
         {
-            _entities.GroundState[slot]++;
+            _entities.Slot(slot).GroundState++;
             Descend(slot, target, cell, map);
             return;
         }
@@ -93,20 +93,20 @@ internal sealed class EnemyRunner
 
     private void Throw(int slot)
     {
-        if (_entities.AttackTimer[slot] != 0)
+        if (_entities.Slot(slot).AttackTimer != 0)
         {
-            _entities.AttackTimer[slot]--;
+            _entities.Slot(slot).AttackTimer--;
 
-            if (_entities.AttackTimer[slot] != 0)
+            if (_entities.Slot(slot).AttackTimer != 0)
             {
                 return;
             }
         }
 
         if (_random.Next() >= ThrowChance
-            || (_entities.GroundState[slot] & 0x80) == 0
-            || (_entities.BubbleTimer[slot] & 0x80) == 0
-            || _entities.Y[slot] >= LowestThrow)
+            || (_entities.Slot(slot).GroundState & 0x80) == 0
+            || (_entities.Slot(slot).BubbleTimer & 0x80) == 0
+            || _entities.Slot(slot).Y >= LowestThrow)
         {
             return;
         }
@@ -115,32 +115,32 @@ internal sealed class EnemyRunner
         {
             int thrown = i + ObjectBase;
 
-            if ((_objects.Type[thrown] & 0x80) == 0)
+            if ((_objects.Slot(thrown).Type & 0x80) == 0)
             {
                 continue;
             }
 
-            _objects.Type[thrown] = ThrownType;
-            _objects.EnemyType[thrown] = ThrownType;
-            _objects.X[thrown] = (byte)slot;
-            _objects.Column[thrown] = (byte)(unchecked((byte)(_entities.X[slot] - ThrowXOffset)) >> 3);
-            _objects.Row[thrown] = (byte)(unchecked((byte)(_entities.Y[slot] - ThrowYOffset)) >> 3);
-            _entities.AttackTimer[slot] = Reload;
-            _entities.BubbleTimer[slot] = Reload;
+            _objects.Slot(thrown).Type = ThrownType;
+            _objects.Slot(thrown).EnemyType = ThrownType;
+            _objects.Slot(thrown).X = (byte)slot;
+            _objects.Slot(thrown).Column = (byte)(unchecked((byte)(_entities.Slot(slot).X - ThrowXOffset)) >> 3);
+            _objects.Slot(thrown).Row = (byte)(unchecked((byte)(_entities.Slot(slot).Y - ThrowYOffset)) >> 3);
+            _entities.Slot(slot).AttackTimer = Reload;
+            _entities.Slot(slot).BubbleTimer = Reload;
             return;
         }
     }
 
     private void Descend(int slot, int target, in PlayerCell cell, SolidMap map)
     {
-        byte ground = _entities.GroundState[slot];
+        byte ground = _entities.Slot(slot).GroundState;
 
         _descent.Step(slot, cell, map);
 
-        if (_entities.GroundState[slot] != ground)
+        if (_entities.Slot(slot).GroundState != ground)
         {
-            byte towards = _entities.X[slot] >= _entities.X[target] ? LeftBit : RightBit;
-            _entities.Heading[slot] = (byte)(towards | (_entities.Heading[slot] & KeptBits));
+            byte towards = _entities.Slot(slot).X >= _entities.Slot(target).X ? LeftBit : RightBit;
+            _entities.Slot(slot).Heading = (byte)(towards | (_entities.Slot(slot).Heading & KeptBits));
         }
 
         EntityAnimation.Toggle(_entities, slot);

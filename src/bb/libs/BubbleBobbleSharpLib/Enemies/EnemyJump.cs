@@ -58,10 +58,10 @@ internal sealed class EnemyJump
 
     internal void StartUp(int slot, in PlayerCell cell, SolidMap map)
     {
-        _entities.LeftFlag[slot] = 0;
-        _entities.RightFlag[slot] = 0;
-        _entities.Heading[slot] &= 0xFB;
-        _entities.RiseCounter[slot] = WindUp;
+        _entities.Slot(slot).LeftFlag = 0;
+        _entities.Slot(slot).RightFlag = 0;
+        _entities.Slot(slot).Heading &= 0xFB;
+        _entities.Slot(slot).RiseCounter = WindUp;
 
         Step(slot, cell, map);
     }
@@ -70,7 +70,7 @@ internal sealed class EnemyJump
     {
         ArgumentNullException.ThrowIfNull(map);
 
-        byte rise = _entities.RiseCounter[slot];
+        byte rise = _entities.Slot(slot).RiseCounter;
 
         if (rise == 0)
         {
@@ -78,13 +78,13 @@ internal sealed class EnemyJump
             return;
         }
 
-        _entities.RiseCounter[slot]--;
+        _entities.Slot(slot).RiseCounter--;
 
         if (rise >= RiseStart)
         {
             if ((rise & 0x03) == 0)
             {
-                _entities.Frame[slot] ^= _entities.FrameCount[slot];
+                _entities.Slot(slot).Frame ^= _entities.Slot(slot).FrameCount;
             }
 
             return;
@@ -92,12 +92,12 @@ internal sealed class EnemyJump
 
         if (Leaping(slot))
         {
-            _entities.Y[slot]--;
+            _entities.Slot(slot).Y--;
             Across(slot, cell, map);
             return;
         }
 
-        _entities.Y[slot] = unchecked((byte)(_entities.Y[slot] - s_jump[rise]));
+        _entities.Slot(slot).Y = unchecked((byte)(_entities.Slot(slot).Y - s_jump[rise]));
         EntityAnimation.Step(_entities, slot);
     }
 
@@ -109,12 +109,12 @@ internal sealed class EnemyJump
 
     private void Fall(int slot, in PlayerCell cell, SolidMap map)
     {
-        if ((_entities.FallCounter[slot] & 0x80) != 0)
+        if ((_entities.Slot(slot).FallCounter & 0x80) != 0)
         {
-            _entities.FallCounter[slot] = 0;
+            _entities.Slot(slot).FallCounter = 0;
         }
 
-        byte fall = _entities.FallCounter[slot];
+        byte fall = _entities.Slot(slot).FallCounter;
 
         if (fall == FallEnd)
         {
@@ -122,10 +122,10 @@ internal sealed class EnemyJump
             return;
         }
 
-        _entities.FallCounter[slot]++;
+        _entities.Slot(slot).FallCounter++;
 
-        byte y = unchecked((byte)(_entities.Y[slot] + (Leaping(slot) ? s_leap[fall] : s_jump[fall])));
-        _entities.Y[slot] = y;
+        byte y = unchecked((byte)(_entities.Slot(slot).Y + (Leaping(slot) ? s_leap[fall] : s_jump[fall])));
+        _entities.Slot(slot).Y = y;
 
         if (y < LandCheckFloor || (unchecked((byte)(y - TopEdge)) & 0x07) >= cell.FineY)
         {
@@ -140,48 +140,48 @@ internal sealed class EnemyJump
             return;
         }
 
-        _entities.Y[slot] = unchecked((byte)(((y - GridBase) & 0xF8) + GridBase));
+        _entities.Slot(slot).Y = unchecked((byte)(((y - GridBase) & 0xF8) + GridBase));
         End(slot);
     }
 
     private void End(int slot)
     {
-        _entities.RiseCounter[slot] = 0xFF;
-        _entities.FallCounter[slot] = 0xFF;
+        _entities.Slot(slot).RiseCounter = 0xFF;
+        _entities.Slot(slot).FallCounter = 0xFF;
         EntityAnimation.Step(_entities, slot);
     }
 
     private void Across(int slot, in PlayerCell cell, SolidMap map)
     {
-        if ((_entities.LeftFlag[slot] & 0x80) != 0)
+        if ((_entities.Slot(slot).LeftFlag & 0x80) != 0)
         {
             int beside = cell.FineY == 0 ? LeftMiddle : LeftBottom;
 
             if (Moves(cell, map, beside, beside + 1))
             {
-                _entities.X[slot] = unchecked((byte)(_entities.X[slot] - AcrossStep));
+                _entities.Slot(slot).X = unchecked((byte)(_entities.Slot(slot).X - AcrossStep));
             }
             else
             {
-                _entities.LeftFlag[slot] = 0x01;
+                _entities.Slot(slot).LeftFlag = 0x01;
             }
         }
-        else if ((_entities.RightFlag[slot] & 0x80) != 0)
+        else if ((_entities.Slot(slot).RightFlag & 0x80) != 0)
         {
             int beside = cell.FineY == 0 ? RightMiddle : RightBottom;
 
-            if (_entities.X[slot] != RightEdge && Moves(cell, map, beside, beside - 1))
+            if (_entities.Slot(slot).X != RightEdge && Moves(cell, map, beside, beside - 1))
             {
-                _entities.X[slot] = unchecked((byte)(_entities.X[slot] + AcrossStep));
+                _entities.Slot(slot).X = unchecked((byte)(_entities.Slot(slot).X + AcrossStep));
             }
             else
             {
-                _entities.RightFlag[slot] = 0x01;
+                _entities.Slot(slot).RightFlag = 0x01;
             }
         }
 
         EntityAnimation.Step(_entities, slot);
     }
 
-    private bool Leaping(int slot) => (_entities.LeftFlag[slot] | _entities.RightFlag[slot]) != 0;
+    private bool Leaping(int slot) => (_entities.Slot(slot).LeftFlag | _entities.Slot(slot).RightFlag) != 0;
 }

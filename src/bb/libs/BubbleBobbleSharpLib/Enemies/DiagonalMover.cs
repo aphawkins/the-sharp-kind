@@ -63,7 +63,7 @@ internal sealed class DiagonalMover
     {
         ArgumentNullException.ThrowIfNull(map);
 
-        byte heading = _entities.Heading[slot];
+        byte heading = _entities.Slot(slot).Heading;
         PlayerCell moved = Vertically(slot, heading, cell, map, Slow);
 
         if ((heading & LeftBit) != 0)
@@ -82,15 +82,15 @@ internal sealed class DiagonalMover
     {
         ArgumentNullException.ThrowIfNull(map);
 
-        byte facing = _entities.Frame[slot];
-        byte heading = _entities.Heading[slot];
+        byte facing = _entities.Slot(slot).Frame;
+        byte heading = _entities.Slot(slot).Heading;
         PlayerCell moved = Vertically(slot, heading, cell, map, Fast);
 
         if ((heading & LeftBit) != 0)
         {
             if (facing < FacingLeft)
             {
-                _entities.Frame[slot] = FacingLeft;
+                _entities.Slot(slot).Frame = FacingLeft;
             }
             else
             {
@@ -99,7 +99,7 @@ internal sealed class DiagonalMover
         }
         else if (facing >= FacingLeft)
         {
-            _entities.Frame[slot] = 0;
+            _entities.Slot(slot).Frame = 0;
         }
         else
         {
@@ -111,15 +111,15 @@ internal sealed class DiagonalMover
 
     internal void Animate(int slot)
     {
-        _entities.AnimationTimer[slot]++;
+        _entities.Slot(slot).AnimationTimer++;
 
-        if (_entities.AnimationTimer[slot] < AnimationPeriod)
+        if (_entities.Slot(slot).AnimationTimer < AnimationPeriod)
         {
             return;
         }
 
-        _entities.AnimationTimer[slot] = 0;
-        _entities.Frame[slot] = (byte)((_entities.Frame[slot] + 1) & FrameMask);
+        _entities.Slot(slot).AnimationTimer = 0;
+        _entities.Slot(slot).Frame = (byte)((_entities.Slot(slot).Frame + 1) & FrameMask);
     }
 
     private static bool Blocked(in PlayerCell cell, SolidMap map, int left, int middle, int right)
@@ -139,7 +139,7 @@ internal sealed class DiagonalMover
             StepDown(slot, cell, map, speed);
         }
 
-        return PlayerCell.Of(_entities.X[slot], _entities.Y[slot]);
+        return PlayerCell.Of(_entities.Slot(slot).X, _entities.Slot(slot).Y);
     }
 
     private void StepUp(int slot, in PlayerCell cell, SolidMap map, byte up)
@@ -150,7 +150,7 @@ internal sealed class DiagonalMover
             return;
         }
 
-        byte y = _entities.Y[slot];
+        byte y = _entities.Slot(slot).Y;
 
         if (y == TopWrap)
         {
@@ -177,7 +177,7 @@ internal sealed class DiagonalMover
             return;
         }
 
-        if (_entities.Y[slot] >= BottomWrap)
+        if (_entities.Slot(slot).Y >= BottomWrap)
         {
             WrapThrough(slot, map, CeilingRow, BottomWrapOffset, TopWrap);
             return;
@@ -194,7 +194,7 @@ internal sealed class DiagonalMover
 
     private void WrapThrough(int slot, SolidMap map, int row, byte offset, byte arrival)
     {
-        int column = WrapColumnBias + (unchecked((byte)(_entities.X[slot] - offset)) >> 3);
+        int column = WrapColumnBias + (unchecked((byte)(_entities.Slot(slot).X - offset)) >> 3);
 
         if (map[row, column])
         {
@@ -202,7 +202,7 @@ internal sealed class DiagonalMover
             return;
         }
 
-        _entities.Y[slot] = arrival;
+        _entities.Slot(slot).Y = arrival;
     }
 
     private void StepLeft(int slot, in PlayerCell cell, SolidMap map, bool faces)
@@ -213,7 +213,7 @@ internal sealed class DiagonalMover
             return;
         }
 
-        _entities.X[slot] = unchecked((byte)(_entities.X[slot] - Across));
+        _entities.Slot(slot).X = unchecked((byte)(_entities.Slot(slot).X - Across));
     }
 
     private void StepRight(int slot, in PlayerCell cell, SolidMap map, bool faces)
@@ -224,21 +224,21 @@ internal sealed class DiagonalMover
             return;
         }
 
-        _entities.X[slot] = unchecked((byte)(_entities.X[slot] + Across));
+        _entities.Slot(slot).X = unchecked((byte)(_entities.Slot(slot).X + Across));
     }
 
     private void MoveVertically(int slot, byte step)
-        => _entities.Y[slot] = unchecked((byte)(_entities.Y[slot] + step));
+        => _entities.Slot(slot).Y = unchecked((byte)(_entities.Slot(slot).Y + step));
 
-    private void TurnVertically(int slot) => _entities.Heading[slot] ^= TurnUpOrDown;
+    private void TurnVertically(int slot) => _entities.Slot(slot).Heading ^= TurnUpOrDown;
 
     private void TurnAcrossWay(int slot, bool faces)
     {
-        _entities.Heading[slot] ^= TurnAcross;
+        _entities.Slot(slot).Heading ^= TurnAcross;
 
         if (faces)
         {
-            _entities.Frame[slot] ^= FacingLeft;
+            _entities.Slot(slot).Frame ^= FacingLeft;
         }
     }
 }

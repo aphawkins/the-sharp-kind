@@ -50,9 +50,9 @@ public sealed class PlayerDeathGoldenTests
 
         for (int slot = 0; slot < EntityTable.Capacity; slot++)
         {
-            entities.State[slot] = before[States + slot];
-            entities.X[slot] = before[Xs + slot];
-            entities.Y[slot] = before[Ys + slot];
+            entities.Slot(slot).State = before[States + slot];
+            entities.Slot(slot).X = before[Xs + slot];
+            entities.Slot(slot).Y = before[Ys + slot];
         }
 
         new PlayerDeath(entities).Update();

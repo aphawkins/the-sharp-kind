@@ -85,48 +85,48 @@ internal sealed class EnemyHopper
     {
         ArgumentNullException.ThrowIfNull(map);
 
-        byte facing = _entities.Frame[slot];
+        byte facing = _entities.Slot(slot).Frame;
 
         _chase.Step(slot, target);
 
-        if ((_entities.GroundState[slot] & 0x80) == 0)
+        if ((_entities.Slot(slot).GroundState & 0x80) == 0)
         {
             Descend(slot, cell, map);
             return;
         }
 
-        if ((_entities.RiseCounter[slot] & 0x80) == 0)
+        if ((_entities.Slot(slot).RiseCounter & 0x80) == 0)
         {
-            Hop(slot, _entities.RiseCounter[slot], cell, map);
+            Hop(slot, _entities.Slot(slot).RiseCounter, cell, map);
             return;
         }
 
-        if (_entities.Y[slot] < GroundCheckFloor || !EnemyProbes.Blocked(cell, map, FloorLeft, FloorMiddle, FloorRight))
+        if (_entities.Slot(slot).Y < GroundCheckFloor || !EnemyProbes.Blocked(cell, map, FloorLeft, FloorMiddle, FloorRight))
         {
-            _entities.GroundState[slot]++;
+            _entities.Slot(slot).GroundState++;
             Descend(slot, cell, map);
             return;
         }
 
-        if (_entities.ClimbFlag[slot] != 0 && EnemyProbes.PlatformAbove(cell, map))
+        if (_entities.Slot(slot).ClimbFlag != 0 && EnemyProbes.PlatformAbove(cell, map))
         {
-            _entities.LeftFlag[slot] = 0;
-            _entities.RightFlag[slot] = 0;
-            _entities.RiseCounter[slot] = UpRise;
+            _entities.Slot(slot).LeftFlag = 0;
+            _entities.Slot(slot).RightFlag = 0;
+            _entities.Slot(slot).RiseCounter = UpRise;
             Hop(slot, UpRise, cell, map);
             return;
         }
 
-        if (_entities.LeapFlag[slot] != 0 && _random.Next() < TurnChance)
+        if (_entities.Slot(slot).LeapFlag != 0 && _random.Next() < TurnChance)
         {
-            facing = _entities.X[target] >= _entities.X[slot] ? FaceRight : FaceLeft;
-            _entities.Frame[slot] = facing;
+            facing = _entities.Slot(target).X >= _entities.Slot(slot).X ? FaceRight : FaceLeft;
+            _entities.Slot(slot).Frame = facing;
         }
 
-        bool left = facing >= _entities.FrameCount[slot];
-        _entities.LeftFlag[slot] = left ? (byte)0xFF : (byte)0x00;
-        _entities.RightFlag[slot] = left ? (byte)0x00 : (byte)0xFF;
-        _entities.RiseCounter[slot] = AcrossRise;
+        bool left = facing >= _entities.Slot(slot).FrameCount;
+        _entities.Slot(slot).LeftFlag = left ? (byte)0xFF : (byte)0x00;
+        _entities.Slot(slot).RightFlag = left ? (byte)0x00 : (byte)0xFF;
+        _entities.Slot(slot).RiseCounter = AcrossRise;
         Hop(slot, AcrossRise, cell, map);
     }
 
@@ -140,54 +140,54 @@ internal sealed class EnemyHopper
 
         if (rise >= RiseStart)
         {
-            _entities.RiseCounter[slot]--;
+            _entities.Slot(slot).RiseCounter--;
 
             if ((rise & 0x03) == 0)
             {
-                _entities.Frame[slot] = _entities.Frame[slot] >= _entities.FrameCount[slot] ? FaceRight : FaceLeft;
+                _entities.Slot(slot).Frame = _entities.Slot(slot).Frame >= _entities.Slot(slot).FrameCount ? FaceRight : FaceLeft;
             }
 
             return;
         }
 
-        if ((_entities.Frame[slot] & SpringMask) >= Crouched)
+        if ((_entities.Slot(slot).Frame & SpringMask) >= Crouched)
         {
-            _entities.Frame[slot]--;
+            _entities.Slot(slot).Frame--;
             return;
         }
 
-        _entities.RiseCounter[slot]--;
+        _entities.Slot(slot).RiseCounter--;
 
         if (Leaping(slot))
         {
-            _entities.Y[slot]--;
+            _entities.Slot(slot).Y--;
             Across(slot, cell, map);
             return;
         }
 
-        _entities.Y[slot] = unchecked((byte)(_entities.Y[slot] - s_jump[rise]));
+        _entities.Slot(slot).Y = unchecked((byte)(_entities.Slot(slot).Y - s_jump[rise]));
         EntityAnimation.Toggle(_entities, slot);
     }
 
     private void Fall(int slot, in PlayerCell cell, SolidMap map)
     {
-        if ((_entities.FallCounter[slot] & 0x80) != 0)
+        if ((_entities.Slot(slot).FallCounter & 0x80) != 0)
         {
-            _entities.FallCounter[slot] = 0;
+            _entities.Slot(slot).FallCounter = 0;
         }
 
-        byte fall = _entities.FallCounter[slot];
+        byte fall = _entities.Slot(slot).FallCounter;
 
-        if (fall == FallEnd || (_entities.Frame[slot] & SpringMask) >= Crouched)
+        if (fall == FallEnd || (_entities.Slot(slot).Frame & SpringMask) >= Crouched)
         {
             Land(slot);
             return;
         }
 
-        _entities.FallCounter[slot]++;
+        _entities.Slot(slot).FallCounter++;
 
-        byte y = unchecked((byte)(_entities.Y[slot] + (Leaping(slot) ? s_leap[fall] : s_jump[fall])));
-        _entities.Y[slot] = y;
+        byte y = unchecked((byte)(_entities.Slot(slot).Y + (Leaping(slot) ? s_leap[fall] : s_jump[fall])));
+        _entities.Slot(slot).Y = y;
 
         if (y < LandCheckFloor
             || (unchecked((byte)(y - TopEdge)) & 0x07) >= cell.FineY
@@ -198,53 +198,53 @@ internal sealed class EnemyHopper
             return;
         }
 
-        _entities.Y[slot] = unchecked((byte)(((y - GridBase) & 0xF8) + GridBase));
+        _entities.Slot(slot).Y = unchecked((byte)(((y - GridBase) & 0xF8) + GridBase));
         Land(slot);
     }
 
     private void Land(int slot)
     {
-        int spring = _entities.Frame[slot] & SpringMask;
+        int spring = _entities.Slot(slot).Frame & SpringMask;
 
         if (spring == SpringMask)
         {
-            _entities.RiseCounter[slot] = 0xFF;
-            _entities.FallCounter[slot] = 0xFF;
+            _entities.Slot(slot).RiseCounter = 0xFF;
+            _entities.Slot(slot).FallCounter = 0xFF;
             EntityAnimation.Toggle(_entities, slot);
             return;
         }
 
-        _entities.Frame[slot] = spring >= Crouched
-            ? (byte)(_entities.Frame[slot] + 1)
-            : (byte)((_entities.Frame[slot] & FacingBit) | Crouched);
+        _entities.Slot(slot).Frame = spring >= Crouched
+            ? (byte)(_entities.Slot(slot).Frame + 1)
+            : (byte)((_entities.Slot(slot).Frame & FacingBit) | Crouched);
     }
 
     private void Across(int slot, in PlayerCell cell, SolidMap map)
     {
-        if ((_entities.LeftFlag[slot] & 0x80) != 0)
+        if ((_entities.Slot(slot).LeftFlag & 0x80) != 0)
         {
             if (Walled(slot, cell, map, LeftTop, LeftMiddle, LeftBottom))
             {
-                _entities.LeftFlag[slot] = 0;
-                _entities.RightFlag[slot]--;
-                _entities.Frame[slot] ^= FacingBit;
+                _entities.Slot(slot).LeftFlag = 0;
+                _entities.Slot(slot).RightFlag--;
+                _entities.Slot(slot).Frame ^= FacingBit;
             }
             else
             {
-                _entities.X[slot] = unchecked((byte)(_entities.X[slot] - AcrossStep));
+                _entities.Slot(slot).X = unchecked((byte)(_entities.Slot(slot).X - AcrossStep));
             }
         }
-        else if ((_entities.RightFlag[slot] & 0x80) != 0)
+        else if ((_entities.Slot(slot).RightFlag & 0x80) != 0)
         {
             if (Walled(slot, cell, map, RightTop, RightMiddle, RightBottom))
             {
-                _entities.RightFlag[slot] = 0;
-                _entities.LeftFlag[slot]--;
-                _entities.Frame[slot] ^= FacingBit;
+                _entities.Slot(slot).RightFlag = 0;
+                _entities.Slot(slot).LeftFlag--;
+                _entities.Slot(slot).Frame ^= FacingBit;
             }
             else
             {
-                _entities.X[slot] = unchecked((byte)(_entities.X[slot] + AcrossStep));
+                _entities.Slot(slot).X = unchecked((byte)(_entities.Slot(slot).X + AcrossStep));
             }
         }
 
@@ -252,21 +252,21 @@ internal sealed class EnemyHopper
     }
 
     private bool Walled(int slot, in PlayerCell cell, SolidMap map, int top, int middle, int bottom)
-        => _entities.Y[slot] >= WallCheckFloor
+        => _entities.Slot(slot).Y >= WallCheckFloor
             && cell.FineX == 0
             && (cell.Solid(map, top) || cell.Solid(map, middle) || (cell.FineY != 0 && cell.Solid(map, bottom)));
 
     private void Descend(int slot, in PlayerCell cell, SolidMap map)
     {
-        byte ground = _entities.GroundState[slot];
+        byte ground = _entities.Slot(slot).GroundState;
 
         _descent.Step(slot, cell, map);
 
-        if (_entities.GroundState[slot] != ground)
+        if (_entities.Slot(slot).GroundState != ground)
         {
             EntityAnimation.Step(_entities, slot);
         }
     }
 
-    private bool Leaping(int slot) => (_entities.LeftFlag[slot] | _entities.RightFlag[slot]) != 0;
+    private bool Leaping(int slot) => (_entities.Slot(slot).LeftFlag | _entities.Slot(slot).RightFlag) != 0;
 }

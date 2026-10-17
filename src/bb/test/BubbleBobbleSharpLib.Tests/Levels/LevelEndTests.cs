@@ -31,17 +31,17 @@ public sealed class LevelEndTests
     public void APlayerFlashingIsPutBackToPlay()
     {
         EndRig rig = Arranged(0xFF);
-        rig.Entities.State[1] = PlayerRespawn.RespawningState;
-        rig.Entities.State[0] = PlayerFrame.PlayingState;
-        rig.Entities.Colour[1] = 0x0E;
-        rig.Entities.FlashTimer[1] = 0x33;
+        rig.Entities.Slot(1).State = PlayerRespawn.RespawningState;
+        rig.Entities.Slot(0).State = PlayerFrame.PlayingState;
+        rig.Entities.Slot(1).Colour = 0x0E;
+        rig.Entities.Slot(1).FlashTimer = 0x33;
         rig.End.SavedFlash[1] = 0x04;
 
         rig.Expire();
 
-        Assert.Equal(PlayerFrame.PlayingState, rig.Entities.State[1]);
-        Assert.Equal(0x03, rig.Entities.Colour[1]);
-        Assert.Equal(0x04, rig.Entities.FlashTimer[1]);
+        Assert.Equal(PlayerFrame.PlayingState, rig.Entities.Slot(1).State);
+        Assert.Equal(0x03, rig.Entities.Slot(1).Colour);
+        Assert.Equal(0x04, rig.Entities.Slot(1).FlashTimer);
         Assert.Equal(1, rig.End.Complete);
     }
 
@@ -53,14 +53,14 @@ public sealed class LevelEndTests
     public void APlayerInAnyOtherStateHoldsTheEndUp(byte state)
     {
         EndRig rig = Arranged(0xFF);
-        rig.Entities.State[1] = PlayerRespawn.RespawningState;
-        rig.Entities.State[0] = state;
+        rig.Entities.Slot(1).State = PlayerRespawn.RespawningState;
+        rig.Entities.Slot(0).State = state;
 
         rig.Expire();
 
         Assert.Equal(0, rig.End.Complete);
-        Assert.Equal(PlayerFrame.PlayingState, rig.Entities.State[1]);
-        Assert.Equal(state, rig.Entities.State[0]);
+        Assert.Equal(PlayerFrame.PlayingState, rig.Entities.Slot(1).State);
+        Assert.Equal(state, rig.Entities.Slot(0).State);
     }
 
     // $15E8-$15F4, $3AB8: the first time the clock runs out every enemy still to be caught is angry, the level
@@ -69,17 +69,17 @@ public sealed class LevelEndTests
     public void TheFirstTimeTheClockRunsOutIsTheHurryUp()
     {
         EndRig rig = Arranged(0);
-        rig.Entities.State[2] = 0x02;
-        rig.Entities.State[3] = 0x0B;
-        rig.Entities.State[4] = 0x0A;
+        rig.Entities.Slot(2).State = 0x02;
+        rig.Entities.Slot(3).State = 0x0B;
+        rig.Entities.Slot(4).State = 0x0A;
 
         rig.Expire();
 
         Assert.Equal(1, rig.Timer.Hurry);
         Assert.Equal(0x0A, rig.Timer.Seconds);
-        Assert.Equal(0xFF, rig.Entities.FlashTimer[2]);
-        Assert.Equal(0x00, rig.Entities.FlashTimer[3]);
-        Assert.Equal(0xFF, rig.Entities.FlashTimer[4]);
+        Assert.Equal(0xFF, rig.Entities.Slot(2).FlashTimer);
+        Assert.Equal(0x00, rig.Entities.Slot(3).FlashTimer);
+        Assert.Equal(0xFF, rig.Entities.Slot(4).FlashTimer);
         Assert.Equal(0, rig.End.Complete);
     }
 
@@ -97,21 +97,21 @@ public sealed class LevelEndTests
         rig.Random.High = 0x18;
         rig.Timer.Seconds = 0;
         rig.Timer.Hurry = 1;
-        rig.Entities.State[0] = PlayerFrame.PlayingState;
-        rig.Entities.State[1] = PlayerFrame.PlayingState;
-        rig.Objects.Variant[0] = 0x11;
-        rig.Objects.EnemyType[1] = 0x14;
+        rig.Entities.Slot(0).State = PlayerFrame.PlayingState;
+        rig.Entities.Slot(1).State = PlayerFrame.PlayingState;
+        rig.Objects.Slot(0).Variant = 0x11;
+        rig.Objects.Slot(1).EnemyType = 0x14;
 
         rig.Expire();
 
-        Assert.Equal(0x2E, rig.Objects.Type[0]);
-        Assert.Equal(0x30, rig.Objects.Type[1]);
-        Assert.Equal(column0, rig.Objects.Column[0]);
-        Assert.Equal(row0, rig.Objects.Row[0]);
-        Assert.Equal(column1, rig.Objects.Column[1]);
-        Assert.Equal(row1, rig.Objects.Row[1]);
-        Assert.Equal(0, rig.Objects.Variant[0]);
-        Assert.Equal(0, rig.Objects.EnemyType[1]);
+        Assert.Equal(0x2E, rig.Objects.Slot(0).Type);
+        Assert.Equal(0x30, rig.Objects.Slot(1).Type);
+        Assert.Equal(column0, rig.Objects.Slot(0).Column);
+        Assert.Equal(row0, rig.Objects.Slot(0).Row);
+        Assert.Equal(column1, rig.Objects.Slot(1).Column);
+        Assert.Equal(row1, rig.Objects.Slot(1).Row);
+        Assert.Equal(0, rig.Objects.Slot(0).Variant);
+        Assert.Equal(0, rig.Objects.Slot(1).EnemyType);
         Assert.Equal(0xFF, rig.Items.FoodBase);
         Assert.Equal(LevelTimer.Stopped, rig.Timer.Frames);
         Assert.Equal(0, rig.Timer.Hurry);
@@ -125,13 +125,13 @@ public sealed class LevelEndTests
         EndRig rig = new(ScriptedRandomSource.For(0, 0, [0xAF, 0x5F, 0xC1, 0x22]));
         rig.Timer.Seconds = 0;
         rig.Timer.Hurry = 1;
-        rig.Entities.State[0] = 0;
-        rig.Entities.State[1] = PlayerFrame.PlayingState;
+        rig.Entities.Slot(0).State = 0;
+        rig.Entities.Slot(1).State = PlayerFrame.PlayingState;
 
         rig.Expire();
 
-        Assert.Equal(ObjectTable.FreeType, rig.Objects.Type[0]);
-        Assert.Equal(0x30, rig.Objects.Type[1]);
+        Assert.Equal(ObjectTable.FreeType, rig.Objects.Slot(0).Type);
+        Assert.Equal(0x30, rig.Objects.Slot(1).Type);
     }
 
     // $1AE8-$1B18: a bubble in either slot is popped, and the game waits for it to go, before the Baron comes.
@@ -141,14 +141,14 @@ public sealed class LevelEndTests
         EndRig rig = new(ScriptedRandomSource.For(0, 0, [0x01, 0x01, 0x01, 0x01]));
         rig.Timer.Seconds = 0;
         rig.Timer.Hurry = 1;
-        rig.Entities.State[0] = PlayerFrame.PlayingState;
-        rig.Objects.Type[0] = 0x3A;
-        rig.Objects.Column[0] = 6;
-        rig.Objects.Row[0] = 7;
+        rig.Entities.Slot(0).State = PlayerFrame.PlayingState;
+        rig.Objects.Slot(0).Type = 0x3A;
+        rig.Objects.Slot(0).Column = 6;
+        rig.Objects.Slot(0).Row = 7;
 
         rig.Expire();
 
-        Assert.Equal(0x2E, rig.Objects.Type[0]);
+        Assert.Equal(0x2E, rig.Objects.Slot(0).Type);
     }
 
     private static EndRig Arranged(byte hurry)
@@ -156,7 +156,7 @@ public sealed class LevelEndTests
         EndRig rig = new();
         rig.Timer.Seconds = 0;
         rig.Timer.Hurry = hurry;
-        rig.Entities.State[0] = PlayerFrame.PlayingState;
+        rig.Entities.Slot(0).State = PlayerFrame.PlayingState;
         return rig;
     }
 }

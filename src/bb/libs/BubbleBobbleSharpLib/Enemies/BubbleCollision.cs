@@ -49,15 +49,15 @@ internal sealed class BubbleCollision
         for (int enemy = EnemyCount - 1; enemy >= 0; enemy--)
         {
             int entity = enemy + EnemyBase;
-            byte state = _entities.State[entity];
+            byte state = _entities.Slot(entity).State;
 
             if (state is 0 or (>= SkipFrom and < SkipBefore))
             {
                 continue;
             }
 
-            if (Distance.Absolute(_entities.X[entity], _objects.X[slot]) >= Range
-                || Distance.Absolute(_entities.Y[entity], _objects.Y[slot]) >= Range)
+            if (Distance.Absolute(_entities.Slot(entity).X, _objects.Slot(slot).X) >= Range
+                || Distance.Absolute(_entities.Slot(entity).Y, _objects.Slot(slot).Y) >= Range)
             {
                 continue;
             }
@@ -71,28 +71,28 @@ internal sealed class BubbleCollision
 
     private void Capture(int slot, int enemy, int entity)
     {
-        _objects.Type[slot] = (byte)((enemy << 1) + CapturedBase);
+        _objects.Slot(slot).Type = (byte)((enemy << 1) + CapturedBase);
 
-        byte state = _entities.State[entity];
+        byte state = _entities.Slot(entity).State;
         byte carried = state;
 
         if (state is 0x0A or >= SkipBefore)
         {
-            carried = _entities.RiseCounter[entity];
+            carried = _entities.Slot(entity).RiseCounter;
 
-            _entities.RiseCounter[entity] = 0xFF;
-            _entities.FallCounter[entity] = 0xFF;
-            _entities.GroundState[entity] = 0xFF;
+            _entities.Slot(entity).RiseCounter = 0xFF;
+            _entities.Slot(entity).FallCounter = 0xFF;
+            _entities.Slot(entity).GroundState = 0xFF;
         }
 
-        _objects.Variant[slot] = carried;
+        _objects.Slot(slot).Variant = carried;
 
-        _entities.State[entity] = 0;
-        _entities.HoldTimer[entity] = 0;
-        _objects.State[slot] = 0;
-        _entities.Mode[entity] = 0xFF;
-        _objects.Flags[slot] = CapturedFlags;
+        _entities.Slot(entity).State = 0;
+        _entities.Slot(entity).HoldTimer = 0;
+        _objects.Slot(slot).State = 0;
+        _entities.Slot(entity).Mode = 0xFF;
+        _objects.Slot(slot).Flags = CapturedFlags;
 
-        _objects.EnemyType[slot] = s_caughtFrames[carried];
+        _objects.Slot(slot).EnemyType = s_caughtFrames[carried];
     }
 }

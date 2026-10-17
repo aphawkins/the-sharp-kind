@@ -106,14 +106,14 @@ public sealed class LevelFlowGoldenTests
 
         for (int slot = 0; slot < Slots; slot++)
         {
-            entities.State[2 + slot] = from[Enemies + slot];
-            entities.X[2 + slot] = from[Enemies + Slots + slot];
-            entities.Y[2 + slot] = from[Enemies + (2 * Slots) + slot];
-            entities.Frame[2 + slot] = from[Enemies + (3 * Slots) + slot];
-            entities.Mode[2 + slot] = 0xFF;
+            entities.Slot(2 + slot).State = from[Enemies + slot];
+            entities.Slot(2 + slot).X = from[Enemies + Slots + slot];
+            entities.Slot(2 + slot).Y = from[Enemies + (2 * Slots) + slot];
+            entities.Slot(2 + slot).Frame = from[Enemies + (3 * Slots) + slot];
+            entities.Slot(2 + slot).Mode = 0xFF;
         }
 
-        entities.State[0] = PlayerFrame.PlayingState;
+        entities.Slot(0).State = PlayerFrame.PlayingState;
         LevelFlow flow = new(new()) { Freeze = from[Freeze] };
         EnemyFrame frame = TestEnemies.Frame(entities, objects, random, new(), flow);
 
@@ -125,9 +125,9 @@ public sealed class LevelFlowGoldenTests
 
             if (state is not 0 and < 0x0B)
             {
-                Assert.Equal(to[Enemies + Slots + slot], entities.X[2 + slot]);
-                Assert.Equal(to[Enemies + (2 * Slots) + slot], entities.Y[2 + slot]);
-                Assert.Equal(to[Enemies + (3 * Slots) + slot], entities.Frame[2 + slot]);
+                Assert.Equal(to[Enemies + Slots + slot], entities.Slot(2 + slot).X);
+                Assert.Equal(to[Enemies + (2 * Slots) + slot], entities.Slot(2 + slot).Y);
+                Assert.Equal(to[Enemies + (3 * Slots) + slot], entities.Slot(2 + slot).Frame);
             }
         }
     }

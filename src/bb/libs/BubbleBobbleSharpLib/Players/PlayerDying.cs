@@ -30,37 +30,37 @@ internal sealed class PlayerDying
 
     internal void Step(int player)
     {
-        _entities.FlashTimer[player] = 0;
+        _entities.Slot(player).FlashTimer = 0;
 
-        if (_entities.LeapFlag[player] != Started)
+        if (_entities.Slot(player).LeapFlag != Started)
         {
-            _entities.LeapFlag[player] = Started;
-            _entities.AnimationTimer[player] = SpinCount;
+            _entities.Slot(player).LeapFlag = Started;
+            _entities.Slot(player).AnimationTimer = SpinCount;
         }
 
-        byte count = --_entities.AnimationTimer[player];
+        byte count = --_entities.Slot(player).AnimationTimer;
 
         if ((count & 0x80) != 0)
         {
-            _entities.Frame[player] = (byte)(((count >> 1) & 0x03) + StillFrame);
+            _entities.Slot(player).Frame = (byte)(((count >> 1) & 0x03) + StillFrame);
 
             if (count == DeadCount)
             {
-                _entities.State[player]++;
+                _entities.Slot(player).State++;
             }
 
             return;
         }
 
         int frame = (count >> 1) & 0x03;
-        _entities.Frame[player] = (byte)(frame == 0 ? 0 : frame + SpinFrame);
+        _entities.Slot(player).Frame = (byte)(frame == 0 ? 0 : frame + SpinFrame);
 
-        if ((_entities.RiseCounter[player] & 0x80) != 0 && (_entities.GroundState[player] & 0x80) != 0)
+        if ((_entities.Slot(player).RiseCounter & 0x80) != 0 && (_entities.Slot(player).GroundState & 0x80) != 0)
         {
             return;
         }
 
-        byte y = (byte)(_entities.Y[player] + FallStep);
-        _entities.Y[player] = y >= Bottom ? Top : y;
+        byte y = (byte)(_entities.Slot(player).Y + FallStep);
+        _entities.Slot(player).Y = y >= Bottom ? Top : y;
     }
 }

@@ -60,7 +60,7 @@ internal sealed class EnemyShot
         _random = random;
     }
 
-    internal bool Booked(int slot) => (_entities.BubbleTimer[slot] & 0x80) == 0;
+    internal bool Booked(int slot) => (_entities.Slot(slot).BubbleTimer & 0x80) == 0;
 
     internal void Aim(int slot, int target)
     {
@@ -69,17 +69,17 @@ internal sealed class EnemyShot
             return;
         }
 
-        if (_entities.AttackTimer[slot] != 0)
+        if (_entities.Slot(slot).AttackTimer != 0)
         {
-            _entities.AttackTimer[slot]--;
+            _entities.Slot(slot).AttackTimer--;
 
-            if (_entities.AttackTimer[slot] != 0)
+            if (_entities.Slot(slot).AttackTimer != 0)
             {
                 return;
             }
         }
 
-        if ((_entities.RiseCounter[slot] & 0x80) == 0 || (_entities.GroundState[slot] & 0x80) == 0)
+        if ((_entities.Slot(slot).RiseCounter & 0x80) == 0 || (_entities.Slot(slot).GroundState & 0x80) == 0)
         {
             return;
         }
@@ -101,61 +101,61 @@ internal sealed class EnemyShot
     {
         ArgumentNullException.ThrowIfNull(map);
 
-        _entities.BubbleTimer[slot]--;
+        _entities.Slot(slot).BubbleTimer--;
 
-        if (_entities.BubbleTimer[slot] != 0)
+        if (_entities.Slot(slot).BubbleTimer != 0)
         {
             return;
         }
 
-        byte booked = _entities.RiseCounter[slot];
+        byte booked = _entities.Slot(slot).RiseCounter;
 
         if ((booked & 0x80) != 0)
         {
-            _entities.BubbleTimer[slot]++;
+            _entities.Slot(slot).BubbleTimer++;
             return;
         }
 
-        _entities.RiseCounter[slot] = 0xFF;
+        _entities.Slot(slot).RiseCounter = 0xFF;
 
         int shot = booked + ObjectBase;
-        bool left = _entities.Frame[slot] >= _entities.FrameCount[slot];
+        bool left = _entities.Slot(slot).Frame >= _entities.Slot(slot).FrameCount;
         int beside = left ? LeftBeside : RightBeside;
 
-        _objects.Direction[shot] = left ? LeftDirection : RightDirection;
+        _objects.Slot(shot).Direction = left ? LeftDirection : RightDirection;
 
         if (cell.Solid(map, beside) || cell.Solid(map, beside + 1))
         {
-            _objects.Type[shot] = ObjectTable.FreeType;
+            _objects.Slot(shot).Type = ObjectTable.FreeType;
             return;
         }
 
-        byte column = unchecked((byte)(Cell(_entities.X[slot], LeftEdge) + (left ? LeftStep : RightStep)));
-        _objects.Column[shot] = column;
-        _objects.X[shot] = column;
-        _objects.Row[shot] = Cell(_entities.Y[slot], TopEdge);
-        _objects.Y[shot] = (byte)slot;
-        _objects.SubX[shot] = 0;
-        _objects.SubY[shot] = 0;
-        _objects.Type[shot] = Load(slot, shot, booked);
+        byte column = unchecked((byte)(Cell(_entities.Slot(slot).X, LeftEdge) + (left ? LeftStep : RightStep)));
+        _objects.Slot(shot).Column = column;
+        _objects.Slot(shot).X = column;
+        _objects.Slot(shot).Row = Cell(_entities.Slot(slot).Y, TopEdge);
+        _objects.Slot(shot).Y = (byte)slot;
+        _objects.Slot(shot).SubX = 0;
+        _objects.Slot(shot).SubY = 0;
+        _objects.Slot(shot).Type = Load(slot, shot, booked);
     }
 
     private static byte Cell(byte position, byte edge) => (byte)(unchecked((byte)(position - edge)) >> 3);
 
     private bool Facing(int slot, int target)
     {
-        byte self = _entities.X[slot];
-        bool left = _entities.Frame[slot] >= _entities.FrameCount[slot];
+        byte self = _entities.Slot(slot).X;
+        bool left = _entities.Slot(slot).Frame >= _entities.Slot(slot).FrameCount;
 
-        bool rightOfPlayer = self >= _entities.X[target] + (_random.Carry ? 0 : 1);
+        bool rightOfPlayer = self >= _entities.Slot(target).X + (_random.Carry ? 0 : 1);
 
         return rightOfPlayer ? left && self >= LeftLimit : !left && self < RightLimit;
     }
 
     private bool InReach(int slot, int target)
     {
-        byte self = _entities.Y[slot];
-        byte player = _entities.Y[target];
+        byte self = _entities.Slot(slot).Y;
+        byte player = _entities.Slot(target).Y;
 
         return self >= player && (self == player || (_random.Next() & OffRowMask) == 0);
     }
@@ -164,32 +164,32 @@ internal sealed class EnemyShot
     {
         for (int shot = ShotSlots - 1; shot >= 0; shot--)
         {
-            if ((_objects.Type[shot + ObjectBase] & 0x80) == 0)
+            if ((_objects.Slot(shot + ObjectBase).Type & 0x80) == 0)
             {
                 continue;
             }
 
-            _objects.Type[shot + ObjectBase] = BookedType;
-            _entities.RiseCounter[slot] = (byte)shot;
-            _entities.BubbleTimer[slot] = Countdown;
-            _entities.AttackTimer[slot] = Reload;
-            _objects.Flags[shot + ObjectBase] = BookedFlags;
+            _objects.Slot(shot + ObjectBase).Type = BookedType;
+            _entities.Slot(slot).RiseCounter = (byte)shot;
+            _entities.Slot(slot).BubbleTimer = Countdown;
+            _entities.Slot(slot).AttackTimer = Reload;
+            _objects.Slot(shot + ObjectBase).Flags = BookedFlags;
             return;
         }
     }
 
     private byte Load(int slot, int shot, byte booked)
     {
-        switch (_entities.State[slot])
+        switch (_entities.Slot(slot).State)
         {
             case ClassSixState:
                 return ClassSixType;
             case ClassFiveState:
-                _entities.AttackTimer[slot] = booked;
-                _entities.BubbleTimer[slot] = ClassFivePause;
+                _entities.Slot(slot).AttackTimer = booked;
+                _entities.Slot(slot).BubbleTimer = ClassFivePause;
                 return ClassFiveType;
             default:
-                _objects.SubX[shot] = (byte)(_objects.Direction[shot] & 0x7F);
+                _objects.Slot(shot).SubX = (byte)(_objects.Slot(shot).Direction & 0x7F);
                 return ShotType;
         }
     }

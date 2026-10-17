@@ -44,8 +44,8 @@ public sealed class PlayerFallTests
 
         fall.Step(0, Input.Idle, PlayerCell.Of(StartX, 0x50), Open());
 
-        Assert.Equal(0x52, entities.Y[0]);
-        Assert.Equal(0x00, entities.GroundState[0]);
+        Assert.Equal(0x52, entities.Slot(0).Y);
+        Assert.Equal(0x00, entities.Slot(0).GroundState);
     }
 
     // $2586. The wrap is an equality test, exactly as $EB56 is, so it catches $F5 and nothing else -
@@ -57,8 +57,8 @@ public sealed class PlayerFallTests
 
         fall.Step(0, Input.Idle, PlayerCell.Of(StartX, 0xF3), Open());
 
-        Assert.Equal(0x15, entities.Y[0]);
-        Assert.Equal(0x00, entities.AnimationTimer[0]);
+        Assert.Equal(0x15, entities.Slot(0).Y);
+        Assert.Equal(0x00, entities.Slot(0).AnimationTimer);
     }
 
     [Fact]
@@ -68,7 +68,7 @@ public sealed class PlayerFallTests
 
         fall.Step(0, Input.Idle, PlayerCell.Of(StartX, 0xF4), Open());
 
-        Assert.Equal(0xF6, entities.Y[0]);
+        Assert.Equal(0xF6, entities.Slot(0).Y);
     }
 
     // $25AB and $25BF. A solid cell on the row below, with the player's own row clear, is the
@@ -80,8 +80,8 @@ public sealed class PlayerFallTests
 
         fall.Step(0, Input.Idle, PlayerCell.Of(StartX, AlignedStart), Floor());
 
-        Assert.Equal(0x55, entities.Y[0]);
-        Assert.Equal(0xFF, entities.GroundState[0]);
+        Assert.Equal(0x55, entities.Slot(0).Y);
+        Assert.Equal(0xFF, entities.Slot(0).GroundState);
     }
 
     // $2597. A player whose own row is solid is inside something, and the check gives up before it
@@ -95,7 +95,7 @@ public sealed class PlayerFallTests
 
         fall.Step(0, Input.Idle, PlayerCell.Of(StartX, AlignedStart), map);
 
-        Assert.Equal(0x00, entities.GroundState[0]);
+        Assert.Equal(0x00, entities.Slot(0).GroundState);
     }
 
     // $2591. Off a row boundary there is no check at all, floor or no floor.
@@ -106,8 +106,8 @@ public sealed class PlayerFallTests
 
         fall.Step(0, Input.Idle, PlayerCell.Of(StartX, 0x51), Floor());
 
-        Assert.Equal(0x53, entities.Y[0]);
-        Assert.Equal(0x00, entities.GroundState[0]);
+        Assert.Equal(0x53, entities.Slot(0).Y);
+        Assert.Equal(0x00, entities.Slot(0).GroundState);
     }
 
     // $25BF to $25E1. Which way a landing rounds X depends on which way the player faces, and the
@@ -127,11 +127,11 @@ public sealed class PlayerFallTests
     public void SquaresXUpInTheDirectionThePlayerFaces(byte frame, byte expected)
     {
         (EntityTable entities, PlayerFall fall) = Falling(AlignedStart);
-        entities.Frame[0] = frame;
+        entities.Slot(0).Frame = frame;
 
         fall.Step(0, Input.Idle, PlayerCell.Of(StartX, AlignedStart), Floor());
 
-        Assert.Equal(expected, entities.X[0]);
+        Assert.Equal(expected, entities.Slot(0).X);
     }
 
     // $25E2 falling into $25F1. The steer runs on every second frame of a fall and not on the
@@ -141,11 +141,11 @@ public sealed class PlayerFallTests
     public void SteersOnEverySecondFrame()
     {
         (EntityTable entities, PlayerFall fall) = Falling(0x50);
-        fall.Step(0, Right, PlayerCell.Of(entities.X[0], entities.Y[0]), Open());
-        Assert.Equal(StartX, entities.X[0]);
+        fall.Step(0, Right, PlayerCell.Of(entities.Slot(0).X, entities.Slot(0).Y), Open());
+        Assert.Equal(StartX, entities.Slot(0).X);
 
-        fall.Step(0, Right, PlayerCell.Of(entities.X[0], entities.Y[0]), Open());
-        Assert.Equal(StartX + 1, entities.X[0]);
+        fall.Step(0, Right, PlayerCell.Of(entities.Slot(0).X, entities.Slot(0).Y), Open());
+        Assert.Equal(StartX + 1, entities.Slot(0).X);
     }
 
     // And a landing frame never reaches the tail, so a player who lands does not also steer.
@@ -153,24 +153,24 @@ public sealed class PlayerFallTests
     public void DoesNotSteerOnTheFrameItLands()
     {
         (EntityTable entities, PlayerFall fall) = Falling(AlignedStart);
-        entities.AnimationTimer[0] = 0x01;
+        entities.Slot(0).AnimationTimer = 0x01;
 
         fall.Step(0, Right, PlayerCell.Of(StartX, AlignedStart), Floor());
 
         // $46 is the snap alone. A steer on top of it would have made it $47.
-        Assert.Equal(0x46, entities.X[0]);
-        Assert.Equal(0x01, entities.AnimationTimer[0]);
+        Assert.Equal(0x46, entities.Slot(0).X);
+        Assert.Equal(0x01, entities.Slot(0).AnimationTimer);
     }
 
     private static (EntityTable Entities, PlayerFall Fall) Falling(byte y)
     {
         EntityTable entities = new();
 
-        entities.X[0] = StartX;
-        entities.Y[0] = y;
+        entities.Slot(0).X = StartX;
+        entities.Slot(0).Y = y;
 
         // What $05F5 leaves it at. The steer will not turn a player whose bubble timer is positive.
-        entities.BubbleTimer[0] = 0xFF;
+        entities.Slot(0).BubbleTimer = 0xFF;
 
         return (entities, new(entities, new(entities, TestBlow.Of(entities))));
     }

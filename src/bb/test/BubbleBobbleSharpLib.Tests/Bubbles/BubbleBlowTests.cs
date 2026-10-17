@@ -35,9 +35,9 @@ public sealed class BubbleBlowTests
 
         blow.Blow(0);
 
-        Assert.Equal(BubbleBlow.BlowFrames, entities.BubbleTimer[0]);
+        Assert.Equal(BubbleBlow.BlowFrames, entities.Slot(0).BubbleTimer);
         Assert.Equal(0x00, players.BlowFacing[0]);
-        Assert.Equal(ObjectTable.FreeType, objects.Type[FirstSlot]);
+        Assert.Equal(ObjectTable.FreeType, objects.Slot(FirstSlot).Type);
     }
 
     // $22F4. Bit 2 of the sprite halved, which is the 2 that $230E adds to the table.
@@ -61,7 +61,7 @@ public sealed class BubbleBlowTests
 
         blow.Blow(0);
 
-        Assert.Equal(0xFF, entities.BubbleTimer[0]);
+        Assert.Equal(0xFF, entities.Slot(0).BubbleTimer);
     }
 
     // $22ED. A blow already running owns the byte, so holding fire does not restart it part way
@@ -72,11 +72,11 @@ public sealed class BubbleBlowTests
         (_, EntityTable entities, ObjectTable objects, BubbleBlow blow) = Standing(FacingRight);
 
         blow.Blow(0);
-        entities.BubbleTimer[0] = 0x02;
+        entities.Slot(0).BubbleTimer = 0x02;
         blow.Blow(0);
 
-        Assert.Equal(0x02, entities.BubbleTimer[0]);
-        Assert.Equal(ObjectTable.FreeType, objects.Type[FirstSlot]);
+        Assert.Equal(0x02, entities.Slot(0).BubbleTimer);
+        Assert.Equal(ObjectTable.FreeType, objects.Slot(FirstSlot).Type);
     }
 
     // $ACC4 walked from six down to one, then $2303 putting the sprite back. Asserted frame by
@@ -94,11 +94,11 @@ public sealed class BubbleBlowTests
         for (int tick = 0; tick < expected.Length; tick++)
         {
             Step(blow, entities);
-            actual[tick] = entities.Frame[0];
+            actual[tick] = entities.Slot(0).Frame;
         }
 
         Assert.Equal(expected, actual);
-        Assert.Equal(0xFF, entities.BubbleTimer[0]);
+        Assert.Equal(0xFF, entities.Slot(0).BubbleTimer);
     }
 
     // The same six frames facing left, which is the whole table plus two. It is asserted separately
@@ -115,7 +115,7 @@ public sealed class BubbleBlowTests
         for (int tick = 0; tick < expected.Length; tick++)
         {
             Step(blow, entities);
-            actual[tick] = entities.Frame[0];
+            actual[tick] = entities.Slot(0).Frame;
         }
 
         Assert.Equal(expected, actual);
@@ -132,11 +132,11 @@ public sealed class BubbleBlowTests
         Step(blow, entities);
         Step(blow, entities);
 
-        Assert.Equal(ObjectTable.FreeType, objects.Type[FirstSlot]);
+        Assert.Equal(ObjectTable.FreeType, objects.Slot(FirstSlot).Type);
 
         Step(blow, entities);
 
-        Assert.Equal(BubbleBlow.BubbleType, objects.Type[FirstSlot]);
+        Assert.Equal(BubbleBlow.BubbleType, objects.Slot(FirstSlot).Type);
     }
 
     // And only one bubble out of one blow, however many frames are left to run.
@@ -151,8 +151,8 @@ public sealed class BubbleBlowTests
             Step(blow, entities);
         }
 
-        Assert.Equal(BubbleBlow.BubbleType, objects.Type[FirstSlot]);
-        Assert.Equal(ObjectTable.FreeType, objects.Type[FirstSlot - 1]);
+        Assert.Equal(BubbleBlow.BubbleType, objects.Slot(FirstSlot).Type);
+        Assert.Equal(ObjectTable.FreeType, objects.Slot(FirstSlot - 1).Type);
     }
 
     // $232A and $2341. The pixel position is copied straight across and the cell worked out from
@@ -164,16 +164,16 @@ public sealed class BubbleBlowTests
         (_, _, ObjectTable objects, _) = Blown(FacingRight);
 
         // $44 is column six, and facing right moves the bubble on by one.
-        Assert.Equal(0x4C, objects.X[FirstSlot]);
-        Assert.Equal(7, objects.Column[FirstSlot]);
-        Assert.Equal(0x00, objects.SubX[FirstSlot]);
+        Assert.Equal(0x4C, objects.Slot(FirstSlot).X);
+        Assert.Equal(7, objects.Slot(FirstSlot).Column);
+        Assert.Equal(0x00, objects.Slot(FirstSlot).SubX);
 
         // $55 is row eight, and a standing player does not get the row below.
-        Assert.Equal(StandY, objects.Y[FirstSlot]);
-        Assert.Equal(8, objects.Row[FirstSlot]);
-        Assert.Equal(0x00, objects.SubY[FirstSlot]);
+        Assert.Equal(StandY, objects.Slot(FirstSlot).Y);
+        Assert.Equal(8, objects.Slot(FirstSlot).Row);
+        Assert.Equal(0x00, objects.Slot(FirstSlot).SubY);
 
-        Assert.Equal(0x00, objects.Direction[FirstSlot]);
+        Assert.Equal(0x00, objects.Slot(FirstSlot).Direction);
     }
 
     // $2397. Facing left there is no shift at all, because the sprite's origin is already where the
@@ -183,9 +183,9 @@ public sealed class BubbleBlowTests
     {
         (_, _, ObjectTable objects, _) = Blown(FacingLeft);
 
-        Assert.Equal(StandX, objects.X[FirstSlot]);
-        Assert.Equal(6, objects.Column[FirstSlot]);
-        Assert.Equal(0x80, objects.Direction[FirstSlot]);
+        Assert.Equal(StandX, objects.Slot(FirstSlot).X);
+        Assert.Equal(6, objects.Slot(FirstSlot).Column);
+        Assert.Equal(0x80, objects.Slot(FirstSlot).Direction);
     }
 
     // $2352 and $2364. The seven bytes $2321's slot is filled with, none of which Phase 5 reads
@@ -195,11 +195,11 @@ public sealed class BubbleBlowTests
     {
         (_, _, ObjectTable objects, _) = Blown(FacingRight);
 
-        Assert.Equal(0x7D, objects.Flags[FirstSlot]);
-        Assert.Equal(0x7D, objects.Behaviour[FirstSlot]);
-        Assert.Equal(0x88, objects.State[FirstSlot]);
-        Assert.Equal(0x04, objects.Variant[FirstSlot]);
-        Assert.Equal(0x04, objects.EnemyType[FirstSlot]);
+        Assert.Equal(0x7D, objects.Slot(FirstSlot).Flags);
+        Assert.Equal(0x7D, objects.Slot(FirstSlot).Behaviour);
+        Assert.Equal(0x88, objects.Slot(FirstSlot).State);
+        Assert.Equal(0x04, objects.Slot(FirstSlot).Variant);
+        Assert.Equal(0x04, objects.Slot(FirstSlot).EnemyType);
     }
 
     // $2399. Both halves of the test have to hold. Off the ground and low in the cell, the bubble
@@ -211,13 +211,13 @@ public sealed class BubbleBlowTests
         (PlayerTable players, EntityTable entities, ObjectTable objects, BubbleBlow blow) = Standing(FacingRight);
 
         // $59 less $15 is $44: row eight still, but four pixels down it.
-        entities.Y[0] = 0x59;
-        entities.RiseCounter[0] = 0x05;
+        entities.Slot(0).Y = 0x59;
+        entities.Slot(0).RiseCounter = 0x05;
 
         Run(blow, entities, players);
 
-        Assert.Equal(9, objects.Row[FirstSlot]);
-        Assert.Equal(0x61, objects.Y[FirstSlot]);
+        Assert.Equal(9, objects.Slot(FirstSlot).Row);
+        Assert.Equal(0x61, objects.Slot(FirstSlot).Y);
     }
 
     // The same cell, standing. $87A0 negative is the whole difference, and without the test on it
@@ -226,12 +226,12 @@ public sealed class BubbleBlowTests
     public void DoesNotBlowIntoTheRowBelowWhileStanding()
     {
         (PlayerTable players, EntityTable entities, ObjectTable objects, BubbleBlow blow) = Standing(FacingRight);
-        entities.Y[0] = 0x59;
+        entities.Slot(0).Y = 0x59;
 
         Run(blow, entities, players);
 
-        Assert.Equal(8, objects.Row[FirstSlot]);
-        Assert.Equal(0x59, objects.Y[FirstSlot]);
+        Assert.Equal(8, objects.Slot(FirstSlot).Row);
+        Assert.Equal(0x59, objects.Slot(FirstSlot).Y);
     }
 
     // And airborne but high in the cell, which is the other half of the same test.
@@ -239,12 +239,12 @@ public sealed class BubbleBlowTests
     public void DoesNotBlowIntoTheRowBelowHighInTheCell()
     {
         (PlayerTable players, EntityTable entities, ObjectTable objects, BubbleBlow blow) = Standing(FacingRight);
-        entities.RiseCounter[0] = 0x05;
+        entities.Slot(0).RiseCounter = 0x05;
 
         Run(blow, entities, players);
 
-        Assert.Equal(8, objects.Row[FirstSlot]);
-        Assert.Equal(StandY, objects.Y[FirstSlot]);
+        Assert.Equal(8, objects.Slot(FirstSlot).Row);
+        Assert.Equal(StandY, objects.Slot(FirstSlot).Y);
     }
 
     // $2349. A player above the top of the playfield borrows from the subtraction and the spawn is
@@ -254,13 +254,13 @@ public sealed class BubbleBlowTests
     public void AbandonsTheSpawnAboveTheTopOfThePlayfield()
     {
         (PlayerTable players, EntityTable entities, ObjectTable objects, BubbleBlow blow) = Standing(FacingRight);
-        entities.Y[0] = 0x10;
+        entities.Slot(0).Y = 0x10;
 
         Run(blow, entities, players);
 
-        Assert.Equal(ObjectTable.FreeType, objects.Type[FirstSlot]);
-        Assert.Equal(0x10, objects.Y[FirstSlot]);
-        Assert.Equal(StandX, objects.X[FirstSlot]);
+        Assert.Equal(ObjectTable.FreeType, objects.Slot(FirstSlot).Type);
+        Assert.Equal(0x10, objects.Slot(FirstSlot).Y);
+        Assert.Equal(StandX, objects.Slot(FirstSlot).X);
         Assert.Equal(0x00, players.Reload[0]);
     }
 
@@ -313,13 +313,13 @@ public sealed class BubbleBlowTests
     public void KeepsTheTwoPlayersApart()
     {
         (PlayerTable players, EntityTable entities, _, BubbleBlow blow) = Standing(FacingRight);
-        entities.BubbleTimer[1] = 0xFF;
+        entities.Slot(1).BubbleTimer = 0xFF;
 
         Run(blow, entities, players);
 
         Assert.Equal(0x08, players.Reload[0]);
         Assert.Equal(0x00, players.Reload[1]);
-        Assert.Equal(0xFF, entities.BubbleTimer[1]);
+        Assert.Equal(0xFF, entities.Slot(1).BubbleTimer);
     }
 
     // $23B8-$23D6: a player with thunder shots left blows one instead, which goes the way they face.
@@ -334,9 +334,9 @@ public sealed class BubbleBlowTests
         Run(blow, entities, players);
 
         Assert.Equal(0x11, players.Shots[0]);
-        Assert.Equal(BubbleBlow.ThunderType, objects.Type[FirstSlot]);
-        Assert.Equal(subX, objects.SubX[FirstSlot]);
-        Assert.Equal(0, objects.State[FirstSlot]);
+        Assert.Equal(BubbleBlow.ThunderType, objects.Slot(FirstSlot).Type);
+        Assert.Equal(subX, objects.Slot(FirstSlot).SubX);
+        Assert.Equal(0, objects.Slot(FirstSlot).State);
     }
 
     // $23B8: $FF is none, and the last shot ($00) is still a shot.
@@ -350,7 +350,7 @@ public sealed class BubbleBlowTests
 
         Run(blow, entities, players);
 
-        Assert.Equal(type, objects.Type[FirstSlot]);
+        Assert.Equal(type, objects.Slot(FirstSlot).Type);
     }
 
     // The blow, run as far as the frame the bubble is made on.
@@ -358,7 +358,7 @@ public sealed class BubbleBlowTests
     {
         blow.Blow(0);
 
-        while (entities.BubbleTimer[0] >= BubbleBlow.SpawnTimer)
+        while (entities.Slot(0).BubbleTimer >= BubbleBlow.SpawnTimer)
         {
             Step(blow, entities, players);
         }
@@ -368,10 +368,10 @@ public sealed class BubbleBlowTests
     // $2162 hands $2301.
     private static void Step(BubbleBlow blow, EntityTable entities, PlayerTable? players = null)
     {
-        byte x = players is null ? StandX : entities.X[0];
-        byte y = players is null ? StandY : entities.Y[0];
+        byte x = players is null ? StandX : entities.Slot(0).X;
+        byte y = players is null ? StandY : entities.Slot(0).Y;
 
-        blow.Step(0, entities.BubbleTimer[0], PlayerCell.Of(x, y));
+        blow.Step(0, entities.Slot(0).BubbleTimer, PlayerCell.Of(x, y));
     }
 
     // A blow run to the bubble, for the cases that are about where the bubble landed.
@@ -392,15 +392,15 @@ public sealed class BubbleBlowTests
         EntityTable entities = new();
         ObjectTable objects = new();
 
-        entities.State[0] = PlayerFrame.PlayingState;
-        entities.X[0] = StandX;
-        entities.Y[0] = StandY;
+        entities.Slot(0).State = PlayerFrame.PlayingState;
+        entities.Slot(0).X = StandX;
+        entities.Slot(0).Y = StandY;
 
-        entities.Frame[0] = facing;
-        entities.RiseCounter[0] = 0xFF;
-        entities.FallCounter[0] = 0xFF;
-        entities.GroundState[0] = 0xFF;
-        entities.BubbleTimer[0] = 0xFF;
+        entities.Slot(0).Frame = facing;
+        entities.Slot(0).RiseCounter = 0xFF;
+        entities.Slot(0).FallCounter = 0xFF;
+        entities.Slot(0).GroundState = 0xFF;
+        entities.Slot(0).BubbleTimer = 0xFF;
 
         return (players, entities, objects, new BubbleBlow(players, entities, objects, new(players, new())));
     }

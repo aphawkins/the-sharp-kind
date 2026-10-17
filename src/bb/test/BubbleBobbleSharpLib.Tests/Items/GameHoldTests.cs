@@ -44,7 +44,7 @@ public sealed class GameHoldTests
 
         Assert.Equal([5, 7, 7, 5, 7, 7, 5, 7, 7, null], borders);
         Assert.All(loop.Entities.State[FirstEnemy..].ToArray(), state => Assert.Equal(SpriteShow.GiantState, state));
-        Assert.Contains(loop.Entities.X[FirstEnemy], (byte[])[0x78, 0x54]);
+        Assert.Contains(loop.Entities.Slot(FirstEnemy).X, (byte[])[0x78, 0x54]);
         Assert.True(loop.Show.On);
 
         for (int pass = 0; loop.Show.On && pass < 500; pass++)
@@ -120,7 +120,7 @@ public sealed class GameHoldTests
 
         loop.Pass([Idle, Idle]);
 
-        while (loop.Objects.Type[0] != 0x2E && passes < 100)
+        while (loop.Objects.Slot(0).Type != 0x2E && passes < 100)
         {
             Assert.Equal(1, loop.Timer.Hurry);
             Assert.Equal(Convert.ToHexString(before), Convert.ToHexString(loop.Entities.X.ToArray()));
@@ -145,7 +145,7 @@ public sealed class GameHoldTests
 
         loop.Pass([Idle, Idle]);
 
-        while (loop.Objects.Type[0] != 0x2E && passes < 100)
+        while (loop.Objects.Slot(0).Type != 0x2E && passes < 100)
         {
             loop.Pass([Idle, Idle]);
             passes++;

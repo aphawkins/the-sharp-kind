@@ -32,15 +32,15 @@ internal sealed class SlotPop
     {
         for (int slot = PlayerTable.Capacity - 1; slot >= 0; slot--)
         {
-            byte type = _objects.Type[slot];
+            byte type = _objects.Slot(slot).Type;
 
             if ((sbyte)type < 0)
             {
                 continue;
             }
 
-            _objects.EnemyType[slot] = type is >= FirstMovableType and < AfterMovableType ? type : (byte)0;
-            _objects.Type[slot] = PopType;
+            _objects.Slot(slot).EnemyType = type is >= FirstMovableType and < AfterMovableType ? type : (byte)0;
+            _objects.Slot(slot).Type = PopType;
         }
     }
 
@@ -52,7 +52,7 @@ internal sealed class SlotPop
     {
         for (int slot = PlayerTable.Capacity - 1; slot >= 0; slot--)
         {
-            if ((sbyte)_objects.Type[slot] >= 0)
+            if ((sbyte)_objects.Slot(slot).Type >= 0)
             {
                 return false;
             }

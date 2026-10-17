@@ -160,12 +160,12 @@ internal sealed class BubblePop
 
     private void Step(int slot)
     {
-        byte type = _objects.Type[slot];
+        byte type = _objects.Slot(slot).Type;
 
-        _drawnSubY[slot] = _objects.SubY[slot];
-        _drawnColumn[slot] = _objects.Column[slot];
-        _drawnRow[slot] = _objects.Row[slot];
-        _drawnColour[slot] = type == FruitType ? _objects.Behaviour[slot] : PlayfieldColourRam;
+        _drawnSubY[slot] = _objects.Slot(slot).SubY;
+        _drawnColumn[slot] = _objects.Slot(slot).Column;
+        _drawnRow[slot] = _objects.Slot(slot).Row;
+        _drawnColour[slot] = type == FruitType ? _objects.Slot(slot).Behaviour : PlayfieldColourRam;
         _drawn[slot] = type switch
         {
             <= LastFloatingType => Entry(type, slot),
@@ -187,7 +187,7 @@ internal sealed class BubblePop
             case >= Hidden:
                 break;
             case BlownType:
-                _objects.Type[slot] = FloatingType;
+                _objects.Slot(slot).Type = FloatingType;
                 _drawn[slot] = Entry(FloatingType, slot);
                 break;
             case >= CapturedFrom and < CapturedBelow:
@@ -201,38 +201,38 @@ internal sealed class BubblePop
                 Release(slot);
                 break;
             case PopFrom:
-                _objects.Type[slot] = PopMiddle;
+                _objects.Slot(slot).Type = PopMiddle;
                 break;
             case PopMiddle:
-                _objects.Type[slot] = PopLate;
+                _objects.Slot(slot).Type = PopLate;
                 break;
             case PopLate:
-                _objects.Type[slot] = PopLast;
+                _objects.Slot(slot).Type = PopLast;
                 break;
             case PopLast:
-                _objects.Type[slot] = GoneType;
+                _objects.Slot(slot).Type = GoneType;
                 break;
             case GoneType:
-                _objects.Type[slot] = ObjectTable.FreeType;
-                _objects.Column[slot] = 0;
-                _objects.Row[slot] = 0;
+                _objects.Slot(slot).Type = ObjectTable.FreeType;
+                _objects.Slot(slot).Column = 0;
+                _objects.Slot(slot).Row = 0;
                 break;
         }
     }
 
     // $E758: the picture is entry $34 or $A9C4 of the tables, one of four.
     private int Drop(int slot)
-        => _objects.SubX[slot] < DropFrames
-            ? _objects.SubX[slot]
-            : throw new NotSupportedException($"a fire drop with $A9C4 {_objects.SubX[slot]} reads past its table");
+        => _objects.Slot(slot).SubX < DropFrames
+            ? _objects.Slot(slot).SubX
+            : throw new NotSupportedException($"a fire drop with $A9C4 {_objects.Slot(slot).SubX} reads past its table");
 
-    private byte Entry(byte type, int slot) => (byte)((type * 2) + _objects.SubX[slot]);
+    private byte Entry(byte type, int slot) => (byte)((type * 2) + _objects.Slot(slot).SubX);
 
-    private byte PopFrame(int frameBase, int slot) => (byte)(PopFrameBase + frameBase + _objects.SubX[slot]);
+    private byte PopFrame(int frameBase, int slot) => (byte)(PopFrameBase + frameBase + _objects.Slot(slot).SubX);
 
     private int? Shot(byte type, int slot)
     {
-        int turn = _objects.SubX[slot];
+        int turn = _objects.Slot(slot).SubX;
 
         return type switch
         {
@@ -249,17 +249,17 @@ internal sealed class BubblePop
 
     private void Carry(int slot)
     {
-        int entity = ((_objects.Type[slot] - CapturedFrom) >> 1) + 2;
+        int entity = ((_objects.Slot(slot).Type - CapturedFrom) >> 1) + 2;
 
-        _entities.Frame[entity] = _objects.EnemyType[slot];
-        _entities.FlashTimer[entity] = 0;
-        _entities.X[entity] = _objects.X[slot];
-        _entities.Y[entity] = _objects.Y[slot];
+        _entities.Slot(entity).Frame = _objects.Slot(slot).EnemyType;
+        _entities.Slot(entity).FlashTimer = 0;
+        _entities.Slot(entity).X = _objects.Slot(slot).X;
+        _entities.Slot(entity).Y = _objects.Slot(slot).Y;
     }
 
     private void Spread(int slot)
     {
-        if (_objects.State[slot] != 0)
+        if (_objects.Slot(slot).State != 0)
         {
             return;
         }
@@ -267,22 +267,22 @@ internal sealed class BubblePop
         for (int other = ObjectTable.Capacity - 1; other >= 0; other--)
         {
             if (other == slot
-                || _objects.Type[other] >= ChainBelow
-                || Distance.Absolute(_objects.X[slot], _objects.X[other]) >= ChainRange
-                || Distance.Absolute(_objects.Y[slot], _objects.Y[other]) >= ChainRange)
+                || _objects.Slot(other).Type >= ChainBelow
+                || Distance.Absolute(_objects.Slot(slot).X, _objects.Slot(other).X) >= ChainRange
+                || Distance.Absolute(_objects.Slot(slot).Y, _objects.Slot(other).Y) >= ChainRange)
             {
                 continue;
             }
 
-            _objects.EnemyType[other] = _objects.Type[other];
-            _objects.Type[other] = TouchedType;
-            _objects.Direction[other] = _objects.Direction[slot];
+            _objects.Slot(other).EnemyType = _objects.Slot(other).Type;
+            _objects.Slot(other).Type = TouchedType;
+            _objects.Slot(other).Direction = _objects.Slot(slot).Direction;
         }
     }
 
     private void Release(int slot)
     {
-        byte held = _objects.EnemyType[slot];
+        byte held = _objects.Slot(slot).EnemyType;
 
         if (held is < CapturedFrom or >= CapturedBelow)
         {
@@ -291,24 +291,24 @@ internal sealed class BubblePop
         }
 
         int enemy = (held - CapturedFrom) >> 1;
-        int player = _objects.Direction[slot];
+        int player = _objects.Slot(slot).Direction;
 
-        _entities.State[enemy + 2] = _objects.Variant[slot];
+        _entities.Slot(enemy + 2).State = _objects.Slot(slot).Variant;
         _food.Kill(enemy);
 
         _entities.SpriteEnable |= (byte)(1 << (enemy + 2));
 
         _chain[player]++;
-        _entities.AttackTimer[enemy + 2] = _chain[player];
+        _entities.Slot(enemy + 2).AttackTimer = _chain[player];
 
-        _objects.Type[slot] = GoneType;
+        _objects.Slot(slot).Type = GoneType;
     }
 
     private void Burst(int slot, byte held)
     {
-        if (_objects.Type[slot] == TouchedType)
+        if (_objects.Slot(slot).Type == TouchedType)
         {
-            int player = _objects.Direction[slot];
+            int player = _objects.Slot(slot).Direction;
             byte score = held is >= SpecialFrom and < SpecialBelow ? SpecialScore : BubbleScore;
 
             _scores.Add(Scores.Last(player & 0x01), score);
@@ -334,15 +334,15 @@ internal sealed class BubblePop
 
             if (a == 0)
             {
-                if (_water.TryStart(_objects.Column[slot], _objects.Row[slot]))
+                if (_water.TryStart(_objects.Slot(slot).Column, _objects.Slot(slot).Row))
                 {
                     // $3DA9: gone, and nothing drawn.
-                    _objects.Type[slot] = GoneType;
+                    _objects.Slot(slot).Type = GoneType;
                     _drawn[slot] = NotDrawn;
                     return;
                 }
 
-                a = (byte)(_objects.Row[slot] + 1);
+                a = (byte)(_objects.Slot(slot).Row + 1);
             }
         }
 
@@ -352,13 +352,13 @@ internal sealed class BubblePop
                 Throw(slot);
                 break;
             case FireItem:
-                _objects.SubY[slot] = 0;
-                _objects.Type[slot] = FireType;
+                _objects.Slot(slot).SubY = 0;
+                _objects.Slot(slot).Type = FireType;
                 _drawn[slot] = (byte)(FireCell + Drop(slot));
                 _drawnSubY[slot] = 0;
                 break;
             default:
-                _objects.Type[slot] = PopFrom;
+                _objects.Slot(slot).Type = PopFrom;
                 break;
         }
     }
@@ -366,13 +366,13 @@ internal sealed class BubblePop
     // $3E30-$3E5B: the bubble becomes the bolt, on the grid, thrown the way the player who burst it faces.
     private void Throw(int slot)
     {
-        _objects.Type[slot] = ThunderType;
+        _objects.Slot(slot).Type = ThunderType;
 
-        int difference = _objects.X[slot] - GridOrigin;
+        int difference = _objects.Slot(slot).X - GridOrigin;
 
-        _objects.X[slot] = (byte)(((byte)difference & GridMask) + GridReturn + (difference >= 0 ? 1 : 0));
+        _objects.Slot(slot).X = (byte)(((byte)difference & GridMask) + GridReturn + (difference >= 0 ? 1 : 0));
 
-        int player = _objects.Direction[slot];
+        int player = _objects.Slot(slot).Direction;
 
         if (player >= EntityTable.Capacity)
         {
@@ -380,9 +380,9 @@ internal sealed class BubblePop
                 $"a bolt from a bubble facing ${player:X2} reads $8520 + ${player:X2}, past the entities, is not translated");
         }
 
-        byte frame = _entities.Frame[player];
+        byte frame = _entities.Slot(player).Frame;
 
-        _objects.Direction[slot] = frame is < 4 or (>= 8 and < 0x0A) ? LeftThrow : RightThrow;
+        _objects.Slot(slot).Direction = frame is < 4 or (>= 8 and < 0x0A) ? LeftThrow : RightThrow;
         _drawn[slot] = BoltCell;
         _drawnSubY[slot] = 0;
     }

@@ -41,12 +41,12 @@ public sealed class PlayerFrameTests
     public void LeavesAnEmptySlotAlone()
     {
         (EntityTable entities, PlayerFrame frame) = Standing();
-        entities.State[1] = 0x00;
-        entities.X[1] = 0xEC;
+        entities.Slot(1).State = 0x00;
+        entities.Slot(1).X = 0xEC;
 
         frame.Step([Right, Right], 0x01, Floor());
 
-        Assert.Equal(0xEC, entities.X[1]);
+        Assert.Equal(0xEC, entities.Slot(1).X);
     }
 
     // $1E6C. A state with no translated handler is a named gap, not a silent skip.
@@ -54,7 +54,7 @@ public sealed class PlayerFrameTests
     public void AnUntranslatedStateIsAGap()
     {
         (EntityTable entities, PlayerFrame frame) = Standing();
-        entities.State[0] = 0x04;
+        entities.Slot(0).State = 0x04;
 
         NotSupportedException gap = Assert.Throws<NotSupportedException>(() => frame.Step(0, Right, Floor()));
         Assert.Contains("is not translated", gap.Message, StringComparison.Ordinal);
@@ -69,7 +69,7 @@ public sealed class PlayerFrameTests
 
         frame.Step(0, Right, Floor());
 
-        Assert.Equal(StandX + 2, entities.X[0]);
+        Assert.Equal(StandX + 2, entities.Slot(0).X);
     }
 
     // $21CD into $21E5. No floor, and on a row boundary, so the ground byte comes out of $FF and
@@ -81,8 +81,8 @@ public sealed class PlayerFrameTests
 
         frame.Step(0, Input.Idle, Open());
 
-        Assert.Equal(0x00, entities.GroundState[0]);
-        Assert.Equal(StandY + 2, entities.Y[0]);
+        Assert.Equal(0x00, entities.Slot(0).GroundState);
+        Assert.Equal(StandY + 2, entities.Slot(0).Y);
     }
 
     // $21CD's first test. Off a row boundary the ground is not looked for at all, so a player part
@@ -91,12 +91,12 @@ public sealed class PlayerFrameTests
     public void SkipsTheGroundCheckOffARowBoundary()
     {
         (EntityTable entities, PlayerFrame frame) = Standing();
-        entities.Y[0] = StandY + 1;
+        entities.Slot(0).Y = StandY + 1;
 
         frame.Step(0, Right, Open());
 
-        Assert.Equal(0xFF, entities.GroundState[0]);
-        Assert.Equal(StandX + 2, entities.X[0]);
+        Assert.Equal(0xFF, entities.Slot(0).GroundState);
+        Assert.Equal(StandX + 2, entities.Slot(0).X);
     }
 
     // $21C5. Already off the ground with no arc running, and the frame belongs to $257C whatever
@@ -105,12 +105,12 @@ public sealed class PlayerFrameTests
     public void FallsWhileTheGroundByteSaysThereIsNoGround()
     {
         (EntityTable entities, PlayerFrame frame) = Standing();
-        entities.GroundState[0] = 0x00;
+        entities.Slot(0).GroundState = 0x00;
 
         frame.Step(0, Right, Floor());
 
-        Assert.Equal(StandY + 2, entities.Y[0]);
-        Assert.Equal(StandX, entities.X[0]);
+        Assert.Equal(StandY + 2, entities.Slot(0).Y);
+        Assert.Equal(StandX, entities.Slot(0).X);
     }
 
     // $21BD. A rise counter out of its idle means an arc is running, and the arc wins over both the
@@ -120,13 +120,13 @@ public sealed class PlayerFrameTests
     public void RunsTheArcWhileTheRiseCounterIsSet()
     {
         (EntityTable entities, PlayerFrame frame) = Standing();
-        entities.RiseCounter[0] = 0x0F;
+        entities.Slot(0).RiseCounter = 0x0F;
 
         frame.Step(0, Input.Idle, Floor());
 
         // $ACCD's last entry is four, and the rise subtracts it.
-        Assert.Equal(StandY - 4, entities.Y[0]);
-        Assert.Equal(0x0E, entities.RiseCounter[0]);
+        Assert.Equal(StandY - 4, entities.Slot(0).Y);
+        Assert.Equal(0x0E, entities.Slot(0).RiseCounter);
     }
 
     // The trigger and the arc, through the chain rather than through $222B directly: up starts the
@@ -138,12 +138,12 @@ public sealed class PlayerFrameTests
 
         frame.Step(0, Up, Floor());
 
-        Assert.Equal(0x0F, entities.RiseCounter[0]);
-        Assert.Equal(StandY, entities.Y[0]);
+        Assert.Equal(0x0F, entities.Slot(0).RiseCounter);
+        Assert.Equal(StandY, entities.Slot(0).Y);
 
         frame.Step(0, Up, Floor());
 
-        Assert.Equal(StandY - 4, entities.Y[0]);
+        Assert.Equal(StandY - 4, entities.Slot(0).Y);
     }
 
     // $21F3 to $2209. Nothing pushed, and the player breathes on a period of seven - a third of the
@@ -159,13 +159,13 @@ public sealed class PlayerFrameTests
             frame.Step(0, Input.Idle, floor);
         }
 
-        Assert.Equal(0x00, entities.Frame[0]);
-        Assert.Equal(StandX, entities.X[0]);
+        Assert.Equal(0x00, entities.Slot(0).Frame);
+        Assert.Equal(StandX, entities.Slot(0).X);
 
         frame.Step(0, Input.Idle, floor);
 
-        Assert.Equal(0x01, entities.Frame[0]);
-        Assert.Equal(0x00, entities.AnimationTimer[0]);
+        Assert.Equal(0x01, entities.Slot(0).Frame);
+        Assert.Equal(0x00, entities.Slot(0).AnimationTimer);
     }
 
     // $21F3's own test. A bubble timer that is not negative sends the idle arm to the movers instead
@@ -188,15 +188,15 @@ public sealed class PlayerFrameTests
             frame.Step(0, Input.Idle, floor);
         }
 
-        Assert.Equal(0x00, entities.AnimationTimer[0]);
-        Assert.Equal(0x08, entities.Frame[0]);
+        Assert.Equal(0x00, entities.Slot(0).AnimationTimer);
+        Assert.Equal(0x08, entities.Slot(0).Frame);
 
         // And it starts again the moment the blow ends, on that same frame: $21F3 reads the byte
         // after $2301 has already taken it back to $FF.
         frame.Step(0, Input.Idle, floor);
 
-        Assert.Equal(0x01, entities.AnimationTimer[0]);
-        Assert.Equal(0x00, entities.Frame[0]);
+        Assert.Equal(0x01, entities.Slot(0).AnimationTimer);
+        Assert.Equal(0x00, entities.Slot(0).Frame);
     }
 
     // $1CBD's loop reads both ports and walks both slots, and one player's stick never reaches the
@@ -205,14 +205,14 @@ public sealed class PlayerFrameTests
     public void DrivesTheTwoPlayersFromTheirOwnSticks()
     {
         (EntityTable entities, PlayerFrame frame) = Standing();
-        entities.State[1] = PlayerFrame.PlayingState;
-        entities.X[1] = StandX;
-        entities.Y[1] = StandY;
+        entities.Slot(1).State = PlayerFrame.PlayingState;
+        entities.Slot(1).X = StandX;
+        entities.Slot(1).Y = StandY;
 
         frame.Step([Right, Input.Idle], 0x01, Floor());
 
-        Assert.Equal(StandX + 2, entities.X[0]);
-        Assert.Equal(StandX, entities.X[1]);
+        Assert.Equal(StandX + 2, entities.Slot(0).X);
+        Assert.Equal(StandX, entities.Slot(1).X);
     }
 
     // A player standing on a floor with nothing pushed stays exactly where they are. It reads as a
@@ -224,9 +224,9 @@ public sealed class PlayerFrameTests
 
         frame.Step(0, Input.Idle, Floor());
 
-        Assert.Equal(StandX, entities.X[0]);
-        Assert.Equal(StandY, entities.Y[0]);
-        Assert.Equal(0xFF, entities.GroundState[0]);
+        Assert.Equal(StandX, entities.Slot(0).X);
+        Assert.Equal(StandY, entities.Slot(0).Y);
+        Assert.Equal(0xFF, entities.Slot(0).GroundState);
     }
 
     // What $04BB and $05F5 leave a player at, which is where every case above starts.
@@ -234,14 +234,14 @@ public sealed class PlayerFrameTests
     {
         EntityTable entities = new();
 
-        entities.State[0] = PlayerFrame.PlayingState;
-        entities.X[0] = StandX;
-        entities.Y[0] = StandY;
+        entities.Slot(0).State = PlayerFrame.PlayingState;
+        entities.Slot(0).X = StandX;
+        entities.Slot(0).Y = StandY;
 
-        entities.RiseCounter[0] = 0xFF;
-        entities.FallCounter[0] = 0xFF;
-        entities.GroundState[0] = 0xFF;
-        entities.BubbleTimer[0] = 0xFF;
+        entities.Slot(0).RiseCounter = 0xFF;
+        entities.Slot(0).FallCounter = 0xFF;
+        entities.Slot(0).GroundState = 0xFF;
+        entities.Slot(0).BubbleTimer = 0xFF;
 
         BubbleBlow blow = TestBlow.Of(entities);
         PlayerSteer steer = new(entities, blow);

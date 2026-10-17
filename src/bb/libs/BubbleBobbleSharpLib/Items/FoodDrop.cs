@@ -108,58 +108,58 @@ internal sealed class FoodDrop
     internal void Kill(int enemy)
     {
         int slot = enemy + 2;
-        byte kind = _entities.State[slot];
+        byte kind = _entities.Slot(slot).State;
 
         if (kind == RisingState)
         {
-            kind = _entities.RiseCounter[slot];
+            kind = _entities.Slot(slot).RiseCounter;
         }
 
         if (kind != NoClassState)
         {
-            _entities.LeftFlag[slot] = kind;
+            _entities.Slot(slot).LeftFlag = kind;
         }
 
-        _entities.State[slot] = FlyingState;
+        _entities.Slot(slot).State = FlyingState;
         _entities.EnemyCount--;
-        _entities.RiseCounter[slot] = (byte)((_random.Next() & 0x07) + 1);
+        _entities.Slot(slot).RiseCounter = (byte)((_random.Next() & 0x07) + 1);
 
         byte climb = (byte)((_random.Next() & 0x07) + 1);
-        _entities.FallCounter[slot] = climb;
-        _entities.RightFlag[slot] = climb;
+        _entities.Slot(slot).FallCounter = climb;
+        _entities.Slot(slot).RightFlag = climb;
 
-        _entities.GroundState[slot] = (byte)(_random.Next() & 0x01);
-        _entities.BubbleTimer[slot] = KillBubbleTimer;
-        _entities.AttackTimer[slot] = KillFood;
-        _entities.Colour[slot] = KillColour;
+        _entities.Slot(slot).GroundState = (byte)(_random.Next() & 0x01);
+        _entities.Slot(slot).BubbleTimer = KillBubbleTimer;
+        _entities.Slot(slot).AttackTimer = KillFood;
+        _entities.Slot(slot).Colour = KillColour;
     }
 
     internal void Fly(int slot)
     {
-        _entities.BubbleTimer[slot]--;
+        _entities.Slot(slot).BubbleTimer--;
 
-        if ((sbyte)_entities.BubbleTimer[slot] < 0)
+        if ((sbyte)_entities.Slot(slot).BubbleTimer < 0)
         {
-            _entities.BubbleTimer[slot] = FlightPace;
+            _entities.Slot(slot).BubbleTimer = FlightPace;
 
-            if ((sbyte)_entities.FallCounter[slot] >= 0)
+            if ((sbyte)_entities.Slot(slot).FallCounter >= 0)
             {
-                _entities.RightFlag[slot]--;
+                _entities.Slot(slot).RightFlag--;
 
-                if (_entities.RightFlag[slot] == 0)
+                if (_entities.Slot(slot).RightFlag == 0)
                 {
-                    _entities.FallCounter[slot] = (byte)(((_random.Next() & 0x07) + 1) | 0x80);
+                    _entities.Slot(slot).FallCounter = (byte)(((_random.Next() & 0x07) + 1) | 0x80);
                 }
             }
             else
             {
-                _entities.RightFlag[slot]++;
+                _entities.Slot(slot).RightFlag++;
 
-                if ((_entities.RightFlag[slot] | 0x80) > _entities.FallCounter[slot])
+                if ((_entities.Slot(slot).RightFlag | 0x80) > _entities.Slot(slot).FallCounter)
                 {
-                    _entities.X[slot] &= 0xFE;
-                    _entities.Y[slot] |= 0x01;
-                    _entities.State[slot] = FallingState;
+                    _entities.Slot(slot).X &= 0xFE;
+                    _entities.Slot(slot).Y |= 0x01;
+                    _entities.Slot(slot).State = FallingState;
                     return;
                 }
             }
@@ -183,27 +183,27 @@ internal sealed class FoodDrop
     {
         ArgumentNullException.ThrowIfNull(map);
 
-        byte y = unchecked((byte)(_entities.Y[slot] + FallStep));
+        byte y = unchecked((byte)(_entities.Slot(slot).Y + FallStep));
 
         if (y == Bottom)
         {
             y = Top;
         }
 
-        _entities.Y[slot] = y;
+        _entities.Slot(slot).Y = y;
 
         if (y >= FirstRow
             && ((y - RowOrigin) & 0x07) == 0
             && !EnemyProbes.Blocked(cell, map, InsideLeft, InsideLeft + 1, InsideLeft + 2)
             && EnemyProbes.Blocked(cell, map, UnderLeft, UnderLeft + 1, UnderLeft + 2))
         {
-            _entities.State[slot] = landed;
+            _entities.Slot(slot).State = landed;
         }
     }
 
     // $2928-$292E: which food a slot in state $12 is, from $A790 by AttackTimer. The game then reads its art from $A892 and
     // its colour from $A8E4, both of which end at food $2E.
-    internal byte Number(int slot) => s_image[_entities.AttackTimer[slot]];
+    internal byte Number(int slot) => s_image[_entities.Slot(slot).AttackTimer];
 
     internal void Land(int slot)
     {
@@ -214,21 +214,21 @@ internal sealed class FoodDrop
 
         _placed = true;
 
-        byte food = s_image[_entities.AttackTimer[slot]];
+        byte food = s_image[_entities.Slot(slot).AttackTimer];
 
-        _entities.State[slot]++;
-        _entities.RiseCounter[slot] = FoodLife;
-        _entities.Frame[slot] = (byte)slot;
-        _entities.SpriteBase[slot] = FoodSpriteBase;
-        _entities.Colour[slot] = (byte)(s_colours[food] & 0x07);
-        _entities.FlashTimer[slot] = 0;
+        _entities.Slot(slot).State++;
+        _entities.Slot(slot).RiseCounter = FoodLife;
+        _entities.Slot(slot).Frame = (byte)slot;
+        _entities.Slot(slot).SpriteBase = FoodSpriteBase;
+        _entities.Slot(slot).Colour = (byte)(s_colours[food] & 0x07);
+        _entities.Slot(slot).FlashTimer = 0;
     }
 
     internal void Wait(int slot)
     {
-        _entities.RiseCounter[slot]--;
+        _entities.Slot(slot).RiseCounter--;
 
-        if (_entities.RiseCounter[slot] == 0)
+        if (_entities.Slot(slot).RiseCounter == 0)
         {
             Clear(slot);
             return;
@@ -236,16 +236,16 @@ internal sealed class FoodDrop
 
         for (int player = 1; player >= 0; player--)
         {
-            byte state = _entities.State[player];
+            byte state = _entities.Slot(player).State;
 
             if (state is 0 or DeadState
-                || Distance.Absolute(_entities.X[slot], _entities.X[player]) >= Reach
-                || Distance.Absolute(_entities.Y[slot], _entities.Y[player]) >= Reach)
+                || Distance.Absolute(_entities.Slot(slot).X, _entities.Slot(player).X) >= Reach
+                || Distance.Absolute(_entities.Slot(slot).Y, _entities.Slot(player).Y) >= Reach)
             {
                 continue;
             }
 
-            byte score = s_image[ScoreTable + _entities.AttackTimer[slot]];
+            byte score = s_image[ScoreTable + _entities.Slot(slot).AttackTimer];
             int index = Scores.Last(player);
 
             if (score != LowScore)
@@ -261,47 +261,47 @@ internal sealed class FoodDrop
 
     private void Travel(int slot)
     {
-        byte speed = _entities.RiseCounter[slot];
+        byte speed = _entities.Slot(slot).RiseCounter;
 
-        if (_entities.GroundState[slot] == 0)
+        if (_entities.Slot(slot).GroundState == 0)
         {
-            _entities.X[slot] = unchecked((byte)(_entities.X[slot] + speed));
+            _entities.Slot(slot).X = unchecked((byte)(_entities.Slot(slot).X + speed));
 
-            if (_entities.X[slot] >= RightWall)
+            if (_entities.Slot(slot).X >= RightWall)
             {
-                _entities.X[slot] = RightWall;
-                _entities.GroundState[slot]++;
+                _entities.Slot(slot).X = RightWall;
+                _entities.Slot(slot).GroundState++;
             }
         }
         else
         {
-            _entities.X[slot] = unchecked((byte)(_entities.X[slot] - speed));
+            _entities.Slot(slot).X = unchecked((byte)(_entities.Slot(slot).X - speed));
 
-            if (_entities.X[slot] < LeftWall)
+            if (_entities.Slot(slot).X < LeftWall)
             {
-                _entities.X[slot] = LeftWall;
-                _entities.GroundState[slot]--;
+                _entities.Slot(slot).X = LeftWall;
+                _entities.Slot(slot).GroundState--;
             }
         }
 
-        byte climb = _entities.RightFlag[slot];
+        byte climb = _entities.Slot(slot).RightFlag;
 
-        if ((sbyte)_entities.FallCounter[slot] >= 0)
+        if ((sbyte)_entities.Slot(slot).FallCounter >= 0)
         {
-            _entities.Y[slot] = unchecked((byte)(_entities.Y[slot] - climb));
+            _entities.Slot(slot).Y = unchecked((byte)(_entities.Slot(slot).Y - climb));
 
-            if (_entities.Y[slot] < Top)
+            if (_entities.Slot(slot).Y < Top)
             {
-                _entities.Y[slot] = Bottom;
+                _entities.Slot(slot).Y = Bottom;
             }
         }
         else
         {
-            _entities.Y[slot] = unchecked((byte)(_entities.Y[slot] + climb));
+            _entities.Slot(slot).Y = unchecked((byte)(_entities.Slot(slot).Y + climb));
 
-            if (_entities.Y[slot] >= Bottom)
+            if (_entities.Slot(slot).Y >= Bottom)
             {
-                _entities.Y[slot] = Top;
+                _entities.Slot(slot).Y = Top;
             }
         }
 
@@ -310,23 +310,23 @@ internal sealed class FoodDrop
 
     private void Animate(int slot)
     {
-        _entities.Heading[slot]++;
+        _entities.Slot(slot).Heading++;
 
-        int step = (_entities.Heading[slot] >> 2) & 0x03;
+        int step = (_entities.Slot(slot).Heading >> 2) & 0x03;
 
         if (step != 0)
         {
-            step += s_flightFrames[_entities.LeftFlag[slot]];
+            step += s_flightFrames[_entities.Slot(slot).LeftFlag];
         }
 
-        _entities.Frame[slot] = (byte)step;
-        _entities.FlashTimer[slot] = 0;
+        _entities.Slot(slot).Frame = (byte)step;
+        _entities.Slot(slot).FlashTimer = 0;
     }
 
     private void Clear(int slot)
     {
-        _entities.X[slot] = 0;
-        _entities.Y[slot] = 0;
-        _entities.State[slot] = 0;
+        _entities.Slot(slot).X = 0;
+        _entities.Slot(slot).Y = 0;
+        _entities.Slot(slot).State = 0;
     }
 }

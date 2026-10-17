@@ -61,11 +61,11 @@ public sealed class EnemyAiLoopTests
     {
         (ObjectTable objects, _, EnemyAiLoop loop) = Table();
         Standing(objects);
-        objects.Type[Slot] = type;
+        objects.Slot(Slot).Type = type;
 
         loop.Update(s_open);
 
-        Assert.Equal(type, objects.Type[Slot]);
+        Assert.Equal(type, objects.Slot(Slot).Type);
     }
 
     // $0CFC. A slot with an AI state goes to the movement dispatcher instead of being tested for a
@@ -78,16 +78,16 @@ public sealed class EnemyAiLoopTests
     {
         (ObjectTable objects, EntityTable entities, EnemyAiLoop loop) = Table();
         Standing(objects);
-        objects.Row[Slot] = 0x0A;
-        objects.Column[Slot] = 0x05;
-        objects.State[Slot] = 0x06;
-        entities.State[0] = 0x01;
+        objects.Slot(Slot).Row = 0x0A;
+        objects.Slot(Slot).Column = 0x05;
+        objects.Slot(Slot).State = 0x06;
+        entities.Slot(0).State = 0x01;
 
         loop.Update(s_open);
 
-        Assert.Equal(0x05, objects.State[Slot]);
-        Assert.Equal(PlayerX + 8, objects.X[Slot]);
-        Assert.NotEqual(Caught, objects.Type[Slot]);
+        Assert.Equal(0x05, objects.Slot(Slot).State);
+        Assert.Equal(PlayerX + 8, objects.Slot(Slot).X);
+        Assert.NotEqual(Caught, objects.Slot(Slot).Type);
     }
 
     // $0D33. Three stores, and this asserts all three.
@@ -96,13 +96,13 @@ public sealed class EnemyAiLoopTests
     {
         (ObjectTable objects, EntityTable entities, EnemyAiLoop loop) = Table();
         Standing(objects);
-        entities.State[0] = 0x01;
+        entities.Slot(0).State = 0x01;
 
         loop.Update(s_open);
 
-        Assert.Equal(Caught, objects.Type[Slot]);
-        Assert.Equal(Bubble, objects.EnemyType[Slot]);
-        Assert.Equal(0, objects.Direction[Slot]);
+        Assert.Equal(Caught, objects.Slot(Slot).Type);
+        Assert.Equal(Bubble, objects.Slot(Slot).EnemyType);
+        Assert.Equal(0, objects.Slot(Slot).Direction);
     }
 
     // $0D02's `ldy #$01`. Player two is tested first, so with both in range player two wins. A loop
@@ -112,12 +112,12 @@ public sealed class EnemyAiLoopTests
     {
         (ObjectTable objects, EntityTable entities, EnemyAiLoop loop) = Table();
         Standing(objects);
-        entities.State[0] = 0x01;
-        entities.State[1] = 0x01;
+        entities.Slot(0).State = 0x01;
+        entities.Slot(1).State = 0x01;
 
         loop.Update(s_open);
 
-        Assert.Equal(1, objects.Direction[Slot]);
+        Assert.Equal(1, objects.Slot(Slot).Direction);
     }
 
     // $0D06, $0D0A and $0D0E. Empty, dying and dead are all passed over.
@@ -129,11 +129,11 @@ public sealed class EnemyAiLoopTests
     {
         (ObjectTable objects, EntityTable entities, EnemyAiLoop loop) = Table();
         Standing(objects);
-        entities.State[0] = state;
+        entities.Slot(0).State = state;
 
         loop.Update(s_open);
 
-        Assert.Equal(Bubble, objects.Type[Slot]);
+        Assert.Equal(Bubble, objects.Slot(Slot).Type);
     }
 
     // $0D21 and $0D32: `cmp #$10` then `bcs`, so sixteen is out and fifteen is in. The bound is the
@@ -147,13 +147,13 @@ public sealed class EnemyAiLoopTests
     {
         (ObjectTable objects, EntityTable entities, EnemyAiLoop loop) = Table();
         Standing(objects);
-        objects.X[Slot] = x;
-        objects.Y[Slot] = y;
-        entities.State[0] = 0x01;
+        objects.Slot(Slot).X = x;
+        objects.Slot(Slot).Y = y;
+        entities.Slot(0).State = 0x01;
 
         loop.Update(s_open);
 
-        Assert.Equal(caught ? Caught : Bubble, objects.Type[Slot]);
+        Assert.Equal(caught ? Caught : Bubble, objects.Slot(Slot).Type);
     }
 
     // $0D14's `clc / adc #$02`. The player's X is nudged two pixels right before the subtraction and
@@ -190,13 +190,13 @@ public sealed class EnemyAiLoopTests
     {
         (ObjectTable objects, EntityTable entities, EnemyAiLoop loop) = Table();
         Standing(objects);
-        entities.State[0] = 0x01;
+        entities.Slot(0).State = 0x01;
 
         loop.Update(s_open);
         loop.Update(s_open);
 
-        Assert.Equal(Caught, objects.Type[Slot]);
-        Assert.Equal(Bubble, objects.EnemyType[Slot]);
+        Assert.Equal(Caught, objects.Slot(Slot).Type);
+        Assert.Equal(Bubble, objects.Slot(Slot).EnemyType);
     }
 
     // Every slot is walked, not just the first: the loop runs from seventeen down to zero.
@@ -204,15 +204,15 @@ public sealed class EnemyAiLoopTests
     public void WalksEverySlot()
     {
         (ObjectTable objects, EntityTable entities, EnemyAiLoop loop) = Table();
-        entities.State[0] = 0x01;
-        entities.X[0] = PlayerX;
-        entities.Y[0] = PlayerY;
+        entities.Slot(0).State = 0x01;
+        entities.Slot(0).X = PlayerX;
+        entities.Slot(0).Y = PlayerY;
 
         for (int slot = 0; slot < ObjectTable.Capacity; slot++)
         {
-            objects.Type[slot] = Bubble;
-            objects.X[slot] = PlayerX;
-            objects.Y[slot] = PlayerY;
+            objects.Slot(slot).Type = Bubble;
+            objects.Slot(slot).X = PlayerX;
+            objects.Slot(slot).Y = PlayerY;
         }
 
         loop.Update(s_open);
@@ -230,13 +230,13 @@ public sealed class EnemyAiLoopTests
     {
         (ObjectTable objects, _, EnemyAiLoop loop) = Table();
         Standing(objects);
-        objects.Row[Slot] = 0x08;
-        objects.Column[Slot] = 0x09;
+        objects.Slot(Slot).Row = 0x08;
+        objects.Slot(Slot).Column = 0x09;
 
         loop.Update(Current(5, 10));
 
-        Assert.Equal(PlayerX + 2, objects.X[Slot]);
-        Assert.Equal(PlayerY, objects.Y[Slot]);
+        Assert.Equal(PlayerX + 2, objects.Slot(Slot).X);
+        Assert.Equal(PlayerY, objects.Slot(Slot).Y);
     }
 
     // The same thing over a current in its own cell, which is not where $0E00 looks. It goes up.
@@ -245,13 +245,13 @@ public sealed class EnemyAiLoopTests
     {
         (ObjectTable objects, _, EnemyAiLoop loop) = Table();
         Standing(objects);
-        objects.Row[Slot] = 0x08;
-        objects.Column[Slot] = 0x09;
+        objects.Slot(Slot).Row = 0x08;
+        objects.Slot(Slot).Column = 0x09;
 
         loop.Update(Current(4, 9));
 
-        Assert.Equal(PlayerX, objects.X[Slot]);
-        Assert.Equal(PlayerY - 2, objects.Y[Slot]);
+        Assert.Equal(PlayerX, objects.Slot(Slot).X);
+        Assert.Equal(PlayerY - 2, objects.Slot(Slot).Y);
     }
 
     // $0E02. A row above four is read as four, so everything near the top takes map row one.
@@ -263,12 +263,12 @@ public sealed class EnemyAiLoopTests
     {
         (ObjectTable objects, _, EnemyAiLoop loop) = Table();
         Standing(objects);
-        objects.Row[Slot] = row;
-        objects.Column[Slot] = 0x09;
+        objects.Slot(Slot).Row = row;
+        objects.Slot(Slot).Column = 0x09;
 
         loop.Update(Current(1, 10));
 
-        Assert.Equal(PlayerX + 2, objects.X[Slot]);
+        Assert.Equal(PlayerX + 2, objects.Slot(Slot).X);
     }
 
     // $0D86's draw is below $EA, so the scan runs - and with nobody near, it falls out into $0E00.
@@ -277,12 +277,12 @@ public sealed class EnemyAiLoopTests
     {
         (ObjectTable objects, _, EnemyAiLoop loop) = Table();
         Standing(objects);
-        objects.Column[Slot] = 0x01;
+        objects.Slot(Slot).Column = 0x01;
 
         loop.Update(s_open);
 
-        Assert.Equal(PlayerX, objects.X[Slot]);
-        Assert.Equal(PlayerY - 2, objects.Y[Slot]);
+        Assert.Equal(PlayerX, objects.Slot(Slot).X);
+        Assert.Equal(PlayerY - 2, objects.Slot(Slot).Y);
     }
 
     // With a neighbour inside sixteen pixels, the random arm moves it instead. The first level's
@@ -294,12 +294,12 @@ public sealed class EnemyAiLoopTests
         (ObjectTable objects, _, EnemyAiLoop loop) = Table();
         Standing(objects);
         Neighbour(objects);
-        objects.Column[Slot] = 0x01;
+        objects.Slot(Slot).Column = 0x01;
 
         loop.Update(s_open);
 
-        Assert.Equal(PlayerX + 2, objects.X[Slot]);
-        Assert.Equal(PlayerY, objects.Y[Slot]);
+        Assert.Equal(PlayerX + 2, objects.Slot(Slot).X);
+        Assert.Equal(PlayerY, objects.Slot(Slot).Y);
     }
 
     // $0D96 and $0D9B. A neighbour with an AI state, or of a special type, is not a neighbour.
@@ -311,14 +311,14 @@ public sealed class EnemyAiLoopTests
         (ObjectTable objects, _, EnemyAiLoop loop) = Table();
         Standing(objects);
         Neighbour(objects);
-        objects.State[Slot - 1] = state;
-        objects.Type[Slot - 1] = type;
-        objects.Column[Slot] = 0x01;
+        objects.Slot(Slot - 1).State = state;
+        objects.Slot(Slot - 1).Type = type;
+        objects.Slot(Slot).Column = 0x01;
 
         loop.Update(s_open);
 
-        Assert.Equal(PlayerX, objects.X[Slot]);
-        Assert.Equal(PlayerY - 2, objects.Y[Slot]);
+        Assert.Equal(PlayerX, objects.Slot(Slot).X);
+        Assert.Equal(PlayerY - 2, objects.Slot(Slot).Y);
     }
 
     // $0D8B. A draw at or above $EA skips the scan, neighbour or not.
@@ -328,12 +328,12 @@ public sealed class EnemyAiLoopTests
         (ObjectTable objects, _, EnemyAiLoop loop) = Table(0xF0);
         Standing(objects);
         Neighbour(objects);
-        objects.Column[Slot] = 0x01;
+        objects.Slot(Slot).Column = 0x01;
 
         loop.Update(s_open);
 
-        Assert.Equal(PlayerX, objects.X[Slot]);
-        Assert.Equal(PlayerY - 2, objects.Y[Slot]);
+        Assert.Equal(PlayerX, objects.Slot(Slot).X);
+        Assert.Equal(PlayerY - 2, objects.Slot(Slot).Y);
     }
 
     // $0DC5's operand is the level, stored at $F23C. The same zero draw is sideways on the first
@@ -346,12 +346,12 @@ public sealed class EnemyAiLoopTests
         (ObjectTable objects, _, EnemyAiLoop loop) = Table();
         Standing(objects);
         Neighbour(objects);
-        objects.Column[Slot] = 0x01;
+        objects.Slot(Slot).Column = 0x01;
 
         loop.Update(Open(level));
 
-        Assert.Equal(PlayerX + dx, objects.X[Slot]);
-        Assert.Equal(PlayerY + dy, objects.Y[Slot]);
+        Assert.Equal(PlayerX + dx, objects.Slot(Slot).X);
+        Assert.Equal(PlayerY + dy, objects.Slot(Slot).Y);
     }
 
     // $F219. On the level whose byte is $48, a fill loop has left $02 in A, and that is what is
@@ -365,20 +365,20 @@ public sealed class EnemyAiLoopTests
         (ObjectTable objects, _, EnemyAiLoop loop) = Table(0x02);
         Standing(objects);
         Neighbour(objects);
-        objects.Column[Slot] = 0x01;
+        objects.Slot(Slot).Column = 0x01;
 
         loop.Update(Open(level));
 
-        Assert.Equal(PlayerX + dx, objects.X[Slot]);
-        Assert.Equal(PlayerY + dy, objects.Y[Slot]);
+        Assert.Equal(PlayerX + dx, objects.Slot(Slot).X);
+        Assert.Equal(PlayerY + dy, objects.Slot(Slot).Y);
     }
 
     // A second bubble one slot down, on the same spot.
     private static void Neighbour(ObjectTable objects)
     {
-        objects.Type[Slot - 1] = Bubble;
-        objects.X[Slot - 1] = PlayerX;
-        objects.Y[Slot - 1] = PlayerY;
+        objects.Slot(Slot - 1).Type = Bubble;
+        objects.Slot(Slot - 1).X = PlayerX;
+        objects.Slot(Slot - 1).Y = PlayerY;
     }
 
     private static SolidMap Open(int number) => SolidMap.Build(
@@ -401,9 +401,9 @@ public sealed class EnemyAiLoopTests
     // A bubble in the top slot, sitting exactly on the player, with neither player active yet.
     private static void Standing(ObjectTable objects)
     {
-        objects.Type[Slot] = Bubble;
-        objects.X[Slot] = PlayerX;
-        objects.Y[Slot] = PlayerY;
+        objects.Slot(Slot).Type = Bubble;
+        objects.Slot(Slot).X = PlayerX;
+        objects.Slot(Slot).Y = PlayerY;
     }
 
     private static EnemyDispatcher Dispatcher(ObjectTable objects, EntityTable entities)
@@ -413,10 +413,10 @@ public sealed class EnemyAiLoopTests
     {
         ObjectTable objects = new();
         EntityTable entities = new();
-        entities.X[0] = PlayerX;
-        entities.Y[0] = PlayerY;
-        entities.X[1] = PlayerX;
-        entities.Y[1] = PlayerY;
+        entities.Slot(0).X = PlayerX;
+        entities.Slot(0).Y = PlayerY;
+        entities.Slot(1).X = PlayerX;
+        entities.Slot(1).Y = PlayerY;
 
         BbRandom random = new(new FakeRandomSource { RandomValue = timer });
 

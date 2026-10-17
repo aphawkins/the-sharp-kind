@@ -57,10 +57,10 @@ public sealed class PlayerWalkGoldenTests
         PlayerMovement movement = new(entities, TestBlow.Of(entities), TestBlow.NoRings());
         SolidMap map = SolidMap.Build(s_levels.Level(1), []);
 
-        entities.X[0] = StartX;
-        entities.Y[0] = StartY;
-        entities.Frame[0] = 0x00;
-        entities.BubbleTimer[0] = 0xFF;
+        entities.Slot(0).X = StartX;
+        entities.Slot(0).Y = StartY;
+        entities.Slot(0).Frame = 0x00;
+        entities.Slot(0).BubbleTimer = 0xFF;
 
         byte[] x = new byte[s_x.Length];
         byte[] frame = new byte[s_frame.Length];
@@ -68,8 +68,8 @@ public sealed class PlayerWalkGoldenTests
         for (int tick = 0; tick < s_x.Length; tick++)
         {
             movement.Step(0, PushRight, map);
-            x[tick] = entities.X[0];
-            frame[tick] = entities.Frame[0];
+            x[tick] = entities.Slot(0).X;
+            frame[tick] = entities.Slot(0).Frame;
         }
 
         Assert.Equal(s_x, x);
@@ -102,17 +102,17 @@ public sealed class PlayerWalkGoldenTests
         EntityTable entities = new();
         PlayerMovement movement = new(entities, TestBlow.Of(entities), TestBlow.NoRings());
 
-        entities.X[0] = startX;
-        entities.Y[0] = y;
-        entities.Frame[0] = frame;
-        entities.BubbleTimer[0] = 0xFF;
+        entities.Slot(0).X = startX;
+        entities.Slot(0).Y = y;
+        entities.Slot(0).Frame = frame;
+        entities.Slot(0).BubbleTimer = 0xFF;
 
         PlayerCell cell = PlayerCell.Of(startX, y);
         bool blocked = cell.Solid(map, probe);
 
         movement.Step(0, port, map);
 
-        bool moved = entities.X[0] != startX;
+        bool moved = entities.Slot(0).X != startX;
 
         Assert.False(
             blocked && moved,

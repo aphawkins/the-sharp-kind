@@ -210,15 +210,15 @@ internal sealed class SuperBonusRoom
         // $36DC-$36F0: a player in the game stands on the floor, the other at (0, 0).
         for (int player = PlayerTable.Capacity - 1; player >= 0; player--)
         {
-            bool playing = _entities.State[player] != 0;
+            bool playing = _entities.Slot(player).State != 0;
 
             if (playing)
             {
-                _entities.State[player] = PlayerFrame.PlayingState;
+                _entities.Slot(player).State = PlayerFrame.PlayingState;
             }
 
-            _entities.X[player] = playing ? PlayerRespawn.SpawnX[player] : (byte)0;
-            _entities.Y[player] = playing ? FloorY : (byte)0;
+            _entities.Slot(player).X = playing ? PlayerRespawn.SpawnX[player] : (byte)0;
+            _entities.Slot(player).Y = playing ? FloorY : (byte)0;
         }
 
         _placed = Place();
@@ -297,12 +297,12 @@ internal sealed class SuperBonusRoom
     {
         for (int player = PlayerTable.Capacity - 1; player >= 0; player--)
         {
-            if (_entities.X[player] != DoorX)
+            if (_entities.Slot(player).X != DoorX)
             {
                 continue;
             }
 
-            byte y = _entities.Y[player];
+            byte y = _entities.Slot(player).Y;
 
             if (Remaining == LastCount)
             {
@@ -313,7 +313,7 @@ internal sealed class SuperBonusRoom
             }
             else if (Remaining < DownBelow && y == FloorY)
             {
-                _entities.Y[player] = DownY;
+                _entities.Slot(player).Y = DownY;
             }
         }
 
@@ -325,7 +325,7 @@ internal sealed class SuperBonusRoom
     {
         for (int player = PlayerTable.Capacity - 1; player >= 0; player--)
         {
-            if (_entities.State[player] != PlayerFrame.PlayingState)
+            if (_entities.Slot(player).State != PlayerFrame.PlayingState)
             {
                 continue;
             }
@@ -335,8 +335,8 @@ internal sealed class SuperBonusRoom
                 RoomItem item = _placed[index];
 
                 if ((item.X == 0 && item.Y == 0)
-                    || Distance.Absolute(_entities.X[player], item.X) >= Reach
-                    || Distance.Absolute(_entities.Y[player], item.Y) >= Reach)
+                    || Distance.Absolute(_entities.Slot(player).X, item.X) >= Reach
+                    || Distance.Absolute(_entities.Slot(player).Y, item.Y) >= Reach)
                 {
                     continue;
                 }

@@ -84,8 +84,8 @@ public sealed class LevelScrollTests
     {
         LevelScroll scroll = Scroll();
         EntityTable entities = new();
-        entities.State[0] = 1;
-        entities.State[2] = 1;
+        entities.Slot(0).State = 1;
+        entities.Slot(2).State = 1;
 
         for (int pass = 0; pass < 4; pass++)
         {

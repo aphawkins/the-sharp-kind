@@ -50,7 +50,7 @@ internal sealed class PlayerJump
     {
         ArgumentNullException.ThrowIfNull(map);
 
-        byte rise = _entities.RiseCounter[player];
+        byte rise = _entities.Slot(player).RiseCounter;
 
         if (rise != 0)
         {
@@ -68,23 +68,23 @@ internal sealed class PlayerJump
 
     private void Rise(int player, byte port, SolidMap map, byte rise)
     {
-        _entities.RiseCounter[player] = unchecked((byte)(rise - 1));
+        _entities.Slot(player).RiseCounter = unchecked((byte)(rise - 1));
 
-        byte y = unchecked((byte)(_entities.Y[player] - s_arc[rise]));
+        byte y = unchecked((byte)(_entities.Slot(player).Y - s_arc[rise]));
 
         if (y < TopWrap)
         {
             y = unchecked((byte)(y + WrapStep));
         }
 
-        _entities.Y[player] = y;
+        _entities.Slot(player).Y = y;
 
-        _drift.Enter(player, port, PlayerCell.Of(_entities.X[player], y), map);
+        _drift.Enter(player, port, PlayerCell.Of(_entities.Slot(player).X, y), map);
     }
 
     private void Fall(int player, byte port, in PlayerCell cell, SolidMap map)
     {
-        byte fall = _entities.FallCounter[player];
+        byte fall = _entities.Slot(player).FallCounter;
 
         if ((fall & 0x80) != 0)
         {
@@ -97,16 +97,16 @@ internal sealed class PlayerJump
             return;
         }
 
-        _entities.FallCounter[player] = unchecked((byte)(fall + 1));
+        _entities.Slot(player).FallCounter = unchecked((byte)(fall + 1));
 
-        byte y = unchecked((byte)(_entities.Y[player] + s_arc[fall]));
+        byte y = unchecked((byte)(_entities.Slot(player).Y + s_arc[fall]));
 
         if (y >= BottomWrap)
         {
             y = unchecked((byte)(y - WrapStep));
         }
 
-        _entities.Y[player] = y;
+        _entities.Slot(player).Y = y;
 
         if (Land(player, cell, map, y, out PlayerCell landed))
         {
@@ -114,19 +114,19 @@ internal sealed class PlayerJump
             return;
         }
 
-        _drift.Step(player, port, PlayerCell.Of(_entities.X[player], y), map);
+        _drift.Step(player, port, PlayerCell.Of(_entities.Slot(player).X, y), map);
     }
 
     private void Settle(int player)
     {
-        byte frame = _entities.Frame[player];
+        byte frame = _entities.Slot(player).Frame;
 
         if (frame is (>= 0x02 and < 0x04) or (>= 0x06 and < 0x08))
         {
-            _entities.Frame[player] = (byte)(frame & 0x05);
+            _entities.Slot(player).Frame = (byte)(frame & 0x05);
         }
 
-        _entities.FallCounter[player] = 0x00;
+        _entities.Slot(player).FallCounter = 0x00;
     }
 
     private bool Land(int player, in PlayerCell cell, SolidMap map, byte y, out PlayerCell landed)
@@ -143,7 +143,7 @@ internal sealed class PlayerJump
             return false;
         }
 
-        landed = PlayerCell.Of(_entities.X[player], y);
+        landed = PlayerCell.Of(_entities.Slot(player).X, y);
 
         if (Blocked(landed, map, ClearRowLeft, ClearRowMiddle, ClearRowRight))
         {
@@ -155,7 +155,7 @@ internal sealed class PlayerJump
             return false;
         }
 
-        _entities.Y[player] = unchecked((byte)((unchecked((byte)(y - GridBase)) & 0xF8) + GridBase));
+        _entities.Slot(player).Y = unchecked((byte)((unchecked((byte)(y - GridBase)) & 0xF8) + GridBase));
         return true;
     }
 }

@@ -94,23 +94,24 @@ public sealed class BaronGoldenTests
     {
         for (int i = 0; i < 2; i++)
         {
-            entities.State[i] = b[i];
-            entities.X[i] = b[2 + i];
-            entities.Y[i] = b[4 + i];
-            objects.Type[i] = b[6 + i];
-            objects.Column[i] = b[8 + i];
-            objects.Row[i] = b[10 + i];
-            objects.Variant[i] = b[12 + i];
-            objects.EnemyType[i] = b[14 + i];
+            entities.Slot(i).State = b[i];
+            entities.Slot(i).X = b[2 + i];
+            entities.Slot(i).Y = b[4 + i];
+            objects.Slot(i).Type = b[6 + i];
+            objects.Slot(i).Column = b[8 + i];
+            objects.Slot(i).Row = b[10 + i];
+            objects.Slot(i).Variant = b[12 + i];
+            objects.Slot(i).EnemyType = b[14 + i];
             baron.Waiting[i] = b[16 + i];
             baron.Facing[i] = b[18 + i];
         }
     }
 
     private static byte[] Save(ObjectTable objects, EntityTable entities, Baron baron) => [
-        entities.State[0], entities.State[1], entities.X[0], entities.X[1], entities.Y[0], entities.Y[1],
-        objects.Type[0], objects.Type[1], objects.Column[0], objects.Column[1], objects.Row[0], objects.Row[1],
-        objects.Variant[0], objects.Variant[1], objects.EnemyType[0], objects.EnemyType[1],
+        entities.Slot(0).State, entities.Slot(1).State, entities.Slot(0).X, entities.Slot(1).X, entities.Slot(0).Y, entities.Slot(1).Y,
+        objects.Slot(0).Type, objects.Slot(1).Type, objects.Slot(0).Column, objects.Slot(1).Column,
+        objects.Slot(0).Row, objects.Slot(1).Row,
+        objects.Slot(0).Variant, objects.Slot(1).Variant, objects.Slot(0).EnemyType, objects.Slot(1).EnemyType,
         baron.Waiting[0], baron.Waiting[1], baron.Facing[0], baron.Facing[1],
     ];
 }

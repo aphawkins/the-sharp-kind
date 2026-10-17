@@ -95,11 +95,11 @@ internal sealed class GiantBubble : IGameHold
     internal byte Phase { get; set; }
 
     // Whether the giant is in the level to be drawn: it is the object type `$46` in slot 0, in its column and row.
-    internal bool Shown => Phase != 0 && _objects.Type[0] == Type;
+    internal bool Shown => Phase != 0 && _objects.Slot(0).Type == Type;
 
-    internal int Column => _objects.Column[0];
+    internal int Column => _objects.Slot(0).Column;
 
-    internal int Row => _objects.Row[0];
+    internal int Row => _objects.Slot(0).Row;
 
     // `$1B02`-`$1B18`, an update of the objects a frame, at least one, until both slots are free; then `$1ABB`-`$1AC9`.
     public bool Frame()
@@ -134,10 +134,10 @@ internal sealed class GiantBubble : IGameHold
     public byte Finish(byte counter)
     {
         _flash = StartFrames + 1;
-        _objects.Type[0] = Type;
-        _objects.Type[1] = Type;
-        _objects.Row[0] = FirstRow;
-        _objects.Column[0] = (byte)((_random.Next() & ColumnMask) + FirstColumn);
+        _objects.Slot(0).Type = Type;
+        _objects.Slot(1).Type = Type;
+        _objects.Slot(0).Row = FirstRow;
+        _objects.Slot(0).Column = (byte)((_random.Next() & ColumnMask) + FirstColumn);
 
         return counter;
     }
@@ -199,7 +199,7 @@ internal sealed class GiantBubble : IGameHold
             return;
         }
 
-        byte type = _objects.Type[0];
+        byte type = _objects.Slot(0).Type;
 
         if ((sbyte)type < 0)
         {
@@ -218,19 +218,19 @@ internal sealed class GiantBubble : IGameHold
             return;
         }
 
-        _objects.Column[0]--;
-        _objects.Row[0]++;
+        _objects.Slot(0).Column--;
+        _objects.Slot(0).Row++;
 
-        byte left = (byte)((_objects.Column[0] * 8) + LeftBias);
-        byte top = (byte)((_objects.Row[0] * 8) + TopBias);
+        byte left = (byte)((_objects.Slot(0).Column * 8) + LeftBias);
+        byte top = (byte)((_objects.Slot(0).Row * 8) + TopBias);
 
         TakeCaught(left, top);
         TakeFree(left, top);
 
-        if (_objects.Row[0] == LastRow)
+        if (_objects.Slot(0).Row == LastRow)
         {
-            _objects.Type[0] = GoneType;
-            _objects.Type[1] = GoneType;
+            _objects.Slot(0).Type = GoneType;
+            _objects.Slot(1).Type = GoneType;
             return;
         }
 
@@ -254,21 +254,21 @@ internal sealed class GiantBubble : IGameHold
         for (int index = ObjectTable.Capacity - FirstEnemy - 1; index >= 0; index--)
         {
             int slot = index + FirstEnemy;
-            byte type = _objects.Type[slot];
+            byte type = _objects.Slot(slot).Type;
 
             if (type is < FirstCaught or >= CaughtBelow
-                || !Within(_objects.X[slot], left)
-                || !Within(_objects.Y[slot], top))
+                || !Within(_objects.Slot(slot).X, left)
+                || !Within(_objects.Slot(slot).Y, top))
             {
                 continue;
             }
 
             int enemy = (type - FirstCaught) >> 1;
 
-            _entities.State[enemy + FirstEnemy] = _objects.Variant[index];
+            _entities.Slot(enemy + FirstEnemy).State = _objects.Slot(index).Variant;
             _entities.SpriteEnable |= (byte)(1 << (enemy + FirstEnemy));
             _food.Kill(enemy);
-            _objects.Type[slot] = GoneType;
+            _objects.Slot(slot).Type = GoneType;
         }
     }
 
@@ -278,13 +278,13 @@ internal sealed class GiantBubble : IGameHold
         for (int enemy = Enemies - 1; enemy >= 0; enemy--)
         {
             if (IsFree(enemy)
-                && Within(_entities.X[enemy + FirstEnemy], left)
-                && Within(_entities.Y[enemy + FirstEnemy], top))
+                && Within(_entities.Slot(enemy + FirstEnemy).X, left)
+                && Within(_entities.Slot(enemy + FirstEnemy).Y, top))
             {
                 _food.Kill(enemy);
             }
         }
     }
 
-    private bool IsFree(int enemy) => _entities.State[enemy + FirstEnemy] is not 0 and < MaxFree;
+    private bool IsFree(int enemy) => _entities.Slot(enemy + FirstEnemy).State is not 0 and < MaxFree;
 }

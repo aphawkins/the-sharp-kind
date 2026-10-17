@@ -218,7 +218,7 @@ public sealed class SuperBonusRoomOracleTests
 
             (_, _, EntityTable entities) = Room(capture.Before, Hook);
 
-            Assert.Equal(capture.After[0xC2], entities.Y[0]);
+            Assert.Equal(capture.After[0xC2], entities.Slot(0).Y);
             downs.Add(capture.After[0xC2]);
         }
 
@@ -290,10 +290,10 @@ public sealed class SuperBonusRoomOracleTests
         else if (from == Hook)
         {
             // The collection is bracketed out: with no player in play, the port's frame is the hook alone.
-            byte state = entities.State[0];
-            entities.State[0] = 0;
+            byte state = entities.Slot(0).State;
+            entities.Slot(0).State = 0;
             room.Frame();
-            entities.State[0] = state;
+            entities.Slot(0).State = state;
         }
 
         return (room, scores, entities);

@@ -37,10 +37,10 @@ internal static class EnemyProbes
 
         if (cell.FineX == 0 && cell.Solid(map, beside))
         {
-            entities.Heading[slot] ^= 0x03;
+            entities.Slot(slot).Heading ^= 0x03;
             return;
         }
 
-        entities.X[slot] = unchecked((byte)(entities.X[slot] + step));
+        entities.Slot(slot).X = unchecked((byte)(entities.Slot(slot).X + step));
     }
 }

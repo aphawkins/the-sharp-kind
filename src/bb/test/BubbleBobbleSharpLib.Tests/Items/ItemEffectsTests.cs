@@ -72,7 +72,7 @@ public sealed class ItemEffectsTests
 
         new ItemEffects(players, entities).Apply(0, 1);
 
-        Assert.Equal(0xFE, entities.FlashTimer[1]);
+        Assert.Equal(0xFE, entities.Slot(1).FlashTimer);
     }
 
     [Theory]

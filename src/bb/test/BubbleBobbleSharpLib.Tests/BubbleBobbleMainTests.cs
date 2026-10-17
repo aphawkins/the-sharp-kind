@@ -72,7 +72,7 @@ public sealed class BubbleBobbleMainTests
     public void ReturnsToTheChoiceOfPlayersSeventyFiveUpdatesAfterBothPlayersAreOut()
     {
         BubbleBobbleMain game = Game(new FakeAbstraction());
-        game.Loop.Entities.State[0] = 0;
+        game.Loop.Entities.Slot(0).State = 0;
 
         for (int update = 1; update < 75; update++)
         {
@@ -108,8 +108,8 @@ public sealed class BubbleBobbleMainTests
         Assert.Equal(1, game.Loop.PlayerTable.Round[0]);
         Assert.Equal(0, game.Loop.PlayerTable.Round[1]);
         Assert.Equal(2, game.Loop.PlayerTable.Lives[0]);
-        Assert.Equal(1, game.Loop.Entities.State[0]);
-        Assert.Equal(0, game.Loop.Entities.State[1]);
+        Assert.Equal(1, game.Loop.Entities.Slot(0).State);
+        Assert.Equal(0, game.Loop.Entities.Slot(1).State);
         Assert.False(game.Loop.IsComplete);
     }
 

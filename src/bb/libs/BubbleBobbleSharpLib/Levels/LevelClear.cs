@@ -199,25 +199,25 @@ internal sealed class LevelClear
     {
         for (int slot = ObjectTable.Capacity - 1; slot >= 0; slot--)
         {
-            byte type = _objects.Type[slot];
+            byte type = _objects.Slot(slot).Type;
 
             if ((sbyte)type < 0 || type is KeptType1 or KeptType2 or KeptType3)
             {
                 continue;
             }
 
-            _objects.EnemyType[slot] = type;
+            _objects.Slot(slot).EnemyType = type;
 
             bool bonus = type is BubbleType or (>= FirstBonusType and < AfterBonusType);
 
             if (bonus && BonusType != 0)
             {
-                _objects.Behaviour[slot] = LevelItems.FoodColour(BonusType);
-                _objects.Type[slot] = BonusPopType;
+                _objects.Slot(slot).Behaviour = LevelItems.FoodColour(BonusType);
+                _objects.Slot(slot).Type = BonusPopType;
             }
             else
             {
-                _objects.Type[slot] = PopType;
+                _objects.Slot(slot).Type = PopType;
             }
         }
     }

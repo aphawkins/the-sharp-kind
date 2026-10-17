@@ -39,7 +39,7 @@ public sealed class PlayerMovementTests
 
         movement.Step(0, PushRight, Open());
 
-        Assert.Equal(StartX + 2, entities.X[0]);
+        Assert.Equal(StartX + 2, entities.Slot(0).X);
     }
 
     // $226B sets $04 to $FE, which is minus two as a byte.
@@ -50,7 +50,7 @@ public sealed class PlayerMovementTests
 
         movement.Step(0, PushLeft, Open());
 
-        Assert.Equal(StartX - 2, entities.X[0]);
+        Assert.Equal(StartX - 2, entities.Slot(0).X);
     }
 
     // The turn. A player facing right and pushed left does not move on that push - $226B finds the
@@ -63,12 +63,12 @@ public sealed class PlayerMovementTests
 
         movement.Step(0, PushLeft, map);
 
-        Assert.Equal(StartX, entities.X[0]);
-        Assert.Equal(0x04, entities.Frame[0]);
+        Assert.Equal(StartX, entities.Slot(0).X);
+        Assert.Equal(0x04, entities.Slot(0).Frame);
 
         movement.Step(0, PushLeft, map);
 
-        Assert.Equal(StartX - 2, entities.X[0]);
+        Assert.Equal(StartX - 2, entities.Slot(0).X);
     }
 
     // $22A6 reads the cell the player is walking into and gives up if it is solid.
@@ -79,7 +79,7 @@ public sealed class PlayerMovementTests
 
         movement.Step(0, PushRight, Blocked(RightCellRow, RightCellColumn));
 
-        Assert.Equal(StartX, entities.X[0]);
+        Assert.Equal(StartX, entities.Slot(0).X);
     }
 
     // Each mover looks at its own side, so a wall on the left does not stop a step to the right.
@@ -90,7 +90,7 @@ public sealed class PlayerMovementTests
 
         movement.Step(0, PushRight, Blocked(LeftCellRow, LeftCellColumn));
 
-        Assert.Equal(StartX + 2, entities.X[0]);
+        Assert.Equal(StartX + 2, entities.Slot(0).X);
     }
 
     // $22A6 skips the check when $23 is set. A player part way into a cell has already been let into
@@ -99,11 +99,11 @@ public sealed class PlayerMovementTests
     public void APlayerPartWayIntoACellWalksIntoTheWall()
     {
         (EntityTable entities, PlayerMovement movement) = Walker(frame: 0x00);
-        entities.X[0] = StartX + 1;
+        entities.Slot(0).X = StartX + 1;
 
         movement.Step(0, PushRight, Blocked(RightCellRow, RightCellColumn));
 
-        Assert.Equal(StartX + 3, entities.X[0]);
+        Assert.Equal(StartX + 3, entities.Slot(0).X);
     }
 
     // And skips it below $2D, where there is no level to walk into.
@@ -111,11 +111,11 @@ public sealed class PlayerMovementTests
     public void AboveTheLevelThereIsNoWallToCheck()
     {
         (EntityTable entities, PlayerMovement movement) = Walker(frame: 0x00);
-        entities.Y[0] = 0x20;
+        entities.Slot(0).Y = 0x20;
 
         movement.Step(0, PushRight, Solid());
 
-        Assert.Equal(StartX + 2, entities.X[0]);
+        Assert.Equal(StartX + 2, entities.Slot(0).X);
     }
 
     // $220C reaches $222B with a jmp rather than a jsr, so a player pushing up never reaches the
@@ -127,7 +127,7 @@ public sealed class PlayerMovementTests
 
         movement.Step(0, PushUp & PushRight, Open());
 
-        Assert.Equal(StartX, entities.X[0]);
+        Assert.Equal(StartX, entities.Slot(0).X);
     }
 
     // $2294. The sprite's bit 0 flips on every fourth frame, and the player keeps walking meanwhile.
@@ -140,13 +140,13 @@ public sealed class PlayerMovementTests
         for (int tick = 0; tick < 3; tick++)
         {
             movement.Step(0, PushRight, map);
-            Assert.Equal(0x00, entities.Frame[0]);
+            Assert.Equal(0x00, entities.Slot(0).Frame);
         }
 
         movement.Step(0, PushRight, map);
 
-        Assert.Equal(0x01, entities.Frame[0]);
-        Assert.Equal(StartX + 8, entities.X[0]);
+        Assert.Equal(0x01, entities.Slot(0).Frame);
+        Assert.Equal(StartX + 8, entities.Slot(0).X);
     }
 
     // Frames 8 and 9 face right too, but reach the tail without passing through $2294, so they walk
@@ -158,9 +158,9 @@ public sealed class PlayerMovementTests
 
         movement.Step(0, PushRight, Open());
 
-        Assert.Equal(StartX + 2, entities.X[0]);
-        Assert.Equal(0x08, entities.Frame[0]);
-        Assert.Equal(0x00, entities.AnimationTimer[0]);
+        Assert.Equal(StartX + 2, entities.Slot(0).X);
+        Assert.Equal(0x08, entities.Slot(0).Frame);
+        Assert.Equal(0x00, entities.Slot(0).AnimationTimer);
     }
 
     // The turn is refused while the bubble timer says the player is in a bubble. $05C5 sets that
@@ -169,12 +169,12 @@ public sealed class PlayerMovementTests
     public void APlayerInABubbleWillNotTurn()
     {
         (EntityTable entities, PlayerMovement movement) = Walker(frame: 0x00);
-        entities.BubbleTimer[0] = 0x00;
+        entities.Slot(0).BubbleTimer = 0x00;
 
         movement.Step(0, PushLeft, Open());
 
-        Assert.Equal(StartX, entities.X[0]);
-        Assert.Equal(0x00, entities.Frame[0]);
+        Assert.Equal(StartX, entities.Slot(0).X);
+        Assert.Equal(0x00, entities.Slot(0).Frame);
     }
 
     [Fact]
@@ -184,7 +184,7 @@ public sealed class PlayerMovementTests
 
         movement.Step(0, Idle, Open());
 
-        Assert.Equal(StartX, entities.X[0]);
+        Assert.Equal(StartX, entities.Slot(0).X);
     }
 
     // The two players have their own bytes, and one walking does not move the other.
@@ -192,25 +192,25 @@ public sealed class PlayerMovementTests
     public void OnePlayerWalkingLeavesTheOtherWhereItWas()
     {
         (EntityTable entities, PlayerMovement movement) = Walker(frame: 0x00);
-        entities.X[1] = StartX;
+        entities.Slot(1).X = StartX;
 
         movement.Step(0, PushRight, Open());
 
-        Assert.Equal(StartX + 2, entities.X[0]);
-        Assert.Equal(StartX, entities.X[1]);
+        Assert.Equal(StartX + 2, entities.Slot(0).X);
+        Assert.Equal(StartX, entities.Slot(1).X);
     }
 
     private static (EntityTable Entities, PlayerMovement Movement) Walker(byte frame)
     {
         EntityTable entities = new();
 
-        entities.X[0] = StartX;
-        entities.Y[0] = StartY;
-        entities.Frame[0] = frame;
+        entities.Slot(0).X = StartX;
+        entities.Slot(0).Y = StartY;
+        entities.Slot(0).Frame = frame;
 
         // What $05C5 leaves behind as a level starts: not in a bubble.
-        entities.BubbleTimer[0] = 0xFF;
-        entities.BubbleTimer[1] = 0xFF;
+        entities.Slot(0).BubbleTimer = 0xFF;
+        entities.Slot(1).BubbleTimer = 0xFF;
 
         return (entities, new(entities, TestBlow.Of(entities), TestBlow.NoRings()));
     }

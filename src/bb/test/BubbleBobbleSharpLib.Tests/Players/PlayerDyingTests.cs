@@ -18,15 +18,15 @@ public sealed class PlayerDyingTests
     public void TheFirstCallStartsTheSpin()
     {
         EntityTable entities = Dying(grounded: true);
-        entities.FlashTimer[0] = 0x40;
+        entities.Slot(0).FlashTimer = 0x40;
 
         new PlayerDying(entities).Step(0);
 
-        Assert.Equal(0x12, entities.LeapFlag[0]);
-        Assert.Equal(0x1F, entities.AnimationTimer[0]);
-        Assert.Equal(0x0E, entities.Frame[0]);
-        Assert.Equal(0x80, entities.Y[0]);
-        Assert.Equal(0x00, entities.FlashTimer[0]);
+        Assert.Equal(0x12, entities.Slot(0).LeapFlag);
+        Assert.Equal(0x1F, entities.Slot(0).AnimationTimer);
+        Assert.Equal(0x0E, entities.Slot(0).Frame);
+        Assert.Equal(0x80, entities.Slot(0).Y);
+        Assert.Equal(0x00, entities.Slot(0).FlashTimer);
     }
 
     // $28DB. Caught in the air: three pixels a call, and $F3 + 3 wraps to the top.
@@ -37,11 +37,11 @@ public sealed class PlayerDyingTests
     public void APlayerCaughtInTheAirFalls(byte y, byte expected)
     {
         EntityTable entities = Dying(grounded: false);
-        entities.Y[0] = y;
+        entities.Slot(0).Y = y;
 
         new PlayerDying(entities).Step(0);
 
-        Assert.Equal(expected, entities.Y[0]);
+        Assert.Equal(expected, entities.Slot(0).Y);
     }
 
     // $28E9. $20 down to $C8 is 88 calls; the last one moves the state on, in frame $0F.
@@ -54,14 +54,14 @@ public sealed class PlayerDyingTests
         for (int call = 1; call < 88; call++)
         {
             dying.Step(0);
-            Assert.Equal(PlayerFrame.DyingState, entities.State[0]);
+            Assert.Equal(PlayerFrame.DyingState, entities.Slot(0).State);
         }
 
         dying.Step(0);
 
-        Assert.Equal(PlayerFrame.DeadState, entities.State[0]);
-        Assert.Equal(0xC8, entities.AnimationTimer[0]);
-        Assert.Equal(0x0F, entities.Frame[0]);
+        Assert.Equal(PlayerFrame.DeadState, entities.Slot(0).State);
+        Assert.Equal(0xC8, entities.Slot(0).AnimationTimer);
+        Assert.Equal(0x0F, entities.Slot(0).Frame);
     }
 
     // $1D03. With the flash set and bit 1 of $08 clear, $1E6C runs twice: $20, $1F, $1E.
@@ -71,10 +71,10 @@ public sealed class PlayerDyingTests
     public void TheFlashCanStepTheFirstCallTwice(byte counter, byte expected)
     {
         EntityTable entities = Dying(grounded: true);
-        entities.FlashTimer[0] = 0x40;
+        entities.Slot(0).FlashTimer = 0x40;
         Frame(entities).Slot(0, Input.Idle, counter, Open());
 
-        Assert.Equal(expected, entities.AnimationTimer[0]);
+        Assert.Equal(expected, entities.Slot(0).AnimationTimer);
     }
 
     // $28E8. Dead is a bare `rts`.
@@ -82,12 +82,12 @@ public sealed class PlayerDyingTests
     public void ADeadPlayerIsLeftAlone()
     {
         EntityTable entities = Dying(grounded: false);
-        entities.State[0] = PlayerFrame.DeadState;
+        entities.Slot(0).State = PlayerFrame.DeadState;
 
         Frame(entities).Step(0, Input.Idle, Open());
 
-        Assert.Equal(0x80, entities.Y[0]);
-        Assert.Equal(0x00, entities.AnimationTimer[0]);
+        Assert.Equal(0x80, entities.Slot(0).Y);
+        Assert.Equal(0x00, entities.Slot(0).AnimationTimer);
     }
 
     private static SolidMap Open()
@@ -111,11 +111,11 @@ public sealed class PlayerDyingTests
     private static EntityTable Dying(bool grounded)
     {
         EntityTable entities = new();
-        entities.State[0] = PlayerFrame.DyingState;
-        entities.X[0] = 0x40;
-        entities.Y[0] = 0x80;
-        entities.RiseCounter[0] = 0xFF;
-        entities.GroundState[0] = grounded ? (byte)0xFF : (byte)0x00;
+        entities.Slot(0).State = PlayerFrame.DyingState;
+        entities.Slot(0).X = 0x40;
+        entities.Slot(0).Y = 0x80;
+        entities.Slot(0).RiseCounter = 0xFF;
+        entities.Slot(0).GroundState = grounded ? (byte)0xFF : (byte)0x00;
 
         return entities;
     }

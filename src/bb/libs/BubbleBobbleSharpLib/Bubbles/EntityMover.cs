@@ -49,89 +49,89 @@ internal sealed class EntityMover
 
     private void MoveUp(int slot)
     {
-        _objects.SubY[slot] -= 2;
-        _objects.Y[slot] -= 2;
+        _objects.Slot(slot).SubY -= 2;
+        _objects.Slot(slot).Y -= 2;
 
-        _objects.SubY[slot] &= 0x07;
+        _objects.Slot(slot).SubY &= 0x07;
 
-        if (_objects.SubY[slot] != 0)
+        if (_objects.Slot(slot).SubY != 0)
         {
             return;
         }
 
-        _objects.Row[slot]--;
+        _objects.Slot(slot).Row--;
 
-        if ((_objects.Row[slot] & 0x80) == 0)
+        if ((_objects.Slot(slot).Row & 0x80) == 0)
         {
             return;
         }
 
-        _objects.Row[slot] = BottomRow;
+        _objects.Slot(slot).Row = BottomRow;
         Wrapped(slot);
     }
 
     private void MoveDown(int slot)
     {
-        _objects.SubY[slot] += 2;
-        _objects.Y[slot] += 2;
+        _objects.Slot(slot).SubY += 2;
+        _objects.Slot(slot).Y += 2;
 
-        if (_objects.SubY[slot] == 0x08)
+        if (_objects.Slot(slot).SubY == 0x08)
         {
-            _objects.SubY[slot] = 0;
+            _objects.Slot(slot).SubY = 0;
             return;
         }
 
-        if (_objects.SubY[slot] != 0x02)
-        {
-            return;
-        }
-
-        _objects.Row[slot]++;
-
-        if (_objects.Row[slot] != RowCount)
+        if (_objects.Slot(slot).SubY != 0x02)
         {
             return;
         }
 
-        _objects.Row[slot] = 0;
+        _objects.Slot(slot).Row++;
+
+        if (_objects.Slot(slot).Row != RowCount)
+        {
+            return;
+        }
+
+        _objects.Slot(slot).Row = 0;
         Wrapped(slot);
     }
 
     private void MoveRight(int slot)
     {
-        _objects.X[slot] += 2;
-        _objects.SubX[slot]++;
+        _objects.Slot(slot).X += 2;
+        _objects.Slot(slot).SubX++;
 
-        if (_objects.SubX[slot] != SubXCount)
+        if (_objects.Slot(slot).SubX != SubXCount)
         {
             return;
         }
 
-        _objects.SubX[slot] = 0;
-        _objects.Column[slot]++;
+        _objects.Slot(slot).SubX = 0;
+        _objects.Slot(slot).Column++;
     }
 
     private void MoveLeft(int slot)
     {
-        _objects.X[slot] -= 2;
-        _objects.SubX[slot]--;
+        _objects.Slot(slot).X -= 2;
+        _objects.Slot(slot).SubX--;
 
-        if ((_objects.SubX[slot] & 0x80) == 0)
+        if ((_objects.Slot(slot).SubX & 0x80) == 0)
         {
             return;
         }
 
-        _objects.SubX[slot] = SubXCount - 1;
-        _objects.Column[slot]--;
+        _objects.Slot(slot).SubX = SubXCount - 1;
+        _objects.Slot(slot).Column--;
     }
 
     private void Wrapped(int slot)
     {
-        if (_objects.Type[slot] >= WrapBelow)
+        if (_objects.Slot(slot).Type >= WrapBelow)
         {
             return;
         }
 
-        _objects.Type[slot] = WrapType;
+        _objects.Slot(slot).Type = WrapType;
     }
 }

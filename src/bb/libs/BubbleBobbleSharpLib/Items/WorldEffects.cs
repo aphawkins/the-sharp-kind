@@ -198,20 +198,20 @@ internal sealed class WorldEffects
 
         for (int slot = ObjectTable.Capacity - 1; slot >= 0; slot--)
         {
-            byte type = _objects.Type[slot];
+            byte type = _objects.Slot(slot).Type;
 
             if (type is >= FirstCaught and < CaughtBelow)
             {
                 int enemy = (type - FirstCaught) >> 1;
 
-                _entities.State[enemy + FirstEnemy] = _objects.Variant[slot];
+                _entities.Slot(enemy + FirstEnemy).State = _objects.Slot(slot).Variant;
                 _entities.SpriteEnable |= (byte)(1 << (enemy + FirstEnemy));
                 _food.Kill(enemy);
             }
 
-            _objects.Type[slot] = KilledType;
-            _objects.Column[slot] = 0;
-            _objects.Row[slot] = 0;
+            _objects.Slot(slot).Type = KilledType;
+            _objects.Slot(slot).Column = 0;
+            _objects.Slot(slot).Row = 0;
         }
     }
 
@@ -245,9 +245,9 @@ internal sealed class WorldEffects
     {
         for (int player = PlayerTable.Capacity - 1; player >= 0; player--)
         {
-            if (_entities.State[player] == CarriedState)
+            if (_entities.Slot(player).State == CarriedState)
             {
-                _entities.State[player] = PlayingState;
+                _entities.Slot(player).State = PlayingState;
             }
         }
 
@@ -266,7 +266,7 @@ internal sealed class WorldEffects
     {
         for (int slot = EntityTable.Capacity - 1; slot >= FirstEnemy; slot--)
         {
-            byte state = _entities.State[slot];
+            byte state = _entities.Slot(slot).State;
 
             if (state is not 0 && (state < CaughtState || state is CarriedState))
             {

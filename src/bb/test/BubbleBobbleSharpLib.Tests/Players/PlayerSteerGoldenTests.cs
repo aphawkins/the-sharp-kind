@@ -62,26 +62,26 @@ public sealed class PlayerSteerGoldenTests
         PlayerJump jump = new(entities, drift, landing);
         SolidMap map = SolidMap.Build(s_levels.Level(1), []);
 
-        entities.X[0] = StartX;
-        entities.Y[0] = StartY;
-        entities.Frame[0] = StartFrame;
-        entities.AnimationTimer[0] = StartTimer;
-        entities.RiseCounter[0] = StartRise;
-        entities.FallCounter[0] = 0xFF;
-        entities.BubbleTimer[0] = 0xFF;
+        entities.Slot(0).X = StartX;
+        entities.Slot(0).Y = StartY;
+        entities.Slot(0).Frame = StartFrame;
+        entities.Slot(0).AnimationTimer = StartTimer;
+        entities.Slot(0).RiseCounter = StartRise;
+        entities.Slot(0).FallCounter = 0xFF;
+        entities.Slot(0).BubbleTimer = 0xFF;
 
         // $222B latched right as the jump began, and nothing in the air clears it.
-        entities.RightFlag[0] = 0xFF;
-        entities.LeftFlag[0] = 0x00;
+        entities.Slot(0).RightFlag = 0xFF;
+        entities.Slot(0).LeftFlag = 0x00;
 
         byte[] x = new byte[s_x.Length];
         byte[] y = new byte[s_y.Length];
 
         for (int tick = 0; tick < s_x.Length; tick++)
         {
-            jump.Step(0, PushUpAndRight, PlayerCell.Of(entities.X[0], entities.Y[0]), map);
-            x[tick] = entities.X[0];
-            y[tick] = entities.Y[0];
+            jump.Step(0, PushUpAndRight, PlayerCell.Of(entities.Slot(0).X, entities.Slot(0).Y), map);
+            x[tick] = entities.Slot(0).X;
+            y[tick] = entities.Slot(0).Y;
         }
 
         Assert.Equal(s_y, y);

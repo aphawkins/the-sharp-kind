@@ -38,14 +38,14 @@ internal sealed class PlayerSteer
     {
         ArgumentNullException.ThrowIfNull(map);
 
-        PlayerCell cell = PlayerCell.Of(_entities.X[player], _entities.Y[player]);
+        PlayerCell cell = PlayerCell.Of(_entities.Slot(player).X, _entities.Slot(player).Y);
 
         if ((port & Input.Fire) == 0)
         {
             _blow.Blow(player);
         }
 
-        byte frame = _entities.Frame[player];
+        byte frame = _entities.Slot(player).Frame;
 
         if ((port & Input.Left) == 0)
         {
@@ -82,53 +82,53 @@ internal sealed class PlayerSteer
 
     private void Left(int player, in PlayerCell cell, SolidMap map)
     {
-        if (_entities.X[player] == LeftEdge)
+        if (_entities.Slot(player).X == LeftEdge)
         {
             return;
         }
 
         bool aligned = cell.FineY == 0;
 
-        if (!aligned && _entities.Y[player] < WallCheckFloor)
+        if (!aligned && _entities.Slot(player).Y < WallCheckFloor)
         {
-            _entities.X[player]--;
+            _entities.Slot(player).X--;
             return;
         }
 
         if (cell.FineX != 0 || !cell.Solid(map, aligned ? LeftProbeAligned : LeftProbeSplit))
         {
-            _entities.X[player]--;
+            _entities.Slot(player).X--;
         }
     }
 
     private void Right(int player, in PlayerCell cell, SolidMap map)
     {
-        if (_entities.X[player] == RightEdge)
+        if (_entities.Slot(player).X == RightEdge)
         {
             return;
         }
 
         bool aligned = cell.FineY == 0;
 
-        if (!aligned && _entities.Y[player] < WallCheckFloor)
+        if (!aligned && _entities.Slot(player).Y < WallCheckFloor)
         {
-            _entities.X[player]++;
+            _entities.Slot(player).X++;
             return;
         }
 
         if (cell.FineX != 0 || !cell.Solid(map, aligned ? RightProbeAligned : RightProbeSplit))
         {
-            _entities.X[player]++;
+            _entities.Slot(player).X++;
         }
     }
 
     private void Turn(int player, byte facing)
     {
-        if ((_entities.BubbleTimer[player] & 0x80) == 0)
+        if ((_entities.Slot(player).BubbleTimer & 0x80) == 0)
         {
             return;
         }
 
-        _entities.Frame[player] = facing;
+        _entities.Slot(player).Frame = facing;
     }
 }

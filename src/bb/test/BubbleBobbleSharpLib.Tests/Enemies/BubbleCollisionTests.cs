@@ -40,8 +40,8 @@ public sealed class BubbleCollisionTests
 
         Assert.True(collision.Check(Slot));
 
-        Assert.Equal(0, entities.State[LastEnemy]);
-        Assert.Equal(PlainState, entities.State[2]);
+        Assert.Equal(0, entities.Slot(LastEnemy).State);
+        Assert.Equal(PlainState, entities.Slot(2).State);
     }
 
     // $105B starts at five, which is slot 7, and stops at zero, which is slot 2. The two players sit
@@ -57,8 +57,8 @@ public sealed class BubbleCollisionTests
 
         Assert.False(collision.Check(Slot));
 
-        Assert.Equal(PlainState, entities.State[player]);
-        Assert.Equal(ObjectTable.FreeType, objects.Type[Slot]);
+        Assert.Equal(PlainState, entities.Slot(player).State);
+        Assert.Equal(ObjectTable.FreeType, objects.Slot(Slot).Type);
     }
 
     // $105D and $1060. An empty slot is passed over, and so is one in the band $0B to $15. Anything
@@ -89,8 +89,8 @@ public sealed class BubbleCollisionTests
     {
         (_, EntityTable entities, BubbleCollision collision) = Thing();
         Enemy(entities, LastEnemy, PlainState);
-        entities.X[LastEnemy] = x;
-        entities.Y[LastEnemy] = y;
+        entities.Slot(LastEnemy).X = x;
+        entities.Slot(LastEnemy).Y = y;
 
         Assert.Equal(hit, collision.Check(Slot));
     }
@@ -108,7 +108,7 @@ public sealed class BubbleCollisionTests
 
         _ = collision.Check(Slot);
 
-        Assert.Equal(type, objects.Type[Slot]);
+        Assert.Equal(type, objects.Slot(Slot).Type);
     }
 
     // $1095 and $10B1. On the short path nothing loads the accumulator between them, so what reaches
@@ -118,12 +118,12 @@ public sealed class BubbleCollisionTests
     {
         (ObjectTable objects, EntityTable entities, BubbleCollision collision) = Thing();
         Enemy(entities, LastEnemy, PlainState);
-        entities.RiseCounter[LastEnemy] = 0x05;
+        entities.Slot(LastEnemy).RiseCounter = 0x05;
 
         _ = collision.Check(Slot);
 
-        Assert.Equal(PlainState, objects.Variant[Slot]);
-        Assert.Equal(0x05, entities.RiseCounter[LastEnemy]);
+        Assert.Equal(PlainState, objects.Slot(Slot).Variant);
+        Assert.Equal(0x05, entities.Slot(LastEnemy).RiseCounter);
     }
 
     // $10A1. On the long path the rise counter is read out first and the three counters go to $FF,
@@ -138,14 +138,14 @@ public sealed class BubbleCollisionTests
     {
         (ObjectTable objects, EntityTable entities, BubbleCollision collision) = Thing();
         Enemy(entities, LastEnemy, state);
-        entities.RiseCounter[LastEnemy] = 0x05;
+        entities.Slot(LastEnemy).RiseCounter = 0x05;
 
         _ = collision.Check(Slot);
 
-        Assert.Equal(0x05, objects.Variant[Slot]);
-        Assert.Equal(0xFF, entities.RiseCounter[LastEnemy]);
-        Assert.Equal(0xFF, entities.FallCounter[LastEnemy]);
-        Assert.Equal(0xFF, entities.GroundState[LastEnemy]);
+        Assert.Equal(0x05, objects.Slot(Slot).Variant);
+        Assert.Equal(0xFF, entities.Slot(LastEnemy).RiseCounter);
+        Assert.Equal(0xFF, entities.Slot(LastEnemy).FallCounter);
+        Assert.Equal(0xFF, entities.Slot(LastEnemy).GroundState);
     }
 
     // $10B4. The enemy is emptied out of the eight and the slot that caught it loses its AI counter,
@@ -155,16 +155,16 @@ public sealed class BubbleCollisionTests
     {
         (ObjectTable objects, EntityTable entities, BubbleCollision collision) = Thing();
         Enemy(entities, LastEnemy, PlainState);
-        entities.HoldTimer[LastEnemy] = 0x04;
-        objects.State[Slot] = 0x06;
+        entities.Slot(LastEnemy).HoldTimer = 0x04;
+        objects.Slot(Slot).State = 0x06;
 
         _ = collision.Check(Slot);
 
-        Assert.Equal(0, entities.State[LastEnemy]);
-        Assert.Equal(0, entities.HoldTimer[LastEnemy]);
-        Assert.Equal(0xFF, entities.Mode[LastEnemy]);
-        Assert.Equal(0, objects.State[Slot]);
-        Assert.Equal(0xA0, objects.Flags[Slot]);
+        Assert.Equal(0, entities.Slot(LastEnemy).State);
+        Assert.Equal(0, entities.Slot(LastEnemy).HoldTimer);
+        Assert.Equal(0xFF, entities.Slot(LastEnemy).Mode);
+        Assert.Equal(0, objects.Slot(Slot).State);
+        Assert.Equal(0xA0, objects.Slot(Slot).Flags);
     }
 
     // $10BF. The frame is indexed by whichever byte reached $AA30, so the two paths above pick
@@ -174,11 +174,11 @@ public sealed class BubbleCollisionTests
     {
         (ObjectTable objects, EntityTable entities, BubbleCollision collision) = Thing();
         Enemy(entities, LastEnemy, ResetState);
-        entities.RiseCounter[LastEnemy] = 0x05;
+        entities.Slot(LastEnemy).RiseCounter = 0x05;
 
         _ = collision.Check(Slot);
 
-        Assert.Equal(0x07, objects.EnemyType[Slot]);
+        Assert.Equal(0x07, objects.Slot(Slot).EnemyType);
     }
 
     // $AB81 is eight bytes, and the game reads on into $AB89 for enemies in states 8 and 9, which
@@ -193,7 +193,7 @@ public sealed class BubbleCollisionTests
 
         collision.Check(Slot);
 
-        Assert.Equal(frame, objects.EnemyType[Slot]);
+        Assert.Equal(frame, objects.Slot(Slot).EnemyType);
     }
 
     // Past $AB89 the next table is text. An enemy still carrying the $FF its rise counter starts a
@@ -204,7 +204,7 @@ public sealed class BubbleCollisionTests
     {
         (_, EntityTable entities, BubbleCollision collision) = Thing();
         Enemy(entities, LastEnemy, ResetState);
-        entities.RiseCounter[LastEnemy] = 0xFF;
+        entities.Slot(LastEnemy).RiseCounter = 0xFF;
 
         _ = Assert.Throws<IndexOutOfRangeException>(() => collision.Check(Slot));
     }
@@ -212,16 +212,16 @@ public sealed class BubbleCollisionTests
     // One enemy sitting exactly on the thing, so that only the state under test decides the outcome.
     private static void Enemy(EntityTable entities, int slot, byte state)
     {
-        entities.State[slot] = state;
-        entities.X[slot] = ThingX;
-        entities.Y[slot] = ThingY;
+        entities.Slot(slot).State = state;
+        entities.Slot(slot).X = ThingX;
+        entities.Slot(slot).Y = ThingY;
     }
 
     private static (ObjectTable Objects, EntityTable Entities, BubbleCollision Collision) Thing()
     {
         ObjectTable objects = new();
-        objects.X[Slot] = ThingX;
-        objects.Y[Slot] = ThingY;
+        objects.Slot(Slot).X = ThingX;
+        objects.Slot(Slot).Y = ThingY;
 
         EntityTable entities = new();
 

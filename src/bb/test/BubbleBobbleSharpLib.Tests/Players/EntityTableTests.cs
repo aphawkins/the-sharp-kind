@@ -36,9 +36,9 @@ public sealed class EntityTableTests
 
         for (int slot = 0; slot < EntityTable.Capacity; slot++)
         {
-            Assert.Equal(0, entities.State[slot]);
-            Assert.Equal(0, entities.X[slot]);
-            Assert.Equal(0, entities.Y[slot]);
+            Assert.Equal(0, entities.Slot(slot).State);
+            Assert.Equal(0, entities.Slot(slot).X);
+            Assert.Equal(0, entities.Slot(slot).Y);
         }
     }
 
@@ -50,13 +50,13 @@ public sealed class EntityTableTests
     {
         EntityTable entities = new();
 
-        entities.X[0] = 0x24;
-        entities.X[1] = 0xF4;
-        entities.X[7] = 0x80;
+        entities.Slot(0).X = 0x24;
+        entities.Slot(1).X = 0xF4;
+        entities.Slot(7).X = 0x80;
 
-        Assert.Equal(0x24, entities.X[0]);
-        Assert.Equal(0xF4, entities.X[1]);
-        Assert.Equal(0x80, entities.X[7]);
-        Assert.Equal(0, entities.Y[0]);
+        Assert.Equal(0x24, entities.Slot(0).X);
+        Assert.Equal(0xF4, entities.Slot(1).X);
+        Assert.Equal(0x80, entities.Slot(7).X);
+        Assert.Equal(0, entities.Slot(0).Y);
     }
 }

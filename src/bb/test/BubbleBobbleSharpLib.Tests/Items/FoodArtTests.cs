@@ -21,8 +21,8 @@ public sealed class FoodArtTests
     public void IsTheArtOfTheFoodTheTimerNames(byte timer, int art)
     {
         GameLoop loop = new(new(new SharpKind.RandomSource(new Random(1))), 1);
-        loop.Entities.State[Slot] = FoodDrop.FoodState;
-        loop.Entities.AttackTimer[Slot] = timer;
+        loop.Entities.Slot(Slot).State = FoodDrop.FoodState;
+        loop.Entities.Slot(Slot).AttackTimer = timer;
 
         int[] arts = loop.FoodArt();
 
@@ -34,8 +34,8 @@ public sealed class FoodArtTests
     public void IsNoneForAFoodPastTheEndOfTheArt()
     {
         GameLoop loop = new(new(new SharpKind.RandomSource(new Random(1))), 1);
-        loop.Entities.State[Slot] = FoodDrop.FoodState;
-        loop.Entities.AttackTimer[Slot] = 0;
+        loop.Entities.Slot(Slot).State = FoodDrop.FoodState;
+        loop.Entities.Slot(Slot).AttackTimer = 0;
 
         Assert.Equal(-1, loop.FoodArt()[Slot]);
     }

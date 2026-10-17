@@ -15,7 +15,6 @@ internal sealed class EntityTable : IRowTails
     private const byte CaughtState = 0x0B;
 
     private readonly EntitySlot[] _slots = new EntitySlot[Capacity];
-    private readonly bool[] _climbNext = new bool[Capacity];
 
     internal EntityTable()
     {
@@ -24,56 +23,6 @@ internal sealed class EntityTable : IRowTails
             _slots[slot] = new();
         }
     }
-
-    internal SlotColumn<EntitySlot> State => new(_slots, static slot => ref slot.State);
-
-    internal SlotColumn<EntitySlot> X => new(_slots, static slot => ref slot.X);
-
-    internal SlotColumn<EntitySlot> Y => new(_slots, static slot => ref slot.Y);
-
-    internal SlotColumn<EntitySlot> Frame => new(_slots, static slot => ref slot.Frame);
-
-    internal SlotColumn<EntitySlot> AnimationTimer => new(_slots, static slot => ref slot.AnimationTimer);
-
-    internal SlotColumn<EntitySlot> BubbleTimer => new(_slots, static slot => ref slot.BubbleTimer);
-
-    internal SlotColumn<EntitySlot> RiseCounter => new(_slots, static slot => ref slot.RiseCounter);
-
-    internal SlotColumn<EntitySlot> FallCounter => new(_slots, static slot => ref slot.FallCounter);
-
-    internal SlotColumn<EntitySlot> LeftFlag => new(_slots, static slot => ref slot.LeftFlag);
-
-    internal SlotColumn<EntitySlot> RightFlag => new(_slots, static slot => ref slot.RightFlag);
-
-    internal SlotColumn<EntitySlot> Colour => new(_slots, static slot => ref slot.Colour);
-
-    internal SlotColumn<EntitySlot> FlashTimer => new(_slots, static slot => ref slot.FlashTimer);
-
-    internal SlotColumn<EntitySlot> Mode => new(_slots, static slot => ref slot.Mode);
-
-    internal SlotColumn<EntitySlot> HoldTimer => new(_slots, static slot => ref slot.HoldTimer);
-
-    internal SlotColumn<EntitySlot> GroundState => new(_slots, static slot => ref slot.GroundState);
-
-    internal SlotColumn<EntitySlot> Heading => new(_slots, static slot => ref slot.Heading);
-
-    internal SlotColumn<EntitySlot> SpriteBase => new(_slots, static slot => ref slot.SpriteBase);
-
-    internal SlotColumn<EntitySlot> TurnTimer => new(_slots, static slot => ref slot.TurnTimer);
-
-    internal SlotColumn<EntitySlot> TurnInterval => new(_slots, static slot => ref slot.TurnInterval);
-
-    internal SlotColumn<EntitySlot> FrameCount => new(_slots, static slot => ref slot.FrameCount);
-
-    internal SlotColumn<EntitySlot> FrameMask => new(_slots, static slot => ref slot.FrameMask);
-
-    internal SlotColumn<EntitySlot> LeapFlag => new(_slots, static slot => ref slot.LeapFlag);
-
-    internal SlotColumn<EntitySlot> ClimbFlag => new(_slots, static slot => ref slot.ClimbFlag);
-
-    internal Span<bool> ClimbNext => _climbNext;
-
-    internal SlotColumn<EntitySlot> AttackTimer => new(_slots, static slot => ref slot.AttackTimer);
 
     internal byte EnemyCount { get; set; }
 
@@ -87,16 +36,29 @@ internal sealed class EntityTable : IRowTails
     // One slot as a whole, for code that works on a single entity.
     internal EntitySlot Slot(int slot) => _slots[slot];
 
+    // Every slot's byte of one field, as it stands.
+    internal byte[] Snapshot(SlotField<EntitySlot> field)
+    {
+        byte[] bytes = new byte[Capacity];
+
+        for (int slot = 0; slot < Capacity; slot++)
+        {
+            bytes[slot] = field(_slots[slot]);
+        }
+
+        return bytes;
+    }
+
     // What the sprite views draw: the entities as they stand, with the extras the game puts on top.
     internal SpriteModel Sprites(IReadOnlyList<int> foodArt, int bonusStage, BossPicture? boss, IReadOnlyList<byte> pictures)
         => new(
-            State.ToArray(),
-            X.ToArray(),
-            Y.ToArray(),
-            Frame.ToArray(),
-            SpriteBase.ToArray(),
-            Colour.ToArray(),
-            FlashTimer.ToArray(),
+            Snapshot(static slot => ref slot.State),
+            Snapshot(static slot => ref slot.X),
+            Snapshot(static slot => ref slot.Y),
+            Snapshot(static slot => ref slot.Frame),
+            Snapshot(static slot => ref slot.SpriteBase),
+            Snapshot(static slot => ref slot.Colour),
+            Snapshot(static slot => ref slot.FlashTimer),
             SpriteEnable)
         {
             FoodArt = foodArt,

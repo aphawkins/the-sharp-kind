@@ -16,13 +16,13 @@ public sealed class BubbleGlideTests
     public void GlidesAllTheWayToTheStartInABubble()
     {
         EntityTable entities = new();
-        entities.State[0] = 1;
-        entities.X[0] = 0x66;
-        entities.Y[0] = 0xDD;
+        entities.Slot(0).State = 1;
+        entities.Slot(0).X = 0x66;
+        entities.Slot(0).Y = 0xDD;
 
         BubbleGlide glide = new(entities, LevelScroll.Steps);
 
-        entities.X[0] = 0x2C;
+        entities.Slot(0).X = 0x2C;
 
         List<byte> places = [];
 
@@ -61,9 +61,9 @@ public sealed class BubbleGlideTests
     public void HasNothingToDoForAPlayerAtTheStart()
     {
         EntityTable entities = new();
-        entities.State[0] = 1;
-        entities.X[0] = 0x2C;
-        entities.Y[0] = 0xDD;
+        entities.Slot(0).State = 1;
+        entities.Slot(0).X = 0x2C;
+        entities.Slot(0).Y = 0xDD;
 
         Assert.True(new BubbleGlide(entities, 0).Finished(entities));
     }

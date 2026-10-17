@@ -52,10 +52,10 @@ public sealed class SuperBonusTests
             loop.Pass([Idle, Idle]);
         }
 
-        Assert.Equal(0xC8, loop.Entities.Y[2]);
-        Assert.Equal(0x80, loop.Entities.X[2]);
-        Assert.Equal(0x98, loop.Entities.X[3]);
-        Assert.Equal(0xC8 + 0x15, loop.Entities.Y[4]);
+        Assert.Equal(0xC8, loop.Entities.Slot(2).Y);
+        Assert.Equal(0x80, loop.Entities.Slot(2).X);
+        Assert.Equal(0x98, loop.Entities.Slot(3).X);
+        Assert.Equal(0xC8 + 0x15, loop.Entities.Slot(4).Y);
     }
 
     [Fact]
@@ -69,12 +69,12 @@ public sealed class SuperBonusTests
         }
 
         byte[] before = [.. loop.Scores.Bytes];
-        loop.Entities.X[0] = 0x90;
-        loop.Entities.Y[0] = 0xD0;
+        loop.Entities.Slot(0).X = 0x90;
+        loop.Entities.Slot(0).Y = 0xD0;
 
         loop.Pass([Idle, Idle]);
 
-        Assert.Equal(0, loop.Entities.State[2]);
+        Assert.Equal(0, loop.Entities.Slot(2).State);
         Assert.False(loop.Clear.SuperBonus!.Showing);
         Assert.Equal(before[1] + 0x30, loop.Scores.Bytes[1]);
     }
@@ -101,7 +101,7 @@ public sealed class SuperBonusTests
     {
         for (int slot = 2; slot < 8; slot++)
         {
-            loop.Entities.State[slot] = 0;
+            loop.Entities.Slot(slot).State = 0;
         }
 
         loop.Entities.EnemyCount = 0;

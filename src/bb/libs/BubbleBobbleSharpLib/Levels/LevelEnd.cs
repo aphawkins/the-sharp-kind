@@ -142,19 +142,19 @@ internal sealed class LevelEnd
 
         for (int slot = PlayerTable.Capacity - 1; slot >= 0; slot--)
         {
-            _objects.SubY[slot] = 0;
-            _objects.SubX[slot] = 0;
-            _objects.Variant[slot] = 0;
-            _objects.EnemyType[slot] = 0;
+            _objects.Slot(slot).SubY = 0;
+            _objects.Slot(slot).SubX = 0;
+            _objects.Slot(slot).Variant = 0;
+            _objects.Slot(slot).EnemyType = 0;
 
             column[slot] = s_spawnColumn[_random.Next() & 1];
-            _objects.Column[slot] = column[slot];
+            _objects.Slot(slot).Column = column[slot];
             row[slot] = s_spawnRow[_random.Next() & 1];
-            _objects.Row[slot] = row[slot];
+            _objects.Slot(slot).Row = row[slot];
 
-            if (_entities.State[slot] != 0)
+            if (_entities.Slot(slot).State != 0)
             {
-                _objects.Type[slot] = PopType;
+                _objects.Slot(slot).Type = PopType;
             }
         }
     }
@@ -164,11 +164,11 @@ internal sealed class LevelEnd
     {
         for (int slot = PlayerTable.Capacity - 1; slot >= 0; slot--)
         {
-            if (_entities.State[slot] != 0)
+            if (_entities.Slot(slot).State != 0)
             {
-                _objects.Column[slot] = column[slot];
-                _objects.Row[slot] = row[slot];
-                _objects.Type[slot] = (byte)(FirstBaronType + (slot << 1));
+                _objects.Slot(slot).Column = column[slot];
+                _objects.Slot(slot).Row = row[slot];
+                _objects.Slot(slot).Type = (byte)(FirstBaronType + (slot << 1));
             }
         }
 
@@ -183,7 +183,7 @@ internal sealed class LevelEnd
     {
         for (int player = PlayerTable.Capacity - 1; player >= 0; player--)
         {
-            byte state = _entities.State[player];
+            byte state = _entities.Slot(player).State;
 
             if (state is 0 or PlayerFrame.PlayingState)
             {
@@ -195,9 +195,9 @@ internal sealed class LevelEnd
                 return;
             }
 
-            _entities.State[player] = PlayerFrame.PlayingState;
-            _entities.FlashTimer[player] = SavedFlash[player];
-            _entities.Colour[player] = s_spawnColour[player];
+            _entities.Slot(player).State = PlayerFrame.PlayingState;
+            _entities.Slot(player).FlashTimer = SavedFlash[player];
+            _entities.Slot(player).Colour = s_spawnColour[player];
         }
 
         Complete++;

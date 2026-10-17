@@ -184,7 +184,7 @@ internal sealed class BubbleSpawner
 
         for (int slot = ObjectTable.Capacity - 1; slot >= 0; slot--)
         {
-            if (_objects.Type[slot] is >= SpecialFrom and < SpecialBelow)
+            if (_objects.Slot(slot).Type is >= SpecialFrom and < SpecialBelow)
             {
                 count++;
             }
@@ -195,13 +195,13 @@ internal sealed class BubbleSpawner
 
     private void Place(int slot, byte column, byte row)
     {
-        _objects.State[slot] = 0;
-        _objects.SubX[slot] = 0;
-        _objects.SubY[slot] = 0;
-        _objects.Column[slot] = column;
-        _objects.X[slot] = (byte)((column << 3) + XOrigin);
-        _objects.Row[slot] = row;
-        _objects.Y[slot] = (byte)((row << 3) + YOrigin);
+        _objects.Slot(slot).State = 0;
+        _objects.Slot(slot).SubX = 0;
+        _objects.Slot(slot).SubY = 0;
+        _objects.Slot(slot).Column = column;
+        _objects.Slot(slot).X = (byte)((column << 3) + XOrigin);
+        _objects.Slot(slot).Row = row;
+        _objects.Slot(slot).Y = (byte)((row << 3) + YOrigin);
 
         byte roll = _random.Next();
 
@@ -221,13 +221,13 @@ internal sealed class BubbleSpawner
 
         Seed = (byte)(seed < SeedWrap ? seed : seed & SeedNarrow);
 
-        _objects.Type[slot] = (byte)((Seed << 1) + FirstLetterType);
-        _objects.Behaviour[slot] = WalkerBehaviour;
+        _objects.Slot(slot).Type = (byte)((Seed << 1) + FirstLetterType);
+        _objects.Slot(slot).Behaviour = WalkerBehaviour;
     }
 
     private void Standardly(int slot, byte bits)
     {
-        _objects.Flags[slot] = FlagsStandard;
+        _objects.Slot(slot).Flags = FlagsStandard;
 
         (byte type, byte behaviour) = (bits & 0x01) != 0
             ? ((byte)0x06, (byte)0x0B)
@@ -237,7 +237,7 @@ internal sealed class BubbleSpawner
                     ? ((byte)0x0A, WalkerBehaviour)
                     : (PlainType, WalkerBehaviour);
 
-        _objects.Type[slot] = type;
-        _objects.Behaviour[slot] = behaviour;
+        _objects.Slot(slot).Type = type;
+        _objects.Slot(slot).Behaviour = behaviour;
     }
 }

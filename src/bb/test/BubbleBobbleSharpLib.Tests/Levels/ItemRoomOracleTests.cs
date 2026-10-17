@@ -189,8 +189,8 @@ public sealed class ItemRoomOracleTests
             int index = Enumerable.Range(0, 0x60).First(i => machine.Peek(Xs + i) != 0);
             machine.Poke(0xBA, machine.Peek(Xs + index));
             machine.Poke(0xC2, machine.Peek(Ys + index));
-            entities.X[0] = machine.Peek(Xs + index);
-            entities.Y[0] = machine.Peek(Ys + index);
+            entities.Slot(0).X = machine.Peek(Xs + index);
+            entities.Slot(0).Y = machine.Peek(Ys + index);
             machine.RunFrames(1);
         }
 
@@ -204,8 +204,8 @@ public sealed class ItemRoomOracleTests
             if (takeAll)
             {
                 RoomItem next = room.Items.First(item => item.X != 0 || item.Y != 0);
-                entities.X[0] = next.X;
-                entities.Y[0] = next.Y;
+                entities.Slot(0).X = next.X;
+                entities.Slot(0).Y = next.Y;
             }
             else
             {

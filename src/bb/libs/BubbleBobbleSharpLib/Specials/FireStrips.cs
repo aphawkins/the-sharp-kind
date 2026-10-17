@@ -130,18 +130,18 @@ internal sealed class FireStrips
         for (int enemy = EntityTable.Capacity - FirstEnemy - 1; enemy >= 0; enemy--)
         {
             int slot = enemy + FirstEnemy;
-            byte state = _entities.State[slot];
+            byte state = _entities.Slot(slot).State;
 
             if (state == 0
                 || state >= KillAbove
-                || (byte)(y - _entities.Y[slot]) != Standing
-                || (byte)(_entities.X[slot] - x) >= reach)
+                || (byte)(y - _entities.Slot(slot).Y) != Standing
+                || (byte)(_entities.Slot(slot).X - x) >= reach)
             {
                 continue;
             }
 
             _food.Kill(enemy);
-            _entities.AttackTimer[slot]--;
+            _entities.Slot(slot).AttackTimer--;
         }
     }
 }

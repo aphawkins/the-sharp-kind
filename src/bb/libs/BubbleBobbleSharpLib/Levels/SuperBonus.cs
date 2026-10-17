@@ -45,7 +45,7 @@ internal sealed class SuperBonus
     }
 
     // Whether the block is on the screen.
-    internal bool Showing => _entities.State[FirstSlot] == State;
+    internal bool Showing => _entities.Slot(FirstSlot).State == State;
 
     // `$1E2E`, then `$1757`-`$175D`: the six enemy slots are emptied, and the first made the block, with its lower pair
     // ($C6, $C7: slots 4 and 5) a sprite's height below the upper.
@@ -56,29 +56,29 @@ internal sealed class SuperBonus
             Empty(slot);
         }
 
-        _entities.State[FirstSlot] = State;
-        _entities.Y[FirstSlot + 2] = Top;
-        _entities.Y[FirstSlot + 3] = Top;
+        _entities.Slot(FirstSlot).State = State;
+        _entities.Slot(FirstSlot + 2).Y = Top;
+        _entities.Slot(FirstSlot + 3).Y = Top;
     }
 
     // `$2ACB`.
     internal void Step()
     {
-        if (_entities.Y[FirstSlot] != Rest)
+        if (_entities.Slot(FirstSlot).Y != Rest)
         {
-            _entities.X[FirstSlot] = LeftX;
-            _entities.X[FirstSlot + 2] = LeftX;
-            _entities.X[FirstSlot + 1] = RightX;
-            _entities.X[FirstSlot + 3] = RightX;
+            _entities.Slot(FirstSlot).X = LeftX;
+            _entities.Slot(FirstSlot + 2).X = LeftX;
+            _entities.Slot(FirstSlot + 1).X = RightX;
+            _entities.Slot(FirstSlot + 3).X = RightX;
 
             for (int piece = Pieces - 1; piece >= 0; piece--)
             {
                 int slot = FirstSlot + piece;
 
-                _entities.SpriteBase[slot] = PieceBase;
-                _entities.Frame[slot] = (byte)piece;
-                _entities.Colour[slot] = _clear.BonusColour;
-                _entities.Y[slot] += Fall;
+                _entities.Slot(slot).SpriteBase = PieceBase;
+                _entities.Slot(slot).Frame = (byte)piece;
+                _entities.Slot(slot).Colour = _clear.BonusColour;
+                _entities.Slot(slot).Y += Fall;
             }
         }
 
@@ -98,16 +98,16 @@ internal sealed class SuperBonus
 
     private bool Touches(int player)
     {
-        int across = _entities.X[player] - _entities.X[FirstSlot];
-        int down = _entities.Y[player] - _entities.Y[FirstSlot];
+        int across = _entities.Slot(player).X - _entities.Slot(FirstSlot).X;
+        int down = _entities.Slot(player).Y - _entities.Slot(FirstSlot).Y;
 
         return across is >= 0 and < ReachX && down is >= 0 and < ReachY;
     }
 
     private void Empty(int slot)
     {
-        _entities.State[slot] = 0;
-        _entities.X[slot] = 0;
-        _entities.Y[slot] = 0;
+        _entities.Slot(slot).State = 0;
+        _entities.Slot(slot).X = 0;
+        _entities.Slot(slot).Y = 0;
     }
 }

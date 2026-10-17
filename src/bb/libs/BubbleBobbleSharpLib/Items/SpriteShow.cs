@@ -124,7 +124,7 @@ internal sealed class SpriteShow
         {
             for (int slot = FirstEnemy; slot < EntityTable.Capacity; slot++)
             {
-                if (_entities.State[slot] is DiamondState or GiantState)
+                if (_entities.Slot(slot).State is DiamondState or GiantState)
                 {
                     return true;
                 }
@@ -177,7 +177,7 @@ internal sealed class SpriteShow
     // `$2A18` and `$2A74`: a slot's turn in state `$13` or `$14`, with `$08`.
     internal void Step(int slot, byte counter)
     {
-        if (_entities.State[slot] == DiamondState)
+        if (_entities.Slot(slot).State == DiamondState)
         {
             Fly(slot);
         }
@@ -200,20 +200,20 @@ internal sealed class SpriteShow
         {
             int slot = enemy + FirstEnemy;
 
-            _keptState[enemy] = _entities.State[slot];
-            _keptX[enemy] = _entities.X[slot];
-            _keptY[enemy] = _entities.Y[slot];
-            _keptBase[enemy] = _entities.SpriteBase[slot];
+            _keptState[enemy] = _entities.Slot(slot).State;
+            _keptX[enemy] = _entities.Slot(slot).X;
+            _keptY[enemy] = _entities.Slot(slot).Y;
+            _keptBase[enemy] = _entities.Slot(slot).SpriteBase;
 
-            _entities.SpriteBase[slot] = FirstPointer;
-            _entities.Frame[slot] = 0;
-            _entities.X[slot] = 0;
-            _entities.Y[slot] = 0;
-            _entities.FlashTimer[slot] = 0;
-            _entities.HoldTimer[slot] = 0;
-            _entities.State[slot] = state;
-            _entities.Mode[slot] = Entered;
-            _entities.Colour[slot] = ShowColour;
+            _entities.Slot(slot).SpriteBase = FirstPointer;
+            _entities.Slot(slot).Frame = 0;
+            _entities.Slot(slot).X = 0;
+            _entities.Slot(slot).Y = 0;
+            _entities.Slot(slot).FlashTimer = 0;
+            _entities.Slot(slot).HoldTimer = 0;
+            _entities.Slot(slot).State = state;
+            _entities.Slot(slot).Mode = Entered;
+            _entities.Slot(slot).Colour = ShowColour;
         }
 
         _timer.Seconds = NoSeconds;
@@ -227,8 +227,8 @@ internal sealed class SpriteShow
 
         for (int slot = FirstEnemy; slot < EntityTable.Capacity; slot++)
         {
-            _entities.X[slot] = x;
-            _entities.Y[slot] = y;
+            _entities.Slot(slot).X = x;
+            _entities.Slot(slot).Y = y;
         }
 
         if (!_giant)
@@ -241,7 +241,7 @@ internal sealed class SpriteShow
 
         for (int enemy = 1; enemy < Slots; enemy++)
         {
-            _entities.SpriteBase[enemy + FirstEnemy] = (byte)(FirstPointer + enemy);
+            _entities.Slot(enemy + FirstEnemy).SpriteBase = (byte)(FirstPointer + enemy);
         }
 
         return counter;
@@ -250,12 +250,12 @@ internal sealed class SpriteShow
     // `$2A18`-`$2A3E`.
     private void Fly(int slot)
     {
-        _entities.X[slot] += s_diamondX[slot];
-        _entities.Y[slot] += s_diamondY[slot];
-        _entities.Colour[slot] ^= DiamondColourSwap;
-        _entities.FlashTimer[slot] = 0;
+        _entities.Slot(slot).X += s_diamondX[slot];
+        _entities.Slot(slot).Y += s_diamondY[slot];
+        _entities.Slot(slot).Colour ^= DiamondColourSwap;
+        _entities.Slot(slot).FlashTimer = 0;
 
-        if (slot == FirstEnemy && _entities.Y[slot] < LeavesAbove)
+        if (slot == FirstEnemy && _entities.Slot(slot).Y < LeavesAbove)
         {
             HandBack();
         }
@@ -264,7 +264,7 @@ internal sealed class SpriteShow
     // `$2A74`-`$2AC8`.
     private void Swell(int slot, byte counter)
     {
-        _entities.Colour[slot] ^= GiantColourSwap;
+        _entities.Slot(slot).Colour ^= GiantColourSwap;
 
         if ((counter & GiantFrames) != 0 || slot != FirstEnemy)
         {
@@ -291,8 +291,8 @@ internal sealed class SpriteShow
     {
         for (int enemy = Slots - 1; enemy >= 0; enemy--)
         {
-            _entities.X[enemy + FirstEnemy] = x[enemy];
-            _entities.Y[enemy + FirstEnemy] = y[enemy];
+            _entities.Slot(enemy + FirstEnemy).X = x[enemy];
+            _entities.Slot(enemy + FirstEnemy).Y = y[enemy];
         }
     }
 
@@ -308,17 +308,17 @@ internal sealed class SpriteShow
 
             if (_keptState[enemy] < KeptBelow)
             {
-                _entities.State[slot] = _keptState[enemy];
-                _entities.X[slot] = _keptX[enemy];
-                _entities.Y[slot] = _keptY[enemy];
-                _entities.SpriteBase[slot] = _keptBase[enemy];
-                _entities.Colour[slot] = BackColour;
+                _entities.Slot(slot).State = _keptState[enemy];
+                _entities.Slot(slot).X = _keptX[enemy];
+                _entities.Slot(slot).Y = _keptY[enemy];
+                _entities.Slot(slot).SpriteBase = _keptBase[enemy];
+                _entities.Slot(slot).Colour = BackColour;
             }
             else
             {
-                _entities.State[slot] = 0;
-                _entities.X[slot] = 0;
-                _entities.Y[slot] = 0;
+                _entities.Slot(slot).State = 0;
+                _entities.Slot(slot).X = 0;
+                _entities.Slot(slot).Y = 0;
             }
         }
     }

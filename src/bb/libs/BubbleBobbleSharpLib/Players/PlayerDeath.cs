@@ -29,26 +29,26 @@ internal sealed class PlayerDeath
     {
         for (int player = PlayerTable.Capacity - 1; player >= 0; player--)
         {
-            if (_entities.State[player] != PlayingState)
+            if (_entities.Slot(player).State != PlayingState)
             {
                 continue;
             }
 
-            int x = _entities.X[player] + 1 + 1;
-            byte y = (byte)(_entities.Y[player] + 2 + (x > 0xFF ? 1 : 0));
+            int x = _entities.Slot(player).X + 1 + 1;
+            byte y = (byte)(_entities.Slot(player).Y + 2 + (x > 0xFF ? 1 : 0));
 
             for (int enemy = EntityTable.Capacity - 1; enemy >= FirstEnemy; enemy--)
             {
-                byte state = _entities.State[enemy];
+                byte state = _entities.Slot(enemy).State;
 
                 if (state is 0 or >= DeadlyStates)
                 {
                     continue;
                 }
 
-                if (Distance(_entities.X[enemy], (byte)x) < Range && Distance(_entities.Y[enemy], y) < Range)
+                if (Distance(_entities.Slot(enemy).X, (byte)x) < Range && Distance(_entities.Slot(enemy).Y, y) < Range)
                 {
-                    _entities.State[player] = DyingState;
+                    _entities.Slot(player).State = DyingState;
                 }
             }
         }

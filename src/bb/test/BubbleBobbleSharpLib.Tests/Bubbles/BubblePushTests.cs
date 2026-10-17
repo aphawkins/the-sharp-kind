@@ -25,9 +25,9 @@ public sealed class BubblePushTests
 
         new BubblePush(entities, objects).Update(Open());
 
-        Assert.Equal(0x4C, objects.X[Slot]);
-        Assert.Equal(3, objects.SubX[Slot]);
-        Assert.Equal(Column, objects.Column[Slot]);
+        Assert.Equal(0x4C, objects.Slot(Slot).X);
+        Assert.Equal(3, objects.Slot(Slot).SubX);
+        Assert.Equal(Column, objects.Slot(Slot).Column);
     }
 
     // $0B90 to $0B97. 2 + 2 wraps to 0, which is smaller, so the bubble moves into the next column.
@@ -38,8 +38,8 @@ public sealed class BubblePushTests
 
         new BubblePush(entities, objects).Update(Open());
 
-        Assert.Equal(0, objects.SubX[Slot]);
-        Assert.Equal(Column + 1, objects.Column[Slot]);
+        Assert.Equal(0, objects.Slot(Slot).SubX);
+        Assert.Equal(Column + 1, objects.Slot(Slot).Column);
     }
 
     // $0AF2 to $0B05. The `sbc #$03` runs with the carry clear, so four pixels; 1 - 2 borrows.
@@ -50,9 +50,9 @@ public sealed class BubblePushTests
 
         new BubblePush(entities, objects).Update(Open());
 
-        Assert.Equal(0x44, objects.X[Slot]);
-        Assert.Equal(3, objects.SubX[Slot]);
-        Assert.Equal(Column - 1, objects.Column[Slot]);
+        Assert.Equal(0x44, objects.Slot(Slot).X);
+        Assert.Equal(3, objects.Slot(Slot).SubX);
+        Assert.Equal(Column - 1, objects.Slot(Slot).Column);
     }
 
     // $0B3B. Pushed into a wall one column left, and put back: $44 - $14 + 7 + 1, masked, + $14 + 0.
@@ -63,9 +63,9 @@ public sealed class BubblePushTests
 
         new BubblePush(entities, objects).Update(Solid(Row - 4 + 1, Column - 1));
 
-        Assert.Equal(0x4C, objects.X[Slot]);
-        Assert.Equal(0, objects.SubX[Slot]);
-        Assert.Equal(Column, objects.Column[Slot]);
+        Assert.Equal(0x4C, objects.Slot(Slot).X);
+        Assert.Equal(0, objects.Slot(Slot).SubX);
+        Assert.Equal(Column, objects.Slot(Slot).Column);
     }
 
     // $0BD4. The right arm reads one column across: $4C - $1C, masked, + $13 + 1.
@@ -76,9 +76,9 @@ public sealed class BubblePushTests
 
         new BubblePush(entities, objects).Update(Solid(Row - 4 + 1, Column + 2));
 
-        Assert.Equal(0x44, objects.X[Slot]);
-        Assert.Equal(0, objects.SubX[Slot]);
-        Assert.Equal(Column, objects.Column[Slot]);
+        Assert.Equal(0x44, objects.Slot(Slot).X);
+        Assert.Equal(0, objects.Slot(Slot).SubX);
+        Assert.Equal(Column, objects.Slot(Slot).Column);
     }
 
     // $0AD6 and $0B68 are one-sided, $0AB7 stops frames 8 up, and $0AC7 a slot with a state byte.
@@ -91,12 +91,12 @@ public sealed class BubblePushTests
     public void NothingElseIsPushed(byte frame, byte playerX, byte bubbleX, byte state)
     {
         (EntityTable entities, ObjectTable objects) = Rig(frame, playerX, bubbleX, subX: 1);
-        objects.State[Slot] = state;
+        objects.Slot(Slot).State = state;
 
         new BubblePush(entities, objects).Update(Open());
 
-        Assert.Equal(bubbleX, objects.X[Slot]);
-        Assert.Equal(1, objects.SubX[Slot]);
+        Assert.Equal(bubbleX, objects.Slot(Slot).X);
+        Assert.Equal(1, objects.Slot(Slot).SubX);
     }
 
     // $0B0E. Row 3 leaves Y at 3; `dey` then walks 2, 1 and 0, so player 1 pushes the same bubble
@@ -105,14 +105,14 @@ public sealed class BubblePushTests
     public void ALeftPushOffTheMapPushesUntilOutOfRange()
     {
         (EntityTable entities, ObjectTable objects) = Rig(frame: 0x04, playerX: 0x50, bubbleX: 0x4C, subX: 0);
-        objects.Row[Slot] = 0x03;
-        objects.Column[Slot] = 8;
+        objects.Slot(Slot).Row = 0x03;
+        objects.Slot(Slot).Column = 8;
 
         new BubblePush(entities, objects).Update(Open());
 
-        Assert.Equal(0x3C, objects.X[Slot]);
-        Assert.Equal(0, objects.SubX[Slot]);
-        Assert.Equal(6, objects.Column[Slot]);
+        Assert.Equal(0x3C, objects.Slot(Slot).X);
+        Assert.Equal(0, objects.Slot(Slot).SubX);
+        Assert.Equal(6, objects.Slot(Slot).Column);
     }
 
     // $0B0E. With Y at 3, the slots still to come are measured from entity 3.
@@ -120,24 +120,24 @@ public sealed class BubblePushTests
     public void ALeftPushOffTheMapMakesEntityThreeThePusher()
     {
         (EntityTable entities, ObjectTable objects) = Rig(frame: 0x04, playerX: 0x50, bubbleX: 0x40, subX: 1);
-        objects.X[Slot] = 0x4C;
-        objects.Row[Slot] = 0x03;
+        objects.Slot(Slot).X = 0x4C;
+        objects.Slot(Slot).Row = 0x03;
 
         const int Lower = 4;
-        objects.Type[Lower] = 0x00;
-        objects.X[Lower] = 0x98;
-        objects.Y[Lower] = 0x60;
-        objects.SubX[Lower] = 1;
-        objects.Column[Lower] = 15;
-        objects.Row[Lower] = Row;
-        entities.X[3] = 0xA0;
-        entities.Y[3] = 0x60;
+        objects.Slot(Lower).Type = 0x00;
+        objects.Slot(Lower).X = 0x98;
+        objects.Slot(Lower).Y = 0x60;
+        objects.Slot(Lower).SubX = 1;
+        objects.Slot(Lower).Column = 15;
+        objects.Slot(Lower).Row = Row;
+        entities.Slot(3).X = 0xA0;
+        entities.Slot(3).Y = 0x60;
 
         new BubblePush(entities, objects).Update(Open());
 
         // Player 1 pushes slot 17 three times from row 3, and each time entity 3 then pushes this
         // one, until it is $14 from entity 3.
-        Assert.Equal(0x8C, objects.X[Lower]);
+        Assert.Equal(0x8C, objects.Slot(Lower).X);
     }
 
     // Row $40 walks Y down through zero page. At $0A, $BC (entity 2's X) reads as a playing state,
@@ -146,8 +146,8 @@ public sealed class BubblePushTests
     public void AnIndexPastTheTablesIsAGap()
     {
         (EntityTable entities, ObjectTable objects) = Rig(frame: 0x04, playerX: 0x50, bubbleX: 0x4C, subX: 1);
-        objects.Row[Slot] = 0x40;
-        entities.X[2] = 0x01;
+        objects.Slot(Slot).Row = 0x40;
+        entities.Slot(2).X = 0x01;
 
         Assert.Throws<NotSupportedException>(() => new BubblePush(entities, objects).Update(Open()));
     }
@@ -155,18 +155,18 @@ public sealed class BubblePushTests
     private static (EntityTable Entities, ObjectTable Objects) Rig(byte frame, byte playerX, byte bubbleX, byte subX)
     {
         EntityTable entities = new();
-        entities.State[0] = PlayerFrame.PlayingState;
-        entities.Frame[0] = frame;
-        entities.X[0] = playerX;
-        entities.Y[0] = 0x80;
+        entities.Slot(0).State = PlayerFrame.PlayingState;
+        entities.Slot(0).Frame = frame;
+        entities.Slot(0).X = playerX;
+        entities.Slot(0).Y = 0x80;
 
         ObjectTable objects = new();
-        objects.Type[Slot] = 0x00;
-        objects.X[Slot] = bubbleX;
-        objects.Y[Slot] = 0x80;
-        objects.SubX[Slot] = subX;
-        objects.Column[Slot] = Column;
-        objects.Row[Slot] = Row;
+        objects.Slot(Slot).Type = 0x00;
+        objects.Slot(Slot).X = bubbleX;
+        objects.Slot(Slot).Y = 0x80;
+        objects.Slot(Slot).SubX = subX;
+        objects.Slot(Slot).Column = Column;
+        objects.Slot(Slot).Row = Row;
 
         return (entities, objects);
     }

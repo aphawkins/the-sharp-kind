@@ -30,11 +30,11 @@ public sealed class EntityTimersTests
     public void TakesOneOffTheClock()
     {
         (ObjectTable objects, _, EntityTimers timers) = Table();
-        objects.Flags[Slot] = 0x7D;
+        objects.Slot(Slot).Flags = 0x7D;
 
         timers.Update(Released);
 
-        Assert.Equal(0x7C, objects.Flags[Slot]);
+        Assert.Equal(0x7C, objects.Slot(Slot).Flags);
     }
 
     // $13C6. A bubble whose clock runs out keeps what it was and starts popping. This is what ends
@@ -43,13 +43,13 @@ public sealed class EntityTimersTests
     public void PopsABubbleWhoseClockRunsOut()
     {
         (ObjectTable objects, _, EntityTimers timers) = Table();
-        objects.Type[Slot] = Bubble;
-        objects.Flags[Slot] = 0x01;
+        objects.Slot(Slot).Type = Bubble;
+        objects.Slot(Slot).Flags = 0x01;
 
         timers.Update(Released);
 
-        Assert.Equal(Popping, objects.Type[Slot]);
-        Assert.Equal(Bubble, objects.EnemyType[Slot]);
+        Assert.Equal(Popping, objects.Slot(Slot).Type);
+        Assert.Equal(Bubble, objects.Slot(Slot).EnemyType);
     }
 
     // $1428. The last sixteen counts, on the even ones only, and $04 eor $4C does both halves of
@@ -60,12 +60,12 @@ public sealed class EntityTimersTests
     public void WobblesNearTheEndOfTheClock(byte type, byte expected)
     {
         (ObjectTable objects, _, EntityTimers timers) = Table();
-        objects.Type[Slot] = type;
-        objects.Flags[Slot] = 0x0B;
+        objects.Slot(Slot).Type = type;
+        objects.Slot(Slot).Flags = 0x0B;
 
         timers.Update(Released);
 
-        Assert.Equal(expected, objects.Type[Slot]);
+        Assert.Equal(expected, objects.Slot(Slot).Type);
     }
 
     // $142E. A caught enemy flickers instead: its own slot's bit in $D015 flips, through $AB55, and
@@ -77,8 +77,8 @@ public sealed class EntityTimersTests
     public void FlickersACaughtEnemy(byte type, byte enabled)
     {
         (ObjectTable objects, EntityTable entities, EntityTimers timers) = Table();
-        objects.Type[Slot] = type;
-        objects.Flags[Slot] = 0x0D;
+        objects.Slot(Slot).Type = type;
+        objects.Slot(Slot).Flags = 0x0D;
         entities.SpriteEnable = 0xFF;
 
         timers.Update(Released);
@@ -89,7 +89,7 @@ public sealed class EntityTimersTests
 
         timers.Update(Released);
         Assert.Equal(0xFF, entities.SpriteEnable);
-        Assert.Equal(type, objects.Type[Slot]);
+        Assert.Equal(type, objects.Slot(Slot).Type);
     }
 
     // $1415 and $1419. An odd count does nothing, and neither does any count from $11 up - so the
@@ -100,12 +100,12 @@ public sealed class EntityTimersTests
     public void DoesNotWobbleOnAnOddCountOrAnEarlyOne(byte clock)
     {
         (ObjectTable objects, _, EntityTimers timers) = Table();
-        objects.Type[Slot] = Bubble;
-        objects.Flags[Slot] = clock;
+        objects.Slot(Slot).Type = Bubble;
+        objects.Slot(Slot).Flags = clock;
 
         timers.Update(Released);
 
-        Assert.Equal(Bubble, objects.Type[Slot]);
+        Assert.Equal(Bubble, objects.Slot(Slot).Type);
     }
 
     // $13DA. A bubble with an enemy in it lets the enemy back into the eight slots, and $13DC undoes
@@ -117,17 +117,17 @@ public sealed class EntityTimersTests
     public void PutsACapturedEnemyBackInItsOwnSlot(byte type, int entity)
     {
         (ObjectTable objects, EntityTable entities, EntityTimers timers) = Table();
-        objects.Type[Slot] = type;
-        objects.Flags[Slot] = 0x01;
-        objects.Variant[Slot] = 0x55;
+        objects.Slot(Slot).Type = type;
+        objects.Slot(Slot).Flags = 0x01;
+        objects.Slot(Slot).Variant = 0x55;
 
         timers.Update(Released);
 
-        Assert.Equal(Released, entities.State[entity]);
-        Assert.Equal(0x55, entities.RiseCounter[entity]);
-        Assert.Equal(0xFF, entities.FlashTimer[entity]);
-        Assert.Equal(0, entities.Frame[entity]);
-        Assert.Equal(Freed, objects.Type[Slot]);
+        Assert.Equal(Released, entities.Slot(entity).State);
+        Assert.Equal(0x55, entities.Slot(entity).RiseCounter);
+        Assert.Equal(0xFF, entities.Slot(entity).FlashTimer);
+        Assert.Equal(0, entities.Slot(entity).Frame);
+        Assert.Equal(Freed, objects.Slot(Slot).Type);
     }
 
     // $13E8 and $13EE. The row gets its bottom bit set and the column gets its bottom bit cleared -
@@ -137,15 +137,15 @@ public sealed class EntityTimersTests
     public void SetsTheRowBitAndClearsTheColumnBit()
     {
         (ObjectTable objects, EntityTable entities, EntityTimers timers) = Table();
-        objects.Type[Slot] = 0x18;
-        objects.Flags[Slot] = 0x01;
-        entities.X[2] = 0x45;
-        entities.Y[2] = 0x60;
+        objects.Slot(Slot).Type = 0x18;
+        objects.Slot(Slot).Flags = 0x01;
+        entities.Slot(2).X = 0x45;
+        entities.Slot(2).Y = 0x60;
 
         timers.Update(Released);
 
-        Assert.Equal(0x44, entities.X[2]);
-        Assert.Equal(0x61, entities.Y[2]);
+        Assert.Equal(0x44, entities.Slot(2).X);
+        Assert.Equal(0x61, entities.Slot(2).Y);
     }
 
     // $140B. Above $24 only one value means anything, and it frees the slot outright.
@@ -155,12 +155,12 @@ public sealed class EntityTimersTests
     public void FreesOnlyTheOneHighType(byte type, byte expected)
     {
         (ObjectTable objects, _, EntityTimers timers) = Table();
-        objects.Type[Slot] = type;
-        objects.Flags[Slot] = 0x01;
+        objects.Slot(Slot).Type = type;
+        objects.Slot(Slot).Flags = 0x01;
 
         timers.Update(Released);
 
-        Assert.Equal(expected, objects.Type[Slot]);
+        Assert.Equal(expected, objects.Slot(Slot).Type);
     }
 
     // $144D counts every slot at or above $34 - and a free slot is $FF, which is above $34. So the
@@ -174,11 +174,11 @@ public sealed class EntityTimersTests
     public void CountsAFreeSlotAsAHeldEnemy()
     {
         (ObjectTable objects, _, EntityTimers timers) = Table();
-        objects.Type[16] = Bubble;
+        objects.Slot(16).Type = Bubble;
 
         timers.Update(Released);
 
-        Assert.Equal(Bubble, objects.Type[16]);
+        Assert.Equal(Bubble, objects.Slot(16).Type);
     }
 
     // $145C is a `jsr` to the very next instruction, so $145F runs twice - once through the call and
@@ -194,9 +194,9 @@ public sealed class EntityTimersTests
 
         timers.Update(Released);
 
-        Assert.Equal(Popping, objects.Type[17]);
-        Assert.Equal(Popping, objects.Type[16]);
-        Assert.Equal(Bubble, objects.Type[15]);
+        Assert.Equal(Popping, objects.Slot(17).Type);
+        Assert.Equal(Popping, objects.Slot(16).Type);
+        Assert.Equal(Bubble, objects.Slot(15).Type);
     }
 
     // A cleared table, so every slot but the one under test is free and stays that way.

@@ -190,9 +190,9 @@ internal sealed class ItemRoom
 
         for (int slot = FirstEnemy; slot < EntityTable.Capacity; slot++)
         {
-            entities.State[slot] = 0;
-            entities.X[slot] = 0;
-            entities.Y[slot] = 0;
+            entities.Slot(slot).State = 0;
+            entities.Slot(slot).X = 0;
+            entities.Slot(slot).Y = 0;
         }
 
         items.Timer[0] = 0xFF;
@@ -279,7 +279,7 @@ internal sealed class ItemRoom
 
         for (int player = PlayerTable.Capacity - 1; player >= 0; player--)
         {
-            if (_entities.State[player] != PlayerFrame.PlayingState)
+            if (_entities.Slot(player).State != PlayerFrame.PlayingState)
             {
                 continue;
             }
@@ -289,8 +289,8 @@ internal sealed class ItemRoom
                 RoomItem item = _placed[index];
 
                 if ((item.X == 0 && item.Y == 0)
-                    || Distance.Absolute(_entities.X[player], item.X) >= Reach
-                    || Distance.Absolute(_entities.Y[player], item.Y) >= Reach)
+                    || Distance.Absolute(_entities.Slot(player).X, item.X) >= Reach
+                    || Distance.Absolute(_entities.Slot(player).Y, item.Y) >= Reach)
                 {
                     continue;
                 }
@@ -320,7 +320,7 @@ internal sealed class ItemRoom
 
             lines.Add(new(column, 8, colour, $"500X{_counts[player]:D2}"));
 
-            if (Remaining != 0 || _entities.State[player] == 0)
+            if (Remaining != 0 || _entities.Slot(player).State == 0)
             {
                 continue;
             }

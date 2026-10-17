@@ -53,7 +53,7 @@ internal sealed class ItemEffects
         switch (type)
         {
             case 0:
-                _entities.FlashTimer[player] = FinalFlash;
+                _entities.Slot(player).FlashTimer = FinalFlash;
                 break;
             case 3:
                 Reload(player);

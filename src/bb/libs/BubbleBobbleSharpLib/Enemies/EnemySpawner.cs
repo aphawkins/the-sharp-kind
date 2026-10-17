@@ -48,8 +48,8 @@ internal sealed class EnemySpawner
 
         Clear();
 
-        _entities.HoldTimer[0] = 0;
-        _entities.HoldTimer[1] = 0;
+        _entities.Slot(0).HoldTimer = 0;
+        _entities.Slot(1).HoldTimer = 0;
         _entities.EnemyCount = 0;
 
         for (int i = 0; i < enemies.Count; i++)
@@ -63,35 +63,35 @@ internal sealed class EnemySpawner
     {
         for (int slot = EnemyBase; slot < EnemyBase + EnemySlots; slot++)
         {
-            _entities.State[slot] = 0;
-            _entities.X[slot] = 0;
-            _entities.Y[slot] = 0;
+            _entities.Slot(slot).State = 0;
+            _entities.Slot(slot).X = 0;
+            _entities.Slot(slot).Y = 0;
         }
     }
 
     private void Place(int slot, EnemySpawn enemy)
     {
-        _entities.HoldTimer[slot] = (byte)(enemy.Delay << 1);
+        _entities.Slot(slot).HoldTimer = (byte)(enemy.Delay << 1);
 
         int state = enemy.Type + 2;
-        _entities.State[slot] = (byte)state;
+        _entities.Slot(slot).State = (byte)state;
 
         int x = (enemy.X << 3) + XOffset;
-        _entities.X[slot] = (byte)x;
-        _entities.Y[slot] = (byte)((enemy.Y << 3) + YOffset + (x >> 8));
+        _entities.Slot(slot).X = (byte)x;
+        _entities.Slot(slot).Y = (byte)((enemy.Y << 3) + YOffset + (x >> 8));
 
-        _entities.Heading[slot] = (byte)((enemy.Byte1Low << 1) | (enemy.MoveLeft ? 1 : 0));
+        _entities.Slot(slot).Heading = (byte)((enemy.Byte1Low << 1) | (enemy.MoveLeft ? 1 : 0));
 
-        _entities.Frame[slot] = enemy.FaceLeft ? s_spawnTables[FrameTable + state] : (byte)0;
+        _entities.Slot(slot).Frame = enemy.FaceLeft ? s_spawnTables[FrameTable + state] : (byte)0;
 
         byte turn = (byte)((_random.Next() & 0x1F) + s_spawnTables[TurnTable + state]);
 
         byte frames = s_spawnTables[FrameTable + state];
-        _entities.FrameCount[slot] = frames;
-        _entities.FrameMask[slot] = (byte)(frames - 1);
-        _entities.TurnInterval[slot] = turn;
-        _entities.TurnTimer[slot] = turn;
-        _entities.SpriteBase[slot] = s_spawnTables[SpriteBaseTable + state];
-        _entities.Colour[slot] = s_spawnTables[ColourTable + state];
+        _entities.Slot(slot).FrameCount = frames;
+        _entities.Slot(slot).FrameMask = (byte)(frames - 1);
+        _entities.Slot(slot).TurnInterval = turn;
+        _entities.Slot(slot).TurnTimer = turn;
+        _entities.Slot(slot).SpriteBase = s_spawnTables[SpriteBaseTable + state];
+        _entities.Slot(slot).Colour = s_spawnTables[ColourTable + state];
     }
 }

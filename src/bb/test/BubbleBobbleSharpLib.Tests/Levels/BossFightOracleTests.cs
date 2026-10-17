@@ -80,7 +80,7 @@ public sealed class BossFightOracleTests
             loop.Boss.Y = y;
             loop.Boss.Frame = frame;
             loop.Boss.Direction = direction;
-            loop.Entities.FlashTimer[2] = angry;
+            loop.Entities.Slot(2).FlashTimer = angry;
             loop.Boss.Move();
 
             string where = $"trial {trial}: boss ({x:X2},{y:X2}) frame {frame:X2} direction {direction:X2} angry {angry:X2}";
@@ -90,8 +90,8 @@ public sealed class BossFightOracleTests
             Assert.True(capture.After[Frame] == loop.Boss.Frame, $"{where}: frame");
             Assert.True(capture.After[Direction] == loop.Boss.Direction, $"{where}: direction");
             Assert.True(capture.After[Colour] == loop.Boss.Colour, $"{where}: colour");
-            Assert.True(capture.After[0xB2] == loop.Entities.State[0], $"{where}: player 1's state");
-            Assert.True(capture.After[0xB3] == loop.Entities.State[1], $"{where}: player 2's state");
+            Assert.True(capture.After[0xB2] == loop.Entities.Slot(0).State, $"{where}: player 1's state");
+            Assert.True(capture.After[0xB3] == loop.Entities.Slot(1).State, $"{where}: player 2's state");
             Assert.True(capture.After[Active] != 0 == loop.Boss.Active, $"{where}: active");
         }
     }
@@ -170,12 +170,12 @@ public sealed class BossFightOracleTests
     {
         Assert.True(capture.After[Frame] == loop.Boss.Frame, $"{where}: frame {capture.After[Frame]:X2} v {loop.Boss.Frame:X2}");
         Assert.True(capture.After[HitsAt] == loop.Boss.Hits, $"{where}: hits {capture.After[HitsAt]:X2} v {loop.Boss.Hits:X2}");
-        Assert.True(capture.After[Angry] == loop.Entities.FlashTimer[2], $"{where}: angry");
+        Assert.True(capture.After[Angry] == loop.Entities.Slot(2).FlashTimer, $"{where}: angry");
         Assert.True(machine.PeekVic(0x15) == 0xFC == loop.Boss.Shown, $"{where}: shown");
 
         for (int slot = 0; slot < 0x12; slot++)
         {
-            Assert.True(capture.After[0xCA + slot] == loop.Objects.Type[slot], $"{where}: bolt {slot}");
+            Assert.True(capture.After[0xCA + slot] == loop.Objects.Slot(slot).Type, $"{where}: bolt {slot}");
         }
     }
 

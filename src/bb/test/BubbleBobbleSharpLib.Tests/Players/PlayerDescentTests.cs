@@ -28,8 +28,8 @@ public sealed class PlayerDescentTests
 
         descent.Step(0, PlayerCell.Of(StartX, 0x50), Open());
 
-        Assert.Equal(0x52, entities.Y[0]);
-        Assert.Equal(0x00, entities.GroundState[0]);
+        Assert.Equal(0x52, entities.Slot(0).Y);
+        Assert.Equal(0x00, entities.Slot(0).GroundState);
     }
 
     // $EB56. The wrap is an equality test, so it catches $F5 and nothing else.
@@ -40,7 +40,7 @@ public sealed class PlayerDescentTests
 
         descent.Step(0, PlayerCell.Of(StartX, 0xF3), Open());
 
-        Assert.Equal(0x15, entities.Y[0]);
+        Assert.Equal(0x15, entities.Slot(0).Y);
     }
 
     // And a thing that steps over $F5 rather than onto it keeps going.
@@ -51,7 +51,7 @@ public sealed class PlayerDescentTests
 
         descent.Step(0, PlayerCell.Of(StartX, 0xF4), Open());
 
-        Assert.Equal(0xF6, entities.Y[0]);
+        Assert.Equal(0xF6, entities.Slot(0).Y);
     }
 
     // $EB7D. A solid cell on the row below, with the thing's own row clear, is the ground - and
@@ -63,8 +63,8 @@ public sealed class PlayerDescentTests
 
         descent.Step(0, PlayerCell.Of(StartX, 0x53), Solid(7, 6));
 
-        Assert.Equal(0x55, entities.Y[0]);
-        Assert.Equal(0xFF, entities.GroundState[0]);
+        Assert.Equal(0x55, entities.Slot(0).Y);
+        Assert.Equal(0xFF, entities.Slot(0).GroundState);
     }
 
     // $EB69. If the thing's own row is solid it is inside something, and the check gives up before
@@ -76,7 +76,7 @@ public sealed class PlayerDescentTests
 
         descent.Step(0, PlayerCell.Of(StartX, 0x53), Solid((6, 6), (7, 6)));
 
-        Assert.Equal(0x00, entities.GroundState[0]);
+        Assert.Equal(0x00, entities.Slot(0).GroundState);
     }
 
     // $EB62. Off a row boundary there is no check at all, floor or no floor.
@@ -87,16 +87,16 @@ public sealed class PlayerDescentTests
 
         descent.Step(0, PlayerCell.Of(StartX, 0x51), Solid(7, 6));
 
-        Assert.Equal(0x53, entities.Y[0]);
-        Assert.Equal(0x00, entities.GroundState[0]);
+        Assert.Equal(0x53, entities.Slot(0).Y);
+        Assert.Equal(0x00, entities.Slot(0).GroundState);
     }
 
     private static (EntityTable Entities, PlayerDescent Descent) Falling(byte y)
     {
         EntityTable entities = new();
 
-        entities.X[0] = StartX;
-        entities.Y[0] = y;
+        entities.Slot(0).X = StartX;
+        entities.Slot(0).Y = y;
 
         return (entities, new(entities));
     }

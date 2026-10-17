@@ -67,18 +67,18 @@ public sealed class WorldEffectsTests
     {
         Rig rig = new();
         rig.Entities.EnemyCount = 2;
-        rig.Entities.State[3] = 0x0B;
-        rig.Objects.Type[4] = 0x1A;
-        rig.Objects.Variant[4] = 0x03;
-        rig.Objects.Column[4] = 9;
-        rig.Objects.Row[4] = 7;
-        rig.Objects.Type[5] = 0x04;
+        rig.Entities.Slot(3).State = 0x0B;
+        rig.Objects.Slot(4).Type = 0x1A;
+        rig.Objects.Slot(4).Variant = 0x03;
+        rig.Objects.Slot(4).Column = 9;
+        rig.Objects.Slot(4).Row = 7;
+        rig.Objects.Slot(5).Type = 0x04;
 
         rig.World.Apply(11, 0);
 
         Assert.All(rig.Objects.Type.ToArray(), type => Assert.Equal(0x4A, type));
-        Assert.Equal(0, rig.Objects.Column[4]);
-        Assert.Equal(0, rig.Objects.Row[4]);
+        Assert.Equal(0, rig.Objects.Slot(4).Column);
+        Assert.Equal(0, rig.Objects.Slot(4).Row);
         Assert.Equal(0x0B, rig.Show.KeptState[1]);
     }
 
@@ -90,15 +90,15 @@ public sealed class WorldEffectsTests
         Rig rig = new();
         rig.Items.Type[0] = 0x10;
         rig.Items.Type[1] = 0x1E;
-        rig.Objects.Type[0] = 0x04;
+        rig.Objects.Slot(0).Type = 0x04;
 
         rig.World.Apply(8, 0);
-        rig.Objects.Type[0] = 0x04;
+        rig.Objects.Slot(0).Type = 0x04;
         rig.World.Apply(11, 0);
 
         Assert.Equal(0xFF, rig.Items.Type[0]);
         Assert.Equal(0xFF, rig.Items.Type[1]);
-        Assert.Equal(0x04, rig.Objects.Type[0]);
+        Assert.Equal(0x04, rig.Objects.Slot(0).Type);
         Assert.True(rig.World.Cleared);
     }
 
@@ -122,9 +122,9 @@ public sealed class WorldEffectsTests
     public void TheWipeTakesTwoFramesARowAndKillsTheEnemiesAfterIt()
     {
         Rig rig = new();
-        rig.Entities.State[0] = WaterFlow.CarriedState;
-        rig.Entities.State[1] = 0x01;
-        rig.Entities.State[4] = 0x02;
+        rig.Entities.Slot(0).State = WaterFlow.CarriedState;
+        rig.Entities.Slot(1).State = 0x01;
+        rig.Entities.Slot(4).State = 0x02;
         rig.Entities.EnemyCount = 1;
 
         rig.World.Apply(8, 0);
@@ -139,7 +139,7 @@ public sealed class WorldEffectsTests
             {
                 hold.Pass();
                 Assert.Equal(frames / 2, rig.World.Wipe.Wiped);
-                Assert.Equal(0x02, rig.Entities.State[4]);
+                Assert.Equal(0x02, rig.Entities.Slot(4).State);
             }
         }
 
@@ -148,8 +148,8 @@ public sealed class WorldEffectsTests
         Assert.Equal(50, frames);
         Assert.Equal(ScreenWipe.Rows, rig.World.Wipe.Wiped);
         Assert.False(hold.Paused);
-        Assert.Equal(0x01, rig.Entities.State[0]);
-        Assert.Equal(FoodDrop.FlyingState, rig.Entities.State[4]);
+        Assert.Equal(0x01, rig.Entities.Slot(0).State);
+        Assert.Equal(FoodDrop.FlyingState, rig.Entities.Slot(4).State);
         Assert.Equal(0, rig.Entities.EnemyCount);
     }
 

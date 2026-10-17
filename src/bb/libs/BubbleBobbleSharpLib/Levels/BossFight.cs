@@ -217,13 +217,13 @@ internal sealed class BossFight
 
         for (int slot = Objects - 1; slot >= 0; slot--)
         {
-            if (_objects.Type[slot] != BoltType || !Reaches(slot))
+            if (_objects.Slot(slot).Type != BoltType || !Reaches(slot))
             {
                 continue;
             }
 
-            _objects.Type[slot] = PopType;
-            _objects.EnemyType[slot] = PopType;
+            _objects.Slot(slot).Type = PopType;
+            _objects.Slot(slot).EnemyType = PopType;
             Hits--;
         }
 
@@ -240,7 +240,7 @@ internal sealed class BossFight
     // `$1D84`-`$1E2D`, at the end of each of the IRQ's turns: an angry giant moves twice.
     internal void Move()
     {
-        if (_entities.FlashTimer[FirstEnemy] != 0)
+        if (_entities.Slot(FirstEnemy).FlashTimer != 0)
         {
             Turn();
             Colour = AngryColour;
@@ -266,7 +266,7 @@ internal sealed class BossFight
         if (Hits == 0)
         {
             Hits = AngryHits;
-            _entities.FlashTimer[FirstEnemy] = 0xFF;
+            _entities.Slot(FirstEnemy).FlashTimer = 0xFF;
             Frame = _wasFrame;
             Shown = true;
             return;
@@ -281,8 +281,8 @@ internal sealed class BossFight
     // Whether a bolt is in the giant's reach: the bolt's own sprite place, which is its cell, against the giant's.
     private bool Reaches(int slot)
     {
-        byte y = (byte)((_objects.Row[slot] << 3) + BoltTop);
-        byte x = (byte)((_objects.Column[slot] << 3) + BoltLeft);
+        byte y = (byte)((_objects.Slot(slot).Row << 3) + BoltTop);
+        byte x = (byte)((_objects.Slot(slot).Column << 3) + BoltLeft);
 
         return Within(y, Y, ReachTall) && Within(x, X, ReachWide);
     }
@@ -336,16 +336,16 @@ internal sealed class BossFight
     {
         for (int player = PlayerTable.Capacity - 1; player >= 0; player--)
         {
-            if (_entities.State[player] != PlayerFrame.PlayingState
-                || !Within(_entities.X[player], X, ReachWide)
-                || !Within(_entities.Y[player], Y, ReachTall))
+            if (_entities.Slot(player).State != PlayerFrame.PlayingState
+                || !Within(_entities.Slot(player).X, X, ReachWide)
+                || !Within(_entities.Slot(player).Y, Y, ReachTall))
             {
                 continue;
             }
 
             if (Frame != StunnedFrame)
             {
-                _entities.State[player] = PlayerFrame.DyingState;
+                _entities.Slot(player).State = PlayerFrame.DyingState;
                 continue;
             }
 
@@ -368,9 +368,9 @@ internal sealed class BossFight
 
         for (int slot = FirstEnemy; slot < EntityTable.Capacity; slot++)
         {
-            _entities.State[slot] = 0;
-            _entities.X[slot] = 0;
-            _entities.Y[slot] = 0;
+            _entities.Slot(slot).State = 0;
+            _entities.Slot(slot).X = 0;
+            _entities.Slot(slot).Y = 0;
         }
     }
 }

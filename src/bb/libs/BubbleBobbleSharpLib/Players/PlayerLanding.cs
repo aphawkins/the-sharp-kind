@@ -37,8 +37,8 @@ internal sealed class PlayerLanding
     {
         ArgumentNullException.ThrowIfNull(map);
 
-        _entities.RiseCounter[player] = 0xFF;
-        _entities.FallCounter[player] = 0xFF;
+        _entities.Slot(player).RiseCounter = 0xFF;
+        _entities.Slot(player).FallCounter = 0xFF;
 
         Square(player);
 
@@ -50,12 +50,12 @@ internal sealed class PlayerLanding
             return;
         }
 
-        if (map.Number - 1 == SpecialLevel && _entities.Y[player] == SpecialHeight)
+        if (map.Number - 1 == SpecialLevel && _entities.Slot(player).Y == SpecialHeight)
         {
             return;
         }
 
-        _entities.GroundState[player]++;
+        _entities.Slot(player).GroundState++;
         _descent.Step(player, cell, map);
     }
 
@@ -66,9 +66,9 @@ internal sealed class PlayerLanding
 
     private void Square(int player)
     {
-        byte x = _entities.X[player];
+        byte x = _entities.Slot(player).X;
 
-        _entities.X[player] = _entities.Frame[player] is >= 0x04 and < 0x0A
+        _entities.Slot(player).X = _entities.Slot(player).Frame is >= 0x04 and < 0x0A
             ? (byte)(x & ColumnMask)
             : unchecked((byte)((x + 1) & ColumnMask));
     }

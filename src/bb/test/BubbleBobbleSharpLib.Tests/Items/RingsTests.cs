@@ -50,9 +50,9 @@ public sealed class RingsTests
     {
         (EntityTable entities, PlayerTable players, Scores scores, Rings rings) = Create();
         players.WalkRing[0] = 0xFF;
-        entities.X[0] = StartX;
-        entities.Y[0] = StartY;
-        entities.BubbleTimer[0] = 0xFF;
+        entities.Slot(0).X = StartX;
+        entities.Slot(0).Y = StartY;
+        entities.Slot(0).BubbleTimer = 0xFF;
         PlayerMovement movement = new(entities, TestBlow.Of(entities), rings);
 
         movement.Step(0, PushRight, wall ? Map(6, 8) : Map());
@@ -66,8 +66,8 @@ public sealed class RingsTests
     {
         (EntityTable entities, PlayerTable players, Scores scores, Rings rings) = Create();
         players.DriftRing[0] = 0xFF;
-        entities.X[0] = StartX;
-        entities.Y[0] = StartY;
+        entities.Slot(0).X = StartX;
+        entities.Slot(0).Y = StartY;
         PlayerDrift drift = new(entities, new(entities, TestBlow.Of(entities)), rings);
         PlayerCell cell = PlayerCell.Of(StartX, StartY);
 
@@ -86,13 +86,13 @@ public sealed class RingsTests
     {
         (EntityTable entities, PlayerTable players, Scores scores, Rings rings) = Create();
         players.BlowRing[0] = 0xFF;
-        entities.State[0] = PlayerFrame.PlayingState;
-        entities.X[0] = 0x8C;
-        entities.Y[0] = 0xB5;
-        entities.RiseCounter[0] = 0xFF;
-        entities.FallCounter[0] = 0xFF;
-        entities.GroundState[0] = 0xFF;
-        entities.BubbleTimer[0] = 0xFF;
+        entities.Slot(0).State = PlayerFrame.PlayingState;
+        entities.Slot(0).X = 0x8C;
+        entities.Slot(0).Y = 0xB5;
+        entities.Slot(0).RiseCounter = 0xFF;
+        entities.Slot(0).FallCounter = 0xFF;
+        entities.Slot(0).GroundState = 0xFF;
+        entities.Slot(0).BubbleTimer = 0xFF;
         ObjectTable objects = new();
         BubbleBlow blow = new(players, entities, objects, rings);
 
@@ -100,14 +100,14 @@ public sealed class RingsTests
 
         for (int frame = 0; frame < 2; frame++)
         {
-            blow.Step(0, entities.BubbleTimer[0], PlayerCell.Of(entities.X[0], entities.Y[0]));
+            blow.Step(0, entities.Slot(0).BubbleTimer, PlayerCell.Of(entities.Slot(0).X, entities.Slot(0).Y));
         }
 
         Assert.Equal(0x00, scores.Bytes[2]);
 
-        blow.Step(0, entities.BubbleTimer[0], PlayerCell.Of(entities.X[0], entities.Y[0]));
+        blow.Step(0, entities.Slot(0).BubbleTimer, PlayerCell.Of(entities.Slot(0).X, entities.Slot(0).Y));
 
-        Assert.Equal(BubbleBlow.BubbleType, objects.Type[ObjectTable.Capacity - 1]);
+        Assert.Equal(BubbleBlow.BubbleType, objects.Slot(ObjectTable.Capacity - 1).Type);
         Assert.Equal(0x01, scores.Bytes[2]);
     }
 

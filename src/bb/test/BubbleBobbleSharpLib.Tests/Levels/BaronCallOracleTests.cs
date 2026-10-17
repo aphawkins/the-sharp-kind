@@ -44,7 +44,7 @@ public sealed class BaronCallOracleTests
         List<(int Frame, Song Song)> played = [];
         int frame = 0;
         rig.End.Play = song => played.Add((frame, song));
-        rig.Entities.State[0] = 1;
+        rig.Entities.Slot(0).State = 1;
         rig.Timer.Seconds = 0;
         rig.Timer.Hurry = 1;
         rig.End.Update();

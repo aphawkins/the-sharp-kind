@@ -60,7 +60,7 @@ internal sealed class PlayerRespawn
     {
         for (int player = PlayerTable.Capacity - 1; player >= 0; player--)
         {
-            if (_entities.State[player] == PlayerFrame.DeadState)
+            if (_entities.Slot(player).State == PlayerFrame.DeadState)
             {
                 Respawn(player, subflg);
             }
@@ -72,10 +72,10 @@ internal sealed class PlayerRespawn
         ResetPlayer(player, subflg);
 
         _items.Undying &= (byte)~PlayerBit[player];
-        _entities.Frame[player] = SpawnFrame[player];
-        _entities.RiseCounter[player] = 0xFF;
-        _entities.FallCounter[player] = 0xFF;
-        _entities.GroundState[player] = 0xFF;
+        _entities.Slot(player).Frame = SpawnFrame[player];
+        _entities.Slot(player).RiseCounter = 0xFF;
+        _entities.Slot(player).FallCounter = 0xFF;
+        _entities.Slot(player).GroundState = 0xFF;
 
         if ((sbyte)--_players.Lives[player] < 0)
         {
@@ -83,12 +83,12 @@ internal sealed class PlayerRespawn
         }
         else
         {
-            _entities.Y[player] = SpawnY;
-            _entities.X[player] = SpawnX[player];
-            _entities.TurnInterval[player] = RespawnPasses;
+            _entities.Slot(player).Y = SpawnY;
+            _entities.Slot(player).X = SpawnX[player];
+            _entities.Slot(player).TurnInterval = RespawnPasses;
 
             // $04EB: the state is $5A7F, which a bonus round makes $18.
-            _entities.State[player] = _round.Respawn;
+            _entities.Slot(player).State = _round.Respawn;
             Respawns++;
         }
 
@@ -105,9 +105,9 @@ internal sealed class PlayerRespawn
     private void GameOver(int player, byte subflg)
     {
         _players.Round[player] = subflg;
-        _entities.X[player] = 0;
-        _entities.Y[player] = 0;
-        _entities.State[player] = 0;
+        _entities.Slot(player).X = 0;
+        _entities.Slot(player).Y = 0;
+        _entities.Slot(player).State = 0;
     }
 
     // $7F53.
@@ -124,8 +124,8 @@ internal sealed class PlayerRespawn
         _players.WalkRing[player] = 0;
         _players.BlowRing[player] = 0;
         _players.BossBlow[player] = 0;
-        _entities.FlashTimer[player] = 0;
-        _entities.LeapFlag[player] = 0;
+        _entities.Slot(player).FlashTimer = 0;
+        _entities.Slot(player).LeapFlag = 0;
 
         // $7F7D-$7FA0: on the last level.
         if (subflg == BonusLevel)

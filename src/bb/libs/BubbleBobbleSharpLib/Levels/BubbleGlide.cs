@@ -35,8 +35,8 @@ internal sealed class BubbleGlide
 
         for (int player = 0; player < Players; player++)
         {
-            _x[player] = entities.X[player];
-            _y[player] = entities.Y[player];
+            _x[player] = entities.Slot(player).X;
+            _y[player] = entities.Slot(player).Y;
         }
 
         _framesBefore = framesBefore;
@@ -50,7 +50,7 @@ internal sealed class BubbleGlide
     {
         ArgumentNullException.ThrowIfNull(entities);
 
-        return Bubbles((byte)((entities.State[0] != 0 ? 1 : 0) | (entities.State[1] != 0 ? 2 : 0)), x, y, frame);
+        return Bubbles((byte)((entities.Slot(0).State != 0 ? 1 : 0) | (entities.Slot(1).State != 0 ? 2 : 0)), x, y, frame);
     }
 
     // $E4DF: the players given, a bit each, at their places in their dragons in bubbles.
@@ -116,9 +116,9 @@ internal sealed class BubbleGlide
 
         for (int player = 0; player < Players; player++)
         {
-            if (entities.State[player] != 0)
+            if (entities.Slot(player).State != 0)
             {
-                length = Math.Max(length, Length(_x[player], _y[player], entities.X[player], entities.Y[player]));
+                length = Math.Max(length, Length(_x[player], _y[player], entities.Slot(player).X, entities.Slot(player).Y));
             }
         }
 
@@ -136,7 +136,7 @@ internal sealed class BubbleGlide
 
         for (int player = 0; player < Players; player++)
         {
-            (x[player], y[player]) = Point(_x[player], _y[player], entities.X[player], entities.Y[player], Points);
+            (x[player], y[player]) = Point(_x[player], _y[player], entities.Slot(player).X, entities.Slot(player).Y, Points);
         }
 
         return Bubbles(entities, x, y, BubbleFrame(_framesBefore + Points));

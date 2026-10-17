@@ -140,40 +140,40 @@ public sealed class FoodDropGoldenTests
 
     private static void Load(EntityTable entities, byte[] b)
     {
-        entities.State[0] = b[0];
-        entities.State[1] = b[1];
-        entities.X[0] = b[2];
-        entities.X[1] = b[3];
-        entities.Y[0] = b[4];
-        entities.Y[1] = b[5];
+        entities.Slot(0).State = b[0];
+        entities.Slot(1).State = b[1];
+        entities.Slot(0).X = b[2];
+        entities.Slot(1).X = b[3];
+        entities.Slot(0).Y = b[4];
+        entities.Slot(1).Y = b[5];
 
-        entities.State[Slot] = b[6];
-        entities.X[Slot] = b[7];
-        entities.Y[Slot] = b[8];
-        entities.Frame[Slot] = b[9];
-        entities.Colour[Slot] = b[10];
-        entities.SpriteBase[Slot] = b[11];
-        entities.Heading[Slot] = b[12];
-        entities.FlashTimer[Slot] = b[13];
-        entities.RiseCounter[Slot] = b[14];
-        entities.FallCounter[Slot] = b[15];
-        entities.GroundState[Slot] = b[16];
-        entities.BubbleTimer[Slot] = b[17];
-        entities.LeftFlag[Slot] = b[18];
-        entities.RightFlag[Slot] = b[19];
-        entities.AttackTimer[Slot] = b[20];
+        entities.Slot(Slot).State = b[6];
+        entities.Slot(Slot).X = b[7];
+        entities.Slot(Slot).Y = b[8];
+        entities.Slot(Slot).Frame = b[9];
+        entities.Slot(Slot).Colour = b[10];
+        entities.Slot(Slot).SpriteBase = b[11];
+        entities.Slot(Slot).Heading = b[12];
+        entities.Slot(Slot).FlashTimer = b[13];
+        entities.Slot(Slot).RiseCounter = b[14];
+        entities.Slot(Slot).FallCounter = b[15];
+        entities.Slot(Slot).GroundState = b[16];
+        entities.Slot(Slot).BubbleTimer = b[17];
+        entities.Slot(Slot).LeftFlag = b[18];
+        entities.Slot(Slot).RightFlag = b[19];
+        entities.Slot(Slot).AttackTimer = b[20];
 
         // The capture wrote these, and they are what let $1CDB reach $1E6C.
-        entities.Mode[Slot] = 0xFF;
+        entities.Slot(Slot).Mode = 0xFF;
     }
 
     private static byte[] Save(EntityTable entities, BbRandom random, Scores scores) => [
-        entities.State[0], entities.State[1], entities.X[0], entities.X[1], entities.Y[0], entities.Y[1],
-        entities.State[Slot], entities.X[Slot], entities.Y[Slot],
-        entities.Frame[Slot], entities.Colour[Slot], entities.SpriteBase[Slot], entities.Heading[Slot],
-        entities.FlashTimer[Slot], entities.RiseCounter[Slot], entities.FallCounter[Slot],
-        entities.GroundState[Slot], entities.BubbleTimer[Slot], entities.LeftFlag[Slot],
-        entities.RightFlag[Slot], entities.AttackTimer[Slot],
+        entities.Slot(0).State, entities.Slot(1).State, entities.Slot(0).X, entities.Slot(1).X, entities.Slot(0).Y, entities.Slot(1).Y,
+        entities.Slot(Slot).State, entities.Slot(Slot).X, entities.Slot(Slot).Y,
+        entities.Slot(Slot).Frame, entities.Slot(Slot).Colour, entities.Slot(Slot).SpriteBase, entities.Slot(Slot).Heading,
+        entities.Slot(Slot).FlashTimer, entities.Slot(Slot).RiseCounter, entities.Slot(Slot).FallCounter,
+        entities.Slot(Slot).GroundState, entities.Slot(Slot).BubbleTimer, entities.Slot(Slot).LeftFlag,
+        entities.Slot(Slot).RightFlag, entities.Slot(Slot).AttackTimer,
         random.Low, random.High,
         .. scores.Bytes,
     ];

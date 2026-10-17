@@ -30,21 +30,21 @@ public sealed class FoodDropTests
     public void KillRollsTheFlight()
     {
         (EntityTable entities, FoodDrop food, _) = Create();
-        entities.State[Slot] = 0x03;
+        entities.Slot(Slot).State = 0x03;
         entities.EnemyCount = 4;
 
         food.Kill(Slot - 2);
 
-        Assert.Equal(FoodDrop.FlyingState, entities.State[Slot]);
-        Assert.Equal(0x03, entities.LeftFlag[Slot]);
+        Assert.Equal(FoodDrop.FlyingState, entities.Slot(Slot).State);
+        Assert.Equal(0x03, entities.Slot(Slot).LeftFlag);
         Assert.Equal(3, entities.EnemyCount);
-        Assert.Equal(0x01, entities.RiseCounter[Slot]);
-        Assert.Equal(0x01, entities.FallCounter[Slot]);
-        Assert.Equal(0x01, entities.RightFlag[Slot]);
-        Assert.Equal(0x00, entities.GroundState[Slot]);
-        Assert.Equal(0x07, entities.BubbleTimer[Slot]);
-        Assert.Equal(0x09, entities.AttackTimer[Slot]);
-        Assert.Equal(0x0E, entities.Colour[Slot]);
+        Assert.Equal(0x01, entities.Slot(Slot).RiseCounter);
+        Assert.Equal(0x01, entities.Slot(Slot).FallCounter);
+        Assert.Equal(0x01, entities.Slot(Slot).RightFlag);
+        Assert.Equal(0x00, entities.Slot(Slot).GroundState);
+        Assert.Equal(0x07, entities.Slot(Slot).BubbleTimer);
+        Assert.Equal(0x09, entities.Slot(Slot).AttackTimer);
+        Assert.Equal(0x0E, entities.Slot(Slot).Colour);
     }
 
     // $1A71. An enemy in state $0A has its class in RiseCounter.
@@ -52,12 +52,12 @@ public sealed class FoodDropTests
     public void KillTakesARisingEnemysClassFromItsRiseCounter()
     {
         (EntityTable entities, FoodDrop food, _) = Create();
-        entities.State[Slot] = 0x0A;
-        entities.RiseCounter[Slot] = 0x05;
+        entities.Slot(Slot).State = 0x0A;
+        entities.Slot(Slot).RiseCounter = 0x05;
 
         food.Kill(Slot - 2);
 
-        Assert.Equal(0x05, entities.LeftFlag[Slot]);
+        Assert.Equal(0x05, entities.Slot(Slot).LeftFlag);
     }
 
     // $1A7A. State $0D leaves the class that is there.
@@ -65,12 +65,12 @@ public sealed class FoodDropTests
     public void KillKeepsTheClassOfAnEnemyInStateD()
     {
         (EntityTable entities, FoodDrop food, _) = Create();
-        entities.State[Slot] = 0x0D;
-        entities.LeftFlag[Slot] = 0x06;
+        entities.Slot(Slot).State = 0x0D;
+        entities.Slot(Slot).LeftFlag = 0x06;
 
         food.Kill(Slot - 2);
 
-        Assert.Equal(0x06, entities.LeftFlag[Slot]);
+        Assert.Equal(0x06, entities.Slot(Slot).LeftFlag);
     }
 
     // $26BF. Sideways by RiseCounter and up by RightFlag.
@@ -82,9 +82,9 @@ public sealed class FoodDropTests
 
         food.Fly(Slot);
 
-        Assert.Equal(0x82, entities.X[Slot]);
-        Assert.Equal(0x7D, entities.Y[Slot]);
-        Assert.Equal(0x04, entities.BubbleTimer[Slot]);
+        Assert.Equal(0x82, entities.Slot(Slot).X);
+        Assert.Equal(0x7D, entities.Slot(Slot).Y);
+        Assert.Equal(0x04, entities.Slot(Slot).BubbleTimer);
     }
 
     // $26CC. The right wall stops it and turns it round.
@@ -96,8 +96,8 @@ public sealed class FoodDropTests
 
         food.Fly(Slot);
 
-        Assert.Equal(0xF4, entities.X[Slot]);
-        Assert.Equal(0x01, entities.GroundState[Slot]);
+        Assert.Equal(0xF4, entities.Slot(Slot).X);
+        Assert.Equal(0x01, entities.Slot(Slot).GroundState);
     }
 
     // $26E1. And the left wall turns it back.
@@ -106,12 +106,12 @@ public sealed class FoodDropTests
     {
         (EntityTable entities, FoodDrop food, _) = Create();
         Flying(entities, x: 0x25, y: 0x80);
-        entities.GroundState[Slot] = 0x01;
+        entities.Slot(Slot).GroundState = 0x01;
 
         food.Fly(Slot);
 
-        Assert.Equal(0x24, entities.X[Slot]);
-        Assert.Equal(0x00, entities.GroundState[Slot]);
+        Assert.Equal(0x24, entities.Slot(Slot).X);
+        Assert.Equal(0x00, entities.Slot(Slot).GroundState);
     }
 
     // $26F9. Off the top, it comes back at the bottom.
@@ -123,7 +123,7 @@ public sealed class FoodDropTests
 
         food.Fly(Slot);
 
-        Assert.Equal(0xF5, entities.Y[Slot]);
+        Assert.Equal(0xF5, entities.Slot(Slot).Y);
     }
 
     // $268B. The rise has run out, so the fall is rolled: 1 with bit 7 set. RightFlag is now 0, so
@@ -133,17 +133,17 @@ public sealed class FoodDropTests
     {
         (EntityTable entities, FoodDrop food, _) = Create();
         Flying(entities, x: 0x80, y: 0x80);
-        entities.BubbleTimer[Slot] = 0x00;
-        entities.FallCounter[Slot] = 0x01;
-        entities.RightFlag[Slot] = 0x01;
+        entities.Slot(Slot).BubbleTimer = 0x00;
+        entities.Slot(Slot).FallCounter = 0x01;
+        entities.Slot(Slot).RightFlag = 0x01;
 
         food.Fly(Slot);
 
-        Assert.Equal(0x03, entities.BubbleTimer[Slot]);
-        Assert.Equal(0x81, entities.FallCounter[Slot]);
-        Assert.Equal(0x00, entities.RightFlag[Slot]);
-        Assert.Equal(0x80, entities.Y[Slot]);
-        Assert.Equal(0x82, entities.X[Slot]);
+        Assert.Equal(0x03, entities.Slot(Slot).BubbleTimer);
+        Assert.Equal(0x81, entities.Slot(Slot).FallCounter);
+        Assert.Equal(0x00, entities.Slot(Slot).RightFlag);
+        Assert.Equal(0x80, entities.Slot(Slot).Y);
+        Assert.Equal(0x82, entities.Slot(Slot).X);
     }
 
     // $26A9. A count equal to the fall's length goes on falling.
@@ -152,14 +152,14 @@ public sealed class FoodDropTests
     {
         (EntityTable entities, FoodDrop food, _) = Create();
         Flying(entities, x: 0x80, y: 0x80);
-        entities.BubbleTimer[Slot] = 0x00;
-        entities.FallCounter[Slot] = 0x82;
-        entities.RightFlag[Slot] = 0x01;
+        entities.Slot(Slot).BubbleTimer = 0x00;
+        entities.Slot(Slot).FallCounter = 0x82;
+        entities.Slot(Slot).RightFlag = 0x01;
 
         food.Fly(Slot);
 
-        Assert.Equal(FoodDrop.FlyingState, entities.State[Slot]);
-        Assert.Equal(0x82, entities.Y[Slot]);
+        Assert.Equal(FoodDrop.FlyingState, entities.Slot(Slot).State);
+        Assert.Equal(0x82, entities.Slot(Slot).Y);
     }
 
     // $26AF. Past it, the flight ends on an even X and an odd Y, without a move.
@@ -168,15 +168,15 @@ public sealed class FoodDropTests
     {
         (EntityTable entities, FoodDrop food, _) = Create();
         Flying(entities, x: 0x81, y: 0x80);
-        entities.BubbleTimer[Slot] = 0x00;
-        entities.FallCounter[Slot] = 0x81;
-        entities.RightFlag[Slot] = 0x01;
+        entities.Slot(Slot).BubbleTimer = 0x00;
+        entities.Slot(Slot).FallCounter = 0x81;
+        entities.Slot(Slot).RightFlag = 0x01;
 
         food.Fly(Slot);
 
-        Assert.Equal(FoodDrop.FallingState, entities.State[Slot]);
-        Assert.Equal(0x80, entities.X[Slot]);
-        Assert.Equal(0x81, entities.Y[Slot]);
+        Assert.Equal(FoodDrop.FallingState, entities.Slot(Slot).State);
+        Assert.Equal(0x80, entities.Slot(Slot).X);
+        Assert.Equal(0x81, entities.Slot(Slot).Y);
     }
 
     // $2713. A quarter of the counter, offset by the class the enemy had: $AB89 holds 7 for class 2.
@@ -189,13 +189,13 @@ public sealed class FoodDropTests
     {
         (EntityTable entities, FoodDrop food, _) = Create();
         Flying(entities, x: 0x80, y: 0x80);
-        entities.Heading[Slot] = heading;
-        entities.FlashTimer[Slot] = 0xFF;
+        entities.Slot(Slot).Heading = heading;
+        entities.Slot(Slot).FlashTimer = 0xFF;
 
         food.Fly(Slot);
 
-        Assert.Equal(frame, entities.Frame[Slot]);
-        Assert.Equal(0x00, entities.FlashTimer[Slot]);
+        Assert.Equal(frame, entities.Slot(Slot).Frame);
+        Assert.Equal(0x00, entities.Slot(Slot).FlashTimer);
     }
 
     // $273D, through EnemyFrame. Two pixels a frame, and it lands where a walker stands.
@@ -207,14 +207,14 @@ public sealed class FoodDropTests
 
         int frames = 0;
 
-        while (entities.State[Slot] == FoodDrop.FallingState)
+        while (entities.Slot(Slot).State == FoodDrop.FallingState)
         {
             frame.Step(0, s_floor);
             frames++;
         }
 
-        Assert.Equal(FoodDrop.LandedState, entities.State[Slot]);
-        Assert.Equal(StandY, entities.Y[Slot]);
+        Assert.Equal(FoodDrop.LandedState, entities.Slot(Slot).State);
+        Assert.Equal(StandY, entities.Slot(Slot).Y);
         Assert.Equal(8, frames);
     }
 
@@ -227,8 +227,8 @@ public sealed class FoodDropTests
 
         frame.Step(0, s_thickFloor);
 
-        Assert.Equal(FoodDrop.FallingState, entities.State[Slot]);
-        Assert.Equal(0xBD, entities.Y[Slot]);
+        Assert.Equal(FoodDrop.FallingState, entities.Slot(Slot).State);
+        Assert.Equal(0xBD, entities.Slot(Slot).Y);
     }
 
     // $2744. The bottom wraps to the top.
@@ -240,7 +240,7 @@ public sealed class FoodDropTests
 
         frame.Step(0, s_floor);
 
-        Assert.Equal(0x15, entities.Y[Slot]);
+        Assert.Equal(0x15, entities.Slot(Slot).Y);
     }
 
     // $2921. AttackTimer 1 is food $08, and $A8E4's $0F for it is colour 7.
@@ -248,16 +248,16 @@ public sealed class FoodDropTests
     public void LandingTurnsTheEnemyIntoFood()
     {
         (EntityTable entities, FoodDrop food, _) = Create();
-        entities.State[Slot] = FoodDrop.LandedState;
-        entities.AttackTimer[Slot] = 0x01;
+        entities.Slot(Slot).State = FoodDrop.LandedState;
+        entities.Slot(Slot).AttackTimer = 0x01;
 
         food.Land(Slot);
 
-        Assert.Equal(FoodDrop.FoodState, entities.State[Slot]);
-        Assert.Equal(0xC8, entities.RiseCounter[Slot]);
-        Assert.Equal(Slot, entities.Frame[Slot]);
-        Assert.Equal(0xF2, entities.SpriteBase[Slot]);
-        Assert.Equal(0x07, entities.Colour[Slot]);
+        Assert.Equal(FoodDrop.FoodState, entities.Slot(Slot).State);
+        Assert.Equal(0xC8, entities.Slot(Slot).RiseCounter);
+        Assert.Equal(Slot, entities.Slot(Slot).Frame);
+        Assert.Equal(0xF2, entities.Slot(Slot).SpriteBase);
+        Assert.Equal(0x07, entities.Slot(Slot).Colour);
     }
 
     // $2922. One a frame: slot 7 goes first, and slot 6 waits for the next.
@@ -268,19 +268,19 @@ public sealed class FoodDropTests
 
         foreach (int slot in new[] { 6, 7 })
         {
-            entities.State[slot] = FoodDrop.LandedState;
-            entities.Mode[slot] = 0xFF;
-            entities.AttackTimer[slot] = 0x01;
+            entities.Slot(slot).State = FoodDrop.LandedState;
+            entities.Slot(slot).Mode = 0xFF;
+            entities.Slot(slot).AttackTimer = 0x01;
         }
 
         frame.Step(0, s_floor);
 
-        Assert.Equal(FoodDrop.FoodState, entities.State[7]);
-        Assert.Equal(FoodDrop.LandedState, entities.State[6]);
+        Assert.Equal(FoodDrop.FoodState, entities.Slot(7).State);
+        Assert.Equal(FoodDrop.LandedState, entities.Slot(6).State);
 
         frame.Step(0, s_floor);
 
-        Assert.Equal(FoodDrop.FoodState, entities.State[6]);
+        Assert.Equal(FoodDrop.FoodState, entities.Slot(6).State);
     }
 
     // $29BE. Left alone, it goes when the count runs out.
@@ -289,13 +289,13 @@ public sealed class FoodDropTests
     {
         (EntityTable entities, FoodDrop food, _) = Create();
         Food(entities, 0x01);
-        entities.RiseCounter[Slot] = 0x01;
+        entities.Slot(Slot).RiseCounter = 0x01;
 
         food.Wait(Slot);
 
-        Assert.Equal(0, entities.State[Slot]);
-        Assert.Equal(0, entities.X[Slot]);
-        Assert.Equal(0, entities.Y[Slot]);
+        Assert.Equal(0, entities.Slot(Slot).State);
+        Assert.Equal(0, entities.Slot(Slot).X);
+        Assert.Equal(0, entities.Slot(Slot).Y);
     }
 
     // $29FF. $50 goes in the lowest byte, and anything else in the byte above. Food 9's $0A is not
@@ -313,7 +313,7 @@ public sealed class FoodDropTests
         food.Wait(Slot);
 
         Assert.Equal(value, scores.Bytes[index]);
-        Assert.Equal(0, entities.State[Slot]);
+        Assert.Equal(0, entities.Slot(Slot).State);
     }
 
     // $29C0. Player two is looked at first, and takes it.
@@ -345,7 +345,7 @@ public sealed class FoodDropTests
 
         food.Wait(Slot);
 
-        Assert.Equal(taken, entities.State[Slot] == 0);
+        Assert.Equal(taken, entities.Slot(Slot).State == 0);
     }
 
     private static (EntityTable Entities, FoodDrop Food, Scores Scores) Create()
@@ -363,39 +363,39 @@ public sealed class FoodDropTests
 
     private static void Flying(EntityTable entities, byte x, byte y)
     {
-        entities.State[Slot] = FoodDrop.FlyingState;
-        entities.X[Slot] = x;
-        entities.Y[Slot] = y;
-        entities.RiseCounter[Slot] = 0x02;
-        entities.FallCounter[Slot] = 0x03;
-        entities.RightFlag[Slot] = 0x03;
-        entities.BubbleTimer[Slot] = 0x05;
-        entities.LeftFlag[Slot] = 0x02;
+        entities.Slot(Slot).State = FoodDrop.FlyingState;
+        entities.Slot(Slot).X = x;
+        entities.Slot(Slot).Y = y;
+        entities.Slot(Slot).RiseCounter = 0x02;
+        entities.Slot(Slot).FallCounter = 0x03;
+        entities.Slot(Slot).RightFlag = 0x03;
+        entities.Slot(Slot).BubbleTimer = 0x05;
+        entities.Slot(Slot).LeftFlag = 0x02;
     }
 
     private static void Falling(EntityTable entities, byte y)
     {
-        entities.State[Slot] = FoodDrop.FallingState;
-        entities.Mode[Slot] = 0xFF;
-        entities.X[Slot] = StandX;
-        entities.Y[Slot] = y;
-        entities.LeftFlag[Slot] = 0x02;
+        entities.Slot(Slot).State = FoodDrop.FallingState;
+        entities.Slot(Slot).Mode = 0xFF;
+        entities.Slot(Slot).X = StandX;
+        entities.Slot(Slot).Y = y;
+        entities.Slot(Slot).LeftFlag = 0x02;
     }
 
     private static void Food(EntityTable entities, byte kind)
     {
-        entities.State[Slot] = FoodDrop.FoodState;
-        entities.X[Slot] = StandX;
-        entities.Y[Slot] = StandY;
-        entities.RiseCounter[Slot] = 0xC8;
-        entities.AttackTimer[Slot] = kind;
+        entities.Slot(Slot).State = FoodDrop.FoodState;
+        entities.Slot(Slot).X = StandX;
+        entities.Slot(Slot).Y = StandY;
+        entities.Slot(Slot).RiseCounter = 0xC8;
+        entities.Slot(Slot).AttackTimer = kind;
     }
 
     private static void Player(EntityTable entities, int player, byte state, int x, byte y)
     {
-        entities.State[player] = state;
-        entities.X[player] = (byte)x;
-        entities.Y[player] = y;
+        entities.Slot(player).State = state;
+        entities.Slot(player).X = (byte)x;
+        entities.Slot(player).Y = y;
     }
 
     private static SolidMap Map(params int[] rows) => SolidMap.Build(

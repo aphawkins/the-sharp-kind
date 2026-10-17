@@ -59,13 +59,13 @@ internal sealed class Baron
 
     internal void Step(int slot)
     {
-        if (_entities.State[slot] == Dying || Catch(slot))
+        if (_entities.Slot(slot).State == Dying || Catch(slot))
         {
             Go(slot);
             return;
         }
 
-        if ((_objects.EnemyType[slot] & 0x7F) == 0)
+        if ((_objects.Slot(slot).EnemyType & 0x7F) == 0)
         {
             Plan(slot);
         }
@@ -76,19 +76,19 @@ internal sealed class Baron
             return;
         }
 
-        byte column = Cell(_entities.X[slot], LeftEdge);
-        _facing[slot] = column >= _objects.Column[slot] ? FacingRight : FacingLeft;
-        byte row = Cell(_entities.Y[slot], TopEdge);
+        byte column = Cell(_entities.Slot(slot).X, LeftEdge);
+        _facing[slot] = column >= _objects.Slot(slot).Column ? FacingRight : FacingLeft;
+        byte row = Cell(_entities.Slot(slot).Y, TopEdge);
 
-        _objects.EnemyType[slot]--;
+        _objects.Slot(slot).EnemyType--;
 
-        if ((_objects.EnemyType[slot] & 0x80) == 0)
+        if ((_objects.Slot(slot).EnemyType & 0x80) == 0)
         {
-            _objects.Row[slot] = Towards(slot, _objects.Row[slot], row);
+            _objects.Slot(slot).Row = Towards(slot, _objects.Slot(slot).Row, row);
         }
         else
         {
-            _objects.Column[slot] = Towards(slot, _objects.Column[slot], column);
+            _objects.Slot(slot).Column = Towards(slot, _objects.Slot(slot).Column, column);
         }
     }
 
@@ -99,15 +99,15 @@ internal sealed class Baron
 
     private void Plan(int slot)
     {
-        _objects.Variant[slot]++;
+        _objects.Slot(slot).Variant++;
 
-        if ((_objects.Variant[slot] & 0x0F) == 0)
+        if ((_objects.Slot(slot).Variant & 0x0F) == 0)
         {
-            _objects.Variant[slot]--;
+            _objects.Slot(slot).Variant--;
         }
 
-        _objects.Variant[slot] ^= 0x80;
-        _objects.EnemyType[slot] = _objects.Variant[slot];
+        _objects.Slot(slot).Variant ^= 0x80;
+        _objects.Slot(slot).EnemyType = _objects.Slot(slot).Variant;
         _pause[slot] = Pause;
     }
 
@@ -115,7 +115,7 @@ internal sealed class Baron
     {
         if (from == to)
         {
-            _objects.EnemyType[slot] = 0;
+            _objects.Slot(slot).EnemyType = 0;
             return from;
         }
 
@@ -124,22 +124,22 @@ internal sealed class Baron
 
     private bool Catch(int slot)
     {
-        byte x = Corner(_objects.Column[slot], ColumnOrigin);
-        byte y = Corner(_objects.Row[slot], RowOrigin);
+        byte x = Corner(_objects.Slot(slot).Column, ColumnOrigin);
+        byte y = Corner(_objects.Slot(slot).Row, RowOrigin);
 
         for (int player = 1; player >= 0; player--)
         {
-            byte state = _entities.State[player];
+            byte state = _entities.Slot(player).State;
 
             if (state is 0 or (not CatchableState and >= CatchLimit))
             {
                 continue;
             }
 
-            if (Distance.Absolute(_entities.X[player], x) < CatchRange
-                && Distance.Absolute(_entities.Y[player], y) < CatchRange)
+            if (Distance.Absolute(_entities.Slot(player).X, x) < CatchRange
+                && Distance.Absolute(_entities.Slot(player).Y, y) < CatchRange)
             {
-                _entities.State[player] = Dying;
+                _entities.Slot(player).State = Dying;
                 return true;
             }
         }
@@ -150,10 +150,10 @@ internal sealed class Baron
     // $1479-$1494. When it is the last Baron to go, the clock, which stopped for him, runs again.
     private void Go(int slot)
     {
-        _objects.Type[slot] = GoneType;
-        _objects.EnemyType[slot] = GoneType;
+        _objects.Slot(slot).Type = GoneType;
+        _objects.Slot(slot).EnemyType = GoneType;
 
-        if (!Is(_objects.Type[slot ^ 1]))
+        if (!Is(_objects.Slot(slot ^ 1).Type))
         {
             _timer.Frames = LevelTimer.FramesPerSecond;
         }

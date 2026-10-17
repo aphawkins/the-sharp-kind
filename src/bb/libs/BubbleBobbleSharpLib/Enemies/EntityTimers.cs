@@ -54,20 +54,20 @@ internal sealed class EntityTimers
 
     private void Tick(int slot, byte releasedState)
     {
-        _objects.Flags[slot]--;
+        _objects.Slot(slot).Flags--;
 
-        if (_objects.Flags[slot] != 0)
+        if (_objects.Slot(slot).Flags != 0)
         {
             Flicker(slot);
             return;
         }
 
-        byte type = _objects.Type[slot];
+        byte type = _objects.Slot(slot).Type;
 
         if (type == BubbleType)
         {
-            _objects.EnemyType[slot] = BubbleType;
-            _objects.Type[slot] = PoppingType;
+            _objects.Slot(slot).EnemyType = BubbleType;
+            _objects.Slot(slot).Type = PoppingType;
             return;
         }
 
@@ -75,7 +75,7 @@ internal sealed class EntityTimers
         {
             if (type == ExpiredType)
             {
-                _objects.Type[slot] = ObjectTable.FreeType;
+                _objects.Slot(slot).Type = ObjectTable.FreeType;
             }
 
             return;
@@ -93,31 +93,31 @@ internal sealed class EntityTimers
     {
         int entity = ((type - CapturedFrom) >> 1) + EnemyBase;
 
-        _entities.State[entity] = releasedState;
-        _entities.Y[entity] |= 0x01;
-        _entities.X[entity] &= 0xFE;
-        _entities.FlashTimer[entity] = 0xFF;
+        _entities.Slot(entity).State = releasedState;
+        _entities.Slot(entity).Y |= 0x01;
+        _entities.Slot(entity).X &= 0xFE;
+        _entities.Slot(entity).FlashTimer = 0xFF;
 
-        _entities.RiseCounter[entity] = _objects.Variant[slot];
-        _entities.Frame[entity] = 0;
+        _entities.Slot(entity).RiseCounter = _objects.Slot(slot).Variant;
+        _entities.Slot(entity).Frame = 0;
 
-        _objects.Type[slot] = FreedType;
+        _objects.Slot(slot).Type = FreedType;
     }
 
     private void Flicker(int slot)
     {
-        byte timer = _objects.Flags[slot];
+        byte timer = _objects.Slot(slot).Flags;
 
         if (timer >= FlickerBelow || (timer & 0x01) != 0)
         {
             return;
         }
 
-        byte type = _objects.Type[slot];
+        byte type = _objects.Slot(slot).Type;
 
         if (type is BubbleType or WobbleType)
         {
-            _objects.Type[slot] = (byte)(type ^ WobbleToggle);
+            _objects.Slot(slot).Type = (byte)(type ^ WobbleToggle);
             return;
         }
 
@@ -131,9 +131,9 @@ internal sealed class EntityTimers
     {
         int captured = 0;
 
-        foreach (byte type in _objects.Type)
+        for (int slot = 0; slot < ObjectTable.Capacity; slot++)
         {
-            if (type >= CapturedCountFrom)
+            if (_objects.Slot(slot).Type >= CapturedCountFrom)
             {
                 captured++;
             }
@@ -152,13 +152,13 @@ internal sealed class EntityTimers
     {
         for (int slot = ObjectTable.Capacity - 1; slot >= 0; slot--)
         {
-            if (_objects.Type[slot] != BubbleType)
+            if (_objects.Slot(slot).Type != BubbleType)
             {
                 continue;
             }
 
-            _objects.EnemyType[slot] = BubbleType;
-            _objects.Type[slot] = PoppingType;
+            _objects.Slot(slot).EnemyType = BubbleType;
+            _objects.Slot(slot).Type = PoppingType;
             return;
         }
     }

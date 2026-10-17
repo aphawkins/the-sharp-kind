@@ -92,28 +92,28 @@ public sealed class BubblePopGoldenTests
     {
         for (int i = 0; i < ObjectTable.Capacity; i++)
         {
-            objects.Type[i] = b[Zero + 0xCA + i];
-            objects.Column[i] = b[Zero + 0xDC + i];
-            objects.Row[i] = b[Zero + 0xEE + i];
-            objects.Direction[i] = b[Direction + i];
-            objects.State[i] = b[Objects + i];
-            objects.X[i] = b[Objects + 0x5A + i];
-            objects.Y[i] = b[Objects + 0x6C + i];
-            objects.Variant[i] = b[Objects + 0x7E + i];
-            objects.EnemyType[i] = b[Objects + 0x90 + i];
+            objects.Slot(i).Type = b[Zero + 0xCA + i];
+            objects.Slot(i).Column = b[Zero + 0xDC + i];
+            objects.Slot(i).Row = b[Zero + 0xEE + i];
+            objects.Slot(i).Direction = b[Direction + i];
+            objects.Slot(i).State = b[Objects + i];
+            objects.Slot(i).X = b[Objects + 0x5A + i];
+            objects.Slot(i).Y = b[Objects + 0x6C + i];
+            objects.Slot(i).Variant = b[Objects + 0x7E + i];
+            objects.Slot(i).EnemyType = b[Objects + 0x90 + i];
         }
 
         for (int i = 0; i < EntityTable.Capacity; i++)
         {
-            entities.State[i] = b[Zero + 0xB2 + i];
-            entities.Colour[i] = b[At(0x8548, i)];
-            entities.RiseCounter[i] = b[At(0x87A0, i)];
-            entities.FallCounter[i] = b[At(0x87C8, i)];
-            entities.GroundState[i] = b[At(0x87F0, i)];
-            entities.BubbleTimer[i] = b[At(0x8818, i)];
-            entities.LeftFlag[i] = b[At(0x8840, i)];
-            entities.RightFlag[i] = b[At(0x8868, i)];
-            entities.AttackTimer[i] = b[At(0x8890, i)];
+            entities.Slot(i).State = b[Zero + 0xB2 + i];
+            entities.Slot(i).Colour = b[At(0x8548, i)];
+            entities.Slot(i).RiseCounter = b[At(0x87A0, i)];
+            entities.Slot(i).FallCounter = b[At(0x87C8, i)];
+            entities.Slot(i).GroundState = b[At(0x87F0, i)];
+            entities.Slot(i).BubbleTimer = b[At(0x8818, i)];
+            entities.Slot(i).LeftFlag = b[At(0x8840, i)];
+            entities.Slot(i).RightFlag = b[At(0x8868, i)];
+            entities.Slot(i).AttackTimer = b[At(0x8890, i)];
         }
 
         entities.EnemyCount = b[Zero + 0x4A];
@@ -162,16 +162,17 @@ public sealed class BubblePopGoldenTests
 
         for (int i = 0; i < ObjectTable.Capacity; i++)
         {
-            out1.AddRange([objects.Type[i], objects.Column[i], objects.Row[i], objects.Direction[i], objects.EnemyType[i]]);
+            ObjectSlot slot = objects.Slot(i);
+            out1.AddRange([slot.Type, slot.Column, slot.Row, slot.Direction, slot.EnemyType]);
         }
 
         for (int i = 0; i < EntityTable.Capacity; i++)
         {
             out1.AddRange(
             [
-                entities.State[i], entities.Colour[i], entities.RiseCounter[i], entities.FallCounter[i],
-                entities.GroundState[i], entities.BubbleTimer[i], entities.LeftFlag[i], entities.RightFlag[i],
-                entities.AttackTimer[i],
+                entities.Slot(i).State, entities.Slot(i).Colour, entities.Slot(i).RiseCounter, entities.Slot(i).FallCounter,
+                entities.Slot(i).GroundState, entities.Slot(i).BubbleTimer, entities.Slot(i).LeftFlag, entities.Slot(i).RightFlag,
+                entities.Slot(i).AttackTimer,
             ]);
         }
 

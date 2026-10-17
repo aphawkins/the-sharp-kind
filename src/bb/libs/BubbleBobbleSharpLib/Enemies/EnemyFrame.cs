@@ -94,29 +94,29 @@ internal sealed class EnemyFrame
     {
         for (int slot = FirstEnemy; slot < EntityTable.Capacity; slot++)
         {
-            _entities.AttackTimer[slot] = _entities.Y[slot];
-            _entities.Y[slot] = EntryRow;
-            _entities.Mode[slot] = 0;
+            _entities.Slot(slot).AttackTimer = _entities.Slot(slot).Y;
+            _entities.Slot(slot).Y = EntryRow;
+            _entities.Slot(slot).Mode = 0;
         }
 
         for (int frame = 0; frame < EntryFrames; frame++)
         {
             for (int slot = EntityTable.Capacity - 1; slot >= FirstEnemy; slot--)
             {
-                if (_entities.State[slot] == 0)
+                if (_entities.Slot(slot).State == 0)
                 {
                     continue;
                 }
 
                 Idle(slot);
 
-                if (_entities.Y[slot] == _entities.AttackTimer[slot])
+                if (_entities.Slot(slot).Y == _entities.Slot(slot).AttackTimer)
                 {
-                    _entities.Mode[slot]--;
+                    _entities.Slot(slot).Mode--;
                 }
                 else
                 {
-                    _entities.Y[slot] = unchecked((byte)(_entities.Y[slot] + DropStep));
+                    _entities.Slot(slot).Y = unchecked((byte)(_entities.Slot(slot).Y + DropStep));
                 }
             }
         }
@@ -138,12 +138,12 @@ internal sealed class EnemyFrame
     {
         ArgumentNullException.ThrowIfNull(map);
 
-        if (_entities.State[slot] == 0)
+        if (_entities.Slot(slot).State == 0)
         {
             return;
         }
 
-        if ((_entities.Mode[slot] & Entered) == 0)
+        if ((_entities.Slot(slot).Mode & Entered) == 0)
         {
             Drop(slot);
             Idle(slot);
@@ -151,21 +151,21 @@ internal sealed class EnemyFrame
         }
 
         // $1CF5-$1D01: a frozen level keeps every enemy that is not out of its bubble still.
-        if (_flow.Freeze != 0 && _entities.State[slot] < CaughtState)
+        if (_flow.Freeze != 0 && _entities.Slot(slot).State < CaughtState)
         {
             return;
         }
 
         int target = Target(slot);
 
-        if (_entities.FlashTimer[slot] != 0 && (counter & AngerFrames) == 0)
+        if (_entities.Slot(slot).FlashTimer != 0 && (counter & AngerFrames) == 0)
         {
             Dispatch(slot, target, counter, map);
         }
 
-        if (_entities.HoldTimer[slot] != 0)
+        if (_entities.Slot(slot).HoldTimer != 0)
         {
-            _entities.HoldTimer[slot]--;
+            _entities.Slot(slot).HoldTimer--;
             Idle(slot);
             return;
         }
@@ -177,25 +177,25 @@ internal sealed class EnemyFrame
     {
         int player = slot & 0x01;
 
-        return _entities.State[player] == PlayingState ? player : player ^ 0x01;
+        return _entities.Slot(player).State == PlayingState ? player : player ^ 0x01;
     }
 
     private void Drop(int slot)
     {
-        if (_entities.Y[slot] != _entities.AttackTimer[slot])
+        if (_entities.Slot(slot).Y != _entities.Slot(slot).AttackTimer)
         {
-            _entities.Y[slot] = unchecked((byte)(_entities.Y[slot] + DropStep));
+            _entities.Slot(slot).Y = unchecked((byte)(_entities.Slot(slot).Y + DropStep));
             return;
         }
 
-        _entities.Mode[slot]--;
-        _entities.BubbleTimer[slot] = 0xFF;
-        _entities.AttackTimer[slot] = FirstAttackDelay;
+        _entities.Slot(slot).Mode--;
+        _entities.Slot(slot).BubbleTimer = 0xFF;
+        _entities.Slot(slot).AttackTimer = FirstAttackDelay;
     }
 
     private void Idle(int slot)
     {
-        switch (_entities.State[slot])
+        switch (_entities.Slot(slot).State)
         {
             case DiagonalState:
                 _diagonal.Animate(slot);
@@ -212,9 +212,9 @@ internal sealed class EnemyFrame
 
     private void Dispatch(int slot, int target, byte counter, SolidMap map)
     {
-        PlayerCell cell = PlayerCell.Of(_entities.X[slot], _entities.Y[slot]);
+        PlayerCell cell = PlayerCell.Of(_entities.Slot(slot).X, _entities.Slot(slot).Y);
 
-        switch (_entities.State[slot])
+        switch (_entities.Slot(slot).State)
         {
             case WalkerState:
                 _walker.Step(slot, target, cell, map);
@@ -275,23 +275,23 @@ internal sealed class EnemyFrame
     private void Released(int slot, in PlayerCell cell, SolidMap map)
     {
         EntityAnimation.Step(_entities, slot);
-        _food.Drop(slot, cell, map, _entities.RiseCounter[slot]);
+        _food.Drop(slot, cell, map, _entities.Slot(slot).RiseCounter);
 
-        if (_entities.State[slot] == ReleasedState)
+        if (_entities.Slot(slot).State == ReleasedState)
         {
             return;
         }
 
-        if (_entities.State[slot] == RunnerState)
+        if (_entities.Slot(slot).State == RunnerState)
         {
-            _entities.X[slot] = (byte)(((byte)(_entities.X[slot] - 0x14) & 0xFC) + 0x14);
+            _entities.Slot(slot).X = (byte)(((byte)(_entities.Slot(slot).X - 0x14) & 0xFC) + 0x14);
         }
 
-        _entities.X[slot] = Math.Clamp(_entities.X[slot], LeftWall, RightWall);
-        _entities.RiseCounter[slot] = 0xFF;
-        _entities.FallCounter[slot] = 0xFF;
-        _entities.GroundState[slot] = 0xFF;
-        _entities.BubbleTimer[slot] = 0xFF;
+        _entities.Slot(slot).X = Math.Clamp(_entities.Slot(slot).X, LeftWall, RightWall);
+        _entities.Slot(slot).RiseCounter = 0xFF;
+        _entities.Slot(slot).FallCounter = 0xFF;
+        _entities.Slot(slot).GroundState = 0xFF;
+        _entities.Slot(slot).BubbleTimer = 0xFF;
     }
 
     private void Shooter(int slot, int target, in PlayerCell cell, SolidMap map)

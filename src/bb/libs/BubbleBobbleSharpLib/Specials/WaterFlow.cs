@@ -119,27 +119,27 @@ internal sealed class WaterFlow
     // bottom of the level ($ED), where an enemy drowns here and a player is let go by the caller.
     internal bool Follow(int slot)
     {
-        _entities.X[slot] = (byte)((_columns[BeforeHead] << 3) + XOrigin);
-        _entities.Y[slot] = (byte)((_rows[BeforeHead] << 3) + YOrigin);
+        _entities.Slot(slot).X = (byte)((_columns[BeforeHead] << 3) + XOrigin);
+        _entities.Slot(slot).Y = (byte)((_rows[BeforeHead] << 3) + YOrigin);
 
-        if (_entities.Y[slot] != ParkedY)
+        if (_entities.Slot(slot).Y != ParkedY)
         {
             return false;
         }
 
         if (slot >= FirstPlayerOnly)
         {
-            _entities.AttackTimer[slot] = DrownedTimer;
-            _entities.State[slot] = DrownedState;
+            _entities.Slot(slot).AttackTimer = DrownedTimer;
+            _entities.Slot(slot).State = DrownedState;
             _entities.EnemyCount--;
-            _entities.Colour[slot] = DrownedColour;
+            _entities.Slot(slot).Colour = DrownedColour;
         }
 
         return true;
     }
 
     // $287C-$2886: a player let go at the bottom stands at one of two columns.
-    internal void Release(int player) => _entities.X[player] = _entities.X[player] < RightThreshold ? LeftEdge : RightEdge;
+    internal void Release(int player) => _entities.Slot(player).X = _entities.Slot(player).X < RightThreshold ? LeftEdge : RightEdge;
 
     private static int Distance(int a, int b) => Math.Abs(a - b);
 
@@ -158,19 +158,19 @@ internal sealed class WaterFlow
 
         for (int slot = EntityTable.Capacity - 1; slot >= 0; slot--)
         {
-            byte state = _entities.State[slot];
+            byte state = _entities.Slot(slot).State;
 
             if (state == 0
                 || state >= CaughtBelow
-                || (slot < FirstPlayerOnly && (_entities.RiseCounter[slot] & 0x80) == 0)
-                || Distance(_entities.X[slot], pixelX) >= Reach
-                || Distance(_entities.Y[slot], pixelY) >= Reach)
+                || (slot < FirstPlayerOnly && (_entities.Slot(slot).RiseCounter & 0x80) == 0)
+                || Distance(_entities.Slot(slot).X, pixelX) >= Reach
+                || Distance(_entities.Slot(slot).Y, pixelY) >= Reach)
             {
                 continue;
             }
 
-            _entities.LeftFlag[slot] = state == ReleasingState ? _entities.RiseCounter[slot] : state;
-            _entities.State[slot] = CarriedState;
+            _entities.Slot(slot).LeftFlag = state == ReleasingState ? _entities.Slot(slot).RiseCounter : state;
+            _entities.Slot(slot).State = CarriedState;
         }
     }
 

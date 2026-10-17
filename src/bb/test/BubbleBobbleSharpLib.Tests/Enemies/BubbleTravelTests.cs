@@ -133,16 +133,16 @@ public sealed class BubbleTravelTests
             new(new()));
         EntityTimers timers = new(objects, entities);
 
-        objects.Type[Slot] = BubbleBlow.BubbleType;
-        objects.X[Slot] = 0x34;
-        objects.Y[Slot] = 0xDD;
-        objects.Column[Slot] = 0x04;
-        objects.Row[Slot] = 0x19;
-        objects.Flags[Slot] = 0x7D;
-        objects.Behaviour[Slot] = 0x7D;
-        objects.State[Slot] = 0x88;
-        objects.Variant[Slot] = 0x04;
-        objects.EnemyType[Slot] = 0x04;
+        objects.Slot(Slot).Type = BubbleBlow.BubbleType;
+        objects.Slot(Slot).X = 0x34;
+        objects.Slot(Slot).Y = 0xDD;
+        objects.Slot(Slot).Column = 0x04;
+        objects.Slot(Slot).Row = 0x19;
+        objects.Slot(Slot).Flags = 0x7D;
+        objects.Slot(Slot).Behaviour = 0x7D;
+        objects.Slot(Slot).State = 0x88;
+        objects.Slot(Slot).Variant = 0x04;
+        objects.Slot(Slot).EnemyType = 0x04;
 
         byte[][] path = new byte[passes + 1][];
         path[0] = Snapshot(objects);
@@ -157,7 +157,7 @@ public sealed class BubbleTravelTests
         return path;
     }
 
-    private static byte[] Snapshot(ObjectTable objects) => [objects.X[Slot], objects.Y[Slot], objects.Type[Slot]];
+    private static byte[] Snapshot(ObjectTable objects) => [objects.Slot(Slot).X, objects.Slot(Slot).Y, objects.Slot(Slot).Type];
 
     private static SolidMap LevelOne()
     {

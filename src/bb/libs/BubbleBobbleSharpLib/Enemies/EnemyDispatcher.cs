@@ -65,28 +65,28 @@ internal sealed class EnemyDispatcher
     {
         ArgumentNullException.ThrowIfNull(map);
 
-        Advance(slot, _objects.State[slot], map);
+        Advance(slot, _objects.Slot(slot).State, map);
 
-        if (_objects.Type[slot] >= NoRepeatType)
+        if (_objects.Slot(slot).Type >= NoRepeatType)
         {
             return;
         }
 
-        if ((_objects.EnemyType[slot] & 0x80) == 0 || _objects.State[slot] == 0)
+        if ((_objects.Slot(slot).EnemyType & 0x80) == 0 || _objects.Slot(slot).State == 0)
         {
             return;
         }
 
-        Advance(slot, _objects.State[slot], map);
+        Advance(slot, _objects.Slot(slot).State, map);
     }
 
     private void Advance(int slot, byte counter, SolidMap map)
     {
-        _objects.State[slot]--;
+        _objects.Slot(slot).State--;
 
         int index = counter & 0x7F;
 
-        if ((_objects.Variant[slot] & 0x80) != 0)
+        if ((_objects.Slot(slot).Variant & 0x80) != 0)
         {
             index >>= 1;
 
@@ -101,32 +101,32 @@ internal sealed class EnemyDispatcher
 
         // $0F73 as `bit`, once the last level has patched it in ($0F76-$0F8D): a bubble with $08 or $09 for its life (the
         // marked player's) is the thunder bubble ($0A) where it would be the plain one, and is left so.
-        if (_round.ThunderBlow && _objects.Flags[slot] < ThunderFlags)
+        if (_round.ThunderBlow && _objects.Slot(slot).Flags < ThunderFlags)
         {
-            _objects.Flags[slot]++;
+            _objects.Slot(slot).Flags++;
 
             type = type == MovedType ? ThunderType : type;
             restore = ThunderType;
         }
 
-        _objects.Type[slot] = type;
+        _objects.Slot(slot).Type = type;
 
         Move(slot, restore, map);
     }
 
     private void Move(int slot, byte restore, SolidMap map)
     {
-        byte savedColumn = _objects.Column[slot];
-        byte savedX = _objects.X[slot];
+        byte savedColumn = _objects.Slot(slot).Column;
+        byte savedX = _objects.Slot(slot).X;
 
-        if ((_objects.Direction[slot] & 0x80) != 0)
+        if ((_objects.Slot(slot).Direction & 0x80) != 0)
         {
-            _objects.Column[slot]--;
-            _objects.X[slot] -= StepPixels;
+            _objects.Slot(slot).Column--;
+            _objects.Slot(slot).X -= StepPixels;
 
             _ = _collision.Check(slot);
 
-            if (_objects.Type[slot] >= NoProbeType)
+            if (_objects.Slot(slot).Type >= NoProbeType)
             {
                 return;
             }
@@ -145,12 +145,12 @@ internal sealed class EnemyDispatcher
             return;
         }
 
-        _objects.Column[slot]++;
-        _objects.X[slot] += StepPixels;
+        _objects.Slot(slot).Column++;
+        _objects.Slot(slot).X += StepPixels;
 
         _ = _collision.Check(slot);
 
-        if (_objects.Type[slot] >= NoProbeType)
+        if (_objects.Slot(slot).Type >= NoProbeType)
         {
             return;
         }
@@ -163,7 +163,7 @@ internal sealed class EnemyDispatcher
 
     private bool Struck(int slot, SolidMap map, int first, int second, int third)
     {
-        if (_objects.SubY[slot] != 0 && Solid(slot, map, first))
+        if (_objects.Slot(slot).SubY != 0 && Solid(slot, map, first))
         {
             return true;
         }
@@ -173,35 +173,35 @@ internal sealed class EnemyDispatcher
             return true;
         }
 
-        _objects.State[slot] &= 0x7F;
+        _objects.Slot(slot).State &= 0x7F;
         return false;
     }
 
     private bool Solid(int slot, SolidMap map, int offset)
-        => map[_objects.Row[slot] - RowBias + (offset / Stride), _objects.Column[slot] + (offset % Stride)];
+        => map[_objects.Slot(slot).Row - RowBias + (offset / Stride), _objects.Slot(slot).Column + (offset % Stride)];
 
     private void Blocked(int slot, byte restore, byte savedColumn, byte savedX)
     {
         int difference = savedX - GridOrigin;
-        _objects.X[slot] = (byte)(((byte)difference & GridMask) + GridReturn + (difference >= 0 ? 1 : 0));
+        _objects.Slot(slot).X = (byte)(((byte)difference & GridMask) + GridReturn + (difference >= 0 ? 1 : 0));
 
-        _objects.Column[slot] = savedColumn;
+        _objects.Slot(slot).Column = savedColumn;
 
         byte type = restore;
 
-        if ((_objects.State[slot] & 0x80) != 0)
+        if ((_objects.Slot(slot).State & 0x80) != 0)
         {
-            _objects.Direction[slot] = Distance.Absolute(_entities.X[1], _objects.X[slot]) < CatchRange
-                && Distance.Absolute(_entities.Y[1], _objects.Y[slot]) < CatchRange
+            _objects.Slot(slot).Direction = Distance.Absolute(_entities.Slot(1).X, _objects.Slot(slot).X) < CatchRange
+                && Distance.Absolute(_entities.Slot(1).Y, _objects.Slot(slot).Y) < CatchRange
                 ? (byte)1
                 : (byte)0;
-            _objects.EnemyType[slot] = restore;
+            _objects.Slot(slot).EnemyType = restore;
             type = CaughtType;
         }
 
-        _objects.Type[slot] = type;
+        _objects.Slot(slot).Type = type;
 
-        _objects.SubX[slot] = 0;
-        _objects.State[slot] = 0;
+        _objects.Slot(slot).SubX = 0;
+        _objects.Slot(slot).State = 0;
     }
 }

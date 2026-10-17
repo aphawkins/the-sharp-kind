@@ -257,7 +257,7 @@ internal sealed class LevelItems
 
         for (int player = 1; player >= 0; player--)
         {
-            byte state = _entities.State[player];
+            byte state = _entities.Slot(player).State;
 
             if (state is 0 or not (CarriedState or RespawnState or < DyingState))
             {
@@ -267,8 +267,8 @@ internal sealed class LevelItems
             for (int item = Count - 1; item >= 0; item--)
             {
                 if ((_type[item] & 0x80) != 0
-                    || Distance.Absolute(_entities.X[player], _x[item]) >= Reach
-                    || Distance.Absolute(_entities.Y[player], _y[item]) >= Reach)
+                    || Distance.Absolute(_entities.Slot(player).X, _x[item]) >= Reach
+                    || Distance.Absolute(_entities.Slot(player).Y, _y[item]) >= Reach)
                 {
                     continue;
                 }

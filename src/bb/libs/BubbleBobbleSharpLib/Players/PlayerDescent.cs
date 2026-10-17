@@ -37,12 +37,12 @@ internal sealed class PlayerDescent
     {
         ArgumentNullException.ThrowIfNull(map);
 
-        byte y = unchecked((byte)(_entities.Y[player] + Drop));
-        _entities.Y[player] = y;
+        byte y = unchecked((byte)(_entities.Slot(player).Y + Drop));
+        _entities.Slot(player).Y = y;
 
         if (y == BottomWrap)
         {
-            _entities.Y[player] = TopRow;
+            _entities.Slot(player).Y = TopRow;
             return;
         }
 
@@ -66,7 +66,7 @@ internal sealed class PlayerDescent
             return;
         }
 
-        _entities.GroundState[player]--;
+        _entities.Slot(player).GroundState--;
     }
 
     private static bool Blocked(in PlayerCell cell, SolidMap map, int left, int middle, int right)

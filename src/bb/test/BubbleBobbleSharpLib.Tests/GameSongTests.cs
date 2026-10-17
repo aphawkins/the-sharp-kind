@@ -112,7 +112,7 @@ public sealed class GameSongTests
     {
         GameLoop loop = Start(1, next: false);
         _ = loop.TakeSong();
-        loop.Entities.State[0] = PlayerFrame.DeadState;
+        loop.Entities.Slot(0).State = PlayerFrame.DeadState;
 
         loop.Pass([Idle, Idle]);
 
@@ -128,7 +128,7 @@ public sealed class GameSongTests
         loop.Timer.Hurry = 0;
         HurryUp(loop);
         _ = Drain(loop);
-        loop.Entities.State[0] = PlayerFrame.DeadState;
+        loop.Entities.Slot(0).State = PlayerFrame.DeadState;
 
         loop.Pass([Idle, Idle]);
 

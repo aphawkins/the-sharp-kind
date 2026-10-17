@@ -32,6 +32,7 @@ internal sealed class EntitySlot
     private byte _leapFlag;
     private byte _climbFlag;
     private byte _attackTimer;
+    private bool _climbNext;
 
     internal ref byte State => ref _state;
 
@@ -80,4 +81,6 @@ internal sealed class EntitySlot
     internal ref byte ClimbFlag => ref _climbFlag;
 
     internal ref byte AttackTimer => ref _attackTimer;
+
+    internal ref bool ClimbNext => ref _climbNext;
 }

@@ -60,31 +60,31 @@ internal sealed class EnemyWalker
     {
         ArgumentNullException.ThrowIfNull(map);
 
-        byte facing = _entities.Frame[slot];
+        byte facing = _entities.Slot(slot).Frame;
 
         _chase.Step(slot, target);
 
-        byte heading = _entities.Heading[slot];
+        byte heading = _entities.Slot(slot).Heading;
 
-        if ((_entities.GroundState[slot] & 0x80) == 0)
+        if ((_entities.Slot(slot).GroundState & 0x80) == 0)
         {
             Descend(slot, cell, map);
             return;
         }
 
-        if ((_entities.RiseCounter[slot] & 0x80) == 0)
+        if ((_entities.Slot(slot).RiseCounter & 0x80) == 0)
         {
             _jump.Step(slot, cell, map);
             return;
         }
 
-        if (_entities.ClimbFlag[slot] != 0 && EnemyProbes.PlatformAbove(cell, map))
+        if (_entities.Slot(slot).ClimbFlag != 0 && EnemyProbes.PlatformAbove(cell, map))
         {
-            _entities.Heading[slot] |= UpBit;
-            heading = _entities.Heading[slot];
+            _entities.Slot(slot).Heading |= UpBit;
+            heading = _entities.Slot(slot).Heading;
         }
 
-        if (_entities.Y[slot] < GroundCheckFloor)
+        if (_entities.Slot(slot).Y < GroundCheckFloor)
         {
             StartFall(slot, cell, map);
             return;
@@ -110,12 +110,12 @@ internal sealed class EnemyWalker
 
     private bool Leap(int slot, byte facing, in PlayerCell cell, SolidMap map)
     {
-        if ((_entities.LeapFlag[slot] | _entities.ClimbFlag[slot]) == 0 || _entities.State[slot] == NoLeapState)
+        if ((_entities.Slot(slot).LeapFlag | _entities.Slot(slot).ClimbFlag) == 0 || _entities.Slot(slot).State == NoLeapState)
         {
             return false;
         }
 
-        bool left = facing >= _entities.FrameCount[slot];
+        bool left = facing >= _entities.Slot(slot).FrameCount;
 
         if (cell.FineX != (left ? 0 : LeapRightFineX))
         {
@@ -127,9 +127,9 @@ internal sealed class EnemyWalker
             return false;
         }
 
-        _entities.LeftFlag[slot] = left ? (byte)0xFF : (byte)0x00;
-        _entities.RightFlag[slot] = left ? (byte)0x00 : (byte)0xFF;
-        _entities.RiseCounter[slot] = LeapRise;
+        _entities.Slot(slot).LeftFlag = left ? (byte)0xFF : (byte)0x00;
+        _entities.Slot(slot).RightFlag = left ? (byte)0x00 : (byte)0xFF;
+        _entities.Slot(slot).RiseCounter = LeapRise;
 
         _jump.Step(slot, cell, map);
         return true;
@@ -158,9 +158,9 @@ internal sealed class EnemyWalker
 
     private void WalkLeft(int slot, byte facing, in PlayerCell cell, SolidMap map)
     {
-        if (facing < _entities.FrameCount[slot])
+        if (facing < _entities.Slot(slot).FrameCount)
         {
-            _entities.Frame[slot] = _entities.FrameCount[slot];
+            _entities.Slot(slot).Frame = _entities.Slot(slot).FrameCount;
             return;
         }
 
@@ -169,9 +169,9 @@ internal sealed class EnemyWalker
 
     private void WalkRight(int slot, byte facing, in PlayerCell cell, SolidMap map)
     {
-        if (facing >= _entities.FrameCount[slot])
+        if (facing >= _entities.Slot(slot).FrameCount)
         {
-            _entities.Frame[slot] = 0;
+            _entities.Slot(slot).Frame = 0;
             return;
         }
 
@@ -180,7 +180,7 @@ internal sealed class EnemyWalker
 
     private void StartFall(int slot, in PlayerCell cell, SolidMap map)
     {
-        _entities.GroundState[slot]++;
+        _entities.Slot(slot).GroundState++;
         Descend(slot, cell, map);
     }
 

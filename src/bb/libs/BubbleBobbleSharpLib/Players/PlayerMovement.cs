@@ -53,7 +53,7 @@ internal sealed class PlayerMovement
             return;
         }
 
-        PlayerCell cell = PlayerCell.Of(_entities.X[player], _entities.Y[player]);
+        PlayerCell cell = PlayerCell.Of(_entities.Slot(player).X, _entities.Slot(player).Y);
 
         if ((port & Input.Left) == 0)
         {
@@ -86,7 +86,7 @@ internal sealed class PlayerMovement
     {
         bool left = step == LeftStep;
 
-        byte frame = _entities.Frame[player];
+        byte frame = _entities.Slot(player).Frame;
 
         if (!Faces(left, frame))
         {
@@ -104,48 +104,48 @@ internal sealed class PlayerMovement
 
     private void Turn(int player, bool left)
     {
-        if ((_entities.BubbleTimer[player] & 0x80) == 0)
+        if ((_entities.Slot(player).BubbleTimer & 0x80) == 0)
         {
             return;
         }
 
-        _entities.Frame[player] = left ? FaceLeft : FaceRight;
+        _entities.Slot(player).Frame = left ? FaceLeft : FaceRight;
     }
 
     private void Launch(int player, byte port)
     {
-        _entities.RiseCounter[player] = JumpRise;
+        _entities.Slot(player).RiseCounter = JumpRise;
 
-        byte frame = _entities.Frame[player];
+        byte frame = _entities.Slot(player).Frame;
 
         bool left = (port & Input.Left) == 0 && frame is >= 0x04 and < 0x08;
         bool right = (port & Input.Right) == 0 && frame is < 0x04;
 
-        _entities.LeftFlag[player] = left ? Latched : (byte)0x00;
-        _entities.RightFlag[player] = right ? Latched : (byte)0x00;
+        _entities.Slot(player).LeftFlag = left ? Latched : (byte)0x00;
+        _entities.Slot(player).RightFlag = right ? Latched : (byte)0x00;
 
         if (frame < 0x08)
         {
-            _entities.Frame[player] = (byte)(frame | 0x02);
+            _entities.Slot(player).Frame = (byte)(frame | 0x02);
         }
     }
 
     private void Animate(int player)
     {
-        _entities.AnimationTimer[player]++;
+        _entities.Slot(player).AnimationTimer++;
 
-        if (_entities.AnimationTimer[player] < AnimationPeriod)
+        if (_entities.Slot(player).AnimationTimer < AnimationPeriod)
         {
             return;
         }
 
-        _entities.AnimationTimer[player] = 0;
-        _entities.Frame[player] ^= 0x01;
+        _entities.Slot(player).AnimationTimer = 0;
+        _entities.Slot(player).Frame ^= 0x01;
     }
 
     private void Advance(int player, in PlayerCell cell, SolidMap map, int probe, byte step)
     {
-        bool checkWall = _entities.Y[player] >= WallCheckFloor && cell.FineX == 0;
+        bool checkWall = _entities.Slot(player).Y >= WallCheckFloor && cell.FineX == 0;
 
         if (checkWall && cell.Solid(map, probe))
         {
@@ -153,6 +153,6 @@ internal sealed class PlayerMovement
         }
 
         _rings.Walk(player);
-        _entities.X[player] = unchecked((byte)(_entities.X[player] + step));
+        _entities.Slot(player).X = unchecked((byte)(_entities.Slot(player).X + step));
     }
 }

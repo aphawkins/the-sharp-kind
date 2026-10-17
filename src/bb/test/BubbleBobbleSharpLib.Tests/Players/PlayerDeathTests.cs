@@ -27,7 +27,7 @@ public sealed class PlayerDeathTests
 
         new PlayerDeath(entities).Update();
 
-        Assert.Equal(expected, entities.State[0]);
+        Assert.Equal(expected, entities.Slot(0).State);
     }
 
     // $1D4D and $1D4F. An empty slot and a popped enemy do not kill; $0A, the last walking state, does.
@@ -42,7 +42,7 @@ public sealed class PlayerDeathTests
 
         new PlayerDeath(entities).Update();
 
-        Assert.Equal(expected, entities.State[0]);
+        Assert.Equal(expected, entities.Slot(0).State);
     }
 
     // $1D3D's carry. X $FE + 2 wraps, and the carry makes the Y point $83: an enemy at $8E is $0B away.
@@ -53,7 +53,7 @@ public sealed class PlayerDeathTests
 
         new PlayerDeath(entities).Update();
 
-        Assert.Equal(0x0E, entities.State[0]);
+        Assert.Equal(0x0E, entities.Slot(0).State);
     }
 
     // $1D36. A player not walking about is left alone.
@@ -61,22 +61,22 @@ public sealed class PlayerDeathTests
     public void ADyingPlayerIsNotKilledAgain()
     {
         EntityTable entities = Rig(0x40, 0x80, 0x42, 0x82, 0x02);
-        entities.State[0] = 0x10;
+        entities.Slot(0).State = 0x10;
 
         new PlayerDeath(entities).Update();
 
-        Assert.Equal(0x10, entities.State[0]);
+        Assert.Equal(0x10, entities.Slot(0).State);
     }
 
     private static EntityTable Rig(byte playerX, byte playerY, byte enemyX, byte enemyY, byte enemyState)
     {
         EntityTable entities = new();
-        entities.State[0] = PlayerFrame.PlayingState;
-        entities.X[0] = playerX;
-        entities.Y[0] = playerY;
-        entities.State[Enemy] = enemyState;
-        entities.X[Enemy] = enemyX;
-        entities.Y[Enemy] = enemyY;
+        entities.Slot(0).State = PlayerFrame.PlayingState;
+        entities.Slot(0).X = playerX;
+        entities.Slot(0).Y = playerY;
+        entities.Slot(Enemy).State = enemyState;
+        entities.Slot(Enemy).X = enemyX;
+        entities.Slot(Enemy).Y = enemyY;
 
         return entities;
     }

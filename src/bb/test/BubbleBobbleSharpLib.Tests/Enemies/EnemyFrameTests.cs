@@ -32,12 +32,12 @@ public sealed class EnemyFrameTests
     public void LeavesAnEmptySlotAlone()
     {
         (EntityTable entities, EnemyFrame frame) = Walker();
-        entities.State[Slot] = 0;
+        entities.Slot(Slot).State = 0;
 
         frame.Step(Slot, 0, s_map);
 
-        Assert.Equal(StandX, entities.X[Slot]);
-        Assert.Equal(0, entities.AnimationTimer[Slot]);
+        Assert.Equal(StandX, entities.Slot(Slot).X);
+        Assert.Equal(0, entities.Slot(Slot).AnimationTimer);
     }
 
     // $1CA0. Two pixels a frame towards the row AttackTimer holds, animating as it goes.
@@ -45,15 +45,15 @@ public sealed class EnemyFrameTests
     public void DropsIntoTheLevelTwoPixelsAFrame()
     {
         (EntityTable entities, EnemyFrame frame) = Walker();
-        entities.Mode[Slot] = 0x00;
-        entities.Y[Slot] = 0x15;
-        entities.AttackTimer[Slot] = 0x19;
+        entities.Slot(Slot).Mode = 0x00;
+        entities.Slot(Slot).Y = 0x15;
+        entities.Slot(Slot).AttackTimer = 0x19;
 
         frame.Step(Slot, 0, s_map);
 
-        Assert.Equal(0x17, entities.Y[Slot]);
-        Assert.Equal(0x00, entities.Mode[Slot]);
-        Assert.Equal(1, entities.AnimationTimer[Slot]);
+        Assert.Equal(0x17, entities.Slot(Slot).Y);
+        Assert.Equal(0x00, entities.Slot(Slot).Mode);
+        Assert.Equal(1, entities.Slot(Slot).AnimationTimer);
     }
 
     // $1CAD. At the row, Mode goes negative, the bubble timer is parked and the first shot is ten
@@ -62,17 +62,17 @@ public sealed class EnemyFrameTests
     public void EndsTheDropAtItsRow()
     {
         (EntityTable entities, EnemyFrame frame) = Walker();
-        entities.Mode[Slot] = 0x00;
-        entities.Y[Slot] = 0x19;
-        entities.AttackTimer[Slot] = 0x19;
-        entities.BubbleTimer[Slot] = 0x00;
+        entities.Slot(Slot).Mode = 0x00;
+        entities.Slot(Slot).Y = 0x19;
+        entities.Slot(Slot).AttackTimer = 0x19;
+        entities.Slot(Slot).BubbleTimer = 0x00;
 
         frame.Step(Slot, 0, s_map);
 
-        Assert.Equal(0x19, entities.Y[Slot]);
-        Assert.Equal(0xFF, entities.Mode[Slot]);
-        Assert.Equal(0xFF, entities.BubbleTimer[Slot]);
-        Assert.Equal(0x0A, entities.AttackTimer[Slot]);
+        Assert.Equal(0x19, entities.Slot(Slot).Y);
+        Assert.Equal(0xFF, entities.Slot(Slot).Mode);
+        Assert.Equal(0xFF, entities.Slot(Slot).BubbleTimer);
+        Assert.Equal(0x0A, entities.Slot(Slot).AttackTimer);
     }
 
     // $17BE. The spawned row becomes the drop's target, and twenty-two frames of two pixels take the
@@ -84,9 +84,9 @@ public sealed class EnemyFrameTests
 
         frame.Enter();
 
-        Assert.Equal(StandY, entities.AttackTimer[Slot]);
-        Assert.Equal(0x41, entities.Y[Slot]);
-        Assert.Equal(0x00, entities.Mode[Slot]);
+        Assert.Equal(StandY, entities.Slot(Slot).AttackTimer);
+        Assert.Equal(0x41, entities.Slot(Slot).Y);
+        Assert.Equal(0x00, entities.Slot(Slot).Mode);
     }
 
     // $17E7. The loop does not look at the mode, so a thing that reaches its row takes it down once
@@ -97,13 +97,13 @@ public sealed class EnemyFrameTests
     public void TakesTheModeDownOnEveryFrameAtItsRow(byte row, byte mode)
     {
         (EntityTable entities, EnemyFrame frame) = Walker();
-        entities.Y[Slot] = row;
+        entities.Slot(Slot).Y = row;
 
         frame.Enter();
 
-        Assert.Equal(row, entities.Y[Slot]);
-        Assert.Equal(row, entities.AttackTimer[Slot]);
-        Assert.Equal(mode, entities.Mode[Slot]);
+        Assert.Equal(row, entities.Slot(Slot).Y);
+        Assert.Equal(row, entities.Slot(Slot).AttackTimer);
+        Assert.Equal(mode, entities.Slot(Slot).Mode);
     }
 
     // $17C2. Every enemy slot is put at the top, but only a live one drops.
@@ -111,13 +111,13 @@ public sealed class EnemyFrameTests
     public void PutsAnEmptySlotAtTheTopWithoutMovingIt()
     {
         (EntityTable entities, EnemyFrame frame) = Walker();
-        entities.Y[Slot + 1] = 0x75;
+        entities.Slot(Slot + 1).Y = 0x75;
 
         frame.Enter();
 
-        Assert.Equal(0x75, entities.AttackTimer[Slot + 1]);
-        Assert.Equal(0x15, entities.Y[Slot + 1]);
-        Assert.Equal(0x00, entities.Mode[Slot + 1]);
+        Assert.Equal(0x75, entities.Slot(Slot + 1).AttackTimer);
+        Assert.Equal(0x15, entities.Slot(Slot + 1).Y);
+        Assert.Equal(0x00, entities.Slot(Slot + 1).Mode);
     }
 
     // $1D11. The spawn delay counts down, and the thing animates on the spot without walking.
@@ -125,13 +125,13 @@ public sealed class EnemyFrameTests
     public void HoldsTheThingWhileTheDelayRuns()
     {
         (EntityTable entities, EnemyFrame frame) = Walker();
-        entities.HoldTimer[Slot] = 0x02;
+        entities.Slot(Slot).HoldTimer = 0x02;
 
         frame.Step(Slot, 0, s_map);
 
-        Assert.Equal(0x01, entities.HoldTimer[Slot]);
-        Assert.Equal(StandX, entities.X[Slot]);
-        Assert.Equal(1, entities.AnimationTimer[Slot]);
+        Assert.Equal(0x01, entities.Slot(Slot).HoldTimer);
+        Assert.Equal(StandX, entities.Slot(Slot).X);
+        Assert.Equal(1, entities.Slot(Slot).AnimationTimer);
     }
 
     [Fact]
@@ -141,7 +141,7 @@ public sealed class EnemyFrameTests
 
         frame.Step(Slot, 0, s_map);
 
-        Assert.Equal(StandX - 2, entities.X[Slot]);
+        Assert.Equal(StandX - 2, entities.Slot(Slot).X);
     }
 
     // $1D03. An angry thing takes a second step on frames whose counter has bit 1 clear.
@@ -153,11 +153,11 @@ public sealed class EnemyFrameTests
     public void StepsTwiceWhenAngryOnHalfTheFrames(int counter, int x)
     {
         (EntityTable entities, EnemyFrame frame) = Walker();
-        entities.FlashTimer[Slot] = 0xFF;
+        entities.Slot(Slot).FlashTimer = 0xFF;
 
         frame.Step(Slot, (byte)counter, s_map);
 
-        Assert.Equal(x, entities.X[Slot]);
+        Assert.Equal(x, entities.Slot(Slot).X);
     }
 
     // $1D03 comes before $1D11, so an angry thing still held by its delay takes the extra step.
@@ -165,13 +165,13 @@ public sealed class EnemyFrameTests
     public void AngerStepsEvenDuringTheDelay()
     {
         (EntityTable entities, EnemyFrame frame) = Walker();
-        entities.FlashTimer[Slot] = 0xFF;
-        entities.HoldTimer[Slot] = 0x02;
+        entities.Slot(Slot).FlashTimer = 0xFF;
+        entities.Slot(Slot).HoldTimer = 0x02;
 
         frame.Step(Slot, 0, s_map);
 
-        Assert.Equal(StandX - 2, entities.X[Slot]);
-        Assert.Equal(0x01, entities.HoldTimer[Slot]);
+        Assert.Equal(StandX - 2, entities.Slot(Slot).X);
+        Assert.Equal(0x01, entities.Slot(Slot).HoldTimer);
     }
 
     // $1CE3. The player of the slot's own parity if they are playing, else the other one. Player 1 is
@@ -183,14 +183,14 @@ public sealed class EnemyFrameTests
     public void FollowsThePlayerOnItsOwnSideIfTheyArePlaying(int slot, int playerZeroState, int leap)
     {
         (EntityTable entities, EnemyFrame frame) = Walker(slot);
-        entities.State[0] = (byte)playerZeroState;
-        entities.Y[0] = 0xDD;
-        entities.State[1] = 0x01;
-        entities.Y[1] = StandY;
+        entities.Slot(0).State = (byte)playerZeroState;
+        entities.Slot(0).Y = 0xDD;
+        entities.Slot(1).State = 0x01;
+        entities.Slot(1).Y = StandY;
 
         frame.Step(slot, 0, s_map);
 
-        Assert.Equal(leap, entities.LeapFlag[slot]);
+        Assert.Equal(leap, entities.Slot(slot).LeapFlag);
     }
 
     // $1CBD's loop runs from slot 7 down to slot 2 and no further.
@@ -202,8 +202,8 @@ public sealed class EnemyFrameTests
 
         frame.Step(0, s_map);
 
-        Assert.Equal(StandX - 2, entities.X[7]);
-        Assert.Equal(StandX, entities.X[0]);
+        Assert.Equal(StandX - 2, entities.Slot(7).X);
+        Assert.Equal(StandX, entities.Slot(0).X);
     }
 
     // $1E87 for a slot not free to move: state 9 flips bit 0, the rest step the walk cycle.
@@ -211,14 +211,14 @@ public sealed class EnemyFrameTests
     public void TogglesStateNineWhileHeld()
     {
         (EntityTable entities, EnemyFrame frame) = Walker();
-        entities.State[Slot] = 0x09;
-        entities.HoldTimer[Slot] = 0x02;
-        entities.AnimationTimer[Slot] = 0x01;
-        entities.Frame[Slot] = 0x06;
+        entities.Slot(Slot).State = 0x09;
+        entities.Slot(Slot).HoldTimer = 0x02;
+        entities.Slot(Slot).AnimationTimer = 0x01;
+        entities.Slot(Slot).Frame = 0x06;
 
         frame.Step(Slot, 0, s_map);
 
-        Assert.Equal(0x07, entities.Frame[Slot]);
+        Assert.Equal(0x07, entities.Slot(Slot).Frame);
     }
 
     // $1CF5-$1D01: while $67 is set, an enemy not yet out of its bubble (state 1 to $0A) takes no turn.
@@ -230,13 +230,13 @@ public sealed class EnemyFrameTests
         LevelFlow flow = new(new()) { Freeze = 0x40 };
         EntityTable entities = new();
         Place(entities, Slot);
-        entities.State[Slot] = state;
+        entities.Slot(Slot).State = state;
         EnemyFrame frame = TestEnemies.Frame(entities, new(), new(new FakeRandomSource()), new(), flow);
 
         frame.Step(Slot, 0, s_map);
 
-        Assert.Equal(StandX, entities.X[Slot]);
-        Assert.Equal(0, entities.AnimationTimer[Slot]);
+        Assert.Equal(StandX, entities.Slot(Slot).X);
+        Assert.Equal(0, entities.Slot(Slot).AnimationTimer);
     }
 
     // The same enemy moves once the freeze has run out.
@@ -250,7 +250,7 @@ public sealed class EnemyFrameTests
 
         frame.Step(Slot, 0, s_map);
 
-        Assert.NotEqual(StandX, entities.X[Slot]);
+        Assert.NotEqual(StandX, entities.Slot(Slot).X);
     }
 
     // $1CF5-$1D01: an enemy from state $0B up (in its bubble, popped, food) is not held by the freeze.
@@ -273,14 +273,14 @@ public sealed class EnemyFrameTests
         LevelFlow flow = new(new()) { Freeze = 0x40 };
         EntityTable entities = new();
         Place(entities, Slot);
-        entities.Mode[Slot] = 0x00;
-        entities.Y[Slot] = 0x15;
-        entities.AttackTimer[Slot] = 0x19;
+        entities.Slot(Slot).Mode = 0x00;
+        entities.Slot(Slot).Y = 0x15;
+        entities.Slot(Slot).AttackTimer = 0x19;
         EnemyFrame frame = TestEnemies.Frame(entities, new(), new(new FakeRandomSource()), new(), flow);
 
         frame.Step(Slot, 0, s_map);
 
-        Assert.Equal(0x17, entities.Y[Slot]);
+        Assert.Equal(0x17, entities.Slot(Slot).Y);
     }
 
     private static byte[] Run(byte state, byte freeze)
@@ -288,13 +288,13 @@ public sealed class EnemyFrameTests
         LevelFlow flow = new(new()) { Freeze = freeze };
         EntityTable entities = new();
         Place(entities, Slot);
-        entities.State[Slot] = state;
-        entities.Y[Slot] = 0x80;
+        entities.Slot(Slot).State = state;
+        entities.Slot(Slot).Y = 0x80;
         EnemyFrame frame = TestEnemies.Frame(entities, new(), new(new FakeRandomSource()), new(), flow);
 
         frame.Step(Slot, 0, s_map);
 
-        return [entities.X[Slot], entities.Y[Slot], entities.Frame[Slot], entities.State[Slot]];
+        return [entities.Slot(Slot).X, entities.Slot(Slot).Y, entities.Slot(Slot).Frame, entities.Slot(Slot).State];
     }
 
     private static (EntityTable Entities, EnemyFrame Frame) Walker(int slot = Slot)
@@ -307,18 +307,18 @@ public sealed class EnemyFrameTests
     // A class 0 thing walking left on the floor, free to move, with a player below it.
     private static void Place(EntityTable entities, int slot)
     {
-        entities.State[0] = 0x01;
-        entities.Y[0] = 0xDD;
-        entities.State[slot] = 0x02;
-        entities.X[slot] = StandX;
-        entities.Y[slot] = StandY;
-        entities.Mode[slot] = 0xFF;
-        entities.Heading[slot] = 0x01;
-        entities.Frame[slot] = 0x04;
-        entities.FrameCount[slot] = 0x04;
-        entities.FrameMask[slot] = 0x03;
-        entities.RiseCounter[slot] = 0xFF;
-        entities.FallCounter[slot] = 0xFF;
-        entities.GroundState[slot] = 0xFF;
+        entities.Slot(0).State = 0x01;
+        entities.Slot(0).Y = 0xDD;
+        entities.Slot(slot).State = 0x02;
+        entities.Slot(slot).X = StandX;
+        entities.Slot(slot).Y = StandY;
+        entities.Slot(slot).Mode = 0xFF;
+        entities.Slot(slot).Heading = 0x01;
+        entities.Slot(slot).Frame = 0x04;
+        entities.Slot(slot).FrameCount = 0x04;
+        entities.Slot(slot).FrameMask = 0x03;
+        entities.Slot(slot).RiseCounter = 0xFF;
+        entities.Slot(slot).FallCounter = 0xFF;
+        entities.Slot(slot).GroundState = 0xFF;
     }
 }

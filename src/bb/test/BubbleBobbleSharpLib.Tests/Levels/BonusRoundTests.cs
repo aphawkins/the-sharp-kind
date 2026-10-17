@@ -35,11 +35,11 @@ public sealed class BonusRoundTests
 
         loop.Bonus.Start();
 
-        Assert.Equal(BonusRound.PlayerState, loop.Entities.State[0]);
-        Assert.Equal(0, loop.Entities.State[1]);
+        Assert.Equal(BonusRound.PlayerState, loop.Entities.Slot(0).State);
+        Assert.Equal(0, loop.Entities.Slot(1).State);
         Assert.Equal(BonusRound.PlayerState, loop.Round.Respawn);
         Assert.Equal(BonusRound.TumbleState, loop.Round.Release);
-        Assert.Contains(Enumerable.Range(2, 6), slot => loop.Entities.State[slot] == BonusRound.TumbleState);
+        Assert.Contains(Enumerable.Range(2, 6), slot => loop.Entities.Slot(slot).State == BonusRound.TumbleState);
     }
 
     [Fact]
@@ -83,8 +83,8 @@ public sealed class BonusRoundTests
             loop.Pass([Idle, Idle]);
         }
 
-        Assert.Contains(Enumerable.Range(2, 6), slot => loop.Entities.State[slot] == 0x17);
-        Assert.Equal(BonusRound.PlayerState, loop.Entities.State[0]);
+        Assert.Contains(Enumerable.Range(2, 6), slot => loop.Entities.Slot(slot).State == 0x17);
+        Assert.Equal(BonusRound.PlayerState, loop.Entities.Slot(0).State);
     }
 
     private static GameLoop Start(int number)

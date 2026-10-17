@@ -42,24 +42,24 @@ internal sealed class EnemyTumble
     {
         ArgumentNullException.ThrowIfNull(map);
 
-        _entities.Colour[slot] = Colour;
+        _entities.Slot(slot).Colour = Colour;
 
         if (!EnemyProbes.Blocked(cell, map, InsideLeft, InsideLeft + 1, InsideLeft + 2)
             && (cell.Solid(map, UnderLeft) || cell.Solid(map, UnderLeft + 1)))
         {
-            _entities.State[slot] = WaitingState;
+            _entities.Slot(slot).State = WaitingState;
             Touch(slot);
             return;
         }
 
         // $27B2: down a step, from an even column and an odd row.
-        _entities.X[slot] &= 0xFE;
-        _entities.Y[slot] |= 0x01;
+        _entities.Slot(slot).X &= 0xFE;
+        _entities.Slot(slot).Y |= 0x01;
         _food.Drop(slot, cell, map);
 
-        if (_entities.State[slot] == FoodDrop.LandedState)
+        if (_entities.Slot(slot).State == FoodDrop.LandedState)
         {
-            _entities.State[slot] = WaitingState;
+            _entities.Slot(slot).State = WaitingState;
         }
 
         Touch(slot);
@@ -71,16 +71,16 @@ internal sealed class EnemyTumble
     {
         for (int player = PlayerTable.Capacity - 1; player >= 0; player--)
         {
-            if (_entities.State[player] == 0
-                || Distance.Absolute(_entities.X[slot], _entities.X[player]) >= Reach
-                || Distance.Absolute(_entities.Y[slot], _entities.Y[player]) >= Reach)
+            if (_entities.Slot(player).State == 0
+                || Distance.Absolute(_entities.Slot(slot).X, _entities.Slot(player).X) >= Reach
+                || Distance.Absolute(_entities.Slot(slot).Y, _entities.Slot(player).Y) >= Reach)
             {
                 continue;
             }
 
-            _entities.State[slot] = _entities.RiseCounter[slot];
+            _entities.Slot(slot).State = _entities.Slot(slot).RiseCounter;
             _food.Kill(slot - FirstEnemy);
-            _entities.AttackTimer[slot] = TouchedFood;
+            _entities.Slot(slot).AttackTimer = TouchedFood;
             return;
         }
     }

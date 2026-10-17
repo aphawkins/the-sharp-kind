@@ -36,8 +36,8 @@ public sealed class DiagonalMoverTests
 
         mover.Step(Slot, PlayerCell.Of(0x55, 0x15), Map(BottomLeftOpen));
 
-        Assert.Equal(0xF5, entities.Y[Slot]);
-        Assert.Equal(Up, entities.Heading[Slot]);
+        Assert.Equal(0xF5, entities.Slot(Slot).Y);
+        Assert.Equal(Up, entities.Slot(Slot).Heading);
     }
 
     [Fact]
@@ -47,8 +47,8 @@ public sealed class DiagonalMoverTests
 
         mover.Step(Slot, PlayerCell.Of(0x55, 0x15), Map(0));
 
-        Assert.Equal(0x15, entities.Y[Slot]);
-        Assert.Equal(0x08, entities.Heading[Slot]);
+        Assert.Equal(0x15, entities.Slot(Slot).Y);
+        Assert.Equal(0x08, entities.Slot(Slot).Heading);
     }
 
     // $EFAC. At the bottom, open ceiling above the thing, and it comes out at the top.
@@ -59,8 +59,8 @@ public sealed class DiagonalMoverTests
 
         mover.Step(Slot, PlayerCell.Of(0x55, 0xF5), Map(TopLeftOpen));
 
-        Assert.Equal(0x15, entities.Y[Slot]);
-        Assert.Equal(0x00, entities.Heading[Slot]);
+        Assert.Equal(0x15, entities.Slot(Slot).Y);
+        Assert.Equal(0x00, entities.Slot(Slot).Heading);
     }
 
     // The carry. Both `sbc`s run with it set, so the top takes $13 and the bottom $14, and the two
@@ -95,7 +95,7 @@ public sealed class DiagonalMoverTests
 
         mover.Step(Slot, PlayerCell.Of(0x55, 0xF6), Map(TopLeftOpen));
 
-        Assert.Equal(0xF7, entities.Y[Slot]);
+        Assert.Equal(0xF7, entities.Slot(Slot).Y);
     }
 
     // $EF98. One pixel a pass, and two across.
@@ -106,8 +106,8 @@ public sealed class DiagonalMoverTests
 
         mover.Step(Slot, PlayerCell.Of(GridX, GridY), Map(0));
 
-        Assert.Equal(GridY - 1, entities.Y[Slot]);
-        Assert.Equal(GridX + 2, entities.X[Slot]);
+        Assert.Equal(GridY - 1, entities.Slot(Slot).Y);
+        Assert.Equal(GridX + 2, entities.Slot(Slot).X);
     }
 
     // $EF70. The row above, one and two columns across, turns the thing and leaves it where it is.
@@ -118,8 +118,8 @@ public sealed class DiagonalMoverTests
 
         mover.Step(Slot, PlayerCell.Of(GridX, GridY), Map(0, (4, 9)));
 
-        Assert.Equal(GridY, entities.Y[Slot]);
-        Assert.Equal(0x08, entities.Heading[Slot]);
+        Assert.Equal(GridY, entities.Slot(Slot).Y);
+        Assert.Equal(0x08, entities.Slot(Slot).Heading);
     }
 
     // $EF85. The third cell above only counts when the thing overlaps it.
@@ -132,7 +132,7 @@ public sealed class DiagonalMoverTests
 
         mover.Step(Slot, PlayerCell.Of((byte)x, GridY), Map(0, (4, 10)));
 
-        Assert.Equal(expected, entities.Y[Slot]);
+        Assert.Equal(expected, entities.Slot(Slot).Y);
     }
 
     // $EFBC. Two rows down, and the turn sets the up bit.
@@ -143,8 +143,8 @@ public sealed class DiagonalMoverTests
 
         mover.Step(Slot, PlayerCell.Of(GridX, GridY), Map(0, (7, 8)));
 
-        Assert.Equal(GridY, entities.Y[Slot]);
-        Assert.Equal(0x0C, entities.Heading[Slot]);
+        Assert.Equal(GridY, entities.Slot(Slot).Y);
+        Assert.Equal(0x0C, entities.Slot(Slot).Heading);
     }
 
     // $EEEB. Off a row boundary the third cell to the left counts, and the turn leaves X alone.
@@ -155,8 +155,8 @@ public sealed class DiagonalMoverTests
 
         mover.Step(Slot, PlayerCell.Of(GridX, 0x56), Map(0, (7, 7)));
 
-        Assert.Equal(GridX, entities.X[Slot]);
-        Assert.Equal(0x02, entities.Heading[Slot]);
+        Assert.Equal(GridX, entities.Slot(Slot).X);
+        Assert.Equal(0x02, entities.Slot(Slot).Heading);
     }
 
     // $EF2A. The right probes are three columns across, past the thing's own two.
@@ -167,8 +167,8 @@ public sealed class DiagonalMoverTests
 
         mover.Step(Slot, PlayerCell.Of(GridX, GridY), Map(0, (5, 10)));
 
-        Assert.Equal(GridX, entities.X[Slot]);
-        Assert.Equal(0x03, entities.Heading[Slot]);
+        Assert.Equal(GridX, entities.Slot(Slot).X);
+        Assert.Equal(0x03, entities.Slot(Slot).Heading);
     }
 
     [Fact]
@@ -178,7 +178,7 @@ public sealed class DiagonalMoverTests
 
         mover.Step(Slot, PlayerCell.Of(GridX, GridY), Map(0));
 
-        Assert.Equal(GridX - 2, entities.X[Slot]);
+        Assert.Equal(GridX - 2, entities.Slot(Slot).X);
     }
 
     // $EFEA. Every second pass, and the frame counts round four.
@@ -186,24 +186,24 @@ public sealed class DiagonalMoverTests
     public void StepsTheFrameEverySecondPass()
     {
         (EntityTable entities, DiagonalMover mover) = Moving(GridX, GridY, 0x00);
-        entities.Frame[Slot] = 0x03;
+        entities.Slot(Slot).Frame = 0x03;
         SolidMap map = Map(0);
 
-        mover.Step(Slot, PlayerCell.Of(entities.X[Slot], entities.Y[Slot]), map);
-        Assert.Equal(0x03, entities.Frame[Slot]);
+        mover.Step(Slot, PlayerCell.Of(entities.Slot(Slot).X, entities.Slot(Slot).Y), map);
+        Assert.Equal(0x03, entities.Slot(Slot).Frame);
 
-        mover.Step(Slot, PlayerCell.Of(entities.X[Slot], entities.Y[Slot]), map);
-        Assert.Equal(0x00, entities.Frame[Slot]);
-        Assert.Equal(0x00, entities.AnimationTimer[Slot]);
+        mover.Step(Slot, PlayerCell.Of(entities.Slot(Slot).X, entities.Slot(Slot).Y), map);
+        Assert.Equal(0x00, entities.Slot(Slot).Frame);
+        Assert.Equal(0x00, entities.Slot(Slot).AnimationTimer);
     }
 
     private static (EntityTable Entities, DiagonalMover Mover) Moving(byte x, byte y, byte heading)
     {
         EntityTable entities = new();
 
-        entities.X[Slot] = x;
-        entities.Y[Slot] = y;
-        entities.Heading[Slot] = heading;
+        entities.Slot(Slot).X = x;
+        entities.Slot(Slot).Y = y;
+        entities.Slot(Slot).Heading = heading;
 
         return (entities, new(entities));
     }

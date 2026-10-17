@@ -112,7 +112,7 @@ internal sealed class ObjectAi
     {
         ArgumentNullException.ThrowIfNull(map);
 
-        switch (_objects.Type[slot])
+        switch (_objects.Slot(slot).Type)
         {
             case FireType:
                 Fall(slot, map);
@@ -121,7 +121,7 @@ internal sealed class ObjectAi
                 Bolt(slot);
                 break;
             case ShotType:
-                _objects.SubX[slot] ^= 0x01;
+                _objects.Slot(slot).SubX ^= 0x01;
                 _ = Advance(slot, GoneType, map);
                 break;
             case SlowShotType:
@@ -137,7 +137,7 @@ internal sealed class ObjectAi
                 Fruit(slot, map);
                 break;
             case ThunderShotType:
-                _objects.SubX[slot] ^= 0x01;
+                _objects.Slot(slot).SubX ^= 0x01;
                 Bolt(slot);
                 break;
         }
@@ -156,34 +156,34 @@ internal sealed class ObjectAi
 
     // The map cell `rows` below and `columns` beside an object's own, as `$7BFE` and a `(pointer),y` reach it.
     private bool Solid(int slot, SolidMap map, int rows, int columns)
-        => map[_objects.Row[slot] - RowBias + rows, _objects.Column[slot] + columns];
+        => map[_objects.Slot(slot).Row - RowBias + rows, _objects.Slot(slot).Column + columns];
 
     // $11B7-$1271.
     private void Fall(int slot, SolidMap map)
     {
-        _objects.SubY[slot] ^= 0x04;
+        _objects.Slot(slot).SubY ^= 0x04;
 
-        if (_objects.SubY[slot] != 0)
+        if (_objects.Slot(slot).SubY != 0)
         {
-            _objects.Row[slot]++;
+            _objects.Slot(slot).Row++;
 
-            if (_objects.Row[slot] >= LastRow)
+            if (_objects.Slot(slot).Row >= LastRow)
             {
-                _objects.Row[slot]--;
-                _objects.Type[slot] = GoneType;
+                _objects.Slot(slot).Row--;
+                _objects.Slot(slot).Type = GoneType;
             }
 
             return;
         }
 
-        int origin = ((_objects.Row[slot] - RowBias) * Stride) + _objects.Column[slot];
+        int origin = ((_objects.Slot(slot).Row - RowBias) * Stride) + _objects.Slot(slot).Column;
 
         if (SolidAt(map, origin, 0) || !SolidAt(map, origin, BelowRow))
         {
             return;
         }
 
-        _objects.Type[slot] = GoneType;
+        _objects.Slot(slot).Type = GoneType;
 
         int strip = _fire.FindFree();
 
@@ -198,7 +198,7 @@ internal sealed class ObjectAi
     // $11F2-$126C: the platform under a drop, scanned left and then right for as far as a roll lets it go.
     private void Spread(int slot, int strip, SolidMap map, int origin)
     {
-        int column = _objects.Column[slot];
+        int column = _objects.Slot(slot).Column;
         int start = column;
         int count = 0;
 
@@ -245,47 +245,47 @@ internal sealed class ObjectAi
             }
         }
 
-        _fire.Light(strip, (byte)start, _objects.Row[slot], (byte)count);
+        _fire.Light(strip, (byte)start, _objects.Slot(slot).Row, (byte)count);
     }
 
     // $10D6-$1471, the bolt.
     private void Bolt(int slot)
     {
-        if ((_objects.Direction[slot] & 0x80) != 0)
+        if ((_objects.Slot(slot).Direction & 0x80) != 0)
         {
-            _objects.X[slot] -= BoltStep;
-            _objects.Column[slot]--;
+            _objects.Slot(slot).X -= BoltStep;
+            _objects.Slot(slot).Column--;
 
-            if (_objects.Column[slot] == 0)
+            if (_objects.Slot(slot).Column == 0)
             {
-                _objects.Type[slot] = GoneType;
+                _objects.Slot(slot).Type = GoneType;
                 return;
             }
         }
         else
         {
-            _objects.X[slot] += BoltStep;
-            _objects.Column[slot]++;
+            _objects.Slot(slot).X += BoltStep;
+            _objects.Slot(slot).Column++;
 
-            if (_objects.Column[slot] == BoltLast)
+            if (_objects.Slot(slot).Column == BoltLast)
             {
-                _objects.Type[slot] = GoneType;
+                _objects.Slot(slot).Type = GoneType;
                 return;
             }
         }
 
-        byte type = _objects.Type[slot];
+        byte type = _objects.Slot(slot).Type;
 
         if (!_collision.Check(slot))
         {
             return;
         }
 
-        int enemy = (_objects.Type[slot] - 0x18) >> 1;
+        int enemy = (_objects.Slot(slot).Type - 0x18) >> 1;
 
-        _entities.State[enemy + 2] = _objects.Variant[slot];
+        _entities.Slot(enemy + 2).State = _objects.Slot(slot).Variant;
         _food.Kill(enemy);
-        _objects.Type[slot] = type;
+        _objects.Slot(slot).Type = type;
         LastHit = KillCall;
     }
 
@@ -293,26 +293,26 @@ internal sealed class ObjectAi
     // it or the bottom of the level takes it (type $38). A player within $10 pixels takes it for 70 points, and it is gone.
     private void Fruit(int slot, SolidMap map)
     {
-        if (_objects.SubY[slot] == 0)
+        if (_objects.Slot(slot).SubY == 0)
         {
-            int origin = ((_objects.Row[slot] - RowBias) * Stride) + _objects.Column[slot];
+            int origin = ((_objects.Slot(slot).Row - RowBias) * Stride) + _objects.Slot(slot).Column;
 
             if (!SolidAt(map, origin, FruitBelow) && !SolidAt(map, origin, FruitBelow + 1))
             {
-                _objects.Row[slot]++;
+                _objects.Slot(slot).Row++;
 
-                if (_objects.Row[slot] == LastRow)
+                if (_objects.Slot(slot).Row == LastRow)
                 {
-                    _objects.Type[slot] = GoneType;
+                    _objects.Slot(slot).Type = GoneType;
                     return;
                 }
 
-                _objects.SubY[slot] = FruitPause;
+                _objects.Slot(slot).SubY = FruitPause;
             }
         }
         else
         {
-            _objects.SubY[slot] = 0;
+            _objects.Slot(slot).SubY = 0;
         }
 
         Take(slot);
@@ -321,20 +321,20 @@ internal sealed class ObjectAi
     // $0EFD-$0F45.
     private void Take(int slot)
     {
-        byte x = (byte)((_objects.Column[slot] << 3) + FruitXOrigin);
-        byte y = (byte)((_objects.Row[slot] << 3) + FruitYOrigin);
+        byte x = (byte)((_objects.Slot(slot).Column << 3) + FruitXOrigin);
+        byte y = (byte)((_objects.Slot(slot).Row << 3) + FruitYOrigin);
 
         for (int player = PlayerTable.Capacity - 1; player >= 0; player--)
         {
-            if (_entities.State[player] == 0
-                || Distance.Absolute(_entities.X[player], x) >= FruitReach
-                || Distance.Absolute(_entities.Y[player], y) >= FruitReach)
+            if (_entities.Slot(player).State == 0
+                || Distance.Absolute(_entities.Slot(player).X, x) >= FruitReach
+                || Distance.Absolute(_entities.Slot(player).Y, y) >= FruitReach)
             {
                 continue;
             }
 
             _scores.Add(Scores.Last(player), FruitScore);
-            _objects.Type[slot] = GoneType;
+            _objects.Slot(slot).Type = GoneType;
             return;
         }
     }
@@ -342,11 +342,11 @@ internal sealed class ObjectAi
     // $1274-$1286: every second pass, by which way it goes.
     private void Slow(int slot, SolidMap map)
     {
-        _objects.SubX[slot] ^= 0x01;
+        _objects.Slot(slot).SubX ^= 0x01;
 
-        bool left = (_objects.Direction[slot] & 0x80) != 0;
+        bool left = (_objects.Slot(slot).Direction & 0x80) != 0;
 
-        if (_objects.SubX[slot] != (left ? 1 : 0))
+        if (_objects.Slot(slot).SubX != (left ? 1 : 0))
         {
             return;
         }
@@ -359,30 +359,30 @@ internal sealed class ObjectAi
     {
         _ = Advance(slot, CollectedType, map);
 
-        _objects.SubX[slot] = (byte)((_objects.SubX[slot] + 1) & 0x03);
+        _objects.Slot(slot).SubX = (byte)((_objects.Slot(slot).SubX + 1) & 0x03);
 
-        if (_objects.Type[slot] == CollectedType)
+        if (_objects.Slot(slot).Type == CollectedType)
         {
-            _objects.Type[slot] = BoomerangType;
-            _objects.Direction[slot] ^= LeftDirection;
+            _objects.Slot(slot).Type = BoomerangType;
+            _objects.Slot(slot).Direction ^= LeftDirection;
         }
 
-        if (_objects.Column[slot] != _objects.X[slot])
+        if (_objects.Slot(slot).Column != _objects.Slot(slot).X)
         {
             return;
         }
 
-        int owner = _objects.Y[slot];
+        int owner = _objects.Slot(slot).Y;
 
-        _entities.AttackTimer[owner] = Reload;
-        _entities.BubbleTimer[owner] = 0xFF;
-        _objects.Type[slot] = GoneType;
+        _entities.Slot(owner).AttackTimer = Reload;
+        _entities.Slot(owner).BubbleTimer = 0xFF;
+        _objects.Slot(slot).Type = GoneType;
     }
 
     // $12F9-$1315.
     private void Thrown(int slot)
     {
-        _objects.Row[slot]++;
+        _objects.Slot(slot).Row++;
 
         byte type;
 
@@ -392,7 +392,7 @@ internal sealed class ObjectAi
         }
         else
         {
-            if (_objects.Row[slot] != LastRow)
+            if (_objects.Slot(slot).Row != LastRow)
             {
                 return;
             }
@@ -400,23 +400,23 @@ internal sealed class ObjectAi
             type = GoneType;
         }
 
-        _objects.Type[slot] = type;
-        _entities.BubbleTimer[_objects.X[slot]] = 0xFF;
+        _objects.Slot(slot).Type = type;
+        _entities.Slot(_objects.Slot(slot).X).BubbleTimer = 0xFF;
     }
 
     // $1288-$12AB, the move a shot makes: one cell along the level. A wall ahead ends it, as `collect`.
     private bool Advance(int slot, byte collect, SolidMap map)
     {
-        if ((_objects.Direction[slot] & 0x80) != 0)
+        if ((_objects.Slot(slot).Direction & 0x80) != 0)
         {
             if (Solid(slot, map, 2, -1))
             {
                 return Collected(slot, collect);
             }
 
-            _objects.Column[slot]--;
+            _objects.Slot(slot).Column--;
 
-            if ((_objects.Column[slot] & 0x80) == 0)
+            if ((_objects.Slot(slot).Column & 0x80) == 0)
             {
                 _ = Catch(slot);
                 return false;
@@ -428,15 +428,15 @@ internal sealed class ObjectAi
             return Collected(slot, collect);
         }
 
-        _objects.Column[slot]++;
+        _objects.Slot(slot).Column++;
         _ = Catch(slot);
         return false;
     }
 
     private bool Collected(int slot, byte type)
     {
-        _objects.Type[slot] = type;
-        _objects.EnemyType[slot] = type;
+        _objects.Slot(slot).Type = type;
+        _objects.Slot(slot).EnemyType = type;
         return true;
     }
 
@@ -444,21 +444,21 @@ internal sealed class ObjectAi
     // $19, is killed. Returns whether one was.
     private bool Catch(int slot)
     {
-        byte x = Corner(_objects.Column[slot], CatchColumnOrigin);
-        byte y = Corner(_objects.Row[slot], CatchRowOrigin);
+        byte x = Corner(_objects.Slot(slot).Column, CatchColumnOrigin);
+        byte y = Corner(_objects.Slot(slot).Row, CatchRowOrigin);
 
         for (int player = PlayerTable.Capacity - 1; player >= 0; player--)
         {
-            byte state = _entities.State[player];
+            byte state = _entities.Slot(player).State;
 
             if (state is 0 or (not CatchStateExact and >= CatchStateLimit))
             {
                 continue;
             }
 
-            if (Distance.Absolute(_entities.X[player], x) < CatchRange && Distance.Absolute(_entities.Y[player], y) < CatchRange)
+            if (Distance.Absolute(_entities.Slot(player).X, x) < CatchRange && Distance.Absolute(_entities.Slot(player).Y, y) < CatchRange)
             {
-                _entities.State[player] = DyingState;
+                _entities.Slot(player).State = DyingState;
                 return true;
             }
         }

@@ -45,7 +45,7 @@ public sealed class ItemRoomTests
     {
         GameLoop loop = Take(16);
 
-        Assert.All(Enumerable.Range(2, 6), slot => Assert.Equal(0, loop.Entities.State[slot]));
+        Assert.All(Enumerable.Range(2, 6), slot => Assert.Equal(0, loop.Entities.Slot(slot).State));
         Assert.Equal(0, loop.Entities.EnemyCount);
         Assert.All(loop.Pop.Drawn.ToArray(), drawn => Assert.Equal(BubblePop.NotDrawn, drawn));
         Assert.Equal(0, loop.Water.Mask);
@@ -81,8 +81,8 @@ public sealed class ItemRoomTests
         while (loop.Room.Phase == ItemRoom.Stage.Playing)
         {
             RoomItem next = loop.Room.Items.First(item => item.X != 0 || item.Y != 0);
-            loop.Entities.X[0] = next.X;
-            loop.Entities.Y[0] = next.Y;
+            loop.Entities.Slot(0).X = next.X;
+            loop.Entities.Slot(0).Y = next.Y;
             loop.Pass([Idle, Idle]);
         }
 
@@ -127,8 +127,8 @@ public sealed class ItemRoomTests
         loop.Start(s_levels.Level(1), s_zones.Zones(1), 1);
 
         loop.Items.Type[1] = (byte)type;
-        loop.Items.X[1] = loop.Entities.X[0];
-        loop.Items.Y[1] = loop.Entities.Y[0];
+        loop.Items.X[1] = loop.Entities.Slot(0).X;
+        loop.Items.Y[1] = loop.Entities.Slot(0).Y;
         loop.Items.Timer[1] = 0x20;
 
         loop.Pass([Idle, Idle]);

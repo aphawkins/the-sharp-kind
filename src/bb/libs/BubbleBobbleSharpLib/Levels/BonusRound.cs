@@ -43,7 +43,7 @@ internal sealed class BonusRound
     {
         for (int slot = EntityTable.Capacity - 1; slot >= FirstEnemy; slot--)
         {
-            byte state = _entities.State[slot];
+            byte state = _entities.Slot(slot).State;
 
             if (state is 0 or >= MaxCaught)
             {
@@ -53,30 +53,30 @@ internal sealed class BonusRound
             // An enemy already rising in its bubble keeps the state it will come back to.
             if (state != HoldingState)
             {
-                _entities.RiseCounter[slot] = state;
+                _entities.Slot(slot).RiseCounter = state;
             }
 
-            _entities.State[slot] = TumbleState;
-            _entities.HoldTimer[slot] = 0;
-            _entities.Mode[slot] = Entered;
+            _entities.Slot(slot).State = TumbleState;
+            _entities.Slot(slot).HoldTimer = 0;
+            _entities.Slot(slot).Mode = Entered;
         }
 
         for (int player = 0; player < PlayerTable.Capacity; player++)
         {
-            _savedFlash[player] = _entities.FlashTimer[player];
+            _savedFlash[player] = _entities.Slot(player).FlashTimer;
         }
 
         for (int player = PlayerTable.Capacity - 1; player >= 0; player--)
         {
-            byte state = _entities.State[player];
+            byte state = _entities.Slot(player).State;
 
             if (state is 0 or PlayerFrame.DyingState or PlayerFrame.DeadState)
             {
                 continue;
             }
 
-            _entities.State[player] = PlayerState;
-            _entities.FlashTimer[player] = 0;
+            _entities.Slot(player).State = PlayerState;
+            _entities.Slot(player).FlashTimer = 0;
         }
 
         _round.Respawn = PlayerState;

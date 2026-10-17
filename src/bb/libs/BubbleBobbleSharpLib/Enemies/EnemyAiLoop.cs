@@ -91,7 +91,7 @@ internal sealed class EnemyAiLoop
 
     private void Step(int slot, SolidMap map)
     {
-        byte type = _objects.Type[slot];
+        byte type = _objects.Slot(slot).Type;
 
         if (type >= SpecialType)
         {
@@ -99,7 +99,7 @@ internal sealed class EnemyAiLoop
             return;
         }
 
-        if (_objects.State[slot] != 0)
+        if (_objects.Slot(slot).State != 0)
         {
             _dispatcher.Step(slot, map);
             return;
@@ -155,13 +155,13 @@ internal sealed class EnemyAiLoop
     {
         for (int other = ObjectTable.Capacity - 1; other >= 0; other--)
         {
-            if (other == slot || _objects.State[other] != 0 || _objects.Type[other] >= SpecialType)
+            if (other == slot || _objects.Slot(other).State != 0 || _objects.Slot(other).Type >= SpecialType)
             {
                 continue;
             }
 
-            if (Distance.Absolute(_objects.X[slot], _objects.X[other]) < NeighbourRange
-                && Distance.Absolute(_objects.Y[slot], _objects.Y[other]) < NeighbourRange)
+            if (Distance.Absolute(_objects.Slot(slot).X, _objects.Slot(other).X) < NeighbourRange
+                && Distance.Absolute(_objects.Slot(slot).Y, _objects.Slot(other).Y) < NeighbourRange)
             {
                 return true;
             }
@@ -178,14 +178,14 @@ internal sealed class EnemyAiLoop
         return _random.Next() >= threshold ? Sideways(slot) : Vertical(slot);
     }
 
-    private int Sideways(int slot) => _objects.Column[slot] switch
+    private int Sideways(int slot) => _objects.Slot(slot).Column switch
     {
         < NearColumn => EntityMover.Right,
         >= FarColumn => EntityMover.Left,
         _ => _random.Next() | EntityMover.Right,
     };
 
-    private int Vertical(int slot) => _objects.Row[slot] switch
+    private int Vertical(int slot) => _objects.Slot(slot).Row switch
     {
         < NearEdge => EntityMover.Down,
         >= FarRow => EntityMover.Up,
@@ -194,9 +194,9 @@ internal sealed class EnemyAiLoop
 
     private int MapDirection(int slot, SolidMap map)
     {
-        int row = Math.Clamp((int)_objects.Row[slot], TopRow, BottomRow);
+        int row = Math.Clamp((int)_objects.Slot(slot).Row, TopRow, BottomRow);
 
-        return map.Direction(row - RowBias + (MapOffset / Stride), _objects.Column[slot] + (MapOffset % Stride));
+        return map.Direction(row - RowBias + (MapOffset / Stride), _objects.Slot(slot).Column + (MapOffset % Stride));
     }
 
     private bool Caught(int slot)
@@ -208,9 +208,9 @@ internal sealed class EnemyAiLoop
                 continue;
             }
 
-            _objects.Direction[slot] = (byte)player;
-            _objects.EnemyType[slot] = _objects.Type[slot];
-            _objects.Type[slot] = CaughtType;
+            _objects.Slot(slot).Direction = (byte)player;
+            _objects.Slot(slot).EnemyType = _objects.Slot(slot).Type;
+            _objects.Slot(slot).Type = CaughtType;
             return true;
         }
 
@@ -218,7 +218,7 @@ internal sealed class EnemyAiLoop
     }
 
     private bool InRange(int slot, int player)
-        => _entities.State[player] is not (0 or PlayerDying or PlayerDead)
-            && Distance.Absolute((byte)(_entities.X[player] + PlayerXNudge), _objects.X[slot]) < CatchRange
-            && Distance.Absolute(_entities.Y[player], _objects.Y[slot]) < CatchRange;
+        => _entities.Slot(player).State is not (0 or PlayerDying or PlayerDead)
+            && Distance.Absolute((byte)(_entities.Slot(player).X + PlayerXNudge), _objects.Slot(slot).X) < CatchRange
+            && Distance.Absolute(_entities.Slot(player).Y, _objects.Slot(slot).Y) < CatchRange;
 }

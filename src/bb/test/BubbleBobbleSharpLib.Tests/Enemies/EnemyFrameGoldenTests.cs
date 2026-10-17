@@ -209,38 +209,38 @@ public sealed class EnemyFrameGoldenTests
     {
         Assert.Equal((int)Fields.Count, b.Length);
 
-        entities.State[0] = b[(int)Fields.PlayerZeroState];
-        entities.State[1] = b[(int)Fields.PlayerOneState];
-        entities.X[0] = b[(int)Fields.PlayerZeroX];
-        entities.X[1] = b[(int)Fields.PlayerOneX];
-        entities.Y[0] = b[(int)Fields.PlayerZeroY];
-        entities.Y[1] = b[(int)Fields.PlayerOneY];
+        entities.Slot(0).State = b[(int)Fields.PlayerZeroState];
+        entities.Slot(1).State = b[(int)Fields.PlayerOneState];
+        entities.Slot(0).X = b[(int)Fields.PlayerZeroX];
+        entities.Slot(1).X = b[(int)Fields.PlayerOneX];
+        entities.Slot(0).Y = b[(int)Fields.PlayerZeroY];
+        entities.Slot(1).Y = b[(int)Fields.PlayerOneY];
 
-        entities.State[slot] = b[(int)Fields.State];
-        entities.X[slot] = b[(int)Fields.X];
-        entities.Y[slot] = b[(int)Fields.Y];
-        entities.Frame[slot] = b[(int)Fields.Frame];
-        entities.Colour[slot] = b[(int)Fields.Colour];
-        entities.SpriteBase[slot] = b[(int)Fields.SpriteBase];
-        entities.Mode[slot] = b[(int)Fields.Mode];
-        entities.Heading[slot] = b[(int)Fields.Heading];
-        entities.AnimationTimer[slot] = b[(int)Fields.AnimationTimer];
-        entities.HoldTimer[slot] = b[(int)Fields.HoldTimer];
-        entities.TurnTimer[slot] = b[(int)Fields.TurnTimer];
-        entities.TurnInterval[slot] = b[(int)Fields.TurnInterval];
-        entities.ClimbNext[slot] = ClimbNext(slot, b[(int)Fields.ClimbNext]);
-        entities.LeapFlag[slot] = b[(int)Fields.LeapFlag];
-        entities.ClimbFlag[slot] = b[(int)Fields.ClimbFlag];
-        entities.FlashTimer[slot] = b[(int)Fields.FlashTimer];
-        entities.FrameCount[slot] = b[(int)Fields.FrameCount];
-        entities.FrameMask[slot] = b[(int)Fields.FrameMask];
-        entities.RiseCounter[slot] = b[(int)Fields.RiseCounter];
-        entities.FallCounter[slot] = b[(int)Fields.FallCounter];
-        entities.GroundState[slot] = b[(int)Fields.GroundState];
-        entities.BubbleTimer[slot] = b[(int)Fields.BubbleTimer];
-        entities.LeftFlag[slot] = b[(int)Fields.LeftFlag];
-        entities.RightFlag[slot] = b[(int)Fields.RightFlag];
-        entities.AttackTimer[slot] = b[(int)Fields.AttackTimer];
+        entities.Slot(slot).State = b[(int)Fields.State];
+        entities.Slot(slot).X = b[(int)Fields.X];
+        entities.Slot(slot).Y = b[(int)Fields.Y];
+        entities.Slot(slot).Frame = b[(int)Fields.Frame];
+        entities.Slot(slot).Colour = b[(int)Fields.Colour];
+        entities.Slot(slot).SpriteBase = b[(int)Fields.SpriteBase];
+        entities.Slot(slot).Mode = b[(int)Fields.Mode];
+        entities.Slot(slot).Heading = b[(int)Fields.Heading];
+        entities.Slot(slot).AnimationTimer = b[(int)Fields.AnimationTimer];
+        entities.Slot(slot).HoldTimer = b[(int)Fields.HoldTimer];
+        entities.Slot(slot).TurnTimer = b[(int)Fields.TurnTimer];
+        entities.Slot(slot).TurnInterval = b[(int)Fields.TurnInterval];
+        entities.Slot(slot).ClimbNext = ClimbNext(slot, b[(int)Fields.ClimbNext]);
+        entities.Slot(slot).LeapFlag = b[(int)Fields.LeapFlag];
+        entities.Slot(slot).ClimbFlag = b[(int)Fields.ClimbFlag];
+        entities.Slot(slot).FlashTimer = b[(int)Fields.FlashTimer];
+        entities.Slot(slot).FrameCount = b[(int)Fields.FrameCount];
+        entities.Slot(slot).FrameMask = b[(int)Fields.FrameMask];
+        entities.Slot(slot).RiseCounter = b[(int)Fields.RiseCounter];
+        entities.Slot(slot).FallCounter = b[(int)Fields.FallCounter];
+        entities.Slot(slot).GroundState = b[(int)Fields.GroundState];
+        entities.Slot(slot).BubbleTimer = b[(int)Fields.BubbleTimer];
+        entities.Slot(slot).LeftFlag = b[(int)Fields.LeftFlag];
+        entities.Slot(slot).RightFlag = b[(int)Fields.RightFlag];
+        entities.Slot(slot).AttackTimer = b[(int)Fields.AttackTimer];
     }
 
     // In the order Fields lists them.
@@ -249,37 +249,37 @@ public sealed class EnemyFrameGoldenTests
         random.Low,
         random.High,
         before[(int)Fields.Freeze],
-        entities.State[0],
-        entities.State[1],
-        entities.X[0],
-        entities.X[1],
-        entities.Y[0],
-        entities.Y[1],
-        entities.State[slot],
-        entities.X[slot],
-        entities.Y[slot],
-        entities.Frame[slot],
-        entities.Colour[slot],
-        entities.SpriteBase[slot],
-        entities.Mode[slot],
-        entities.Heading[slot],
-        entities.AnimationTimer[slot],
-        entities.HoldTimer[slot],
-        entities.TurnTimer[slot],
-        entities.TurnInterval[slot],
-        (byte)(slot + (entities.ClimbNext[slot] ? 0x28 : 0x00)),
-        entities.LeapFlag[slot],
-        entities.ClimbFlag[slot],
-        entities.FlashTimer[slot],
-        entities.FrameCount[slot],
-        entities.FrameMask[slot],
-        entities.RiseCounter[slot],
-        entities.FallCounter[slot],
-        entities.GroundState[slot],
-        entities.BubbleTimer[slot],
-        entities.LeftFlag[slot],
-        entities.RightFlag[slot],
-        entities.AttackTimer[slot],
+        entities.Slot(0).State,
+        entities.Slot(1).State,
+        entities.Slot(0).X,
+        entities.Slot(1).X,
+        entities.Slot(0).Y,
+        entities.Slot(1).Y,
+        entities.Slot(slot).State,
+        entities.Slot(slot).X,
+        entities.Slot(slot).Y,
+        entities.Slot(slot).Frame,
+        entities.Slot(slot).Colour,
+        entities.Slot(slot).SpriteBase,
+        entities.Slot(slot).Mode,
+        entities.Slot(slot).Heading,
+        entities.Slot(slot).AnimationTimer,
+        entities.Slot(slot).HoldTimer,
+        entities.Slot(slot).TurnTimer,
+        entities.Slot(slot).TurnInterval,
+        (byte)(slot + (entities.Slot(slot).ClimbNext ? 0x28 : 0x00)),
+        entities.Slot(slot).LeapFlag,
+        entities.Slot(slot).ClimbFlag,
+        entities.Slot(slot).FlashTimer,
+        entities.Slot(slot).FrameCount,
+        entities.Slot(slot).FrameMask,
+        entities.Slot(slot).RiseCounter,
+        entities.Slot(slot).FallCounter,
+        entities.Slot(slot).GroundState,
+        entities.Slot(slot).BubbleTimer,
+        entities.Slot(slot).LeftFlag,
+        entities.Slot(slot).RightFlag,
+        entities.Slot(slot).AttackTimer,
     ];
 
     // Only the type bytes when the frame left ObjectTable alone, which is all $EE27 reads of it.
@@ -290,15 +290,15 @@ public sealed class EnemyFrameGoldenTests
         for (int slot = 0; slot < ObjectTable.Capacity; slot++)
         {
             int at = slot * ObjectBytes;
-            objects.Type[slot] = bytes[at];
-            objects.Column[slot] = bytes[at + 1];
-            objects.Row[slot] = bytes[at + 2];
-            objects.X[slot] = bytes[at + 3];
-            objects.Y[slot] = bytes[at + 4];
-            objects.SubX[slot] = bytes[at + 5];
-            objects.SubY[slot] = bytes[at + 6];
-            objects.Flags[slot] = bytes[at + 7];
-            objects.Direction[slot] = bytes[at + 8];
+            objects.Slot(slot).Type = bytes[at];
+            objects.Slot(slot).Column = bytes[at + 1];
+            objects.Slot(slot).Row = bytes[at + 2];
+            objects.Slot(slot).X = bytes[at + 3];
+            objects.Slot(slot).Y = bytes[at + 4];
+            objects.Slot(slot).SubX = bytes[at + 5];
+            objects.Slot(slot).SubY = bytes[at + 6];
+            objects.Slot(slot).Flags = bytes[at + 7];
+            objects.Slot(slot).Direction = bytes[at + 8];
         }
     }
 
@@ -322,15 +322,15 @@ public sealed class EnemyFrameGoldenTests
         for (int slot = 0; slot < ObjectTable.Capacity; slot++)
         {
             int at = slot * ObjectBytes;
-            bytes[at] = objects.Type[slot];
-            bytes[at + 1] = objects.Column[slot];
-            bytes[at + 2] = objects.Row[slot];
-            bytes[at + 3] = objects.X[slot];
-            bytes[at + 4] = objects.Y[slot];
-            bytes[at + 5] = objects.SubX[slot];
-            bytes[at + 6] = objects.SubY[slot];
-            bytes[at + 7] = objects.Flags[slot];
-            bytes[at + 8] = objects.Direction[slot];
+            bytes[at] = objects.Slot(slot).Type;
+            bytes[at + 1] = objects.Slot(slot).Column;
+            bytes[at + 2] = objects.Slot(slot).Row;
+            bytes[at + 3] = objects.Slot(slot).X;
+            bytes[at + 4] = objects.Slot(slot).Y;
+            bytes[at + 5] = objects.Slot(slot).SubX;
+            bytes[at + 6] = objects.Slot(slot).SubY;
+            bytes[at + 7] = objects.Slot(slot).Flags;
+            bytes[at + 8] = objects.Slot(slot).Direction;
         }
 
         return bytes;

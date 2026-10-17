@@ -28,13 +28,13 @@ public sealed class BubblePopTests
         for (int i = 0; i < types.Length; i++)
         {
             rig.Pop.Update();
-            types[i] = rig.Objects.Type[Slot];
+            types[i] = rig.Objects.Slot(Slot).Type;
         }
 
         Assert.Equal([0x3C, 0x3E, 0x40, 0x38, 0x36, 0xFF], types);
         Assert.Equal(0x01, rig.Scores.Bytes[5]);
-        Assert.Equal(0, rig.Objects.Column[Slot]);
-        Assert.Equal(0, rig.Objects.Row[Slot]);
+        Assert.Equal(0, rig.Objects.Slot(Slot).Column);
+        Assert.Equal(0, rig.Objects.Slot(Slot).Row);
     }
 
     // $7BD4. A bubble just blown is type $00 by the time it is drawn.
@@ -46,7 +46,7 @@ public sealed class BubblePopTests
 
         rig.Pop.Update();
 
-        Assert.Equal(0x00, rig.Objects.Type[Slot]);
+        Assert.Equal(0x00, rig.Objects.Slot(Slot).Type);
     }
 
     // $3CB2. $1E is enemy 3, slot 5: its sprite goes where the bubble is, in the frame $AA42 holds.
@@ -55,16 +55,16 @@ public sealed class BubblePopTests
     {
         Rig rig = new();
         Place(rig, Slot, 0x1E);
-        rig.Objects.EnemyType[Slot] = 0x07;
-        rig.Entities.FlashTimer[5] = 0xFF;
+        rig.Objects.Slot(Slot).EnemyType = 0x07;
+        rig.Entities.Slot(5).FlashTimer = 0xFF;
 
         rig.Pop.Update();
 
-        Assert.Equal(0x1E, rig.Objects.Type[Slot]);
-        Assert.Equal(0x80, rig.Entities.X[5]);
-        Assert.Equal(0x80, rig.Entities.Y[5]);
-        Assert.Equal(0x07, rig.Entities.Frame[5]);
-        Assert.Equal(0x00, rig.Entities.FlashTimer[5]);
+        Assert.Equal(0x1E, rig.Objects.Slot(Slot).Type);
+        Assert.Equal(0x80, rig.Entities.Slot(5).X);
+        Assert.Equal(0x80, rig.Entities.Slot(5).Y);
+        Assert.Equal(0x07, rig.Entities.Slot(5).Frame);
+        Assert.Equal(0x00, rig.Entities.Slot(5).FlashTimer);
     }
 
     // $3D77 to $3DB0 for $3A: a bubble that ran out pops without scoring.
@@ -73,11 +73,11 @@ public sealed class BubblePopTests
     {
         Rig rig = new();
         Place(rig, Slot, 0x3A);
-        rig.Objects.EnemyType[Slot] = 0x04;
+        rig.Objects.Slot(Slot).EnemyType = 0x04;
 
         rig.Pop.Update();
 
-        Assert.Equal(0x3C, rig.Objects.Type[Slot]);
+        Assert.Equal(0x3C, rig.Objects.Slot(Slot).Type);
         Assert.Equal(new byte[6], rig.Scores.Bytes.ToArray());
     }
 
@@ -91,18 +91,18 @@ public sealed class BubblePopTests
         Rig rig = new();
         Touched(rig, Slot, 0x04, player: 1);
         Place(rig, 12, 0x04);
-        rig.Objects.X[12] = (byte)(0x80 + apart);
+        rig.Objects.Slot(12).X = (byte)(0x80 + apart);
         Place(rig, 13, 0x48);
 
         rig.Pop.Update();
 
-        Assert.Equal(popped ? 0x34 : 0x04, rig.Objects.Type[12]);
-        Assert.Equal(0x48, rig.Objects.Type[13]);
+        Assert.Equal(popped ? 0x34 : 0x04, rig.Objects.Slot(12).Type);
+        Assert.Equal(0x48, rig.Objects.Slot(13).Type);
 
         if (popped)
         {
-            Assert.Equal(0x04, rig.Objects.EnemyType[12]);
-            Assert.Equal(1, rig.Objects.Direction[12]);
+            Assert.Equal(0x04, rig.Objects.Slot(12).EnemyType);
+            Assert.Equal(1, rig.Objects.Slot(12).Direction);
         }
     }
 
@@ -117,8 +117,8 @@ public sealed class BubblePopTests
 
         rig.Pop.Update();
 
-        Assert.Equal(0x3C, rig.Objects.Type[8]);
-        Assert.Equal(0x34, rig.Objects.Type[12]);
+        Assert.Equal(0x3C, rig.Objects.Slot(8).Type);
+        Assert.Equal(0x34, rig.Objects.Slot(12).Type);
     }
 
     // $3D3C. A bubble still under way pops nothing else.
@@ -127,12 +127,12 @@ public sealed class BubblePopTests
     {
         Rig rig = new();
         Touched(rig, Slot, 0x04, player: 0);
-        rig.Objects.State[Slot] = 0x05;
+        rig.Objects.Slot(Slot).State = 0x05;
         Place(rig, 8, 0x04);
 
         rig.Pop.Update();
 
-        Assert.Equal(0x04, rig.Objects.Type[8]);
+        Assert.Equal(0x04, rig.Objects.Slot(8).Type);
     }
 
     // $3D82. $1C is enemy 2, slot 4. It goes back in the state $1090 kept, $1A6F kills it, and the
@@ -142,17 +142,17 @@ public sealed class BubblePopTests
     {
         Rig rig = new();
         Touched(rig, Slot, 0x1C, player: 0);
-        rig.Objects.Variant[Slot] = 0x03;
+        rig.Objects.Slot(Slot).Variant = 0x03;
         rig.Entities.EnemyCount = 5;
 
         rig.Pop.Update();
 
-        Assert.Equal(0x0B, rig.Entities.State[4]);
-        Assert.Equal(0x03, rig.Entities.LeftFlag[4]);
+        Assert.Equal(0x0B, rig.Entities.Slot(4).State);
+        Assert.Equal(0x03, rig.Entities.Slot(4).LeftFlag);
         Assert.Equal(4, rig.Entities.EnemyCount);
         Assert.Equal(1, rig.Pop.Chain[0]);
-        Assert.Equal(0x01, rig.Entities.AttackTimer[4]);
-        Assert.Equal(0x36, rig.Objects.Type[Slot]);
+        Assert.Equal(0x01, rig.Entities.Slot(4).AttackTimer);
+        Assert.Equal(0x36, rig.Objects.Slot(Slot).Type);
         Assert.Equal(new byte[6], rig.Scores.Bytes.ToArray());
     }
 
@@ -224,7 +224,7 @@ public sealed class BubblePopTests
         Assert.Equal(0xFF, rig.Water.Mask);
         Assert.All(rig.Water.Columns.ToArray(), c => Assert.Equal(0x0D, c));
         Assert.All(rig.Water.Rows.ToArray(), r => Assert.Equal(0x0E, r));
-        Assert.Equal(0x36, rig.Objects.Type[Slot]);
+        Assert.Equal(0x36, rig.Objects.Slot(Slot).Type);
         Assert.Equal(BubblePop.NotDrawn, rig.Pop.Drawn[Slot]);
     }
 
@@ -239,7 +239,7 @@ public sealed class BubblePopTests
         rig.Pop.Update();
 
         Assert.Equal(0x04, rig.Water.Mask);
-        Assert.Equal(0x3C, rig.Objects.Type[Slot]);
+        Assert.Equal(0x3C, rig.Objects.Slot(Slot).Type);
     }
 
     // $3E1B: a row of $1C or more leaves no room below, so the cells' columns change but the water does not start.
@@ -248,14 +248,14 @@ public sealed class BubblePopTests
     {
         Rig rig = new();
         Touched(rig, Slot, 0x06, player: 0);
-        rig.Objects.Row[Slot] = 0x1C;
+        rig.Objects.Slot(Slot).Row = 0x1C;
 
         rig.Pop.Update();
 
         Assert.Equal(0, rig.Water.Mask);
         Assert.Equal(0x0D, rig.Water.Columns[0]);
         Assert.Equal(0x1D, rig.Water.Rows[0]);
-        Assert.Equal(0x3C, rig.Objects.Type[Slot]);
+        Assert.Equal(0x3C, rig.Objects.Slot(Slot).Type);
     }
 
     // $E758 picks a cell by $A9C4 and keeps $A9D6, which the fall toggles; $3E94 draws the bolt, and clears OLDTXT.
@@ -267,8 +267,8 @@ public sealed class BubblePopTests
     {
         Rig rig = new();
         Place(rig, Slot, type);
-        rig.Objects.SubX[Slot] = subX;
-        rig.Objects.SubY[Slot] = subY;
+        rig.Objects.Slot(Slot).SubX = subX;
+        rig.Objects.Slot(Slot).SubY = subY;
 
         rig.Pop.Update();
 
@@ -282,8 +282,8 @@ public sealed class BubblePopTests
     {
         Rig rig = new();
         Place(rig, Slot, 0x4C);
-        rig.Objects.Behaviour[Slot] = 0x0B;
-        rig.Objects.SubY[Slot] = 0x04;
+        rig.Objects.Slot(Slot).Behaviour = 0x0B;
+        rig.Objects.Slot(Slot).SubY = 0x04;
         Place(rig, Slot - 1, 0x00);
         rig.Pop.FruitArt = 0x03;
 
@@ -308,14 +308,14 @@ public sealed class BubblePopTests
     {
         Rig rig = new();
         Touched(rig, Slot, 0x0A, player: 1);
-        rig.Entities.Frame[1] = frame;
-        rig.Objects.X[Slot] = 0x83;
+        rig.Entities.Slot(1).Frame = frame;
+        rig.Objects.Slot(Slot).X = 0x83;
 
         rig.Pop.Update();
 
-        Assert.Equal(0x26, rig.Objects.Type[Slot]);
-        Assert.Equal(0x7C, rig.Objects.X[Slot]);
-        Assert.Equal(direction, rig.Objects.Direction[Slot]);
+        Assert.Equal(0x26, rig.Objects.Slot(Slot).Type);
+        Assert.Equal(0x7C, rig.Objects.Slot(Slot).X);
+        Assert.Equal(direction, rig.Objects.Slot(Slot).Direction);
     }
 
     // $3E5E-$3E6B: a fire bubble becomes the falling fire, with $A9D6 cleared.
@@ -324,12 +324,12 @@ public sealed class BubblePopTests
     {
         Rig rig = new();
         Touched(rig, Slot, 0x08, player: 0);
-        rig.Objects.SubY[Slot] = 0x04;
+        rig.Objects.Slot(Slot).SubY = 0x04;
 
         rig.Pop.Update();
 
-        Assert.Equal(0x24, rig.Objects.Type[Slot]);
-        Assert.Equal(0, rig.Objects.SubY[Slot]);
+        Assert.Equal(0x24, rig.Objects.Slot(Slot).Type);
+        Assert.Equal(0, rig.Objects.Slot(Slot).SubY);
     }
 
     // $3EFD, $E752, $3ED4 and $3E77 pick a cell by $A9C4, and clear OLDTXT.
@@ -345,14 +345,14 @@ public sealed class BubblePopTests
     {
         Rig rig = new();
         Place(rig, Slot, type);
-        rig.Objects.SubX[Slot] = subX;
-        rig.Objects.SubY[Slot] = 0x04;
+        rig.Objects.Slot(Slot).SubX = subX;
+        rig.Objects.Slot(Slot).SubY = 0x04;
 
         rig.Pop.Update();
 
         Assert.Equal(cell, rig.Pop.Drawn[Slot]);
         Assert.Equal(0, rig.Pop.DrawnSubY[Slot]);
-        Assert.Equal(type, rig.Objects.Type[Slot]);
+        Assert.Equal(type, rig.Objects.Slot(Slot).Type);
     }
 
     // $E767. $30 | $E765 by slot | bit 1 of $597F, after $E90E counts it up.
@@ -379,7 +379,7 @@ public sealed class BubblePopTests
     {
         Rig rig = new();
         Place(rig, Slot, 0x02);
-        rig.Objects.SubY[Slot] = 0x04;
+        rig.Objects.Slot(Slot).SubY = 0x04;
 
         rig.Pop.Update();
 
@@ -393,12 +393,12 @@ public sealed class BubblePopTests
     {
         Rig rig = new();
         Place(rig, Slot, 0x02);
-        rig.Objects.Column[Slot] = 12;
-        rig.Objects.Row[Slot] = 20;
+        rig.Objects.Slot(Slot).Column = 12;
+        rig.Objects.Slot(Slot).Row = 20;
 
         rig.Pop.Update();
-        rig.Objects.Row[Slot] = 19;
-        rig.Objects.Column[Slot] = 13;
+        rig.Objects.Slot(Slot).Row = 19;
+        rig.Objects.Slot(Slot).Column = 13;
 
         Assert.Equal(12, rig.Pop.DrawnColumn[Slot]);
         Assert.Equal(20, rig.Pop.DrawnRow[Slot]);
@@ -412,7 +412,7 @@ public sealed class BubblePopTests
     {
         Rig rig = new();
         Place(rig, Slot, type);
-        rig.Objects.SubX[Slot] = subX;
+        rig.Objects.Slot(Slot).SubX = subX;
 
         Assert.Throws<NotSupportedException>(rig.Pop.Update);
     }
@@ -420,17 +420,17 @@ public sealed class BubblePopTests
     private static void Touched(Rig rig, int slot, byte held, int player)
     {
         Place(rig, slot, 0x34);
-        rig.Objects.EnemyType[slot] = held;
-        rig.Objects.Direction[slot] = (byte)player;
+        rig.Objects.Slot(slot).EnemyType = held;
+        rig.Objects.Slot(slot).Direction = (byte)player;
     }
 
     private static void Place(Rig rig, int slot, byte type)
     {
-        rig.Objects.Type[slot] = type;
-        rig.Objects.X[slot] = 0x80;
-        rig.Objects.Y[slot] = 0x80;
-        rig.Objects.Column[slot] = 0x0C;
-        rig.Objects.Row[slot] = 0x0D;
+        rig.Objects.Slot(slot).Type = type;
+        rig.Objects.Slot(slot).X = 0x80;
+        rig.Objects.Slot(slot).Y = 0x80;
+        rig.Objects.Slot(slot).Column = 0x0C;
+        rig.Objects.Slot(slot).Row = 0x0D;
     }
 
     private sealed class Rig

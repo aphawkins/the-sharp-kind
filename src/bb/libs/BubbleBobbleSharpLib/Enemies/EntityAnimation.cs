@@ -19,14 +19,14 @@ internal static class EntityAnimation
             return;
         }
 
-        entities.Frame[slot]++;
+        entities.Slot(slot).Frame++;
 
-        if ((entities.Frame[slot] & entities.FrameMask[slot]) != 0)
+        if ((entities.Slot(slot).Frame & entities.Slot(slot).FrameMask) != 0)
         {
             return;
         }
 
-        entities.Frame[slot] -= entities.FrameCount[slot];
+        entities.Slot(slot).Frame -= entities.Slot(slot).FrameCount;
     }
 
     internal static void Toggle(EntityTable entities, int slot)
@@ -35,20 +35,20 @@ internal static class EntityAnimation
 
         if (Due(entities, slot))
         {
-            entities.Frame[slot] ^= 0x01;
+            entities.Slot(slot).Frame ^= 0x01;
         }
     }
 
     private static bool Due(EntityTable entities, int slot)
     {
-        entities.AnimationTimer[slot]++;
+        entities.Slot(slot).AnimationTimer++;
 
-        if (entities.AnimationTimer[slot] < Period)
+        if (entities.Slot(slot).AnimationTimer < Period)
         {
             return false;
         }
 
-        entities.AnimationTimer[slot] = 0;
+        entities.Slot(slot).AnimationTimer = 0;
         return true;
     }
 }

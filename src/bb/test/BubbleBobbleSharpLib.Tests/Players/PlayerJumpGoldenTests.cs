@@ -60,11 +60,11 @@ public sealed class PlayerJumpGoldenTests
         PlayerJump jump = new(entities, drift, landing);
         SolidMap map = SolidMap.Build(s_levels.Level(1), []);
 
-        entities.X[0] = StartX;
-        entities.Y[0] = StartY;
-        entities.Frame[0] = 0x01;
-        entities.RiseCounter[0] = JumpRise;
-        entities.FallCounter[0] = Idle;
+        entities.Slot(0).X = StartX;
+        entities.Slot(0).Y = StartY;
+        entities.Slot(0).Frame = 0x01;
+        entities.Slot(0).RiseCounter = JumpRise;
+        entities.Slot(0).FallCounter = Idle;
 
         byte[] y = new byte[s_y.Length];
 
@@ -72,10 +72,10 @@ public sealed class PlayerJumpGoldenTests
         {
             // $E9B8 runs at the top of the frame, so the cell a step reasons about is the one the
             // player was in before it moved.
-            PlayerCell cell = PlayerCell.Of(entities.X[0], entities.Y[0]);
+            PlayerCell cell = PlayerCell.Of(entities.Slot(0).X, entities.Slot(0).Y);
 
             jump.Step(0, NoDirection, cell, map);
-            y[tick] = entities.Y[0];
+            y[tick] = entities.Slot(0).Y;
         }
 
         Assert.Equal(s_y, y);
@@ -94,30 +94,30 @@ public sealed class PlayerJumpGoldenTests
         PlayerJump jump = new(entities, drift, landing);
         SolidMap map = SolidMap.Build(s_levels.Level(1), []);
 
-        entities.X[0] = StartX;
-        entities.Y[0] = StartY;
-        entities.RiseCounter[0] = JumpRise;
-        entities.FallCounter[0] = Idle;
+        entities.Slot(0).X = StartX;
+        entities.Slot(0).Y = StartY;
+        entities.Slot(0).RiseCounter = JumpRise;
+        entities.Slot(0).FallCounter = Idle;
 
         for (int tick = 0; tick < 15; tick++)
         {
-            jump.Step(0, NoDirection, PlayerCell.Of(entities.X[0], entities.Y[0]), map);
-            Assert.Equal(0x0E - tick, entities.RiseCounter[0]);
+            jump.Step(0, NoDirection, PlayerCell.Of(entities.Slot(0).X, entities.Slot(0).Y), map);
+            Assert.Equal(0x0E - tick, entities.Slot(0).RiseCounter);
         }
 
         for (int tick = 0; tick < 3; tick++)
         {
-            jump.Step(0, NoDirection, PlayerCell.Of(entities.X[0], entities.Y[0]), map);
-            Assert.Equal(tick + 1, entities.FallCounter[0]);
+            jump.Step(0, NoDirection, PlayerCell.Of(entities.Slot(0).X, entities.Slot(0).Y), map);
+            Assert.Equal(tick + 1, entities.Slot(0).FallCounter);
         }
 
         // The fourth step of the fall is the one that lands, and $2519 puts both counters back to
         // the idle the caller tests for. Before $2519 was translated this asserted a fall counter of
         // four, which is what the capture reads at $2480 - one instruction before the reset.
-        jump.Step(0, NoDirection, PlayerCell.Of(entities.X[0], entities.Y[0]), map);
+        jump.Step(0, NoDirection, PlayerCell.Of(entities.Slot(0).X, entities.Slot(0).Y), map);
 
-        Assert.Equal(0xFF, entities.FallCounter[0]);
-        Assert.Equal(0xFF, entities.RiseCounter[0]);
+        Assert.Equal(0xFF, entities.Slot(0).FallCounter);
+        Assert.Equal(0xFF, entities.Slot(0).RiseCounter);
     }
 
     // $2519, from the one frame of the capture that lands. Going in, the player is mid-fall at X
@@ -135,24 +135,24 @@ public sealed class PlayerJumpGoldenTests
         PlayerJump jump = new(entities, drift, landing);
         SolidMap map = SolidMap.Build(s_levels.Level(1), []);
 
-        entities.X[0] = 0x53;
-        entities.Y[0] = 0xB4;
-        entities.Frame[0] = 0x00;
-        entities.RiseCounter[0] = 0x00;
-        entities.FallCounter[0] = 0x03;
-        entities.BubbleTimer[0] = Idle;
-        entities.GroundState[0] = Idle;
+        entities.Slot(0).X = 0x53;
+        entities.Slot(0).Y = 0xB4;
+        entities.Slot(0).Frame = 0x00;
+        entities.Slot(0).RiseCounter = 0x00;
+        entities.Slot(0).FallCounter = 0x03;
+        entities.Slot(0).BubbleTimer = Idle;
+        entities.Slot(0).GroundState = Idle;
 
-        jump.Step(0, NoDirection, PlayerCell.Of(entities.X[0], entities.Y[0]), map);
+        jump.Step(0, NoDirection, PlayerCell.Of(entities.Slot(0).X, entities.Slot(0).Y), map);
 
-        Assert.Equal(0xB5, entities.Y[0]);
-        Assert.Equal(0x54, entities.X[0]);
-        Assert.Equal(Idle, entities.RiseCounter[0]);
-        Assert.Equal(Idle, entities.FallCounter[0]);
+        Assert.Equal(0xB5, entities.Slot(0).Y);
+        Assert.Equal(0x54, entities.Slot(0).X);
+        Assert.Equal(Idle, entities.Slot(0).RiseCounter);
+        Assert.Equal(Idle, entities.Slot(0).FallCounter);
 
         // The capture read $87F0 still negative after the landing, so the branch that starts the
         // player falling again did not fire: there was a floor.
-        Assert.Equal(Idle, entities.GroundState[0]);
+        Assert.Equal(Idle, entities.Slot(0).GroundState);
     }
 
     // $2474. A landing puts the player on a row boundary, counted from $2D.
@@ -167,16 +167,16 @@ public sealed class PlayerJumpGoldenTests
         PlayerJump jump = new(entities, drift, landing);
         SolidMap map = SolidMap.Build(s_levels.Level(1), []);
 
-        entities.X[0] = StartX;
-        entities.Y[0] = StartY;
-        entities.RiseCounter[0] = JumpRise;
-        entities.FallCounter[0] = Idle;
+        entities.Slot(0).X = StartX;
+        entities.Slot(0).Y = StartY;
+        entities.Slot(0).RiseCounter = JumpRise;
+        entities.Slot(0).FallCounter = Idle;
 
         for (int tick = 0; tick < s_y.Length; tick++)
         {
-            jump.Step(0, NoDirection, PlayerCell.Of(entities.X[0], entities.Y[0]), map);
+            jump.Step(0, NoDirection, PlayerCell.Of(entities.Slot(0).X, entities.Slot(0).Y), map);
         }
 
-        Assert.Equal(0, (entities.Y[0] - 0x2D) % 8);
+        Assert.Equal(0, (entities.Slot(0).Y - 0x2D) % 8);
     }
 }

@@ -44,7 +44,7 @@ internal sealed class PlayerJoin
 
         for (int player = PlayerTable.Capacity - 1; player >= 0; player--)
         {
-            if (_entities.State[player] == 0 && (ports[player] & Input.Fire) == 0)
+            if (_entities.Slot(player).State == 0 && (ports[player] & Input.Fire) == 0)
             {
                 Join(player);
             }
@@ -54,7 +54,7 @@ internal sealed class PlayerJoin
     private void Join(int player)
     {
         _players.Lives[player] = JoinLives;
-        _entities.State[player] = PlayerFrame.DeadState;
+        _entities.Slot(player).State = PlayerFrame.DeadState;
 
         _scores.Clear(player);
         _players.ExtraLifeStep[player] = 0;

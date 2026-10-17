@@ -72,12 +72,12 @@ internal sealed class PlayerFrame
     {
         ArgumentNullException.ThrowIfNull(map);
 
-        switch (_entities.State[player])
+        switch (_entities.Slot(player).State)
         {
             case 0:
                 return;
             case PlayingState:
-                Playing(player, port, PlayerCell.Of(_entities.X[player], _entities.Y[player]), map);
+                Playing(player, port, PlayerCell.Of(_entities.Slot(player).X, _entities.Slot(player).Y), map);
                 return;
             case DyingState:
                 _dying.Step(player);
@@ -95,23 +95,23 @@ internal sealed class PlayerFrame
                 return;
             default:
                 throw new NotSupportedException(
-                    $"slot {player}'s state ${_entities.State[player]:X2} at $1E6C is not translated");
+                    $"slot {player}'s state ${_entities.Slot(player).State:X2} at $1E6C is not translated");
         }
     }
 
     internal void Slot(int player, byte port, byte counter, SolidMap map)
     {
-        if (_entities.State[player] == 0)
+        if (_entities.Slot(player).State == 0)
         {
             return;
         }
 
-        if (_entities.FlashTimer[player] != 0 && (counter & AngerFrames) == 0)
+        if (_entities.Slot(player).FlashTimer != 0 && (counter & AngerFrames) == 0)
         {
             Step(player, port, map);
         }
 
-        if (_entities.HoldTimer[player] != 0)
+        if (_entities.Slot(player).HoldTimer != 0)
         {
             throw new NotSupportedException($"slot {player} with $8638 set at $1D11 is not translated");
         }
@@ -126,20 +126,20 @@ internal sealed class PlayerFrame
 
     private void Playing(int player, byte port, in PlayerCell cell, SolidMap map)
     {
-        byte blowTimer = _entities.BubbleTimer[player];
+        byte blowTimer = _entities.Slot(player).BubbleTimer;
 
         if ((blowTimer & 0x80) == 0)
         {
             _blow.Step(player, blowTimer, cell);
         }
 
-        if ((_entities.RiseCounter[player] & 0x80) == 0)
+        if ((_entities.Slot(player).RiseCounter & 0x80) == 0)
         {
             _jump.Step(player, port, cell, map);
             return;
         }
 
-        if ((_entities.GroundState[player] & 0x80) == 0)
+        if ((_entities.Slot(player).GroundState & 0x80) == 0)
         {
             _fall.Step(player, port, cell, map);
             return;
@@ -147,7 +147,7 @@ internal sealed class PlayerFrame
 
         if (cell.FineY == 0 && !Blocked(cell, map, GroundRowLeft, GroundRowMiddle, GroundRowRight))
         {
-            _entities.GroundState[player]++;
+            _entities.Slot(player).GroundState++;
             _fall.Step(player, port, cell, map);
             return;
         }
@@ -168,64 +168,64 @@ internal sealed class PlayerFrame
         if (_water.Follow(player))
         {
             _water.Release(player);
-            _entities.State[player] = PlayingState;
+            _entities.Slot(player).State = PlayingState;
             return;
         }
 
-        byte blowTimer = _entities.BubbleTimer[player];
+        byte blowTimer = _entities.Slot(player).BubbleTimer;
 
         if ((blowTimer & 0x80) == 0)
         {
-            _blow.Step(player, blowTimer, PlayerCell.Of(_entities.X[player], _entities.Y[player]));
+            _blow.Step(player, blowTimer, PlayerCell.Of(_entities.Slot(player).X, _entities.Slot(player).Y));
         }
 
         _movement.Step(player, port, map);
 
-        if ((_entities.RiseCounter[player] & 0x80) == 0)
+        if ((_entities.Slot(player).RiseCounter & 0x80) == 0)
         {
-            _entities.State[player] = PlayingState;
+            _entities.Slot(player).State = PlayingState;
         }
     }
 
     // $290D: counts down to state 1, flashing, and plays as state 1 meanwhile.
     private void Respawning(int player, byte port, SolidMap map)
     {
-        if (--_entities.TurnInterval[player] == 0)
+        if (--_entities.Slot(player).TurnInterval == 0)
         {
-            _entities.State[player] = PlayingState;
+            _entities.Slot(player).State = PlayingState;
         }
 
-        _entities.Colour[player] ^= RespawnFlash;
-        Playing(player, port, PlayerCell.Of(_entities.X[player], _entities.Y[player]), map);
+        _entities.Slot(player).Colour ^= RespawnFlash;
+        Playing(player, port, PlayerCell.Of(_entities.Slot(player).X, _entities.Slot(player).Y), map);
     }
 
     // $28FA-$290C: a bonus round's player flashes and plays as state 1, twice a frame: the handler, then `$1E6C` again.
     private void InBonusRound(int player, byte port, SolidMap map)
     {
-        _entities.Colour[player] ^= RespawnFlash;
-        Playing(player, port, PlayerCell.Of(_entities.X[player], _entities.Y[player]), map);
+        _entities.Slot(player).Colour ^= RespawnFlash;
+        Playing(player, port, PlayerCell.Of(_entities.Slot(player).X, _entities.Slot(player).Y), map);
 
-        _entities.State[player] = PlayingState;
+        _entities.Slot(player).State = PlayingState;
         Step(player, port, map);
-        _entities.State[player] = BonusRound.PlayerState;
+        _entities.Slot(player).State = BonusRound.PlayerState;
     }
 
     private void Idle(int player, byte port, SolidMap map)
     {
-        if ((_entities.BubbleTimer[player] & 0x80) == 0)
+        if ((_entities.Slot(player).BubbleTimer & 0x80) == 0)
         {
             _movement.Step(player, port, map);
             return;
         }
 
-        _entities.AnimationTimer[player]++;
+        _entities.Slot(player).AnimationTimer++;
 
-        if (_entities.AnimationTimer[player] != IdlePeriod)
+        if (_entities.Slot(player).AnimationTimer != IdlePeriod)
         {
             return;
         }
 
-        _entities.Frame[player] ^= 0x01;
-        _entities.AnimationTimer[player] = 0;
+        _entities.Slot(player).Frame ^= 0x01;
+        _entities.Slot(player).AnimationTimer = 0;
     }
 }

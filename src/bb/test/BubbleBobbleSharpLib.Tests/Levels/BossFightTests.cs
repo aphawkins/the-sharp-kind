@@ -62,12 +62,12 @@ public sealed class BossFightTests
         GameLoop loop = Start(100);
         Run(loop, () => loop.Boss.Active);
 
-        loop.Entities.State[0] = PlayerFrame.PlayingState;
-        loop.Entities.X[0] = loop.Boss.X;
-        loop.Entities.Y[0] = loop.Boss.Y;
+        loop.Entities.Slot(0).State = PlayerFrame.PlayingState;
+        loop.Entities.Slot(0).X = loop.Boss.X;
+        loop.Entities.Slot(0).Y = loop.Boss.Y;
         loop.Boss.Move();
 
-        Assert.Equal(PlayerFrame.DyingState, loop.Entities.State[0]);
+        Assert.Equal(PlayerFrame.DyingState, loop.Entities.Slot(0).State);
     }
 
     [Fact]
@@ -77,9 +77,9 @@ public sealed class BossFightTests
         Run(loop, () => loop.Boss.Active);
 
         loop.Boss.Frame = BossFight.StunnedFrame;
-        loop.Entities.State[1] = PlayerFrame.PlayingState;
-        loop.Entities.X[1] = loop.Boss.X;
-        loop.Entities.Y[1] = loop.Boss.Y;
+        loop.Entities.Slot(1).State = PlayerFrame.PlayingState;
+        loop.Entities.Slot(1).X = loop.Boss.X;
+        loop.Entities.Slot(1).Y = loop.Boss.Y;
         loop.Boss.Move();
 
         Assert.False(loop.Boss.Active);

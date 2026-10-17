@@ -6,4 +6,3 @@ in `EnemyAiLoop`, `ItemEffects` and `WorldEffects`. The 6502 used a jump table.
 
 Fix direction: enums with real names (the "class one/five/six" states first),
 then one behaviour object per kind so the dispatch lives in one place.
-Blocked by the entity-struct item.

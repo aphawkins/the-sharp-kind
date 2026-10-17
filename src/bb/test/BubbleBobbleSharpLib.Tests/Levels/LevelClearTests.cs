@@ -74,13 +74,13 @@ public sealed class LevelClearTests
         Rig rig = new();
         rig.Timer.Hurry = hurry;
         rig.Entities.EnemyCount = 1;
-        rig.Entities.State[2] = 0x02;
-        rig.Entities.State[3] = 0x0B;
+        rig.Entities.Slot(2).State = 0x02;
+        rig.Entities.Slot(3).State = 0x0B;
 
         rig.Clear.Update();
 
-        Assert.Equal(0xFF, rig.Entities.FlashTimer[2]);
-        Assert.Equal(0, rig.Entities.FlashTimer[3]);
+        Assert.Equal(0xFF, rig.Entities.Slot(2).FlashTimer);
+        Assert.Equal(0, rig.Entities.Slot(3).FlashTimer);
     }
 
     // $16E2: more than one, and no one is made angry.
@@ -89,11 +89,11 @@ public sealed class LevelClearTests
     {
         Rig rig = new();
         rig.Entities.EnemyCount = 2;
-        rig.Entities.State[2] = 0x02;
+        rig.Entities.Slot(2).State = 0x02;
 
         rig.Clear.Update();
 
-        Assert.Equal(0, rig.Entities.FlashTimer[2]);
+        Assert.Equal(0, rig.Entities.Slot(2).FlashTimer);
         Assert.Equal(0, rig.Timer.Hurry);
     }
 
@@ -139,9 +139,9 @@ public sealed class LevelClearTests
         rig.Clear.Update();
 
         Assert.Equal([0x3A, 0x3A, 0x3A, 0x3A, 0x44, 0x46, 0x4A, 0xFF, 0x3A, 0x3A], rig.Objects.Type.ToArray()[..types.Length]);
-        Assert.Equal(0x04, rig.Objects.EnemyType[0]);
-        Assert.Equal(0x3A, rig.Objects.EnemyType[8]);
-        Assert.Equal(0, rig.Objects.EnemyType[4]);
+        Assert.Equal(0x04, rig.Objects.Slot(0).EnemyType);
+        Assert.Equal(0x3A, rig.Objects.Slot(8).EnemyType);
+        Assert.Equal(0, rig.Objects.Slot(4).EnemyType);
     }
 
     // $1737-$1746: on a level with a bonus round, a bubble or special ($04, $38-$41) becomes $4C, with its
@@ -157,8 +157,8 @@ public sealed class LevelClearTests
         rig.Clear.Update();
 
         Assert.Equal([0x4C, 0x4C, 0x4C, 0x3A, 0x3A], rig.Objects.Type.ToArray()[..5]);
-        Assert.Equal(LevelItems.FoodColour(9), rig.Objects.Behaviour[0]);
-        Assert.Equal(LevelItems.FoodColour(9), rig.Objects.Behaviour[2]);
+        Assert.Equal(LevelItems.FoodColour(9), rig.Objects.Slot(0).Behaviour);
+        Assert.Equal(LevelItems.FoodColour(9), rig.Objects.Slot(2).Behaviour);
     }
 
     // $16FB-$170B: a special item showing has its timer run out, and one not yet shown never comes.

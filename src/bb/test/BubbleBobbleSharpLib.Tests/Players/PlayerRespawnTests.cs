@@ -27,14 +27,14 @@ public sealed class PlayerRespawnTests
         rig.Respawn.Update(0);
 
         Assert.Equal(2, rig.Players.Lives[player]);
-        Assert.Equal(PlayerRespawn.RespawningState, rig.Entities.State[player]);
-        Assert.Equal(x, rig.Entities.X[player]);
-        Assert.Equal(0xDD, rig.Entities.Y[player]);
-        Assert.Equal(frame, rig.Entities.Frame[player]);
-        Assert.Equal(0x4A, rig.Entities.TurnInterval[player]);
-        Assert.Equal(0xFF, rig.Entities.RiseCounter[player]);
-        Assert.Equal(0xFF, rig.Entities.FallCounter[player]);
-        Assert.Equal(0xFF, rig.Entities.GroundState[player]);
+        Assert.Equal(PlayerRespawn.RespawningState, rig.Entities.Slot(player).State);
+        Assert.Equal(x, rig.Entities.Slot(player).X);
+        Assert.Equal(0xDD, rig.Entities.Slot(player).Y);
+        Assert.Equal(frame, rig.Entities.Slot(player).Frame);
+        Assert.Equal(0x4A, rig.Entities.Slot(player).TurnInterval);
+        Assert.Equal(0xFF, rig.Entities.Slot(player).RiseCounter);
+        Assert.Equal(0xFF, rig.Entities.Slot(player).FallCounter);
+        Assert.Equal(0xFF, rig.Entities.Slot(player).GroundState);
         Assert.Equal((byte)(0x03 & ~bit), rig.Items.Undying);
     }
 
@@ -51,8 +51,8 @@ public sealed class PlayerRespawnTests
         rig.Players.DriftRing[0] = 1;
         rig.Players.WalkRing[0] = 1;
         rig.Players.BlowRing[0] = 1;
-        rig.Entities.FlashTimer[0] = 0x40;
-        rig.Entities.LeapFlag[0] = 0x12;
+        rig.Entities.Slot(0).FlashTimer = 0x40;
+        rig.Entities.Slot(0).LeapFlag = 0x12;
 
         rig.Respawn.Update(0);
 
@@ -63,8 +63,8 @@ public sealed class PlayerRespawnTests
         Assert.Equal(0, rig.Players.DriftRing[0]);
         Assert.Equal(0, rig.Players.WalkRing[0]);
         Assert.Equal(0, rig.Players.BlowRing[0]);
-        Assert.Equal(0, rig.Entities.FlashTimer[0]);
-        Assert.Equal(0, rig.Entities.LeapFlag[0]);
+        Assert.Equal(0, rig.Entities.Slot(0).FlashTimer);
+        Assert.Equal(0, rig.Entities.Slot(0).LeapFlag);
     }
 
     // $0460: only state $0F is dealt with.
@@ -75,12 +75,12 @@ public sealed class PlayerRespawnTests
     {
         Rig rig = new();
         rig.Players.Lives[0] = 3;
-        rig.Entities.State[0] = state;
+        rig.Entities.Slot(0).State = state;
 
         rig.Respawn.Update(0);
 
         Assert.Equal(3, rig.Players.Lives[0]);
-        Assert.Equal(state, rig.Entities.State[0]);
+        Assert.Equal(state, rig.Entities.Slot(0).State);
     }
 
     // $04E0, $04F0: the last life goes negative, and the player is out: the level reached is kept, and
@@ -93,18 +93,18 @@ public sealed class PlayerRespawnTests
         Rig rig = new();
         rig.Dead(player);
         rig.Players.Lives[player] = 0;
-        rig.Entities.X[player] = 0x80;
-        rig.Entities.Y[player] = 0x70;
-        rig.Entities.TurnInterval[player] = 0x12;
+        rig.Entities.Slot(player).X = 0x80;
+        rig.Entities.Slot(player).Y = 0x70;
+        rig.Entities.Slot(player).TurnInterval = 0x12;
 
         rig.Respawn.Update(0x2F);
 
         Assert.Equal(0xFF, rig.Players.Lives[player]);
-        Assert.Equal(0, rig.Entities.State[player]);
-        Assert.Equal(0, rig.Entities.X[player]);
-        Assert.Equal(0, rig.Entities.Y[player]);
+        Assert.Equal(0, rig.Entities.Slot(player).State);
+        Assert.Equal(0, rig.Entities.Slot(player).X);
+        Assert.Equal(0, rig.Entities.Slot(player).Y);
         Assert.Equal(0x2F, rig.Players.Round[player]);
-        Assert.Equal(0x12, rig.Entities.TurnInterval[player]);
+        Assert.Equal(0x12, rig.Entities.Slot(player).TurnInterval);
     }
 
     // $04F0: the other player's Round, lives and place are not touched.
@@ -114,14 +114,14 @@ public sealed class PlayerRespawnTests
         Rig rig = new();
         rig.Dead(0);
         rig.Players.Lives[0] = 0;
-        rig.Entities.State[1] = PlayerFrame.PlayingState;
-        rig.Entities.X[1] = 0x40;
+        rig.Entities.Slot(1).State = PlayerFrame.PlayingState;
+        rig.Entities.Slot(1).X = 0x40;
         rig.Players.Lives[1] = 2;
 
         rig.Respawn.Update(0x10);
 
-        Assert.Equal(PlayerFrame.PlayingState, rig.Entities.State[1]);
-        Assert.Equal(0x40, rig.Entities.X[1]);
+        Assert.Equal(PlayerFrame.PlayingState, rig.Entities.Slot(1).State);
+        Assert.Equal(0x40, rig.Entities.Slot(1).X);
         Assert.Equal(2, rig.Players.Lives[1]);
         Assert.Equal(0, rig.Players.Round[1]);
     }
@@ -135,7 +135,7 @@ public sealed class PlayerRespawnTests
 
         rig.Respawn.Update(0x63);
 
-        Assert.Equal(0, rig.Entities.FlashTimer[0]);
+        Assert.Equal(0, rig.Entities.Slot(0).FlashTimer);
     }
 
     // $0514-$0527, $16E4: with two or more enemies left, the free ones lose their anger; a caught one keeps it.
@@ -147,20 +147,20 @@ public sealed class PlayerRespawnTests
         Rig rig = new();
         rig.Dead(0);
         rig.Entities.EnemyCount = enemies;
-        rig.Entities.State[2] = 0x01;
-        rig.Entities.FlashTimer[2] = 0x40;
-        rig.Entities.State[7] = 0x0A;
-        rig.Entities.FlashTimer[7] = 0x40;
-        rig.Entities.State[3] = 0x0B;
-        rig.Entities.FlashTimer[3] = 0x40;
-        rig.Entities.FlashTimer[4] = 0x40;
+        rig.Entities.Slot(2).State = 0x01;
+        rig.Entities.Slot(2).FlashTimer = 0x40;
+        rig.Entities.Slot(7).State = 0x0A;
+        rig.Entities.Slot(7).FlashTimer = 0x40;
+        rig.Entities.Slot(3).State = 0x0B;
+        rig.Entities.Slot(3).FlashTimer = 0x40;
+        rig.Entities.Slot(4).FlashTimer = 0x40;
 
         rig.Respawn.Update(0);
 
-        Assert.Equal(expected, rig.Entities.FlashTimer[2]);
-        Assert.Equal(expected, rig.Entities.FlashTimer[7]);
-        Assert.Equal(0x40, rig.Entities.FlashTimer[3]);
-        Assert.Equal(0x40, rig.Entities.FlashTimer[4]);
+        Assert.Equal(expected, rig.Entities.Slot(2).FlashTimer);
+        Assert.Equal(expected, rig.Entities.Slot(7).FlashTimer);
+        Assert.Equal(0x40, rig.Entities.Slot(3).FlashTimer);
+        Assert.Equal(0x40, rig.Entities.Slot(4).FlashTimer);
     }
 
     // $290D: $4A passes flashing (colour EOR 5), then state 1; the colour ends where it started.
@@ -168,28 +168,28 @@ public sealed class PlayerRespawnTests
     public void RespawningFlashesForSeventyFourPassesThenPlays()
     {
         EntityTable entities = new();
-        entities.State[0] = PlayerRespawn.RespawningState;
-        entities.TurnInterval[0] = 0x4A;
-        entities.Colour[0] = 0x05;
-        entities.X[0] = 0x2C;
-        entities.Y[0] = 0x80;
-        entities.RiseCounter[0] = 0xFF;
-        entities.GroundState[0] = 0xFF;
-        entities.BubbleTimer[0] = 0xFF;
+        entities.Slot(0).State = PlayerRespawn.RespawningState;
+        entities.Slot(0).TurnInterval = 0x4A;
+        entities.Slot(0).Colour = 0x05;
+        entities.Slot(0).X = 0x2C;
+        entities.Slot(0).Y = 0x80;
+        entities.Slot(0).RiseCounter = 0xFF;
+        entities.Slot(0).GroundState = 0xFF;
+        entities.Slot(0).BubbleTimer = 0xFF;
         PlayerFrame frame = Frame(entities);
         SolidMap map = Floor();
 
         for (int pass = 1; pass < 0x4A; pass++)
         {
             frame.Step(0, Input.Idle, map);
-            Assert.Equal(PlayerRespawn.RespawningState, entities.State[0]);
-            Assert.Equal((pass & 1) == 0 ? 0x05 : 0x00, entities.Colour[0]);
+            Assert.Equal(PlayerRespawn.RespawningState, entities.Slot(0).State);
+            Assert.Equal((pass & 1) == 0 ? 0x05 : 0x00, entities.Slot(0).Colour);
         }
 
         frame.Step(0, Input.Idle, map);
 
-        Assert.Equal(PlayerFrame.PlayingState, entities.State[0]);
-        Assert.Equal(0x05, entities.Colour[0]);
+        Assert.Equal(PlayerFrame.PlayingState, entities.Slot(0).State);
+        Assert.Equal(0x05, entities.Slot(0).Colour);
     }
 
     private static SolidMap Floor()
@@ -232,7 +232,7 @@ public sealed class PlayerRespawnTests
 
         internal void Dead(int player)
         {
-            Entities.State[player] = PlayerFrame.DeadState;
+            Entities.Slot(player).State = PlayerFrame.DeadState;
             Players.Lives[player] = 3;
         }
     }

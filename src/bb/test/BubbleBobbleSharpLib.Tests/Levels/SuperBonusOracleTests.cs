@@ -52,7 +52,7 @@ public sealed class SuperBonusOracleTests
         string actual = RamImage.Entities(entities);
 
         Assert.True(expected == actual, RamImage.EntityDifference(expected, actual));
-        Assert.Equal(0x15, entities.State[2]);
+        Assert.Equal(0x15, entities.Slot(2).State);
     }
 
     [Fact]

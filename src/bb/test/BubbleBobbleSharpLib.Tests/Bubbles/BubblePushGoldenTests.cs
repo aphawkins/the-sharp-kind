@@ -146,10 +146,10 @@ public sealed class BubblePushGoldenTests
 
         for (int player = 0; player < EntityTable.Capacity; player++)
         {
-            entities.State[player] = b[States + player];
-            entities.X[player] = b[PlayerX + player];
-            entities.Y[player] = b[PlayerY + player];
-            entities.Frame[player] = b[Frames + player];
+            entities.Slot(player).State = b[States + player];
+            entities.Slot(player).X = b[PlayerX + player];
+            entities.Slot(player).Y = b[PlayerY + player];
+            entities.Slot(player).Frame = b[Frames + player];
         }
 
         objects.Type.Load(b.AsSpan(Types, ObjectTable.Capacity));
@@ -168,10 +168,10 @@ public sealed class BubblePushGoldenTests
 
         for (int player = 0; player < EntityTable.Capacity; player++)
         {
-            b[States + player] = entities.State[player];
-            b[PlayerX + player] = entities.X[player];
-            b[PlayerY + player] = entities.Y[player];
-            b[Frames + player] = entities.Frame[player];
+            b[States + player] = entities.Slot(player).State;
+            b[PlayerX + player] = entities.Slot(player).X;
+            b[PlayerY + player] = entities.Slot(player).Y;
+            b[Frames + player] = entities.Slot(player).Frame;
         }
 
         objects.Type.CopyTo(b.AsSpan(Types));

@@ -82,7 +82,7 @@ internal static class RamImage
 
         for (int slot = 0; slot < EntityTable.Capacity; slot++)
         {
-            entities.ClimbNext[slot] = ram[ClimbNext + slot] != 0;
+            entities.Slot(slot).ClimbNext = ram[ClimbNext + slot] != 0;
         }
 
         entities.EnemyCount = ram[EnemyCount];

@@ -78,7 +78,7 @@ public sealed class GameLoopTests
         }
 
         // $1D32 can kill the player, who dies, respawns, or is out and joins again with the fire button.
-        Assert.Contains(loop.Entities.State[0], (byte[])[0x00, 0x01, 0x0E, 0x0F, 0x10]);
+        Assert.Contains(loop.Entities.Slot(0).State, (byte[])[0x00, 0x01, 0x0E, 0x0F, 0x10]);
     }
 
     // A level starts with its enemies in slots 2 onwards, both items hidden, and the one player up.
@@ -87,8 +87,8 @@ public sealed class GameLoopTests
     {
         GameLoop loop = Start(1, seed: 1);
 
-        Assert.Equal(1, loop.Entities.State[0]);
-        Assert.Equal(0, loop.Entities.State[1]);
+        Assert.Equal(1, loop.Entities.Slot(0).State);
+        Assert.Equal(0, loop.Entities.Slot(1).State);
         Assert.Equal(s_levels.Level(1).Enemies.Count, loop.Entities.EnemyCount);
         Assert.All(loop.Items.Type.ToArray(), t => Assert.True(t >= 0x80));
         Assert.All(loop.Objects.Type.ToArray(), t => Assert.Equal(ObjectTable.FreeType, t));
@@ -104,14 +104,14 @@ public sealed class GameLoopTests
 
         GameLoop loop = Start(1, seed: 1);
         loop.Objects.Flags.Fill(Clock);
-        byte counter = loop.Objects.Flags[0];
+        byte counter = loop.Objects.Slot(0).Flags;
 
         for (int tick = 0; tick < Ticks; tick++)
         {
             loop.Tick([Idle, Idle]);
         }
 
-        Assert.Equal(Ticks / 3 * 2, counter - loop.Objects.Flags[0]);
+        Assert.Equal(Ticks / 3 * 2, counter - loop.Objects.Slot(0).Flags);
     }
 
     // $05F5 readies all eight slots, not just the players: no jump, no fall, on the ground, out of a
@@ -124,18 +124,18 @@ public sealed class GameLoopTests
 
         for (int slot = 0; slot < EntityTable.Capacity; slot++)
         {
-            Assert.Equal(0xFF, entities.RiseCounter[slot]);
-            Assert.Equal(0xFF, entities.FallCounter[slot]);
-            Assert.Equal(0xFF, entities.GroundState[slot]);
-            Assert.Equal(0xFF, entities.BubbleTimer[slot]);
-            Assert.Equal(0x00, entities.LeapFlag[slot]);
-            Assert.Equal(0x00, entities.ClimbFlag[slot]);
-            Assert.False(entities.ClimbNext[slot]);
+            Assert.Equal(0xFF, entities.Slot(slot).RiseCounter);
+            Assert.Equal(0xFF, entities.Slot(slot).FallCounter);
+            Assert.Equal(0xFF, entities.Slot(slot).GroundState);
+            Assert.Equal(0xFF, entities.Slot(slot).BubbleTimer);
+            Assert.Equal(0x00, entities.Slot(slot).LeapFlag);
+            Assert.Equal(0x00, entities.Slot(slot).ClimbFlag);
+            Assert.False(entities.Slot(slot).ClimbNext);
         }
 
         for (int slot = PlayerTable.Capacity; slot < EntityTable.Capacity; slot++)
         {
-            Assert.Equal(0x00, entities.FlashTimer[slot]);
+            Assert.Equal(0x00, entities.Slot(slot).FlashTimer);
         }
     }
 
@@ -156,14 +156,14 @@ public sealed class GameLoopTests
 
             for (int slot = 2; slot <= last; slot++)
             {
-                Assert.InRange(loop.Entities.Y[slot], 0x15, TopPlatform);
+                Assert.InRange(loop.Entities.Slot(slot).Y, 0x15, TopPlatform);
             }
         }
 
         for (int slot = 2; slot <= last; slot++)
         {
-            Assert.Equal(TopPlatform, loop.Entities.Y[slot]);
-            Assert.Equal(0xFF, loop.Entities.GroundState[slot]);
+            Assert.Equal(TopPlatform, loop.Entities.Slot(slot).Y);
+            Assert.Equal(0xFF, loop.Entities.Slot(slot).GroundState);
         }
     }
 
@@ -172,12 +172,12 @@ public sealed class GameLoopTests
     public void MovesThePlayerEachPass()
     {
         GameLoop loop = Start(1, seed: 1);
-        byte x = loop.Entities.X[0];
+        byte x = loop.Entities.Slot(0).X;
 
         loop.Pass([PushRight, Idle]);
         loop.Pass([PushRight, Idle]);
 
-        Assert.NotEqual(x, loop.Entities.X[0]);
+        Assert.NotEqual(x, loop.Entities.Slot(0).X);
     }
 
     // $052A, then $045C: player 2 presses fire and joins with four lives, and the next pass takes one and
@@ -189,14 +189,14 @@ public sealed class GameLoopTests
 
         loop.Pass([Idle, PushFire]);
 
-        Assert.Equal(PlayerFrame.DeadState, loop.Entities.State[1]);
+        Assert.Equal(PlayerFrame.DeadState, loop.Entities.Slot(1).State);
         Assert.Equal(4, loop.PlayerTable.Lives[1]);
 
         loop.Pass([Idle, Idle]);
 
-        Assert.Equal(PlayerRespawn.RespawningState, loop.Entities.State[1]);
+        Assert.Equal(PlayerRespawn.RespawningState, loop.Entities.Slot(1).State);
         Assert.Equal(3, loop.PlayerTable.Lives[1]);
-        Assert.Equal(PlayerRespawn.SpawnX[1], loop.Entities.X[1]);
+        Assert.Equal(PlayerRespawn.SpawnX[1], loop.Entities.Slot(1).X);
     }
 
     // $392A, $09FD, $06AB: a level starts with thirty seconds, and a second is fifty IRQ frames, twenty-five passes.
@@ -230,8 +230,8 @@ public sealed class GameLoopTests
     public void TheGameIsOverOnlyWhenBothPlayersAreOut(byte one, byte two, bool over)
     {
         GameLoop loop = Start(1, seed: 1);
-        loop.Entities.State[0] = one;
-        loop.Entities.State[1] = two;
+        loop.Entities.Slot(0).State = one;
+        loop.Entities.Slot(1).State = two;
 
         Assert.Equal(over, loop.IsOver);
     }
@@ -241,8 +241,8 @@ public sealed class GameLoopTests
     public void ARunOutOfPlayersHoldsForSeventyFivePassesThenFinishes()
     {
         GameLoop loop = Start(1, seed: 1);
-        loop.Entities.State[0] = 0;
-        byte enemy = loop.Entities.X[2];
+        loop.Entities.Slot(0).State = 0;
+        byte enemy = loop.Entities.Slot(2).X;
 
         for (int pass = 1; pass < 75; pass++)
         {
@@ -253,7 +253,7 @@ public sealed class GameLoopTests
         loop.Pass([Idle, Idle]);
 
         Assert.True(loop.Finished);
-        Assert.Equal(enemy, loop.Entities.X[2]);
+        Assert.Equal(enemy, loop.Entities.Slot(2).X);
     }
 
     // $0A64 comes after $045C, whose $052A lets a player who holds fire as the last life goes join again
@@ -264,7 +264,7 @@ public sealed class GameLoopTests
     public void TheLastLifeGoingLeavesTheGameOverUnlessFireIsDown(bool fire, bool over)
     {
         GameLoop loop = Start(1, seed: 1);
-        loop.Entities.State[0] = PlayerFrame.DeadState;
+        loop.Entities.Slot(0).State = PlayerFrame.DeadState;
         loop.PlayerTable.Lives[0] = 0;
 
         loop.Pass([fire ? PushFire : Idle, Idle]);
@@ -277,7 +277,7 @@ public sealed class GameLoopTests
     public void AGameStartsNotFinished()
     {
         GameLoop loop = Start(1, seed: 1);
-        loop.Entities.State[0] = 0;
+        loop.Entities.Slot(0).State = 0;
 
         for (int pass = 0; pass < 80; pass++)
         {
@@ -315,8 +315,8 @@ public sealed class GameLoopTests
         byte[] first = dumps["first-pass"];
 
         GameLoop loop = Start(complete[Subflg] + 1, seed: 1);
-        loop.Entities.State[0] = complete[States];
-        loop.Entities.State[1] = complete[States + 1];
+        loop.Entities.Slot(0).State = complete[States];
+        loop.Entities.Slot(1).State = complete[States + 1];
 
         int number = loop.EndLevel()!.Value;
 
@@ -326,12 +326,12 @@ public sealed class GameLoopTests
 
         loop.Start(s_levels.Level(number), s_zones.Zones(number), number, next: true);
 
-        Assert.Equal(first[States], loop.Entities.State[0]);
-        Assert.Equal(first[States + 1], loop.Entities.State[1]);
-        Assert.Equal(first[X], loop.Entities.X[0]);
-        Assert.Equal(first[Y], loop.Entities.Y[0]);
-        Assert.Equal(first[Frame], loop.Entities.Frame[0]);
-        Assert.Equal(first[Colour], loop.Entities.Colour[0]);
+        Assert.Equal(first[States], loop.Entities.Slot(0).State);
+        Assert.Equal(first[States + 1], loop.Entities.Slot(1).State);
+        Assert.Equal(first[X], loop.Entities.Slot(0).X);
+        Assert.Equal(first[Y], loop.Entities.Slot(0).Y);
+        Assert.Equal(first[Frame], loop.Entities.Slot(0).Frame);
+        Assert.Equal(first[Colour], loop.Entities.Slot(0).Colour);
     }
 
     // Fire makes a bubble three passes later, and the loop then carries it away from the player.
@@ -345,20 +345,20 @@ public sealed class GameLoopTests
 
         int pass = 1;
 
-        while (loop.Objects.Type[slot] == ObjectTable.FreeType && pass++ < 10)
+        while (loop.Objects.Slot(slot).Type == ObjectTable.FreeType && pass++ < 10)
         {
             loop.Pass([Idle, Idle]);
         }
 
-        byte x = loop.Objects.X[slot];
+        byte x = loop.Objects.Slot(slot).X;
 
         for (int i = 0; i < 10; i++)
         {
             loop.Pass([Idle, Idle]);
         }
 
-        Assert.NotEqual(ObjectTable.FreeType, loop.Objects.Type[slot]);
-        Assert.NotEqual(x, loop.Objects.X[slot]);
+        Assert.NotEqual(ObjectTable.FreeType, loop.Objects.Slot(slot).Type);
+        Assert.NotEqual(x, loop.Objects.Slot(slot).X);
     }
 
     // The picture of a bubble is made at the top of a pass, at the place the pass before left it: its row and its
@@ -385,9 +385,9 @@ public sealed class GameLoopTests
                 checkedPasses++;
             }
 
-            before = loop.Objects.Type[slot] == ObjectTable.FreeType
+            before = loop.Objects.Slot(slot).Type == ObjectTable.FreeType
                 ? null
-                : (loop.Objects.Row[slot], loop.Objects.SubY[slot], loop.Objects.Column[slot]);
+                : (loop.Objects.Slot(slot).Row, loop.Objects.Slot(slot).SubY, loop.Objects.Slot(slot).Column);
         }
 
         Assert.True(checkedPasses > 30);
