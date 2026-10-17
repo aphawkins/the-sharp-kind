@@ -39,6 +39,18 @@ Every open work item, in priority order. Each line links to a file in
 
 ## Must
 
+### Bubble Bobble
+
+- [ ] [Main loop pass rate: two IRQ frames or three?](work-items/bb-main-loop-pass-rate.md)
+- [ ] [Golden sprite frames against VICE (step 2's verify)](work-items/bb-sprite-frames-vice.md)
+- [ ] [Extra lives from the score (`$F1AC`)](work-items/bb-extra-lives-from-score.md)
+- [ ] [`BubbleCollision`'s table past `$AB89`](work-items/bb-collision-table-past-ab89.md)
+- [ ] [Translate or rule out `$A783` and `$37C7`](work-items/bb-a783-37c7.md)
+- [ ] [Compare the static screen with VICE](work-items/bb-static-screen-vice.md)
+- [ ] [Where a bubble parks under the ceiling](work-items/bb-ceiling-bubble-y.md)
+- [ ] [A jump ending in a fall mid-arc](work-items/bb-jump-fall-no-floor.md)
+- [ ] [What draws `hud-font.tga` and `digit-font.tga`](work-items/bb-unused-font-sheets.md)
+
 ## Should
 
 ## Could
