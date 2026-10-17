@@ -166,20 +166,4 @@ public class CaesarSymmetricTests
         using SymmetricAlgorithm cipher = new CaesarSymmetric();
         Assert.Equal("Caesar", cipher.ToString());
     }
-
-    [Fact]
-    public void SinghCodeBook()
-    {
-        const string ciphertext = "MHILY LZA ZBHL XBPZXBL MVYABUHL HWWPBZ JSHBKPBZ JHLJBZ KPJABT HYJHUBT LZA ULBAYVU";
-        const string plaintext = "FABER EST SUAE QUISQUE FORTUNAE APPIUS CLAUDIUS CAECUS DICTUM ARCANUM EST NEUTRON";
-
-        byte[] key = Encoding.Unicode.GetBytes("7");
-        using SymmetricAlgorithm cipher = new CaesarSymmetric
-        {
-            Key = key,
-        };
-
-        Assert.Equal(plaintext, CipherMethods.SymmetricTransform(cipher, CipherTransformMode.Decrypt, ciphertext));
-        Assert.Equal(ciphertext, CipherMethods.SymmetricTransform(cipher, CipherTransformMode.Encrypt, plaintext));
-    }
 }

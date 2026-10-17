@@ -64,19 +64,4 @@ public class CaesarTests
         Assert.Equal("Caesar", cipher.CipherName);
         Assert.Equal("Caesar", cipher.ToString());
     }
-
-    [Fact]
-    public void SinghCodeBook()
-    {
-        const string ciphertext = "MHILY LZA ZBHL XBPZXBL MVYABUHL HWWPBZ JSHBKPBZ JHLJBZ KPJABT HYJHUBT LZA ULBAYVU";
-        const string plaintext = "FABER EST SUAE QUISQUE FORTUNAE APPIUS CLAUDIUS CAECUS DICTUM ARCANUM EST NEUTRON";
-
-        Caesar cipher = new(
-            new CaesarSettings()
-            {
-                RightShift = 7,
-            });
-        Assert.Equal(plaintext, cipher.Decrypt(ciphertext));
-        Assert.Equal(ciphertext, cipher.Encrypt(plaintext));
-    }
 }

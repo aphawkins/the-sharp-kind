@@ -9,7 +9,7 @@ public class CaesarCryptanalysisTests
     [Theory]
     [InlineData("AAAAAAAABBCCCDDDDEEEEEEEEEEEEEFFGGHHHHHHIIIIIIIKLLLLMMNNNNNNNOOOOOOOOPPRRRRRRSSSSSSSSSTTTTTTTTTUUUVWWYY", 0)]
     [InlineData("YMJHFJXFWHNUMJWNXTSJTKYMJJFWQNJXYPSTBSFSIXNRUQJXYHNUMJWX", 5)] // http://practicalcryptography.com/cryptanalysis/stochastic-searching/cryptanalysis-caesar-cipher/
-    [InlineData("MHILY LZA ZBHL XBPZXBL MVYABUHL HWWPBZ JSHBKPBZ JHLJBZ KPJABT HYJHUBT LZA ULBAYVU", 7)] // Singh Code Book
+    [InlineData(SinghCiphertexts.Stage2, 7)] // Singh Code Book
     [InlineData("QFM", 12)]
     public void Crack(string ciphertext, int shift)
     {

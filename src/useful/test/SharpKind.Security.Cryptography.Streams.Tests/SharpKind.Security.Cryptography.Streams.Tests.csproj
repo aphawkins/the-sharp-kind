@@ -29,6 +29,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The Singh ciphertexts, plaintexts and keys are shared with the cipher tests, not copied. -->
+    <Compile Include="..\SharpKind.Security.Cryptography.Tests\SinghCiphertexts.cs" Link="SinghCiphertexts.cs" />
+    <Compile Include="..\SharpKind.Security.Cryptography.Tests\SinghKeys.cs" Link="SinghKeys.cs" />
+    <Compile Include="..\SharpKind.Security.Cryptography.Tests\SinghPlaintexts.cs" Link="SinghPlaintexts.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\libs\SharpKind.Security.Cryptography.Streams\SharpKind.Security.Cryptography.Streams.csproj" />
   </ItemGroup>
 
