@@ -15,7 +15,7 @@ public sealed class EightBitRendition : IBbRendition
 
     public int ScreenWidth => 320;
 
-    public int ScreenHeight => 256;
+    public int ScreenHeight => 200;
 
     public IReadOnlyList<int> WindowScales => [1, 2, 3, 4];
 

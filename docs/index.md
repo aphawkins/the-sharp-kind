@@ -66,6 +66,7 @@ A rendition isn't a skin: it's a whole machine's worth of personality. Pick **8-
 | | `8-bit` | `16-bit` | `Modern` (work in progress) |
 | --- | --- | --- | --- |
 | Render resolution (Elite) | 320 x 256 | 640 x 512 | 1280 x 720 |
+| Render resolution (Bubble Bobble) | 320 x 200 | - | - |
 | Colours | 16 | 4,096 | 16.7 million |
 | Fonts | 8 x 8 bitmap glyphs <br /> 40 columns x 32 rows | 32 x 32 Bitmap glyphs | TrueType or Bitmaps |
 | Sound | C64 SID emulation | MIDI & SoundFont | WAV, MIDI, SID |
@@ -77,7 +78,7 @@ Each game keeps its settings in a JSON file in the shared per-user data director
 
 ## SharpKind libraries
 
-All three games are built on a shared set of engine libraries under `src/useful/` — graphics, audio, input, assets and the game loop — published as `SharpKind.*` NuGet packages.
+All three games are built on a shared set of engine libraries under `src/useful/` â€” graphics, audio, input, assets and the game loop â€” published as `SharpKind.*` NuGet packages.
 
 ## Documentation
 
@@ -85,12 +86,12 @@ All three games are built on a shared set of engine libraries under `src/useful/
 - [Bubble Bobble - The Sharp Kind](bb-readme.md)
 - [Stunt Car Racer - The Sharp Kind](scr-readme.md)
 - [Architecture principles](architecture-principles.md)
-- [Backlog](backlog-roadmap.md) — every open work item, bugs first
+- [Backlog](backlog-roadmap.md) â€” every open work item, bugs first
 - [Changelog](https://github.com/aphawkins/the-sharp-kind/blob/main/CHANGELOG.md)
-- [Release notes](release-notes.md) — a concise, categorised summary of the changelog, split at v1.0.0
-- [Release process](release-process.md) — how to cut a tagged release
+- [Release notes](release-notes.md) â€” a concise, categorised summary of the changelog, split at v1.0.0
+- [Release process](release-process.md) â€” how to cut a tagged release
 - [Contributing](https://github.com/aphawkins/the-sharp-kind/blob/main/CONTRIBUTING.md)
 
 ## Licence
 
-[MIT](https://github.com/aphawkins/the-sharp-kind/blob/main/LICENSE). Original game copyrights remain with their respective owners — see each game's readme for credits.
+[MIT](https://github.com/aphawkins/the-sharp-kind/blob/main/LICENSE). Original game copyrights remain with their respective owners â€” see each game's readme for credits.

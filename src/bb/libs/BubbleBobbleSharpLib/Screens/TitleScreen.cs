@@ -10,6 +10,9 @@ namespace BubbleBobbleSharpLib.Screens;
 // $4556-$4590: the title screen. The tune plays, and the game starts when fire is pressed on either joystick.
 internal sealed class TitleScreen : IGameScreen
 {
+    // The rows above the first line of credits, which the banner covers.
+    internal const int LogoRows = 7;
+
     private const int Fire = 0x10;
 
     private readonly Func<byte> _fire;

@@ -1,4 +1,4 @@
-﻿# Maintainer Decisions — The Sharp Kind
+ï»¿# Maintainer Decisions â€” The Sharp Kind
 
 Consolidated log of maintainer decisions for the repository, split out of
 [backlog-roadmap.md](backlog-roadmap.md) so the backlog stays about work
@@ -8,7 +8,7 @@ split on 2026-07-31 into defects and features, and merged back on
 reshapes or unblocks backlog items, those items are updated in the backlog
 to reference the decision here rather than restating it.
 
-## Resolved (2026-10-10) — the audio stack is our own, one format per tier
+## Resolved (2026-10-10) â€” the audio stack is our own, one format per tier
 
 `SharpKind.Audio` no longer uses a third-party package. The emulator (6502,
 C64 bus, PSID reader, SID chip) is in `SharpKind.Emulation`, which Bubble
@@ -101,12 +101,12 @@ data (C64 Elite's sound engine) is how this repo always works.
 | Boop | sfxboop | `MA4`, `HME6`, `WA1` |
 | Dock | (none) | the C64 makes no docking sound |
 
-## Resolved (2026-09-27) — Bubble Bobble item 2d is split
+## Resolved (2026-09-27) â€” Bubble Bobble item 2d is split
 
 - **2d(i)**, the enemy shots and the Baron, can be proved now.
 - **2d(ii)**, the special bubbles, follows item 5, which first makes them.
 
-## Resolved (2026-09-27) — docking rings reach the corners
+## Resolved (2026-09-27) â€” docking rings reach the corners
 
 - **Extent of the widest ring**: still a circle (an ellipse was rejected), with
   a radius that reaches the viewport's corners, so the rings fill the whole
@@ -115,7 +115,7 @@ data (C64 Elite's sound engine) is how this repo always works.
   (`ViewportRight`, `ViewportBottom`), not one past it, and the moved golden
   frames are accepted.
 
-## Resolved (2026-09-18) — a rendition is an aesthetic tier, not a machine
+## Resolved (2026-09-18) â€” a rendition is an aesthetic tier, not a machine
 
 **8-bit means the look and feel of an 8-bit game.** Sixteen colours, a low
 screen resolution, synthesised sound, limited graphics. It does **not** mean
@@ -160,7 +160,7 @@ Elite having no music of its own does not mean the 8-bit tier must be
 silent.** What the BBC did is not the constraint; what an 8-bit machine sounds
 like is. Music on that tier is a presentation choice like any other.
 
-## Resolved (2026-09-17) — the character grid belongs to the screen, not to the base view
+## Resolved (2026-09-17) â€” the character grid belongs to the screen, not to the base view
 
 Supersedes the third bullet of
 [2026-07-31](#resolved-2026-07-31--viewlayout-is-the-viewport-and-8-bit-text-is-on-a-grid),
@@ -193,7 +193,7 @@ It is a `readonly record struct`, so a grid per call allocates nothing.
   `SnapToGrid` survive as one-line delegates, so none of the ~120 call sites
   moved and no golden frame could.
 - **The grid is not on `ViewLayout`.** `ViewLayout` is shared by both tiers,
-  and the 16-bit tier lays out in pixels with a proportional font — giving
+  and the 16-bit tier lays out in pixels with a proportional font â€” giving
   it a cell size would mean inventing one. A tier without a grid holds none.
 - **Bubble Bobble's `BbViewLayout` exposes two**, `Screen` and `Playfield`,
   the second originating at the level's own top-left so a view names the
@@ -207,7 +207,7 @@ that rule exists so the ports do not drift apart on arbitrary differences,
 and it is not a reason to copy a shape whose cost was already visible in
 three duplicated helpers. Convergence was the point, so Elite moved.
 
-## Resolved (2026-09-15) — the dashboard moves into the docs site
+## Resolved (2026-09-15) â€” the dashboard moves into the docs site
 
 One GitHub Pages site cannot have two publishers, and the repository had
 two candidates: the DocFX site
@@ -238,11 +238,11 @@ never run, so the checkout tolerates a missing `gh-pages` and the site gets a
 placeholder page at `/benchmarks/` until the first run records something.
 This was found while making the change, not before it.
 
-**The manual half stays manual.** Settings → Pages → Source must be changed
+**The manual half stays manual.** Settings â†’ Pages â†’ Source must be changed
 from `gh-pages` to GitHub Actions by hand, once. Until it is, the workflows
 behave exactly as before.
 
-## Resolved (2026-08-27) — goods are a plugin family, and failure is loud
+## Resolved (2026-08-27) â€” goods are a plugin family, and failure is loud
 
 Scoping the configurable-`StockType` roadmap item. The starting question was
 whether goods belong in the renditions; four calls came out of it, and the
@@ -250,8 +250,8 @@ last one is not about goods at all.
 
 **Goods are their own plugin family, not a rendition's property.** A
 rendition is presentation, and the trade screens are already goods-agnostic
-— `MarketRow` and `InventoryModel` carry name, units, price and counts as
-plain data, and both renditions loop over `model.Rows` — so a new goods set
+â€” `MarketRow` and `InventoryModel` carry name, units, price and counts as
+plain data, and both renditions loop over `model.Rows` â€” so a new goods set
 needs no rendition change whatever. Goods on `IRendition` would have made a
 rendition a whole game variant, forced both shipped ones to carry a copy of
 the classic table, and made "classic goods, 8-bit look" a third rendition.
@@ -263,7 +263,7 @@ door already exists and works.
 
 **A good is named, not numbered.** As with mission stages, a closed enum
 cannot name goods the game was never built against. Two ordinal
-dependencies have to go with it — the loot draw at `Combat.cs:350` and the
+dependencies have to go with it â€” the loot draw at `Combat.cs:350` and the
 market cursor at `MarketController.cs:41`.
 
 **Four ships keep naming their good.** `Alloy`, `EscapeCapsule`,
@@ -273,14 +273,14 @@ missing names listed. Tagging each good with the ship that drops it was
 considered and lost: an unfilled tag needs the same check, for more
 machinery.
 
-**Saves need no new field — they need a reason.** `SaveFile.IsValidStock`
+**Saves need no new field â€” they need a reason.** `SaveFile.IsValidStock`
 already rejects a save whose goods do not match the live market, by count
 and by name, so a file from another set is turned away correctly today. It
 just will not say why.
 
 **Which is the general complaint, and it is a defect.** Any validation
-failure — a missing asset, an unreadable config, a save the game will not
-take — must be logged *and* shown, and the app must never simply vanish. At
+failure â€” a missing asset, an unreadable config, a save the game will not
+take â€” must be logged *and* shown, and the app must never simply vanish. At
 the time of this decision `GameApp.Run` caught only around `game.Run()`, so
 a startup failure unwound through `Main` as a raw stack trace, and even the
 caught case reported to stderr, which a double-clicked app has nowhere to
@@ -291,10 +291,10 @@ of a dozen checks it had failed.
 The startup half: the composition moved inside the handler and the message
 reaches an SDL dialog as well as the console. The in-game half: the save's
 validation reports the field it rejected and why, so the goods check the
-item below added arrived already explaining itself — a file from another
+item below added arrived already explaining itself â€” a file from another
 economy now says which good is missing rather than reading as corrupt.
 
-### Follow-up (2026-08-27) — the goods plugin landed, and the save keeps its verdict
+### Follow-up (2026-08-27) â€” the goods plugin landed, and the save keeps its verdict
 
 Building it out settled two things the scoping left open.
 
@@ -325,7 +325,7 @@ startup naming any the set leaves out, and any id it repeats or blanks.
 `EliteRenditionAssetsServiceCollectionExtensions` - the same
 split-for-coupling the screen registrations already use.
 
-### Follow-up (2026-08-27) — the classic table is a file, not a literal
+### Follow-up (2026-08-27) â€” the classic table is a file, not a literal
 
 The maintainer asked for `ClassicGoodsSet` to stop hardcoding its seventeen
 wares and read them from JSON. That lands the config half of the original
@@ -357,7 +357,7 @@ Verified: the market drawn from the file differs from the market drawn from
 the literal in **zero pixels**, and a deliberately truncated `goods.json`
 stops the game with a dialog naming the file and the JSON position.
 
-### Follow-up (2026-08-27) — the market screen is controls, not a view
+### Follow-up (2026-08-27) â€” the market screen is controls, not a view
 
 The last step of the goods work, and the one that needed a decision rather
 than a mechanism. The goods being a plugin means **how many rows there are
@@ -410,7 +410,7 @@ Both screens are pixel-identical to their hand-drawn predecessors for the
 classic seventeen, which is what makes the whole rewrite checkable rather
 than merely plausible.
 
-## Resolved (2026-08-26) — the drawing gets its own dice
+## Resolved (2026-08-26) â€” the drawing gets its own dice
 
 Separating simulate from compose (item 2 of the frame-rate list) ran into
 something the audit had not found: **composition drew from the simulation's
@@ -430,15 +430,15 @@ more numbers and move the simulation.
 
 **Decided: the drawing gets its own stream.** `RenderRandom` is a distinct
 type, not a second `RNG` registration, so the two cannot be swapped at a
-constructor. It rides on `IEliteDraw.Jitter` — the entropy belongs to the
-surface being drawn on — which let every ship constructor drop its `rng`
+constructor. It rides on `IEliteDraw.Jitter` â€” the entropy belongs to the
+surface being drawn on â€” which let every ship constructor drop its `rng`
 parameter, thirty-seven files simpler. `ShipFactory` keeps the game's `RNG`
 for its own rolls and hands ships nothing.
 
 **Pre-rolling was considered and does not work.** Having the simulate pass
 roll the cosmetic values and the compose pass consume them would have kept
 the baselines byte-identical. But *how many* rolls happen depends on
-visibility, which is decided during projection — the very work being
+visibility, which is decided during projection â€” the very work being
 separated. The idea is self-defeating; it is recorded so it is not tried
 again.
 
@@ -451,7 +451,7 @@ RNG and deliberately leaves `RenderRandom` unseeded. If drawing ever
 influences the simulation again, the reproducibility test starts failing at
 random instead of the coupling going unnoticed.
 
-## Resolved (2026-08-26) — a rate is per second, whatever it costs
+## Resolved (2026-08-26) â€” a rate is per second, whatever it costs
 
 The 2026-07-27 decision below left Elite's frame rate item as a [LARGE]
 placeholder pending an audit. The audit is done and the item is now seven
@@ -462,7 +462,7 @@ rather than one.
 start until they separate: `EliteMain.Update` composes the whole frame while
 `Draw` only presents it, `Space.UpdateUniverseObject` moves each object and
 then draws it, `Stars`' three starfield passes advance the stars and emit
-their marks together, and — the one that surprised — `EliteDraw.DrawObject`
+their marks together, and â€” the one that surprised â€” `EliteDraw.DrawObject`
 *mutates game state while drawing*, setting `ShipProperties.Explosion`,
 seeding `ExpDelta` and advancing it four a frame. Drawing twice as often
 would have run the explosions twice as fast.
@@ -475,20 +475,20 @@ game-over hold to sound-effect lifetimes.
 
 **The rate model: true per-second rates at any `Fps`.** Snapping `Fps` to a
 whole multiple of 13.5 (27/54/108Hz) was the cheaper option and was
-considered — every per-tick counter would have stayed a whole number, the
+considered â€” every per-tick counter would have stayed a whole number, the
 work would have been sub-tick division rather than conversion, and the
 golden traces would have compared exactly. It was declined because it makes
 the `Fps` setting a lie: a player who asks for 60 gets 54.
 
 What that costs, recorded here so it is not re-litigated as a defect later:
 the constants being converted are faithful ports of 6502/TNK integer logic,
-and its semantics — `& 7`, `& 31`, the `±127` clamps, `RotateByteLeft` — do
+and its semantics â€” `& 7`, `& 31`, the `Â±127` clamps, `RotateByteLeft` â€” do
 not survive a rate change cleanly. **Elite's feel and difficulty change at
 60Hz.** That is the price of the decision, not a bug to tune away
 afterwards. The golden-trace harness that goes first therefore compares with
 tolerances, not exactly, from the third item onward.
 
-## Resolved (2026-08-06) — every control is bound, and nothing is told
+## Resolved (2026-08-06) â€” every control is bound, and nothing is told
 
 The 2026-08-05 split below said a widget may hold how it draws but not what is
 true, and `ComboBox` was built that way. `Label` was not: its `Text` was a
@@ -529,7 +529,7 @@ grew small private adapters (`ValueOf`, `Shown`) so their inner labels can show
 a value or a value-plus-cursor - a label shows a binding's *name*, and these
 are the same binding seen from another end rather than a copy of it.
 
-## Resolved (2026-08-05) — a widget owns the interaction, the binding owns the truth
+## Resolved (2026-08-05) â€” a widget owns the interaction, the binding owns the truth
 
 The settings screens were the first thing built out of the new `SharpKind.UI`
 library, and building them asked a question the widget shape kept failing to
@@ -538,7 +538,7 @@ opposite sides of the plugin door. Four shapes were tried before the split
 that works.
 
 **A widget may hold how it draws; it may not hold what is true.** That is the
-whole rule. `Label` keeps its bounds, its alignment and its colours — a brush,
+whole rule. `Label` keeps its bounds, its alignment and its colours â€” a brush,
 not the painting. `ComboBox` keeps no selected value at all: it reads its name,
 its values and its index through an `ISetting` at the moment it draws, and
 cycling assigns straight back through the same interface.
@@ -556,7 +556,7 @@ synchronises two copies, and the better move was to not have two.
 else; `IRendition.CreateSettingsListStyle` sits beside `CreateShipColours` and
 the planet renderers, which had already established that shape. The two
 `SettingsListView*` classes and the `SettingsListModel`/`SettingsRow` pair are
-gone — a screen whose tier-specific content is a set of numbers does not need
+gone â€” a screen whose tier-specific content is a set of numbers does not need
 an assembly's worth of drawing code in each rendition to express them.
 
 **The bindings absorbed two switch statements.** Each setting now names what it
@@ -565,8 +565,8 @@ one place: `EnumSetting<TEnum>`, `ToggleSetting`, `ChoiceSetting`, each wrapped
 in a `SavedSetting` that writes the config file. `SettingValue`/`ToggleSetting`
 and the index-to-value and value-to-effect switches they needed are gone.
 Labels are paired with values rather than indexed by ordinal, because a screen
-does not always offer every member of its enum — Game Settings offers three of
-`PlanetType`'s three but none of `PlanetStyle`'s wireframe — and does not always
+does not always offer every member of its enum â€” Game Settings offers three of
+`PlanetType`'s three but none of `PlanetStyle`'s wireframe â€” and does not always
 call them what the enum does.
 
 Consequences:
@@ -591,7 +591,7 @@ Consequences:
   [architecture-principles.md](architecture-principles.md) had to be reworded
   for. Converting them to the style-pack shape would close it.
 
-## Resolved (2026-08-03) — a missile arrives in a box, not a sphere
+## Resolved (2026-08-03) â€” a missile arrives in a box, not a sphere
 
 Missiles were slow to arrive and corkscrewed on the way, sometimes flying
 several passes before killing anything. Two explanations were tried against
@@ -624,7 +624,7 @@ sources for both games are now written down in
 that wins for Elite. The two readmes only link to it: they are for people who
 want to play the games.
 
-## Resolved (2026-08-03) — a modifier that decides is held, not pressed
+## Resolved (2026-08-03) â€” a modifier that decides is held, not pressed
 
 The Ctrl-M mission jump stopped M firing missiles. `IsPressed` is one-shot: it
 reports a press and consumes it. The jump's guard read M first and Ctrl second,
@@ -643,7 +643,7 @@ declined to run, and the missile handler polled an empty keyboard.
   that the real keyboard would have moved one row. The fake consumes now and
   those tests press per tick.
 
-## Resolved (2026-08-03) — a tier is a rendition, and a rendition draws everything
+## Resolved (2026-08-03) â€” a tier is a rendition, and a rendition draws everything
 
 The entry below put the screens behind the plugin door and left the rest of
 the drawing in the game. Finishing the job changed what the thing is called
@@ -711,7 +711,7 @@ Consequences:
   going through the same door as a stranger's, and it is the right price:
   the door is known to work rather than assumed to.
 
-## Resolved (2026-08-03) — the tiers are plugin assemblies too, behind one contracts assembly
+## Resolved (2026-08-03) â€” the tiers are plugin assemblies too, behind one contracts assembly
 
 > Superseded the same day by the entry above, which renamed all of this and
 > carried it further. The names here - `Views` folder, view pack, `IViewPack`,
@@ -726,8 +726,8 @@ and neither referenced by the game. Adding a third tier is an assembly, and no
 edit to the game's composition at all.
 
 **One contracts assembly, not one per plugin family.** The mission contracts
-assembly was renamed `EliteSharp.Abstractions` and subdivided by namespace —
-`Missions`, `Views`, `Assets`, `Ships` — rather than growing a project per
+assembly was renamed `EliteSharp.Abstractions` and subdivided by namespace â€”
+`Missions`, `Views`, `Assets`, `Ships` â€” rather than growing a project per
 family, which would be sprawl standing in for a folder. Note the price, which
 was accepted knowingly: the mission contracts were dependency-free on their
 own, and views need `IGraphics` and a palette to exist at all, so a mission
@@ -737,8 +737,8 @@ mission may touch is a namespace boundary now rather than a compile error.
 The calls that shaped it:
 
 - **`IViewSurface`, not `IEliteDraw`.** Views only ever used `Graphics`,
-  `Layout` and `Palette` — nothing called `DrawObject`, `Focus` or the
-  clip/render members — so the published surface is those three and
+  `Layout` and `Palette` â€” nothing called `DrawObject`, `Focus` or the
+  clip/render members â€” so the published surface is those three and
   `IEliteDraw` implements it. Projecting a ship and starting a frame stay on
   the game's side and are unreachable from a pack.
 - **A pack hands over a `ViewSet`, checked once at startup.** `Add<TModel>`
@@ -748,7 +748,7 @@ The calls that shaped it:
   screen short is a startup failure naming every missing screen at once, not a
   blank screen the commander finds later.
 - **The mission briefing is handed over separately.** It is the one screen that
-  answers back — where its tier puts the ship posing behind a briefing — so it
+  answers back â€” where its tier puts the ship posing behind a briefing â€” so it
   has its own factory method rather than being fished out of the set with a
   cast that could fail.
 - **A missing pack is fatal, unlike a missing mission.** No `Missions` folder
@@ -756,7 +756,7 @@ The calls that shaped it:
   game with nothing to draw at all, so the loader throws and names the tier.
 - **The laser's game state moved onto `PilotModel`.** `LaserDrawBase` read
   `GameState` for the wireframe setting and `RNG` for the beams' per-frame
-  jitter. Both now arrive on the model — the roll happens game-side because the
+  jitter. Both now arrive on the model â€” the roll happens game-side because the
   game owns the one source of entropy, and a view that rolled its own would not
   be reproducible. The geometry is already derived from the tier's scale, so
   the base sits with the contracts and only the beam colours are each pack's.
@@ -772,10 +772,10 @@ Consequences:
   the mission decision flagged as the thing to watch if the plugin model spread
   to views. It has. Still nothing configures either.
 - The views and their models became public API. The views themselves stay
-  internal to their pack — the game only ever sees an `IView` — with the tests
+  internal to their pack â€” the game only ever sees an `IView` â€” with the tests
   let in, the same arrangement `EliteSharp.Missions.Classic` uses.
 
-## Resolved (2026-08-02) — missions are plugin assemblies, not game code
+## Resolved (2026-08-02) â€” missions are plugin assemblies, not game code
 
 The mission stages were hardcoded, and adding a mission meant editing two
 enums, two controllers, two `Screen` values and four tier-specific views.
@@ -784,8 +784,8 @@ folder beside the executable. The two the game has always had went out with
 everything else, into `EliteSharp.Missions.Classic`, so the door a stranger
 would come through is the one the game itself uses.
 
-**Not a config file.** A mission carries behaviour — spawning a Constrictor,
-fitting an energy unit, being ambushed while carrying plans — so data alone
+**Not a config file.** A mission carries behaviour â€” spawning a Constrictor,
+fitting an energy unit, being ambushed while carrying plans â€” so data alone
 cannot express one without inventing a scripting language. This is the pilot
 for the backlog's [LARGE] data-driven game content model item; the answer for
 *content that acts* is an assembly, and only inert content (equipment, stock,
@@ -817,7 +817,7 @@ The calls that shaped it:
   inventing string namespaces for either would only let a mission ask for
   something that cannot be delivered.
 - **One briefing screen for every mission**, laid out from what a briefing
-  contains — a headline, how many paragraphs, whether somebody is pictured —
+  contains â€” a headline, how many paragraphs, whether somebody is pictured â€”
   never from which mission sent it. A plugin's mission cannot draw itself.
 
 Contract shapes that exist for a reason and should not be undone:
@@ -839,7 +839,7 @@ Contract shapes that exist for a reason and should not be undone:
 Consequences:
 
 - **The `Missions` folder is load-bearing.** Remove it and the game has no
-  missions, and a commander part-way through one is refused — the reject-and-log
+  missions, and a commander part-way through one is refused â€” the reject-and-log
   rule for a save naming a mission nothing provides. The app's build copies the
   plugin in on both `Build` and `Publish`.
 - **Commander files hold only the stages actually reached**, so a fresh
@@ -857,28 +857,28 @@ Consequences:
   chart, so Reesdice was named from anywhere in galaxy 0. A rumour is somebody
   in the station talking, and is now only said about the system underfoot.
 
-## Resolved (2026-08-01) — the 16-bit tier is a 12-bit, 4096-colour machine
+## Resolved (2026-08-01) â€” the 16-bit tier is a 12-bit, 4096-colour machine
 
 The 2026-07-30 decision that renamed the 16-bit palette to web colours is
 **backed out**. A web colour name is only worth having if the value really
 is that colour, and the constraint that actually governs this tier is not
 naming but **channel depth**: the 16-bit machines it stands in for drove a
-12-bit DAC — four bits each of red, green and blue, 4096 colours. So the
+12-bit DAC â€” four bits each of red, green and blue, 4096 colours. So the
 29 ramp names return, and every one of them is now a colour that hardware
 could produce:
 
 ```
-White FFFFFF · LighterGrey EEEEEE · LightGrey 888888 · Grey 777777 · DarkGrey 666666 · DarkerGrey 555555 · Black 000000
-Red 880000 · LightRed 991111 · LighterRed CC0000 · RedOrange FF3333 · Orange FF7733 · DarkOrange EE6622 · LightOrange FFBB77
-Gold FFBB33 · DarkYellow DD9911 · PaleYellow FFFF55 · LightYellow FFFFBB · Yellow FFFF00
-Green 008800 · LightGreen 88CC00 · LighterGreen 66EE22 · LightBlue 115599 · Cyan 00FFFF
-Blue 000088 · DarkBlue 111199 · Purple 444488 · BrightPurple BB55EE · Lilac EEAAEE
+White FFFFFF Â· LighterGrey EEEEEE Â· LightGrey 888888 Â· Grey 777777 Â· DarkGrey 666666 Â· DarkerGrey 555555 Â· Black 000000
+Red 880000 Â· LightRed 991111 Â· LighterRed CC0000 Â· RedOrange FF3333 Â· Orange FF7733 Â· DarkOrange EE6622 Â· LightOrange FFBB77
+Gold FFBB33 Â· DarkYellow DD9911 Â· PaleYellow FFFF55 Â· LightYellow FFFFBB Â· Yellow FFFF00
+Green 008800 Â· LightGreen 88CC00 Â· LighterGreen 66EE22 Â· LightBlue 115599 Â· Cyan 00FFFF
+Blue 000088 Â· DarkBlue 111199 Â· Purple 444488 Â· BrightPurple BB55EE Â· Lilac EEAAEE
 ```
 
 - **Widen a channel by replication, never a left shift.** A 4-bit `0xE`
   becomes `0xEE`, not `0xE0`. The shift is the tempting one-liner and it is
   wrong: it can never reach `0xFF`, so a tier using it has no true white.
-  The art settled this on its own — 109 of the 145 colours in the 16-bit
+  The art settled this on its own â€” 109 of the 145 colours in the 16-bit
   bitmaps were already replicated values and only 2 were shifted ones.
 - **The old ramp values were shifted, so the names cost nothing to
   restore.** 23 of the 29 were `E0`/`B0`/`70`-style truncations, meaning
@@ -888,15 +888,15 @@ Blue 000088 · DarkBlue 111199 · Purple 444488 · BrightPurple BB55EE · Lilac 
 - **Three needed a judgement call.** `BrightPurple` (B855F6) and
   `PaleYellow` (FFFF5C) went to their nearest level. `Grey` (727272) and
   `DarkGrey` (707070) both round to `777777`, and 12 bits has nothing
-  between 7 and 8, so the neutral ramp was re-spaced one step down —
-  `DarkerGrey` 555555, `DarkGrey` 666666, `Grey` 777777 — to keep four
+  between 7 and 8, so the neutral ramp was re-spaced one step down â€”
+  `DarkerGrey` 555555, `DarkGrey` 666666, `Grey` 777777 â€” to keep four
   distinct greys.
 - **Enforced at startup, for the palette and the art alike.**
   `AssetColourBudget.ChannelBits`/`IsOnGrid` and `AssetSet.Load` fail the
   game on any colour between the tier's levels, naming the asset and the
   value. This is a separate rule from `PaletteNamesEveryColour`, which
   stays false for 16-bit: the tier is still direct-colour, so a bitmap need
-  not use a *named* colour — it just has to use a *producible* one.
+  not use a *named* colour â€” it just has to use a *producible* one.
 - **36 bitmap colours were repainted to comply**, mostly `elitetext.bmp`'s
   anti-aliased grey ramp and the HUD art (then `scanner.bmp`, now
   `hud.bmp`). The ramp loses a few steps
@@ -904,15 +904,15 @@ Blue 000088 · DarkBlue 111199 · Purple 444488 · BrightPurple BB55EE · Lilac 
   Stunt Car Racer shares the tier and its `menu.bmp` was repainted the same
   way; its palette was already on the grid.
 - **The 8-bit tier is unaffected.** Its limit is the 16-entry palette, not
-  channel depth, so `ChannelBits` is 8 there and its web colour names — the
-  2026-07-30 decision below — stand.
+  channel depth, so `ChannelBits` is 8 there and its web colour names â€” the
+  2026-07-30 decision below â€” stand.
 
-## Resolved (2026-08-01) — widescreen is a modern-tier concern only
+## Resolved (2026-08-01) â€” widescreen is a modern-tier concern only
 
 The 8-bit and 16-bit tiers are **fixed-width**: each has one resolution
 (320x256 and 640x512) and its screens are laid out for it. The widescreen
 variants sketched in the 2026-07-24 multi-resolution decision above are
-**dropped for those two tiers** — only the modern tier, being vector-based
+**dropped for those two tiers** â€” only the modern tier, being vector-based
 rather than tied to a bitmap set, supports widescreen.
 
 Consequences:
@@ -931,7 +931,7 @@ Consequences:
 - Widescreen layout for the modern tier is designed when that tier is,
   against vector chrome, and inherits nothing from these two.
 
-## Resolved (2026-07-31) — `ViewLayout` is the viewport, and 8-bit text is on a grid
+## Resolved (2026-07-31) â€” `ViewLayout` is the viewport, and 8-bit text is on a grid
 
 > Superseded in part by
 > [2026-09-17](#resolved-2026-09-17--the-character-grid-belongs-to-the-screen-not-to-the-base-view):
@@ -939,14 +939,14 @@ Consequences:
 
 `ViewLayout` described its metrics partly against the border and partly
 against the scanner, which made every position two subtractions away from
-what it meant. It now describes **one region, the viewport** — everything
-above the HUD — starting at the screen origin:
+what it meant. It now describes **one region, the viewport** â€” everything
+above the HUD â€” starting at the screen origin:
 
 - **`BorderWidth`, `ScannerTop`, `ScannerLeft` and `ScannerRight` are
   gone.** The border's width belongs to the base view that draws the
   frame; the scanner's geometry belongs to `ScannerBase`. Both tiers'
   scanners are full-width, so `ScannerLeft` was always 0 and
-  `ScannerRight` always `ScreenWidth - 1` — screen edges wearing the HUD's
+  `ScannerRight` always `ScreenWidth - 1` â€” screen edges wearing the HUD's
   name. `Offset` went with them, having been an exact duplicate of
   `ScannerLeft` across ~90 call sites.
 - **The border overlays the viewport's outer pixel rather than being
@@ -969,18 +969,18 @@ level that everything drawn in a tick relies on, and making lasers,
 planets, suns, stars and ships each police the viewport themselves would
 reimplement in six places what `DrawPixel` already does once.
 
-## Resolved (2026-07-30) — the 8-bit palette is sixteen web colour names
+## Resolved (2026-07-30) â€” the 8-bit palette is sixteen web colour names
 
 The 8-bit palette was a set of 29 relative ramp names (`LighterGrey`,
-`DarkerGrey`, `Gold`, `Lilac`, `RedOrange`…) mapped onto whatever values
+`DarkerGrey`, `Gold`, `Lilac`, `RedOrange`â€¦) mapped onto whatever values
 the art happened to use, inherited from the 16-bit palette when the tier
 was stood up. It is now **sixteen entries, each a CSS/HTML colour name at
 its exact web value**:
 
 ```
-White FFFFFF · LightGray D3D3D3 · DarkGray A9A9A9 · Gray 808080 · DimGray 696969 · Black 000000
-Red FF0000 · Orange FFA500 · Yellow FFFF00 · Brown A52A2A
-Green 008000 · LightGreen 90EE90 · Blue 0000FF · LightBlue ADD8E6 · Cyan 00FFFF · Purple 800080
+White FFFFFF Â· LightGray D3D3D3 Â· DarkGray A9A9A9 Â· Gray 808080 Â· DimGray 696969 Â· Black 000000
+Red FF0000 Â· Orange FFA500 Â· Yellow FFFF00 Â· Brown A52A2A
+Green 008000 Â· LightGreen 90EE90 Â· Blue 0000FF Â· LightBlue ADD8E6 Â· Cyan 00FFFF Â· Purple 800080
 ```
 
 - **Names are absolute, not relative.** A ramp name only means anything
@@ -991,8 +991,8 @@ Green 008000 · LightGreen 90EE90 · Blue 0000FF · LightBlue ADD8E6 · Cyan 00F
   machine's colour set rather than an alias table over it. Every 8-bit
   bitmap colour is one of these sixteen, enforced at startup.
 - **The two tiers no longer share a name set**, which is what forced the
-  models to become tier-varying (see asset-structure.md). That cost —
-  duplicating 31 `.obj` files per tier — was accepted as the price of
+  models to become tier-varying (see asset-structure.md). That cost â€”
+  duplicating 31 `.obj` files per tier â€” was accepted as the price of
   the palette meaning what it says.
 - **`DimGray` was added late, replacing `Magenta`.** Five neutral steps
   above black let `DarkerGrey`'s 48 model faces map to a dark grey rather
@@ -1000,10 +1000,10 @@ Green 008000 · LightGreen 90EE90 · Blue 0000FF · LightBlue ADD8E6 · Cyan 00F
   hull. `Magenta` was earning nothing once the mining laser moved to
   `Purple`.
 - UK spelling is the repo standard, but these are **proper nouns from the
-  CSS specification** and keep its spelling — `Gray`, not `Grey`. The
+  CSS specification** and keep its spelling â€” `Gray`, not `Grey`. The
   16-bit palette keeps its ramp names and its `Grey` spelling unchanged.
 
-## Resolved (2026-07-29) — `Focus` follows screen height
+## Resolved (2026-07-29) â€” `Focus` follows screen height
 
 Revises one bullet of the 2026-07-28 tier presentation decision below,
 which derived `Focus` from the screen *width*. Everything else in that
@@ -1015,20 +1015,20 @@ decision stands.
 - The width-derived version holds the *horizontal* field of view
   constant instead, which is the wrong invariant once the width and
   height differ: with `Focus = width`, the vertical field of view is
-  `2·atan(height / 2·width)`, so it narrows as the screen widens. That
+  `2Â·atan(height / 2Â·width)`, so it narrows as the screen widens. That
   is why the trial widening of the 16-bit tier to 640x512 (2026-07-29,
-  see the backlog) made the planet fill the front view — a 25% longer
+  see the backlog) made the planet fill the front view â€” a 25% longer
   focal length and less visible above and below.
 - It also fixes a live inconsistency rather than only a future one. The
   8-bit tier is 320x256, so today its `Focus` is 320 while its `Scale`
-  is exactly half the 16-bit tier's — the 3D view is not the half-size
+  is exactly half the 16-bit tier's â€” the 3D view is not the half-size
   rendering the rest of the tier is, and its vertical field of view is
   already narrower than 16-bit's. Height-derived `Focus` makes it 256,
   exactly half, consistent with `Scale`.
-- No effect at 512x512, where width and height are equal — which is
+- No effect at 512x512, where width and height are equal â€” which is
   also why the 16-bit tier reproduces unchanged.
 
-## Resolved (2026-07-28) — tier presentation architecture
+## Resolved (2026-07-28) â€” tier presentation architecture
 
 - **`Scale` magnifies the window, it does not scale the drawing.** A tier
   renders at its own native resolution and `Scale` only decides how large
@@ -1036,7 +1036,7 @@ decision stands.
   2 fills a 640x512 window showing the same 320x256 pixels doubled. The
   graphics themselves do not change. This restates the pixel-doubling rule
   from the 2026-07-27 multi-resolution decision below, which had been
-  misread as a coordinate multiplier — see the backlog item retiring
+  misread as a coordinate multiplier â€” see the backlog item retiring
   `EliteDraw.Scale`'s current meaning.
 - **Views are per tier, not shared and scaled.** A single scale factor
   cannot serve a Modern tier whose resolution is arbitrary and need not be
@@ -1047,8 +1047,8 @@ decision stands.
 - **Shared behaviour lives in an MVC split.** Duplicating whole views per
   tier would duplicate the data and formatting rules with them, so the
   per-screen model (game data, formatting) and controller (input,
-  navigation) are shared and only the view — pure presentation, drawing
-  only — varies per tier. **[LARGE]** — see the backlog items below.
+  navigation) are shared and only the view â€” pure presentation, drawing
+  only â€” varies per tier. **[LARGE]** â€” see the backlog items below.
 - **Every screen gets a per-tier view**, not just the ones that look like
   they need it. They live in `Views/<Tier>/` with a tier-suffixed class
   name (`Views/EightBit/CommanderStatusView8Bit.cs`) to avoid clashes.
@@ -1061,7 +1061,7 @@ decision stands.
   projection currently folds the view centre and the zoom into one
   integer `Scale`
   (`((x * 256 / z) + (Centre.X / 2)) * Scale`), which only lands the
-  scene in the middle of the screen when `Scale` is exactly 2 — at 8-bit
+  scene in the middle of the screen when `Scale` is exactly 2 â€” at 8-bit
   it centres the view a quarter of the way across. Decided: separate the
   two, so projection becomes `Centre + (x * Focus / z)` with `Centre` the
   real centre of the 3D viewport and `Focus` a float. `Focus` is derived
@@ -1069,13 +1069,13 @@ decision stands.
   16-bit exactly (512 x 1.0) and works at any Modern resolution without
   needing to be a multiple of anything. **Superseded 2026-07-29 on which
   dimension it follows**: this said width, holding the horizontal field
-  of view constant; it is height, holding the vertical one constant —
+  of view constant; it is height, holding the vertical one constant â€”
   see the decision at the top of this file.
 - **Elite first, then SCR.** SCR inherits the `Tier` setting from
   the shared `EngineConfigSettings` but nothing reads it yet; that is
   fine for now.
 
-## Resolved (2026-07-28) — asset structure for the tier system
+## Resolved (2026-07-28) â€” asset structure for the tier system
 
 Follows on from the multi-resolution tier decision of 2026-07-27 below,
 settling how assets are laid out and constrained per tier. Full design in
@@ -1092,13 +1092,13 @@ settling how assets are laid out and constrained per tier. Full design in
 - **Bitmap formats not restricted**: `BitmapReader`'s 32bpp-only,
   fixed-header assumption is replaced by a real BMP decoder (1/4/8/24/
   32bpp, real data offset, row padding, top-down), plus PNG support
-  hand-rolled on `ZLibStream` — no third-party dependency, stays pure
+  hand-rolled on `ZLibStream` â€” no third-party dependency, stays pure
   managed for the Software backend and headless tests.
 - **Colour budgets**: 16 distinct opaque colours for the 8-bit tier,
   4096 for the 16-bit tier; modern is unrestricted 32bpp. Counted as
   distinct values only (no quantisation to a 12-bit or 9-bit space), and
   capped over the union of one game's whole asset set for the active
-  tier — per game, not per image. Transparent pixels are excluded; alpha
+  tier â€” per game, not per image. Transparent pixels are excluded; alpha
   must be 0 or 255.
 - **Enforced eagerly**: assets are never loaded on demand. A single
   eager `AssetSet` load in `SharpKind.Assets` replaces the separate loads in
@@ -1117,7 +1117,7 @@ settling how assets are laid out and constrained per tier. Full design in
   frame inside `Update` at a fixed 13.5Hz (authentic to The New Kind), so
   raising `Fps` today draws nothing new above the tick rate. Decided:
   Elite should compose (draw) frames at the configured `Fps` setting
-  itself — not by interpolating between fixed 13.5Hz ticks. This means
+  itself â€” not by interpolating between fixed 13.5Hz ticks. This means
   anything currently timed against the 13.5Hz update tick (tactics/AI
   pacing in `Space.UpdateUniverse`, animations, etc.) needs auditing and
   reworking so it stays correct when `Fps` differs from 13.5Hz.
@@ -1127,14 +1127,14 @@ settling how assets are laid out and constrained per tier. Full design in
 - **UI/graphics scale model**: the existing `Scale` setting is untested
   and buggy. Decided: scale is **per-element and game-aware**, not a
   single discrete multiplier applied only at the framebuffer/present
-  layer — game code needs to know about scale for individual elements.
+  layer â€” game code needs to know about scale for individual elements.
   This aligns with the existing Scale/centring cleanup already in
   backlog-roadmap.md's Could section (move scale policy out of
   `SharpKind.Graphics` into the game).
 - **Data-driven game content**: `EquipmentType`, `StockType`, ship
   definitions, and similar currently hardcoded/`AssetManifest.json`-driven
   game data (including `ShipFactory.CreateShipFromName`'s reflection-based
-  construction) should move to a proper config-driven model. **[LARGE]** —
+  construction) should move to a proper config-driven model. **[LARGE]** â€”
   design/scope the config shape in a follow-up session; this is now a
   commitment, not just a spike question.
 - **Multi-resolution tier system** (supersedes the "Elite at non-512x512
@@ -1147,31 +1147,31 @@ settling how assets are laid out and constrained per tier. Full design in
     tied to a fixed bitmap resolution
 
   Both games get all tiers (not one tier per game). Scaling between
-  tiers is integer-based pixel-doubling (e.g. 320x256 → 640x512 is
-  exactly 2x, rendered blocky using the 8-bit bitmaps scaled up — not
+  tiers is integer-based pixel-doubling (e.g. 320x256 â†’ 640x512 is
+  exactly 2x, rendered blocky using the 8-bit bitmaps scaled up â€” not
   the native 16-bit bitmaps). `AssetManager` needs to support multiple
   asset "systems"; config needs a per-game system-type + scale setting.
-  **[LARGE]** — supersedes and expands the existing "Elite at
+  **[LARGE]** â€” supersedes and expands the existing "Elite at
   non-512x512 resolutions" and SCR widescreen items in
   backlog-roadmap.md's Could section; re-scope those items against this
   scheme before starting either.
 
-## Resolved (2026-07-24) — benchmark history tracking
+## Resolved (2026-07-24) â€” benchmark history tracking
 
 Decided: use [benchmark-action/github-action-benchmark](https://github.com/benchmark-action/github-action-benchmark)
 against BenchmarkDotNet's `[JsonExporterAttribute.FullCompressed]` output,
 storing history on a `gh-pages` branch (one chart per benchmark class, kept
 apart by the action's `name` input), triggered manually via
-`workflow_dispatch` only — not on every push/PR, since shared GitHub-hosted
+`workflow_dispatch` only â€” not on every push/PR, since shared GitHub-hosted
 runners are too noisy for benchmark numbers to gate CI, and this repo has no
 regression-alerting need yet. Implemented in
 [.github/workflows/benchmarks.yml](https://github.com/aphawkins/the-sharp-kind/blob/main/.github/workflows/benchmarks.yml).
 One-time manual follow-up outside of code: after the workflow's first run
-creates the `gh-pages` branch, enable it under repo Settings → Pages →
+creates the `gh-pages` branch, enable it under repo Settings â†’ Pages â†’
 Source, to get a browsable dashboard (the history is recorded either way;
 this only makes it visible).
 
-## Resolved (2026-07-19) — ptitSeb parity audit
+## Resolved (2026-07-19) â€” ptitSeb parity audit
 
 A full feature-by-feature comparison of `C:\code\github\ptitSeb\stuntcarremake`
 (the definitive conversion source) against `StuntCarRacerSharpLib` was run on
@@ -1195,7 +1195,7 @@ functionality. Conclusions:
   hardcoded FALSE, "won't implement chains at first"); ptitSeb instead
   drops the car above its current piece after 64 off-track frames. The
   port's crane chain-recovery (commit 7039a11) deliberately goes beyond
-  ptitSeb toward the Amiga original — keep it.
+  ptitSeb toward the Amiga original â€” keep it.
 - **racewin/racelost/wrecked/heads/menu bitmaps**: present in ptitSeb's
   `Bitmap/` but never loaded by its code (upstream commit 7ad79f7 "More
   bitmaps, but not pluged in yet"). menu.png is already wired up in the
@@ -1211,9 +1211,11 @@ functionality. Conclusions:
 
 ## Resolved (2026-09-29)
 
-- **Bubble Bobble's banner**: the 8-bit rendition is 320x256, a 56-line banner
-  above the C64's 200 lines. It is house chrome, outside the fidelity rule, so
-  comparisons with the C64 crop to the 200 lines below it.
+- **Bubble Bobble's banner**: the 8-bit rendition is 320x200, the C64's own
+  resolution. The 56-line banner is the title screen's logo only, drawn over
+  the seven rows above its credits. It is house chrome, outside the fidelity
+  rule, and every other screen is the C64's pixel for pixel. (Superseded the
+  320x256 layout with the banner above every screen, 2026-10-17.)
 
 ## Resolved (2026-07-11)
 
@@ -1226,5 +1228,5 @@ functionality. Conclusions:
 - **NuGet packaging of `SharpKind.*`**: defer until an external consumer
   exists.
 - **Elite Intro2 parade**: keep mission ships (Cougar, Constrictor, Lone
-  variants) out of the parade — status quo confirmed intentional, not a bug
+  variants) out of the parade â€” status quo confirmed intentional, not a bug
   (see Won't in backlog-roadmap.md).

@@ -116,7 +116,7 @@ has the detail.
 - [x] Assets: `levels.json`, `zones.json` and eleven `.tga` sheets, plus the
       Pepto palette (`palette.json`, with `c64-pepto-colodore.png` as its
       source). A sheet's pixels are C64 entry numbers; `MulticolourSheet`
-      repaints entries 1–3 at draw time. Multicolour sheets are half width and
+      repaints entries 1â€“3 at draw time. Multicolour sheets are half width and
       are doubled when drawn.
 - [x] `PlayfieldModel`/`PlayfieldView8Bit`: the level is the leftmost 32 of 40
       columns, 25 rows (ceiling and floor from `wrapOpenings`), with the two
@@ -129,8 +129,8 @@ has the detail.
 
 **Players** (state 1 only)
 
-- [x] `Input`, `PlayerTable`, `EntityTable` (eight slots: players 0–1, enemies
-      2–7), `PlayerCell` (`$E9B8`), `SolidMap` (bit 7 solid, low two bits the
+- [x] `Input`, `PlayerTable`, `EntityTable` (eight slots: players 0â€“1, enemies
+      2â€“7), `PlayerCell` (`$E9B8`), `SolidMap` (bit 7 solid, low two bits the
       bubble current), `PlayerModel`/`PlayerView8Bit` (`$1805`; now
       `SpriteModel`/`SpriteView8Bit`, all eight slots).
 - [x] `PlayerFrame` (`$1CBD`, `$1E6C`, `$2162`), `PlayerMovement` (`$220C`,
@@ -145,7 +145,7 @@ has the detail.
 
 - [x] `BubbleBlow` (`$22E8`, `$2301`): a bubble appears three frames after
       fire. `EntityMover` (`$0E23`). `ObjectTable` is the eighteen slots.
-- [x] `EnemyAiLoop` (`$0CF2`), `EnemyDispatcher` (`$0F48`–`$0F98`),
+- [x] `EnemyAiLoop` (`$0CF2`), `EnemyDispatcher` (`$0F48`â€“`$0F98`),
       `BubbleCollision` (`$105B`, `$1090`), `EntityTimers` (`$13BE`: clock,
       wobble, timeout pop), `BbRandom` (`$E9EA`).
 - [x] The bubble current comes from the map: zone rectangles give it, every
@@ -153,15 +153,15 @@ has the detail.
       and 24 take `bubbleCurrent`, and other rows take the wall-bitmap byte.
 - [x] `EnemySpawner` (`$1E2E`, `$39D2`), `SolidMap` row copy (`$3A6C`),
       `DiagonalMover` and wrap openings (`$EFC0`), `EnemyFrame` (`$1CBD` for
-      slots 2–7) with every enemy class, anger (`$1D03`), and `Baron` (`$1473`).
+      slots 2â€“7) with every enemy class, anger (`$1D03`), and `Baron` (`$1473`).
 
 **Items and scoring**
 
 - [x] `FoodDrop`: a popped enemy flies (`$0B`), falls (`$0C`), becomes food
       (`$11`, one slot per frame) and waits `$C8` passes (`$12`). `Scores`
-      (`$0400`–`$0405`, `$7C26`) does the 6510's decimal add, so `$A79A`'s
+      (`$0400`â€“`$0405`, `$7C26`) does the 6510's decimal add, so `$A79A`'s
       out-of-table `$0A` scores `$10`.
-- [x] `BubblePop` (`$E90E`'s vectors for types `$34`–`$40`): chain pops within
+- [x] `BubblePop` (`$E90E`'s vectors for types `$34`â€“`$40`): chain pops within
       `$18` pixels, lets caught enemies out dead, gives EXTEND letter bits,
       runs the pop frames, and scores a chain once it stops (`$E97F`).
 - [x] `LevelItems` (`$2B31`, `$1578`, `$2CB7`, `$06C6`): a bonus food and a
@@ -179,7 +179,7 @@ Each item ends with how it is proved.
 - [x] **1. Run the game loop.** `GameLoop` calls every translated routine in
       the reference's order; `BubbleBobbleMain` holds it, and the HUD shows
       `Scores`.
-      - Level start (`$09DC`–`$0A05`): map, enemy spawn, players, and
+      - Level start (`$09DC`â€“`$0A05`): map, enemy spawn, players, and
         `LevelItems.Setup` (level 100's are `BossFight`'s).
       - A pass (`$0A07`): `$1578`, `$0A28`, `$E90E` pop, `$0CF2`, `$13BE`,
         `$2CB7`; `$06C6` every 25 passes; then `$1CBD`, enemies then players.
@@ -207,18 +207,18 @@ Each item ends with how it is proved.
         frame, and `BubbleCollision`'s `$AB81` table is caught-enemy frames,
         not scores. Proved by hand in `BubblePopTests`.
       - [x] **2b. Enemies and caught enemies**, through `$1805`: the hardware
-        sprite path, for slots 2–7 as well as 0–1. The pointer is
+        sprite path, for slots 2â€“7 as well as 0â€“1. The pointer is
         `(Frame & $1F) + $8598`, in the VIC bank at `$4000`.
         - [x] **Where the enemy art is.** `EnemySpawner`'s `$8598` table is
           indexed by state (class + 2), so its first two bytes (`$03`, `$0F`)
           are never an enemy's; the enemy bases are `$73`, `$7F`, `$8B`,
           `$97`, `$9F`, `$AB`, `$B3`, `$BB`. Measured over the whole port (every
           level, three seeds, 3,000 passes, the `GameLoopTests` stick), every
-          enemy pointer in every state (walking `$02`–`$09`, caught `$0A`,
-          popped `$0B`/`$0C`, food-bound `$11`) lies in `$73`–`$BF`, all
-          inside `sprites-game.tga` (`$60`–`$C0`). No per-level sprite set is
+          enemy pointer in every state (walking `$02`â€“`$09`, caught `$0A`,
+          popped `$0B`/`$0C`, food-bound `$11`) lies in `$73`â€“`$BF`, all
+          inside `sprites-game.tga` (`$60`â€“`$C0`). No per-level sprite set is
           needed. Caught enemies (`$0A`) only showed pointer `base + 0`.
-          Food (`$12`) uses `$F4`–`$F9` from base `$F2`: `$7C80`–`$7E7F`,
+          Food (`$12`) uses `$F4`â€“`$F9` from base `$F2`: `$7C80`â€“`$7E7F`,
           which `$2921` fills at run time, so food waits for `$2921`. Not
           reached by the run: the Baron (`$1473`), since the hurry-up is
           untranslated.
@@ -239,7 +239,7 @@ Each item ends with how it is proved.
           (pointer `$7E`), popped enemies (`$0B`/`$0C`), and every other class
           walking. `SpriteView8BitGoldenTests` matches every opaque pixel, and
           `$1805`'s registers. Level 1 has only class 0, so the other classes
-          are an intervention: `$8598` was written for slots 2–7 before each
+          are an intervention: `$8598` was written for slots 2â€“7 before each
           pass. The protocol: bytes at `$1843` (`$1805`'s `rts`), then the frame
           at the next `$1805`. The sprite registers have held for a whole frame
           by then, and they read the same at both stops in every sample.
@@ -258,23 +258,23 @@ Each item ends with how it is proved.
           `$D015` writers (`level-transition.s`, `render-screen.s`,
           `special-enemies.s`), which are not translated.
       - [x] **2c. Bubbles and pop frames**, drawn as software sprites. Each is a
-        3×16 character-column graphic (12×16 multicolour pixels) and a mask,
+        3Ã—16 character-column graphic (12Ã—16 multicolour pixels) and a mask,
         composed as `(background AND mask) OR graphic`, in the level's
         character colours (as `MulticolourSheet`).
-        - `$E779` (types `$00`–`$14`): entry `type×2 + $A9C4` in
-          `$AA54`/`$AA8E` (graphic) and `$AAC8`/`$AB02` (mask). Entries 0–11,
+        - `$E779` (types `$00`â€“`$14`): entry `typeÃ—2 + $A9C4` in
+          `$AA54`/`$AA8E` (graphic) and `$AAC8`/`$AB02` (mask). Entries 0â€“11,
           the plain bubble, point into `$8000`, so their graphics are in
           `bubble-masks.tga`, one bit per pixel, read in pairs. Entries 12
           onwards are in `software-sprites.tga` (16-row strips of 4-pixel byte
-          columns). Masks for entries 12–43 cycle `$83C0`–`$8450` by `$A9C4`.
+          columns). Masks for entries 12â€“43 cycle `$83C0`â€“`$8450` by `$A9C4`.
         - Pop frames (`$3CE5`): `$AB41`/`$AB49` indexed by `$A9C4` or 4 (the
           later frames), with one mask, `$8260`, for all three columns. The
           graphics are at `bubble_anim_masks` in `sprites2-tables.s`, which is
           not exported yet.
-        - Position: the box's left is `$DC × 8`; the graphic is pre-shifted by
-          `$A9C4 × 2` inside it, so the art's left is `X − $14`, exactly, in
+        - Position: the box's left is `$DC Ã— 8`; the graphic is pre-shifted by
+          `$A9C4 Ã— 2` inside it, so the art's left is `X âˆ’ $14`, exactly, in
           every VICE sample. The first character row composed is screen row
-          `$EE − 2` (`$AD22` is row 0) and the box builds upwards; the
+          `$EE âˆ’ 2` (`$AD22` is row 0) and the box builds upwards; the
           graphic's bottom row is at pixel `($A9D6 + 7) & 7` of that row.
         - The screen is double-buffered: record bytes at `$0A4B` and read the
           frame at the `$E90E` after next (see the proof below).
@@ -283,22 +283,22 @@ Each item ends with how it is proved.
         - [x] **Compose `object-sprites.tga`.** Done in
           `tools/bb/export-csharp-assets.py` (`export_object_sprites` and
           helpers): gets the ROM bytes with rebb64's own
-          `convert_bubble_masks` (8×16) and `convert_software_sprites`
-          (4×16), and parses the pop frames from `sprites2-tables.s`
-          (`bubble_anim_masks`, `$8960`–`$8AFF`, 26 blocks of 16; frame k is
-          three blocks at `+$20 + $30k`). Writes one 12×16 cell per entry
-          (entries 0–43, then pop frames 0–7), all in a single row (index
+          `convert_bubble_masks` (8Ã—16) and `convert_software_sprites`
+          (4Ã—16), and parses the pop frames from `sprites2-tables.s`
+          (`bubble_anim_masks`, `$8960`â€“`$8AFF`, 26 blocks of 16; frame k is
+          three blocks at `+$20 + $30k`). Writes one 12Ã—16 cell per entry
+          (entries 0â€“43, then pop frames 0â€“7), all in a single row (index
           `i`'s cell is at x = `12i`). Per bit-pair, mask 11 keeps the
           background (index 0, transparent, regardless of the graphic - a
           masked pixel's leftover graphic data is normal and not reported);
-          mask 00 takes the graphic (graphic 00 → index 4, opaque black, a
+          mask 00 takes the graphic (graphic 00 â†’ index 4, opaque black, a
           fifth colour-map entry that borrows canonical colour 0's RGB but
           keeps its own alpha). Any other mask value is reported, not
           guessed at - none occurred. Memory map: masks `$8000`; software
-          sprites `$8F00`. Graphic pointers: entry e<12 `$8000+$30e`; 12–14
-          `$9080`; 15–19 `$9110`; 20–23 `$9200`; 24–26 `$9480`; 27–31
-          `$9510`; 32–37 `$9600`; 38–42 `$9720`; 43 `$9810` (each `+$30` per
-          entry). Masks: e<12 `$8240+$30e`; e≥12
+          sprites `$8F00`. Graphic pointers: entry e<12 `$8000+$30e`; 12â€“14
+          `$9080`; 15â€“19 `$9110`; 20â€“23 `$9200`; 24â€“26 `$9480`; 27â€“31
+          `$9510`; 32â€“37 `$9600`; 38â€“42 `$9720`; 43 `$9810` (each `+$30` per
+          entry). Masks: e<12 `$8240+$30e`; eâ‰¥12
           `[$83C0,$83F0,$8420,$8450][e&3]`.
           - **Pop frames are composed without any mask.** `$3CE5`
             (`entity-state-tables.s`) points every pop frame's AND-mask
@@ -307,8 +307,8 @@ Each item ends with how it is proved.
             0's small bubble never reaches that column. Composited through
             it, every pop frame would be blank. `bubble_anim_masks`' bytes
             only ever hold 0 or 3 per bit-pair, which decodes clean into a
-            spinning-spark burst shape with no masking at all (0 →
-            transparent, 3 → colour 3 directly) - checked by eye against
+            spinning-spark burst shape with no masking at all (0 â†’
+            transparent, 3 â†’ colour 3 directly) - checked by eye against
             all eight frames, not guessed. The AND/OR compositing that
             `sprite-composer.s`'s comments describe is a C64 technique for
             blending a sprite into an arbitrary sub-character screen row (it
@@ -320,10 +320,10 @@ Each item ends with how it is proved.
           into `object-sprites.tga`, or `NotDrawn`) is computed from the type
           read at the start of `Step`, before that same call mutates it -
           since the screen shows the drawing made before `$0CF2` moves
-          anything: `$00`–`$14` → entry `type×2+$A9C4` (a `$16` becomes `$00`
+          anything: `$00`â€“`$14` â†’ entry `typeÃ—2+$A9C4` (a `$16` becomes `$00`
           first, since `$7BD4` converts the type before drawing it); `$34`,
-          `$3A`, `$3C` → pop `0|$A9C4`; `$3E`, `$40` → pop `4|$A9C4`; nothing
-          for `$18`–`$22`, `$36`, `$38`, `$42`, `$48`, `$4A`, or any type not
+          `$3A`, `$3C` â†’ pop `0|$A9C4`; `$3E`, `$40` â†’ pop `4|$A9C4`; nothing
+          for `$18`â€“`$22`, `$36`, `$38`, `$42`, `$48`, `$4A`, or any type not
           matched (item 2d's specials). Not renamed to `ObjectPass` - the
           rename is cosmetic and the class still steps the eighteen slots as
           it always did.
@@ -332,8 +332,8 @@ Each item ends with how it is proved.
           only ever touches the level's outermost two columns, so the order
           between it and the objects does not matter; the hardware sprites
           (players, and item 2b's enemies) come after both. Position: the
-          cell's left edge is `$DC × 8` (the entry is already shifted by
-          `$A9C4 × 2` inside it); the bottom pixel row sits in character row
+          cell's left edge is `$DC Ã— 8` (the entry is already shifted by
+          `$A9C4 Ã— 2` inside it); the bottom pixel row sits in character row
           `$EE - 2` at sub-position `($A9D6 + 7) & 7`, and the sixteen-pixel
           cell builds upward from there. Doubled horizontally through a
           `MulticolourSheet`, as every other multicolour sheet is.
@@ -343,7 +343,7 @@ Each item ends with how it is proved.
           and every `$A9D6` seen, and pop frame 4 (`$40`).
           `ObjectView8BitGoldenTests` matches every visible pixel. The capture
           found one bug: the port drew the cell at `$AA0C - $14`, which is
-          right only for `$A9C4` 0, and was `$A9C4 × 2` pixels too far right
+          right only for `$A9C4` 0, and was `$A9C4 Ã— 2` pixels too far right
           otherwise. `ObjectsModel` now carries `$DC`, not `$AA0C`.
           Two traps in the capture protocol, both now in the test header:
           - **The screen is double-buffered** (`$D018` swaps `$41`/`$53`).
@@ -359,7 +359,7 @@ Each item ends with how it is proved.
           Not captured: pop frames other than 4, and `$A9C4` 3 with `$A9D6`
           4 or 6. `$A9D6` is only ever even (`BubbleBlow` masks it with `$06`,
           `EntityMover` steps by 2), so odd values need no proof.
-      - [x] **2d(i). The enemy shots and the Baron**, `$28`–`$32`, through
+      - [x] **2d(i). The enemy shots and the Baron**, `$28`â€“`$32`, through
         their `$040C` vectors: `$3EFD`, `$E752`, `$3ED4`, `$E767` (the Baron)
         and `$3E77`. Their cells follow the pop frames in
         `object-sprites.tga`.
@@ -372,19 +372,19 @@ Each item ends with how it is proved.
           by `ObjectView8BitGoldenTests`.
       - [x] **2e. The level's items**, `$52`/`$53`, drawn in characters.
         `$2B31` copies each item's 32 bytes from `sprites_rom` (`$9AE0` +
-        index × 32; `$A892` food, `$A8C1` special) into characters
-        `$42`–`$45` and `$46`–`$49`. `$1844` (`L_1934`) writes them as a
-        2×2 block at the level cell (`$4E`/`$50`), in column order. It
+        index Ã— 32; `$A892` food, `$A8C1` special) into characters
+        `$42`â€“`$45` and `$46`â€“`$49`. `$1844` (`L_1934`) writes them as a
+        2Ã—2 block at the level cell (`$4E`/`$50`), in column order. It
         writes the item's colour (`$5F`/`$60`, from `$A8E4`/`$A913`) to all
         four colour-RAM cells (`L_186B`). `$1578` puts the cells back when
         the item goes. `LevelItems` now holds `Art`, `Colour`, `Column` and
         `Row`, and `$2CB7`'s EOR 5 flash for a visible `$18`. `ItemsModel`
         and `ItemView8Bit` draw from `item-chars.tga` (exported by
-        `export_item_chars`, blocks 0–`$39`). They draw in a layer just
+        `export_item_chars`, blocks 0â€“`$39`). They draw in a layer just
         above the playfield, with entry 11 in the item's own colour and entry
         00 opaque black. **Proved against VICE:**
         `Views/Captures/items-level-1.txt` (level 1, food `$19`, no
-        intervention) holds the bytes at `$0A4B` and the food's 16×16
+        intervention) holds the bytes at `$0A4B` and the food's 16Ã—16
         pixels from the screenshot at the next `$E90E`.
         `ItemView8BitGoldenTests` matches them pixel for pixel. The
         characters at `$4210` equal block `$26` of the export byte for byte.
@@ -407,8 +407,8 @@ Each item ends with how it is proved.
       slots and pushes bubbles. A player dies at `$1D32`, the tail of `$1CBD`.
       - [x] **3a. `$0AAB`, a player pushing a bubble.** `BubblePush`, called
         at `$0A4B` between `$E90E` and `$0CF2`. A player in state 1 with frame
-        0–3 nudges an object (state 0, type below `$24`) up to `$11` pixels to
-        their right 4 pixels right. Frames 4–7 nudge one up to `$13` pixels to
+        0â€“3 nudges an object (state 0, type below `$24`) up to `$11` pixels to
+        their right 4 pixels right. Frames 4â€“7 nudge one up to `$13` pixels to
         their left 4 pixels left. Both need Y within `$0D`. A bubble pushed
         into a wall goes back a column and snaps to the grid. Proved by hand
         in `BubblePushTests`. **Proved against VICE:**
@@ -420,14 +420,14 @@ Each item ends with how it is proved.
         Nothing outside the bytes compared changed but `$40`/`$41`, the
         routine's own pointer.
       - [x] **3a2. `$0AAB`'s lost player index.** The left arm, on an object
-        row outside `$04`–`$1C`, branches to the loop with the row in Y instead
+        row outside `$04`â€“`$1C`, branches to the loop with the row in Y instead
         of the player. `BubblePush` now keeps Y as the 6502 does and reads
-        through `Peek`, which maps `$B2`–`$FF` and `$8520`–`$8527` to
+        through `Peek`, which maps `$B2`â€“`$FF` and `$8520`â€“`$8527` to
         `EntityTable` and `ObjectTable`. So row 3 makes entity 3 the pusher for
         the slots left, and `dey` then gives entities 2, 1 and 0 a turn: the
         player can push one bubble several times in a pass. A read outside
         those arrays still throws. **Proved against VICE:**
-        `Bubbles/Captures/push-offmap-level-1.txt` (896 passes, rows `$00`–`$03`,
+        `Bubbles/Captures/push-offmap-level-1.txt` (896 passes, rows `$00`â€“`$03`,
         up to four pushes a call, columns wrapping to 255, and entity 3
         pushing) matches byte for byte. An intervention: see
         `BubblePushGoldenTests`. Two findings:
@@ -440,7 +440,7 @@ Each item ends with how it is proved.
           followed up; rows `$1D` and up are not captured.
       - [x] **3b. `$1D32`, death.** `PlayerDeath`, called by `GameLoop` after
         the players move, as the end of `$1CBD`. A player in state 1 with an
-        enemy (slots 2–7, state 1 to `$0A`) within `$0B` pixels in both axes
+        enemy (slots 2â€“7, state 1 to `$0A`) within `$0B` pixels in both axes
         goes to state `$0E`. The point measured from is X + 2 and Y + 2, not
         + 1: the `cmp #$01` leaves the carry set, and a wrapped X carries one
         more into Y. `$5AFF` sends `$1CBD` to `$1D84` instead, which skips the
@@ -455,17 +455,17 @@ Each item ends with how it is proved.
         `$0E`) and `$28E8` (state `$0F`, a bare `rts`), dispatched by
         `PlayerFrame.Step`, which is `$1E6C`; any other state now throws there
         instead of being skipped. The first call sets `$86D8` to `$12` and
-        `$8610` to `$20`. `$8610` counts down: `$1F`–`$00` spin (frame 0 or
-        `$0C`–`$0E`), dropping 3 px a call if the player was caught in the air
+        `$8610` to `$20`. `$8610` counts down: `$1F`â€“`$00` spin (frame 0 or
+        `$0C`â€“`$0E`), dropping 3 px a call if the player was caught in the air
         (`$87A0`/`$87F0` are not updated, so they fall through floors);
-        `$FF`–`$C8` lie still (frames `$0F`–`$12`); 88 calls in all, then
+        `$FF`â€“`$C8` lie still (frames `$0F`â€“`$12`); 88 calls in all, then
         `$0F`. `$7F53`, called by `$045C`, clears `$86D8` again (3d).
-        `PlayerFrame.Slot` is now `$1CDB`–`$1D21` for a player: `$1D03`'s extra
+        `PlayerFrame.Slot` is now `$1CDB`â€“`$1D21` for a player: `$1D03`'s extra
         call when `$8728` is set and bit 1 of `$08` is clear (item effect 0's
         flash, and a death's first pass), and slot 1 before slot 0. `$8638` on a
         player throws. Proved by hand in `PlayerDyingTests`, and **against
         VICE**: `Players/Captures/dying-level-1.txt` (four deaths on level 1, 352
-        turns, no intervention, bracketed `$1CDB`–`$1D24` with `X < 2`) matches
+        turns, no intervention, bracketed `$1CDB`â€“`$1D24` with `X < 2`) matches
         byte for byte. No captured death had `$8728` set.
       - [x] **3d. Lives and respawn, `$045C`/`$04BB`.** `PlayerRespawn`, called
         in the pass after `LevelItems.Collect` (`$0A1C`). A state `$0F` player,
@@ -786,6 +786,7 @@ Each item ends with how it is proved.
       committed 32 by 32 brightness grids; regenerate with
       `BB_REGENERATE_FRAMES=1`). The zero-warning full-solution build with every
       test green is checked at each stage.
+      - (Changed 2026-10-17: now 320x200, the banner on the title screen only.)
       - 320x256 with a 56-line banner on top, the repo's 8-bit tier (Elite's
         size). `EightBitRendition.ScreenHeight` to 256, `PlayfieldRow` to 7,
         and a `BannerModel` drawing `Assets/Images/banner.png` (already

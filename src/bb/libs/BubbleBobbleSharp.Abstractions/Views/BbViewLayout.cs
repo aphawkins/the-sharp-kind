@@ -40,11 +40,8 @@ public sealed record BbViewLayout(float ScreenWidth, float ScreenHeight)
     /// <summary>Gets the rows the C64's own screen has.</summary>
     public int ScreenRows { get; init; } = 25;
 
-    /// <summary>Gets the height in pixels of the banner above the C64's screen, which is what the render height has over it.</summary>
-    public float BannerHeight => Math.Max(0, ScreenHeight - (ScreenRows * CellHeight));
-
-    /// <summary>Gets the character grid of the C64's screen, which starts below the banner.</summary>
-    public CharacterGrid Screen => new(CellWidth, CellHeight, new(0, BannerHeight));
+    /// <summary>Gets the character grid of the C64's screen.</summary>
+    public CharacterGrid Screen => new(CellWidth, CellHeight, Vector2.Zero);
 
     /// <summary>Gets the level's character grid, counted from the level's top-left corner.</summary>
     public CharacterGrid Playfield => new(

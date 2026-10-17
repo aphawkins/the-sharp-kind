@@ -64,7 +64,6 @@ internal sealed class SpriteView8Bit : IView<SpriteModel>
     private readonly IGraphics _graphics;
     private readonly IPaletteCollection _palette;
     private readonly HashSet<string> _pictures = [];
-    private readonly BbViewLayout _layout;
     private readonly MulticolourSprites _sprites;
     private readonly MulticolourSprites _foods;
     private readonly MulticolourSprites[] _bonuses;
@@ -77,7 +76,6 @@ internal sealed class SpriteView8Bit : IView<SpriteModel>
 
         _graphics = surface.Graphics;
         _palette = surface.Palette;
-        _layout = surface.Layout;
         _sprites = new(surface, Sheet);
         _foods = new(surface, FoodSheet, itemArt: true);
         _boss = new(surface, "GrumpleGromit");
@@ -149,7 +147,7 @@ internal sealed class SpriteView8Bit : IView<SpriteModel>
                 _transit.Paint(model.Colour(slot)),
                 new(
                     model.X(slot) - TransitOffsetX - SpriteOriginX,
-                    model.Y(slot) - TransitOffsetY - SpriteOriginY + _layout.BannerHeight),
+                    model.Y(slot) - TransitOffsetY - SpriteOriginY),
                 new(TransitSourceWidth * 2, TransitHeight),
                 new(model.TransitFrame * TransitSourceWidth, 0),
                 new(TransitSourceWidth, TransitHeight));
@@ -171,7 +169,7 @@ internal sealed class SpriteView8Bit : IView<SpriteModel>
 
         _graphics.DrawImagePart(
             _bonuses[kind].Paint(model.Colour(BonusFirstSlot)),
-            new(model.X(BonusFirstSlot) - SpriteOriginX, model.Y(top) - SpriteOriginY + raise + _layout.BannerHeight),
+            new(model.X(BonusFirstSlot) - SpriteOriginX, model.Y(top) - SpriteOriginY + raise),
             new(BonusSourceWidth * 2, height),
             new(0, 0),
             new(BonusSourceWidth, height));
@@ -188,7 +186,7 @@ internal sealed class SpriteView8Bit : IView<SpriteModel>
 
         _graphics.DrawImagePart(
             _boss.Paint(boss.Colour & SpriteModel.ColourMask),
-            new(boss.X - SpriteOriginX, boss.Y - SpriteOriginY + _layout.BannerHeight),
+            new(boss.X - SpriteOriginX, boss.Y - SpriteOriginY),
             new(BossSourceWidth * 2, BossHeight),
             new(set * BossSourceWidth, 0),
             new(BossSourceWidth, BossHeight));
@@ -199,7 +197,7 @@ internal sealed class SpriteView8Bit : IView<SpriteModel>
             _foods.Paint(model.Colour(slot)),
             new(
                 model.X(slot) - SpriteOriginX + FoodOffsetX,
-                model.Y(slot) - SpriteOriginY + FoodOffsetY + _layout.BannerHeight),
+                model.Y(slot) - SpriteOriginY + FoodOffsetY),
             new(FoodSourceWidth * 2, FoodHeight),
             new(model.Food(slot) * FoodSourceWidth, 0),
             new(FoodSourceWidth, FoodHeight));
@@ -214,7 +212,7 @@ internal sealed class SpriteView8Bit : IView<SpriteModel>
 
         _graphics.DrawImagePart(
             _sprites.Paint(model.Colour(slot)),
-            new(model.X(slot) - SpriteOriginX, model.Y(slot) - SpriteOriginY + _layout.BannerHeight),
+            new(model.X(slot) - SpriteOriginX, model.Y(slot) - SpriteOriginY),
             new(SourceSpriteWidth * 2, SpriteHeight),
             new(model.Sprite(slot) * SourceSpriteWidth, 0),
             new(SourceSpriteWidth, SpriteHeight));
@@ -227,7 +225,7 @@ internal sealed class SpriteView8Bit : IView<SpriteModel>
 
         _graphics.DrawImagePart(
             Picture(model, model.Picture(slot), model.Colour(slot)),
-            new(model.X(slot) - SpriteOriginX, model.Y(slot) - SpriteOriginY + _layout.BannerHeight),
+            new(model.X(slot) - SpriteOriginX, model.Y(slot) - SpriteOriginY),
             new(SourceSpriteWidth * 2 * scale, SpriteHeight * scale),
             new(0, 0),
             new(SourceSpriteWidth, SpriteHeight));

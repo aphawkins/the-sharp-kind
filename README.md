@@ -1,4 +1,4 @@
-﻿# The Sharp Kind
+ï»¿# The Sharp Kind
 
 [![Build and Package](https://github.com/aphawkins/the-sharp-kind/actions/workflows/build-and-package.yml/badge.svg)](https://github.com/aphawkins/the-sharp-kind/actions/workflows/build-and-package.yml)
 ![Line coverage](docs/images/coverage-badge.svg)
@@ -58,14 +58,14 @@ dotnet run --project src/bb/apps/BubbleBobbleSharp
 # Stunt Car Racer
 dotnet run --project src/scr/apps/StuntCarRacerSharp
 
-# Control gallery — every shared UI control, for looking at
+# Control gallery â€” every shared UI control, for looking at
 dotnet run --project src/useful/apps/SharpKind.UI.Gallery
 ```
 
 All three games can also be run and debugged from an IDE:
 
-- **Visual Studio 2026** — open [TheSharpKind.slnx](TheSharpKind.slnx) and set `EliteSharp`, `BubbleBobbleSharp` or `StuntCarRacerSharp` as the startup project.
-- **VS Code** — open the repo root and pick the "Elite", "Bubble Bobble" or "Stunt Car Racer" launch configuration (`.vscode/launch.json`).
+- **Visual Studio 2026** â€” open [TheSharpKind.slnx](TheSharpKind.slnx) and set `EliteSharp`, `BubbleBobbleSharp` or `StuntCarRacerSharp` as the startup project.
+- **VS Code** â€” open the repo root and pick the "Elite", "Bubble Bobble" or "Stunt Car Racer" launch configuration (`.vscode/launch.json`).
 
 SDL3 and its native libraries come inside their NuGet packages (win-x64, linux-x64 and linux-arm64), so there is nothing else to install: `dotnet run` or `dotnet build` is enough.
 
@@ -78,6 +78,7 @@ A rendition isn't a skin: it's a whole machine's worth of personality. Pick **8-
 | | `8-bit` | `16-bit` | `Modern` (work in progress) |
 | --- | --- | --- | --- |
 | Render resolution (Elite) | 320 x 256 | 640 x 512 | 1280 x 720 |
+| Render resolution (Bubble Bobble) | 320 x 200 | - | - |
 | Colours | 16 | 4,096 | 16.7 million |
 | Fonts  | 8 x 8 bitmap glyphs <br /> 40 columns x 32 rows | 32 x 32 Bitmap glyphs | TrueType or Bitmaps |
 | Sound | C64 SID emulation | MIDI & SoundFont | WAV, MIDI, SID |
@@ -132,12 +133,12 @@ Diagnostic opt-ins read at runtime rather than compiled in, so they work in a Re
 - [Bubble Bobble - The Sharp Kind](docs/bb-readme.md)
 - [Stunt Car Racer - The Sharp Kind](docs/scr-readme.md)
 - [Architecture principles](docs/architecture-principles.md)
-- [Backlog](docs/backlog-roadmap.md) — every open work item, bugs first
+- [Backlog](docs/backlog-roadmap.md) â€” every open work item, bugs first
 - [Changelog](CHANGELOG.md)
-- [Release notes](docs/release-notes.md) — a concise, categorised summary of the changelog, split at v1.0.0
-- [Release process](docs/release-process.md) — how to cut a tagged release
+- [Release notes](docs/release-notes.md) â€” a concise, categorised summary of the changelog, split at v1.0.0
+- [Release process](docs/release-process.md) â€” how to cut a tagged release
 - [Contributing](CONTRIBUTING.md)
 
 ## Licence
 
-[MIT](LICENSE). Original game copyrights remain with their respective owners — see each game's readme for credits.
+[MIT](LICENSE). Original game copyrights remain with their respective owners â€” see each game's readme for credits.

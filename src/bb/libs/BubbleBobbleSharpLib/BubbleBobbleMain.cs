@@ -48,7 +48,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     private readonly IView<RoomModel> _roomView;
     private readonly IView<EffectsModel> _effectsView;
     private readonly IView<BannerModel> _bannerView;
-    private readonly float _bannerHeight;
+    private readonly float _logoHeight;
     private readonly ScreenManager<BbScreen, IGameScreen> _screens;
 
     private readonly Input _input;
@@ -128,8 +128,8 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         _itemView = rendition.CreateItemView(surface);
         _roomView = rendition.CreateRoomView(surface);
         _effectsView = rendition.CreateEffectsView(surface);
-        _bannerHeight = surface.Layout.BannerHeight;
         _bannerView = rendition.CreateBannerView(surface);
+        _logoHeight = TitleScreen.LogoRows * surface.Layout.CellHeight;
 
         _change = new(_levels);
         ShowLevel(FirstLevel);
@@ -177,10 +177,9 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
     {
         Graphics.Clear();
 
-        // The last frame's final layer left its clip set, and the banner sits outside every layer.
+        // The last frame's final layer left its clip set.
         Graphics.SetClipRegion(Vector2.Zero, Layout.ScreenWidth, Layout.ScreenHeight);
 
-        _bannerView.Draw(new BannerModel(_bannerHeight));
         _screens.Current.Draw();
         Graphics.ScreenUpdate();
     }
@@ -287,11 +286,18 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         }
     }
 
+    // House chrome: the banner is the title's logo, over the seven rows the reference leaves above its credits.
+    private void DrawTitle(IView<TitleModel> titleView, TitleModel model)
+    {
+        _bannerView.Draw(new BannerModel(_logoHeight));
+        titleView.Draw(model);
+    }
+
     private ScreenManager<BbScreen, IGameScreen> CreateScreens(IView<TitleModel> titleView, LayerRunner layers, LayerRunner endingLayers)
     {
         ScreenManager<BbScreen, IGameScreen> screens = new(Keyboard);
 
-        screens.Add(BbScreen.Title, new TitleScreen(TitleFire, SuperKeys, Select, PlaySong, titleView.Draw));
+        screens.Add(BbScreen.Title, new TitleScreen(TitleFire, SuperKeys, Select, PlaySong, model => DrawTitle(titleView, model)));
         screens.Add(
             BbScreen.Select,
             new SelectScreen(

@@ -10,26 +10,22 @@ using Xunit;
 
 namespace BubbleBobbleSharpLib.Tests.Views;
 
-// House chrome: 56 lines above the C64's 200, which the reference does not have.
+// House chrome: the title's logo, over the 56 lines above its credits, which the reference does not have.
 public sealed class BannerTests
 {
     [Fact]
-    public void ThePlayfieldStartsBelowTheBanner()
+    public void ThePlayfieldStartsAtTheTopOfTheScreen()
     {
-        BbViewLayout layout = new(320, 256);
+        BbViewLayout layout = new(320, 200);
 
-        Assert.Equal(56f, layout.BannerHeight);
-        Assert.Equal(new Vector2(0, 56), layout.Screen.Cell(0, 0));
-        Assert.Equal(new Vector2(0, 56), layout.Playfield.Cell(0, 0));
+        Assert.Equal(Vector2.Zero, layout.Screen.Cell(0, 0));
+        Assert.Equal(Vector2.Zero, layout.Playfield.Cell(0, 0));
     }
-
-    [Fact]
-    public void AScreenOfTwoHundredLinesHasNoBanner() => Assert.Equal(0f, new BbViewLayout(320, 200).BannerHeight);
 
     [Fact]
     public void TheBannerIsDrawnAtTheTopOfTheScreen()
     {
-        RecordingGraphics graphics = new(320, 256);
+        RecordingGraphics graphics = new(320, 200);
 
         new EightBitRendition().CreateBannerView(new TestSurface(graphics, "Banner")).Draw(new BannerModel(56));
 

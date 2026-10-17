@@ -1,4 +1,4 @@
-﻿# Changelog
+ï»¿# Changelog
 
 All notable changes to this project are documented in this file. The format
 is based on [Keep a Changelog](https://keepachangelog.com/); the project does
@@ -6,6 +6,12 @@ not yet cut versioned releases, so everything sits under Unreleased.
 Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
+
+### Changed (Bubble Bobble's resolution, 2026-10-17)
+
+- **Bubble Bobble renders at the C64's own 320x200.** The 56-line banner no longer sits above every screen; it is the title
+  screen's logo, drawn over the seven rows above its credits. `BbViewLayout.BannerHeight` and the sprite view's offset for it
+  are gone, and the golden frames were regenerated. The README and docs now say Bubble Bobble is 320x200.
 
 ### Fixed (Bubble Bobble's Must Have backlog, 2026-10-17)
 
@@ -891,7 +897,7 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
     Car Racer through `PerspectiveProjector`. The setting is the angle; `Focus`
     is what the angle derives.
   - 53 is the original's own projection - a focal length of exactly one screen
-    height, which is 2·atan(0.5) = 53.13° - and selecting it stores nothing
+    height, which is 2Â·atan(0.5) = 53.13Â° - and selecting it stores nothing
     rather than writing 53 back, so the classic view stays bit-for-bit the
     classic view instead of becoming the rounded angle put back through the
     arithmetic. `FocusFactor` is now derived from the setting rather than a
@@ -1069,7 +1075,7 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
   `BaseView8Bit.DrawBorder` drew a single vertical line down each side, so
   the frame read thinner at the sides than the art has it. Each side now
   draws a second line one pixel inboard (`SideBorderWidth`); the top stays
-  single-pixel, and the content grid is unaffected — row 0 and the outermost
+  single-pixel, and the content grid is unaffected â€” row 0 and the outermost
   columns already belonged to the border, and the extra column falls in the
   glyph cell's own inked-free edge, so no text is clipped.
 
@@ -1078,7 +1084,7 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 - **The `explosion` golden-trace scenario explodes again.** It held the beam
   down and waited for an encounter to fly into it; at this seed the encounter
   now arrives *behind* the ship and stays there, so nothing died and every
-  `ExpDelta` in the baseline was `0` — the one scenario that covers the cloud
+  `ExpDelta` in the baseline was `0` â€” the one scenario that covers the cloud
   had been passing while covering nothing. It now pitches for 230 ticks to
   bring the Shuttle round to dead ahead before firing: the kill lands on tick
   376 at z~1900, the cloud is drawn from 377 to 435, and the slot empties on
@@ -1095,7 +1101,7 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
   independent axes (`_rng.Random(-128, 128)` on each), so the cloud filled the
   square that encloses the intended radius and read as a box. The roll moves
   into `EliteDraw.ScatterOffset`, which re-rolls a point that falls outside
-  the radius rather than clamping it — clamping would pile the rejected
+  the radius rather than clamping it â€” clamping would pile the rejected
   corners onto the rim. The golden trace and frame baselines are unchanged:
   the scatter comes from `RenderRandom`, which is a separate stream from the
   game's `RNG`.
@@ -1118,8 +1124,8 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
   three right-hand slots the same 12-row interior above their tick marks, and
   the roll and pitch indicators start three rows into theirs, so the speed
   bar's own start row was one slot's worth out too. `SpeedPosition` moves
-  from `9` to `7`, and the roll and pitch positions — written relative to it
-  — become `7 + 16` and `7 + 16 + 16`, drawing on the same rows as before and
+  from `9` to `7`, and the roll and pitch positions â€” written relative to it
+  â€” become `7 + 16` and `7 + 16 + 16`, drawing on the same rows as before and
   making the slot pitch a uniform 16.
 
 ### Fixed (the intro's fire prompt, 2026-09-05)
@@ -1127,7 +1133,7 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 - **The ship parade now starts the game on a joystick's fire button**, as its
   own "Press Fire or Space, Commander." prompt has always claimed.
   `Intro2Controller` only ever tested the spacebar and had no `IGamepad`; it
-  now takes one and also accepts `GamepadControls.WasFirePressed` — a
+  now takes one and also accepts `GamepadControls.WasFirePressed` â€” a
   one-shot form of the existing `IsFiring` pair (button 1/3, or (A)/(X)),
   since the held form would run straight through the screen behind it.
   `Intro1Controller` was checked for the same gap and left alone: its prompt
@@ -1137,9 +1143,9 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 ### Confirmed (the gamepad path checked with a real XInput pad, 2026-09-05)
 
 - **The one thing the 2026-08-22 gamepad/joystick landing left unconfirmed is
-  now confirmed.** All three devices — a Speedlink Competition Pro Extra
+  now confirmed.** All three devices â€” a Speedlink Competition Pro Extra
   joystick, a Microsoft Wireless Controller for Xbox One (Model 1708), and a
-  Microsoft SideWinder Precision 2 joystick — have been smoke-tested on both
+  Microsoft SideWinder Precision 2 joystick â€” have been smoke-tested on both
   games. `SDLInput.ConvertGamepadButton`/`ConvertGamepadAxis` name the
   controls as expected, the 0.5 threshold in each game's `GamepadControls`
   feels right on the Xbox pad's analog sticks, and sharing Stunt Car Racer's
@@ -2248,8 +2254,8 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
   `DrawTextRight` sit on `IGraphics`, and both games call them directly;
   the item was written before they got there.
 - **Above that the two games have no common ground.** Elite's chrome is
-  viewport-relative and per tier — `BaseView8Bit` places everything on an
-  8x8 character grid, `BaseView16Bit` against a proportional font — and
+  viewport-relative and per tier â€” `BaseView8Bit` places everything on an
+  8x8 character grid, `BaseView16Bit` against a proportional font â€” and
   `IBaseView` already shares what the tiers have in common. SCR draws no
   border, no header rule and no panel rect at all, and its three text
   sites each measure from a different origin.
@@ -2556,8 +2562,8 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 - **`SharpKind.UI`**: `Label`, `Container<TControl>` and `ComboBox`, each
   owning its own bounds and drawing everything relative to them. A widget
-  holds how it draws and never what is true — a `ComboBox` reads and writes
-  its value through an injected `ISetting` and keeps no copy — which is what
+  holds how it draws and never what is true â€” a `ComboBox` reads and writes
+  its value through an injected `ISetting` and keeps no copy â€” which is what
   lets the same widget serve two renditions without either one becoming the
   authority on a setting. See [decisions.md](docs/decisions.md).
 - **`IGraphics.MeasureText`**: the size a string would occupy in a given font.
@@ -2565,7 +2571,7 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
   screen, which is what `DrawTextCentre` measures against.
 - **`SharpKind.UI.Gallery`**: a window showing every widget in every state,
   with each one's bounds outlined, and the combo boxes live. Runs on either
-  backend — the software one draws from an 8x8 bitmap sheet and the hardware
+  backend â€” the software one draws from an 8x8 bitmap sheet and the hardware
   one from a 12pt true-type face, and the gallery measures its row pitch so
   the same layout fits both.
 
@@ -2578,7 +2584,7 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 - **Left and Right now cycle a setting in opposite directions.** Both used to
   advance, because the enums behind the settings only offered a "next"; a
   setting bound to an index can go either way.
-- **A selected setting shows its value bracketed** — `< Wireframe >` — where
+- **A selected setting shows its value bracketed** â€” `< Wireframe >` â€” where
   there is more than one value to cycle to.
 - The settings screens no longer have a view per rendition. A rendition
   supplies a `SettingsListStyle` (colours and positions) and the game owns the
@@ -2706,7 +2712,7 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
   denominator (96, the unit vector's own magnitude) instead of 36 (the
   dot product's own max magnitude after its implicit `>>8` scaling - the
   same shape of error as the equipment tech-level item below). The
-  correct normalization is `33/36 ≈ 0.9167`, which is exactly the
+  correct normalization is `33/36 â‰ˆ 0.9167`, which is exactly the
   `0.9166f` already in the port. No code change.
 
 ### Fixed (Sun orientation, 2026-08-04)
@@ -2722,7 +2728,7 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 ### Fixed (Firing-cone thresholds, 2026-08-04) [best-effort, see note]
 
 - **Firing-cone thresholds now use a single re-derived gate.** The
-  original's `CPX #160` (X <= -32 of a max magnitude 36, ≈ -0.889
+  original's `CPX #160` (X <= -32 of a max magnitude 36, â‰ˆ -0.889
   normalized) decides both whether a ship may fire and whether it sets
   its `Firing` flag - the same check, used twice. The port gated firing
   consideration at a looser `-0.833` and then re-checked a third,
@@ -2908,14 +2914,14 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 ### Changed (Screens become plugins, 2026-08-03)
 
 - The 8-bit and 16-bit screens are no longer written into the game. Each tier
-  is an assembly of its own — **`EliteSharp.Views.EightBit`** and
-  **`EliteSharp.Views.SixteenBit`** — referencing the contracts and nothing
+  is an assembly of its own â€” **`EliteSharp.Views.EightBit`** and
+  **`EliteSharp.Views.SixteenBit`** â€” referencing the contracts and nothing
   else, and the game finds them at startup in a **`Views` folder beside the
   executable**, the same way it finds a mission. Adding a tier is now an
   assembly rather than a second branch in every screen registration.
 - **The `Views` folder is required.** Delete it, or the pack for the tier
   configured in `engine.tier`, and the game refuses to start and says which
-  tier it could not find — there is nothing to draw with. A pack missing a
+  tier it could not find â€” there is nothing to draw with. A pack missing a
   screen is refused the same way before the first frame, naming every screen it
   does not draw.
 - The mission contracts assembly is now **`EliteSharp.Abstractions`**, one
@@ -2930,7 +2936,7 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 - The two missions are no longer written into the game. They live in
   **`EliteSharp.Missions.Classic`**, an assembly that references the mission
   contracts and nothing else, and the game finds them at startup in a
-  **`Missions` folder beside the executable** — the same way it would find
+  **`Missions` folder beside the executable** â€” the same way it would find
   anyone else's. Adding a mission is now a new assembly rather than edits to
   two enums, two controllers, two `Screen` values and four views.
 - **Fixed:** the rumours about the stolen Constrictor were printed for whatever
@@ -2938,14 +2944,14 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
   first galaxy. A rumour is somebody in the station talking, and is now only
   said about the system the commander is standing on.
 - The two mission briefing screens are one screen, which lays itself out from
-  what a briefing contains — a headline, how many paragraphs, whether somebody
-  is pictured — rather than from which mission sent it. On the **8-bit tier the
+  what a briefing contains â€” a headline, how many paragraphs, whether somebody
+  is pictured â€” rather than from which mission sent it. On the **8-bit tier the
   Constrictor debrief moves down the screen**, matching the Thargoid debrief;
   one rule cannot draw the two layouts they had drifted into. 16-bit is
   unchanged.
 - Commander files hold only the mission stages actually reached, so a fresh
   commander writes none. A file naming a mission that nothing provides is
-  refused and says which name it could not place — including when a mission's
+  refused and says which name it could not place â€” including when a mission's
   plugin has been removed.
 - `ELITE_DEBUG_MISSIONS`' Ctrl-M jump now moves the commander to a real system
   rather than overwriting two of the docked planet's six seed bytes, so the
@@ -2954,22 +2960,22 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 ### Changed (The 16-bit tier becomes a real 12-bit machine, 2026-08-01)
 
 - The 2026-07-30 rename of the 16-bit palette to web colour names is backed
-  out: the 29 ramp names (`LighterGrey`, `Gold`, `Lilac`, `RedOrange`…)
+  out: the 29 ramp names (`LighterGrey`, `Gold`, `Lilac`, `RedOrange`â€¦)
   return across `palette.json`, `palette.mtl`, the ~380 `usemtl` lines in
   the 31 `SixteenBit/*.obj` models and every `Palette["..."]` lookup on the
   16-bit path. `FractalPlanet` goes back to the plain shared lookup, since
   the names it wanted exist in both palettes again.
 - In its place the tier gets the constraint that actually describes the
   hardware: a **12-bit DAC, 4096 colours**, four bits per channel. Every
-  palette entry is now a value that hardware could produce — channels
-  widened by replication (`0xE` → `0xEE`), never by a left shift (`0xE0`),
+  palette entry is now a value that hardware could produce â€” channels
+  widened by replication (`0xE` â†’ `0xEE`), never by a left shift (`0xE0`),
   which can never reach white. Most of the old ramp values were shifted
   nibbles, so restoring them properly expanded changes the expansion rather
   than the colour.
 - `AssetColourBudget.ChannelBits`/`IsOnGrid` and `AssetSet.Load` enforce it
   at startup for both the named palette and every bitmap pixel, failing
   with the offending asset and colour named. Separate from the existing
-  `PaletteNamesEveryColour` rule, which stays false for 16-bit — the tier
+  `PaletteNamesEveryColour` rule, which stays false for 16-bit â€” the tier
   is direct-colour, so a bitmap need not use a *named* colour, only a
   *producible* one. The 8-bit tier keeps 8 bits per channel and is
   unaffected.
@@ -3134,7 +3140,7 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
   which is the value it was already computing and discarding.
   `PainterRenderer` and `WireframeRenderer` ignore the new argument; the
   flat key stays because the painter's chain still sorts by it.
-- `ZBufferRenderer`'s O(n²) insertion sort into a back-to-front linked chain
+- `ZBufferRenderer`'s O(nÂ²) insertion sort into a back-to-front linked chain
   is gone. It sorted whole polygons and *then* depth-tested every pixel;
   with a real per-pixel test the sort was dead work. Polygons now draw in
   submission order. `PainterRenderer` keeps its chain, which is the whole of
@@ -3157,19 +3163,19 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
   covered area.
 - Lines are depth-tested now too, via a new `IGraphics.DrawLineDepth`
   implemented in both backends (`SoftwareGraphics.DrawLineIntDepth`,
-  `SDLGraphics.DrawLineDepthToLayer` — Bresenham interpolating inverse
+  `SDLGraphics.DrawLineDepthToLayer` â€” Bresenham interpolating inverse
   depth by fraction of the major axis, mirroring the span fills).
   `ZBufferRenderer` routes its 2-point submissions through it. Previously
-  every line — model detail lines and the laser bolt — went to the plain
+  every line â€” model detail lines and the laser bolt â€” went to the plain
   `DrawLine` and wrote pixels unconditionally, so hull detail on the far
   side of a ship drew straight through the hull. Dropping the back-to-front
   chain removed the accidental ordering that had been partly masking this,
   which is why it is fixed here rather than filed. `PainterRenderer` keeps
-  plain `DrawLine`, which is correct for it — the chain is its ordering.
+  plain `DrawLine`, which is correct for it â€” the chain is its ordering.
 - Detail lines take the decal bias for the same reason decals do, and the
   laser bolt takes it at its mount: the bolt's far end is a screen-space
   viewport-boundary point with no camera depth of its own, so the whole
-  line tests at the mount's biased depth — it cannot be swallowed by the
+  line tests at the mount's biased depth â€” it cannot be swallowed by the
   hull it springs from, but anything genuinely in front still hides it.
 - Verified live via `run-elite` against the same poses rendered in
   painter's mode: decal panels render solid at every angle including near
@@ -3267,7 +3273,7 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
   other caller are unchanged); Elite's DI registration passes a real
   logger. The practical effect is that a test constructing an
   `AudioController` only has to populate the effects it actually cares
-  about — `EffectsOn` defaults true, so previously every effect the code
+  about â€” `EffectsOn` defaults true, so previously every effect the code
   under test happened to trigger had to be present.
 
 ### Fixed (sdl-drive key names, 2026-07-31)
@@ -3303,8 +3309,8 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 - The screen border was a pixel short on the right: `DrawRectangle` draws
   its far edge at `position + size - 1`, so passing `ScreenWidth - 1` lost
   the last column. It now touches both edges.
-- `ViewLayout` describes one region, the viewport — everything above the
-  HUD — starting at the screen origin. `BorderWidth`, `ScannerTop`,
+- `ViewLayout` describes one region, the viewport â€” everything above the
+  HUD â€” starting at the screen origin. `BorderWidth`, `ScannerTop`,
   `ScannerLeft`, `ScannerRight` and `Offset` are gone; `Offset` duplicated
   `ScannerLeft` exactly, and both tiers' scanners being full-width meant
   the scanner members were screen edges under another name. See
@@ -3323,8 +3329,8 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
   never show and Debug could never hide. It, the hyperspace countdown and
   the in-flight message are per-tier chrome on `IBaseView` now, not
   `EliteMain`'s own drawing.
-- `ShortRangeChartViewBase` — the last screen combining controller and
-  view — is split into `ShortRangeChartController`/`ShortRangeChartModel`
+- `ShortRangeChartViewBase` â€” the last screen combining controller and
+  view â€” is split into `ShortRangeChartController`/`ShortRangeChartModel`
   with per-tier views. Its model carries screen positions rather than
   galaxy space, because the row packing decides which planets get a name
   and the blob sizes depend on the `CarryFlag` side effect of naming;
@@ -3333,10 +3339,10 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 ### Changed (FastColor's implicit conversions removed, 2026-07-30)
 
 - Phase 4, closing out the colour-handling unification: the implicit
-  `uint`↔`FastColor` conversions added in phase 1 are gone, so the
+  `uint`â†”`FastColor` conversions added in phase 1 are gone, so the
   boundary is now explicit wherever one still exists. Rather than cast at
-  each call site — which would have put the conversion noise inside the
-  render inner loops the earlier phases had deliberately kept clean — the
+  each call site â€” which would have put the conversion noise inside the
+  render inner loops the earlier phases had deliberately kept clean â€” the
   type flows end to end instead: `FastBitmap.GetPixel` returns `FastColor`
   (the backing store stays `uint[]` for memalloc) and the redundant
   `SetPixel(.., in uint)` overload goes; `BitmapFont.Ink`/`Background`,
@@ -3347,7 +3353,7 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
   bookkeeping does set arithmetic and sorts with `Order()`, which
   `FastColor` does not support, and `SDLGraphics` keys its text-texture
   cache on the raw ARGB.
-- `PlanetRenderer.Landscape` was doing double duty — the fractal
+- `PlanetRenderer.Landscape` was doing double duty â€” the fractal
   midpoint-displacement pass filled it with heights, `ColorLandscape`
   overwrote it in place with colours, and the renderer drew it as pixels.
   That cannot survive typing, since heights are averaged arithmetically
@@ -3367,7 +3373,7 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
   [decisions.md](docs/decisions.md).
 - The 14 8-bit bitmaps were repainted onto those sixteen colours
   (maintainer). Transparency is carried by a 32bpp alpha channel at
-  `00000000` — indexed and 24bpp BMP cannot express it, since
+  `00000000` â€” indexed and 24bpp BMP cannot express it, since
   `BitmapReader` forces those opaque, so the sprites that need a
   transparent background are 32bpp and the rest stay indexed.
 - Every `Palette["..."]` lookup on the 8-bit path moved with it: `Gold` to
@@ -3381,9 +3387,9 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
   `usemtl` through the active palette, and 13 of the 21 material names the
   ships use stopped existing at 8-bit.
 - The 8-bit copies' ~380 `usemtl` lines were rewritten onto the web names.
-  The grey ramp maps onto five neutral steps by luminance — `LighterGrey`
+  The grey ramp maps onto five neutral steps by luminance â€” `LighterGrey`
   to `White` (255), `LightGrey` to `LightGray` (211), `Grey` to `DarkGray`
-  (169), `DarkGrey` to `Gray` (128), `DarkerGrey` to `DimGray` (105) —
+  (169), `DarkGrey` to `Gray` (128), `DarkerGrey` to `DimGray` (105) â€”
   deliberately stopping short of `Black`, which would render 48 faces as
   holes against space.
 - `AssetLocator.ModelPaths` uses `TierPath` like the other tier-varying
@@ -3405,7 +3411,7 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
   16-bit is direct-colour and its palette only names colours the geometry
   draws with. `AssetColourBudget.PaletteNamesEveryColour` carries the
   distinction, beside `MaxColours`.
-- It is a subset test, not equality, and transparent pixels are excluded —
+- It is a subset test, not equality, and transparent pixels are excluded â€”
   as they are from the colour cap.
 
 ### Changed (Nothing that draws is shared between tiers, 2026-07-30)
@@ -3413,7 +3419,7 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 - `ViewLayout` holds the tier's screen metrics, derived from a screen size,
   the scanner art's size and the coordinate scale rather than stored, so no
   two can disagree. `IEliteDraw` exposes it and no longer carries its own
-  `Top`/`Left`/`Centre`/`Scale`/`Scanner*` — those had become a second
+  `Top`/`Left`/`Centre`/`Scale`/`Scanner*` â€” those had become a second
   spelling of the same values.
 - `IBaseView` with `BaseView8Bit`/`BaseView16Bit` holds the chrome every
   screen shares: `DrawViewHeader`, `DrawTextPretty`, `DrawBorder` and
@@ -3437,7 +3443,7 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
   version shows it was re-laid-out rather than stretched: the left dial
   panel did not move (its edge is at x=97-100 in both), the radar's centre
   line moved half the increase (253 to 317), and everything from the
-  compass rightwards moved the full 128 — the right panel's edge 411 to
+  compass rightwards moved the full 128 â€” the right panel's edge 411 to
   539, and the compass ring's centre 386.5 to 514.5.
 - `Scanner16Bit`'s right-hand cluster is +128 accordingly, which puts the
   energy banks back inside their numbered boxes and the speed, roll and
@@ -3659,7 +3665,7 @@ next implementation work rather than code to write.
 
 - `GameOver`, `EscapeCapsule` and `ConstrictorMission` each become a
   controller, a model record and a drawing-only view. Nine of the
-  eighteen behaviour-bearing screens are now split — half way.
+  eighteen behaviour-bearing screens are now split â€” half way.
 - The animation counters the backlog named are now controller state,
   and renamed `_i` to `_tick` on the way: a controller that no longer
   draws has no loop for `_i` to belong to. `EscapeCapsule` publishes
@@ -3688,7 +3694,7 @@ next implementation work rather than code to write.
   leaving the view with the x=16/x=200 label columns that the 8-bit
   layout will re-author. `Inventory` and `CommanderStatus` have no
   input of their own but plenty of formatting, which is why they were
-  converted here rather than left as drawing-only screens — otherwise
+  converted here rather than left as drawing-only screens â€” otherwise
   each tier's view would re-derive the same strings.
 - Every screen draws through `IView<TModel>`. A parameterless `IView`
   was added for screens with input but no data and removed the same
@@ -3762,7 +3768,7 @@ next implementation work rather than code to write.
   drawn: an integer, defaulting to 1, that both games multiply their
   render resolution by when creating the window. At scale 2 Elite's
   512x512 fills a 1024x1024 window with each pixel doubled, not with
-  more of the scene. It is deliberately independent of `tier` — the
+  more of the scene. It is deliberately independent of `tier` â€” the
   tier chooses which machine's art and resolution the game reproduces,
   the scale only how large that appears on a modern display.
 - The framebuffer stays native at any scale. Both backends already
@@ -3771,7 +3777,7 @@ next implementation work rather than code to write.
   `SDL_SetRenderLogicalPresentation` in integer-scale mode on the
   renderer plus nearest-neighbour sampling on the two presented
   textures. Every drawing coordinate above that is logical-space and
-  unchanged, so no game code knows the window size — and because
+  unchanged, so no game code knows the window size â€” and because
   logical presentation applies only when drawing to the window,
   `SDLGraphics`' render target and `SaveScreen` still work at the
   native resolution.
@@ -3965,25 +3971,25 @@ next implementation work rather than code to write.
   `((x * 256 / z) + (Centre.X / 2)) * Scale`, which only recovers the
   true view centre when `Scale` is exactly 2. At the 8-bit tier
   (`Scale` 1) everything 3D was centred a quarter of the way across the
-  screen instead of the middle — the reason 8-bit ships, planets and
+  screen instead of the middle â€” the reason 8-bit ships, planets and
   suns sat up and to the left. It is now `Centre + (x * Focus / z)`,
   where `IEliteDraw.Focus` is the projection's focal length in pixels,
-  derived from the tier's screen width (× 1.0). At 16-bit that is
-  512 × 1.0, which reduces to the old maths exactly, so the 16-bit
-  render is unchanged — verified by screenshot before and after.
+  derived from the tier's screen width (Ã— 1.0). At 16-bit that is
+  512 Ã— 1.0, which reduces to the old maths exactly, so the 16-bit
+  render is unchanged â€” verified by screenshot before and after.
 - The five sites that inlined the old form are converted:
   `ShipBase.ProjectPoint`, `EliteDraw.ProjectExplosionPoints`,
   `PlanetRenderer.GetPlanetPosition`, `SolidSun.Draw` and
   `GradientSun.Draw`. The planet/sun radii and
   `WireframePlanet`'s detail threshold are in the same 256-wide space,
-  so they follow `Focus / 256` rather than `Scale` — which keeps the
+  so they follow `Focus / 256` rather than `Scale` â€” which keeps the
   field of view identical at every tier instead of tying it to a
   whole-number magnification.
 - `Stars` had it too, which confined the whole 8-bit starfield to the
   top-left quadrant of the viewport. Star coordinates are held in the
   same 256-wide space, so they map to the screen through `Focus / 256`
   as well, and the star-space bounds that recycle a star off the edge
-  are now the screen's half-extents divided back through that factor —
+  are now the screen's half-extents divided back through that factor â€”
   so the starfield fills exactly the view at any tier. The four inlined
   copies of the mapping collapse into one `ToScreen` helper.
 - `LaserDraw` carried the same mistaken construction for the crosshair
@@ -3998,15 +4004,15 @@ next implementation work rather than code to write.
 - `Tier` is a config setting (on `BaseConfigSettings`, so both games
   inherit it), read before the container exists the way `GraphicsBackend`
   already was. Elite's render resolution is derived from it rather than
-  being its own setting — 320x256 for 8-bit, 512x512 for 16-bit — so the
+  being its own setting â€” 320x256 for 8-bit, 512x512 for 16-bit â€” so the
   asset set and the resolution cannot disagree. Retires the "Get these
   from config" comment and the dead QHD block.
 - `EliteDraw` no longer hardcodes the 16-bit HUD: the scanner's width and
   height come from the scanner bitmap, so each tier's art sets its own
   HUD size (8-bit 320x56 against 16-bit 512x129).
 - Bitmap fonts support two sheet shapes. The 16-bit sheets are
-  proportional — glyphs run 4 to 17 pixels wide, terminated by magenta
-  markers — and the 8-bit BBC Micro sheet is monospaced 8x8 in a
+  proportional â€” glyphs run 4 to 17 pixels wide, terminated by magenta
+  markers â€” and the 8-bit BBC Micro sheet is monospaced 8x8 in a
   12-column grid, as the hardware it imitates was. `BitmapFont` carries
   its sheet's geometry instead of a static cell size, and the manifest
   carries it per font.
@@ -4015,7 +4021,7 @@ next implementation work rather than code to write.
   `TierOverrides` block inside it.
 - `Palette/EightBit/palette.json` maps the 29 colour names game code uses
   onto sixteen colours, and the palette now counts against the tier's
-  colour cap — colours the game draws with have to be colours the tier
+  colour cap â€” colours the game draws with have to be colours the tier
   can show, whether they arrive as pixels or as a name.
 - `SoftwareGraphics.DrawImage` clipped nothing: `DrawPixel` only tests
   bounds while a clip region is set, so an image landing partly
@@ -4028,7 +4034,7 @@ next implementation work rather than code to write.
 
 - `Assets/Images/EightBit/` gains `scanner.bmp` and the four laser
   bitmaps. `scanner.bmp` is a 4bpp indexed BMP with a 10-entry palette
-  and a 94-byte data offset — a file the old `BitmapReader` would have
+  and a 94-byte data offset â€” a file the old `BitmapReader` would have
   rejected outright on both counts, and the first real asset to exercise
   the broadened decoder.
 - The set is 11 distinct opaque colours against the 8-bit cap of 16: the
@@ -4043,7 +4049,7 @@ next implementation work rather than code to write.
 ### Changed (Posterised the over-budget 16-bit assets, 2026-07-28)
 
 - `font2.bmp` (both games' copies, byte-identical) and SCR's `atlas.bmp`
-  are quantised to the 12-bit RGB space real 16-bit hardware used —
+  are quantised to the 12-bit RGB space real 16-bit hardware used â€”
   each channel keeps its high nibble and replicates it, so 0xFF stays
   0xFF and 0x00 stays 0x00. `atlas.bmp`'s alpha is snapped to 0 or 255
   at a threshold of 128, clearing all 2765 of its partial-alpha pixels.
@@ -4066,7 +4072,7 @@ next implementation work rather than code to write.
   instances. `SoftwareGraphics` decoded via `BitmapReader` while
   `SDLGraphics` decoded via `SDL_LoadBMP`, so the two backends could
   disagree about a file and the SDL one bypassed the managed decoder
-  entirely — including any validation attached to it. `SDLGraphics` now
+  entirely â€” including any validation attached to it. `SDLGraphics` now
   uploads textures from the decoded bitmaps, setting the blend mode
   explicitly since `SDL_CreateTexture` (unlike
   `SDL_CreateTextureFromSurface`) does not infer it from the alpha
@@ -4076,7 +4082,7 @@ next implementation work rather than code to write.
   8-bit, 4096 for 16-bit). Fully transparent pixels are excluded; pixels
   whose alpha is neither 0 nor 255 are reported separately, since the
   renderer treats transparency as all-or-nothing. Bitmap fonts count too,
-  even for the SDL backend that never draws with them — they are part of
+  even for the SDL backend that never draws with them â€” they are part of
   the tier's set.
 - Warn-only for now, logged through each app's existing Serilog sinks
   with a per-asset breakdown at Information, until the over-budget assets
@@ -4084,7 +4090,7 @@ next implementation work rather than code to write.
   against the 4096 cap, `Atlas` 2676 and `Large` 2431, plus 2765
   partial-alpha pixels. Elite's 2481 passes silently.
 - `IAssetLocator` gains `Tier` so the validator knows which cap applies.
-  `AssetSet` lives in `SharpKind.Graphics` rather than `SharpKind.Assets` — it
+  `AssetSet` lives in `SharpKind.Graphics` rather than `SharpKind.Assets` â€” it
   holds `FastBitmap`s, and putting it in `SharpKind.Assets` would invert
   that project reference.
 
@@ -4093,8 +4099,8 @@ next implementation work rather than code to write.
 - `SystemTier` (`EightBit`, `SixteenBit`) and tier resolution in
   `AssetLocator`: the tier-varying categories resolve to
   `<Category>/<Tier>/<file>` and fall back to `<Category>/<file>`, which
-  is what keeps the tier-neutral categories — audio, models, TrueType
-  fonts, tracks — from needing a copy per tier. The tier is fixed at
+  is what keeps the tier-neutral categories â€” audio, models, TrueType
+  fonts, tracks â€” from needing a copy per tier. The tier is fixed at
   construction, so `IAssetLocator`'s members and every consumer of them
   are unchanged.
 - `AssetManifest` gains `Tiers`, so asking for a tier a game ships no
@@ -4105,7 +4111,7 @@ next implementation work rather than code to write.
   subfolders, and both manifests declare that tier. No behaviour change:
   the full suite passes and both games render identically.
 - `ScrPalette` and `FakeAssetLocator` each built the palette path by
-  hand, bypassing `AssetLocator` entirely — the move broke both.
+  hand, bypassing `AssetLocator` entirely â€” the move broke both.
   `ScrPalette` now goes through `AssetLocator` so tier resolution stays
   in one place; `FakeAssetLocator` still builds a plain string, since its
   consumers include tests with no asset manifest to read. `ScrPalette`
@@ -4118,7 +4124,7 @@ next implementation work rather than code to write.
   assets, picking the decoder from the file's magic bytes rather than its
   extension. `SoftwareGraphics` now loads images and bitmap fonts through
   it.
-- `BitmapReader` was a reader of one specific 32bpp export — it rejected
+- `BitmapReader` was a reader of one specific 32bpp export â€” it rejected
   every other bit depth and assumed pixel data began at a fixed offset of
   150 bytes. It is now a real BMP decoder: 1/4/8bpp palettised, 24bpp BGR
   and 32bpp BGRA, the header's declared data offset, rows padded to a
@@ -4134,7 +4140,7 @@ next implementation work rather than code to write.
   transparency is honoured for palettised, greyscale and truecolour
   images; interlaced files are rejected outright. Chunk CRCs are not
   verified.
-- Both decoders are covered by tests building files in memory — bit
+- Both decoders are covered by tests building files in memory â€” bit
   depths, row padding, row order, palette transparency, all five PNG
   scanline filters, and the rejection paths.
 
@@ -4146,13 +4152,13 @@ next implementation work rather than code to write.
   folders from [asset-structure.md](docs/asset-structure.md) needs no
   project-file churn.
 - Elite keeps a second, narrower `Assets\SFX\*.wav;Assets\Music\*.ogg`
-  entry marking the uncompressed sources `Never` — they stay in source
+  entry marking the uncompressed sources `Never` â€” they stay in source
   control but out of the build output, as before. SCR copies its whole
   asset tree, so it needs no exclusion (its `.wav` files are the ones it
   actually plays).
 - One behaviour change: `Assets\SFX\pulse.wav` was the only Elite `.wav`
   marked `PreserveNewest` while its 15 siblings were `Never`. Nothing
-  reads it — the manifest maps `Pulse` to `pulse.ogg` — so the glob
+  reads it â€” the manifest maps `Pulse` to `pulse.ogg` â€” so the glob
   normalises it to `Never` and the file is no longer copied. Asset output
   is otherwise byte-identical for both games.
 
@@ -4160,7 +4166,7 @@ next implementation work rather than code to write.
 
 - Every setting in `SettingsView` now takes effect on the next frame and
   is written to the config file as it's changed, so the "Save Settings"
-  row is gone — the last row is now "Back", which just returns to the
+  row is gone â€” the last row is now "Back", which just returns to the
   options screen.
 - Ship Style previously needed a restart: `IPolygonRenderer` was chosen
   once at DI-registration time. The new `ConfigPolygonRenderer` holds
@@ -4187,9 +4193,9 @@ next implementation work rather than code to write.
 ### Added (Per-laser crosshairs and beam colours, 2026-07-28)
 
 - Every laser type drew the same white cross (issue #15). Each type now
-  has its own crosshair sprite — `laser-pulse.bmp`, `laser-beam.bmp`,
+  has its own crosshair sprite â€” `laser-pulse.bmp`, `laser-beam.bmp`,
   `laser-military.bmp`, `laser-mining.bmp` in `Assets/Images`, replacing
-  the `laser-crosshairs.png` reference art — drawn centred on the view
+  the `laser-crosshairs.png` reference art â€” drawn centred on the view
   by `LaserDraw.DrawLaserSights`, and the firing beams are coloured per
   type instead of always red-orange: pale yellow for beam and bright
   purple for mining, matching their crosshair sprites, with pulse and
@@ -4214,9 +4220,9 @@ next implementation work rather than code to write.
 
 - `WireframePlanet` drew a bare circle. It now also draws the surface
   detail the original does (`PL9`, `PLS2`/`PLS22` in the BBC Micro
-  source): either an equator and a meridian — two half ellipses sharing
+  source): either an equator and a meridian â€” two half ellipses sharing
   the planet's nose vector, drawn against its roof and side vectors,
-  each starting at the `PLS4` angle `arctan(-nosev_z / other_z)` — or a
+  each starting at the `PLS4` angle `arctan(-nosev_z / other_z)` â€” or a
   crater, a full ellipse of half the planet's radius offset 222/256 of
   the radius along the roof vector and hidden when that vector points
   away. As in the original (`SOS1`), the choice comes from bit 1 of the
@@ -4259,7 +4265,7 @@ next implementation work rather than code to write.
   tick; the transformed-point buffer is now a per-instance field grown
   once to the model's point count.
 - Deleted the discarded `_ = VectorMaths.UnitVector(...)` call in
-  `ShipBase.Draw` — `UnitVector` is pure, so the call had no effect.
+  `ShipBase.Draw` â€” `UnitVector` is pure, so the call had no effect.
 - `EliteDraw._pointList`'s magic `100` is now a named `MaxModelPoints`
   constant (it bounds model points, unrelated to the renderers'
   `MAXPOLYS`).
@@ -4267,16 +4273,16 @@ next implementation work rather than code to write.
 ### Fixed (lone-wolf ship models missing from the manifest, 2026-07-27)
 
 - `CobraMk3Lone` and `PythonLone` have no `Models` entry in
-  `AssetManifest.json` — they are subclasses of `CobraMk3`/`Python`
+  `AssetManifest.json` â€” they are subclasses of `CobraMk3`/`Python`
   that only change flags, bounty and loot, and share the parent's mesh,
   so there is no model file of their own to list. `ShipFactory` built
   its prototypes straight from the manifest, so neither existed and
   `CreateLoneWolf` threw an unhandled `EliteException` on 2 of its 5
-  rolls — `Combat.CreateLoneWolf` has no catch, so a lone-wolf
+  rolls â€” `Combat.CreateLoneWolf` has no catch, so a lone-wolf
   encounter could take the game down.
 - `ShipFactory.Create` now iterates its own ship table rather than the
   manifest, resolving each ship's model through an `s_modelNames`
-  variant→parent map, and skipping ships the manifest supplies no model
+  variantâ†’parent map, and skipping ships the manifest supplies no model
   for. Manifest keys that name no known ship still throw.
 - Added `ShipFactoryTests.CreateLoneWolfPicksShipByRoll`, which builds
   the factory from the real `AssetLocator` so a missing manifest entry
@@ -4301,7 +4307,7 @@ next implementation work rather than code to write.
 
 - `SDLGraphics.FlushDepthLayer` created an `SDL_Surface` and an
   `SDL_Texture` from the CPU depth layer and destroyed both on every
-  flush — a GPU allocation and a synchronous upload for every frame
+  flush â€” a GPU allocation and a synchronous upload for every frame
   drawing depth-tested geometry, which is every frame in SCR and every
   ZBuffer frame in Elite. It now uses one persistent
   `SDL_TEXTUREACCESS_STREAMING` texture, created alongside the layer in
@@ -4309,26 +4315,26 @@ next implementation work rather than code to write.
 - The new texture sets `SDL_BLENDMODE_BLEND` explicitly:
   `SDL_CreateTextureFromSurface` inferred alpha blending from the
   surface's pixel format, but `SDL_CreateTexture` does not, and the
-  depth layer is transparent everywhere nothing was rasterised — left
+  depth layer is transparent everywhere nothing was rasterised â€” left
   at the default it would have painted an opaque rectangle over
   everything drawn before the flush.
 - Sibling of the framebuffer-blit change below; same fix, same file
   pair. Full test suite green, both apps smoke-tested live on the
   Hardware backend (Elite's depth-tested intro ship; SCR's track
   preview, where the sky and scenery drawn before the depth pass stay
-  visible around the track — the check that blending survived).
+  visible around the track â€” the check that blending survived).
 
 ### Changed (streaming texture for the software framebuffer blit, 2026-07-27)
 
 - `SoftwareAbstraction.SoftwareScreenUpdate` created an `SDL_Surface`
   and an `SDL_Texture` from the CPU framebuffer on every presented
-  frame, then destroyed both — a GPU allocation and a synchronous
+  frame, then destroyed both â€” a GPU allocation and a synchronous
   upload per frame. It now creates one
   `SDL_TEXTUREACCESS_STREAMING` texture in the constructor and
   re-uploads the pixels with `SDL_UpdateTexture`; the texture is
   destroyed in `Dispose` before the renderer.
 - The sibling half of the backlog item (`SDLGraphics.DrawImage`/
-  `DrawImagePart` creating a texture per call) was already fixed —
+  `DrawImagePart` creating a texture per call) was already fixed â€”
   `_imageTextures` is built once in `SDLGraphics.Create`.
 - No behaviour change: full test suite green, both apps smoke-tested
   live on the Software backend (Elite's intro, ship parade and front
@@ -4337,15 +4343,15 @@ next implementation work rather than code to write.
 ### Changed (`Scale` moved out of `IGraphics`, 2026-07-27)
 
 - `IGraphics.Scale` (hardcoded `2` in both backends) was Elite's
-  coordinate scale leaking into the shared graphics library — no other
+  coordinate scale leaking into the shared graphics library â€” no other
   consumer read it. It is now `IEliteDraw.Scale`, and Elite's ~50 call
   sites go through `_draw.Scale` instead of `_draw.Graphics.Scale`.
 - `DrawRectangleCentre` centred with `(ScreenWidth - width) / Scale` in
   both `SoftwareGraphics` and `SDLGraphics`, which was correct only
   because `Scale` happened to equal `2`; it now divides by `2`
   explicitly.
-- `SDLGraphics` divided positions by `(2 / Scale)` in ten places — an
-  exact no-op at `Scale == 2` — removed.
+- `SDLGraphics` divided positions by `(2 / Scale)` in ten places â€” an
+  exact no-op at `Scale == 2` â€” removed.
 - `Scale` dropped from `FakeGraphics`, SCR's `RecordingGraphics` (which
   returned `1` and was never read), the `SoftwareGraphics` benchmark and
   the two test assertions covering it. `FakeEliteDraw` gained it.
@@ -4361,10 +4367,10 @@ next implementation work rather than code to write.
 
   | Rule | Violations | Outcome |
   | --- | --- | --- |
-  | `CA1502` cyclomatic complexity | — | Enabled at `warning` |
-  | `CA1506` class coupling | — | Enabled at `warning` |
-  | `S1451` license headers | 333 → 0 | Fixed and enabled |
-  | `S2234` argument order | 4 → 0 | Fixed and enabled |
+  | `CA1502` cyclomatic complexity | â€” | Enabled at `warning` |
+  | `CA1506` class coupling | â€” | Enabled at `warning` |
+  | `S1451` license headers | 333 â†’ 0 | Fixed and enabled |
+  | `S2234` argument order | 4 â†’ 0 | Fixed and enabled |
   | `S2583` unreachable code | 0 | Enabled |
   | `S1541` method complexity | 61 (all prod) | Left `none` |
   | `S3776` cognitive complexity | 41 (40 prod) | Split methods, then enabled |
@@ -4382,10 +4388,10 @@ next implementation work rather than code to write.
 - Enabled `CA5394` (do not use insecure randomness), scoped off in the
   two assemblies that must reach `System.Random` directly rather than
   repo-wide:
-  - `SharpKind` (its own `.editorconfig`) — `RandomSource` is the single
+  - `SharpKind` (its own `.editorconfig`) â€” `RandomSource` is the single
     wrapper every game and test goes through, deliberately the fast,
     seedable kind of randomness rather than a cryptographic one.
-  - `StuntCarRacerSharpLib.Tests` (its own `.editorconfig`) —
+  - `StuntCarRacerSharpLib.Tests` (its own `.editorconfig`) â€”
     `OpponentPhysicsTests` drives a seeded `Random` directly to assert
     the opponent's speed logic consumes the RNG stream exactly once per
     piece; comparing the raw stream *is* the assertion, so it cannot go
@@ -4399,33 +4405,33 @@ next implementation work rather than code to write.
   could not be narrowed, each scoped off where it lives rather than
   repo-wide:
   - The BenchmarkDotNet classes in `src/elite/perf` and
-    `src/useful/perf` (a new `.editorconfig` per `perf` folder) —
+    `src/useful/perf` (a new `.editorconfig` per `perf` folder) â€”
     BenchmarkDotNet compiles a generated runner into a separate assembly
     that references them, so they must stay public.
   - `RecordingGraphics` and `FakeAbstraction` in
-    `StuntCarRacerSharpLib.Fakes` (its own `.editorconfig`) — a shared
+    `StuntCarRacerSharpLib.Fakes` (its own `.editorconfig`) â€” a shared
     fakes library consumed by `StuntCarRacerSharpLib.Tests`. `CA1515`
     fires there only because `Microsoft.NET.Test.Sdk` generates an entry
     point, which makes the assembly look like an application; the Elite
     and SharpKind fakes projects do not reference it and stayed silent.
   - `SoftwareSoundTests.AudioAssetFixture`, folded into the `CA1034`
-    `#pragma` already covering it — xUnit1000 requires a public test
+    `#pragma` already covering it â€” xUnit1000 requires a public test
     class and CS0051 then forces the fixture public too.
 
 ### Added (`S1451` license headers enforced, 2026-07-27)
 
 - Enabled `S1451` (missing copyright/license header). Sonar rule
-  parameters cannot be set from `.editorconfig` — only from a
-  `SonarLint.xml` supplied as an `AdditionalFiles` item — so
+  parameters cannot be set from `.editorconfig` â€” only from a
+  `SonarLint.xml` supplied as an `AdditionalFiles` item â€” so
   [SonarLint.xml](SonarLint.xml) is new at the repo root and wired into
   every project from [Directory.Build.props](Directory.Build.props). It
   matches the header by shape rather than by three literal strings
   (`// '[^']+' - Andy Hawkins \d{4}(-\d{4})?\.`), so it stays valid as
   years advance and covers all three header variants.
 - Copyright years brought up to date in the `file_header_template`
-  values and across all files: Elite `2023` → `2023-2026`, SharpKind
-  `2025` → `2023-2026`. SCR keeps `2026`, and gained the
-  `src/scr/.editorconfig` `file_header_template` it never had — until
+  values and across all files: Elite `2023` â†’ `2023-2026`, SharpKind
+  `2025` â†’ `2023-2026`. SCR keeps `2026`, and gained the
+  `src/scr/.editorconfig` `file_header_template` it never had â€” until
   now `IDE0073` was not checking SCR's headers at all.
 - Upstream attribution lines (C.J. Pinder / Bell & Braben for Elite,
   the remake and Crammond/MicroStyle/MicroProse lines for SCR) are
@@ -4445,7 +4451,7 @@ next implementation work rather than code to write.
   and `CA1506`: `S2583` (unreachable conditional code) was already clean,
   and `S2234`'s four sites were all false positives from deliberate
   coordinate swaps, cleared by renaming the parameters rather than
-  suppressing — `PlanetRenderer.RenderPlanetLine`'s `x`/`y` become
+  suppressing â€” `PlanetRenderer.RenderPlanetLine`'s `x`/`y` become
   `offsetX`/`offsetY` (its four callers mirror the octants of Doros'
   circle algorithm on purpose), and `TrackRendererTests.Cross`'s
   `a`/`b`/`c` become `origin`/`first`/`second`. No behaviour change; the
@@ -4458,7 +4464,7 @@ next implementation work rather than code to write.
 ### Fixed (Planets painting over the view border, 2026-07-27)
 
 - The previous entry below claimed `WireframePlanet`/`FractalPlanet`/
-  `PlanetRenderer` had "no reference to the view bounds at all" — that
+  `PlanetRenderer` had "no reference to the view bounds at all" â€” that
   was wrong; `GetPlanetPosition`'s bounding-box cull and
   `RenderPlanetLine`'s per-pixel clip against `IEliteDraw.Left`/`Right`/
   `Top`/`Bottom` have existed since 2025-03-19 (`git blame`), well before
@@ -4479,7 +4485,7 @@ next implementation work rather than code to write.
   covers `FractalPlanet`/`StripedPlanet`, and `EliteDraw.Width`/`Height`
   (feeding `SetViewClipRegion`'s graphics-level clip, `-1` each) covers
   `WireframePlanet`/`SolidPlanet`, which draw via `DrawCircle`/
-  `DrawCircleFilled` with no manual bounds check of their own — and this
+  `DrawCircleFilled` with no manual bounds check of their own â€” and this
   same clip region is shared by ships and lasers, so it closes the same
   1px gap there too. `Right`/`Bottom`/`Bottom`-as-height stayed
   unchanged, since `DrawBorder` still needs them to draw the border in
@@ -4495,7 +4501,7 @@ next implementation work rather than code to write.
 
 - `ShipBase.DrawLasers` ([ShipBase.cs](src/elite/libs/EliteSharpLib/Ships/ShipBase.cs))
   drew each NPC's laser bolt from its mount point to `(Location.X > 0 ? 0
-  : 511, _rng.Random(256) * 2)` — a screen-edge X picked by which side the
+  : 511, _rng.Random(256) * 2)` â€” a screen-edge X picked by which side the
   ship was on, paired with a Y uniformly random over the whole view,
   ignoring the ship's actual firing angle, and hardcoded to a 512-tall
   view regardless of `ScannerWidth`/height. Replaced with a real
@@ -4509,7 +4515,7 @@ next implementation work rather than code to write.
   view rectangle (`IEliteDraw.Left`/`Right`/`Top`/`Bottom`, derived from
   screen size) via a new `ProjectToViewBoundary` helper. Investigated the
   reporter's second concern (planets not clipped to the scanner/viewport
-  boundary either) — confirmed `WireframePlanet`/`FractalPlanet`/
+  boundary either) â€” confirmed `WireframePlanet`/`FractalPlanet`/
   `PlanetRenderer` still have no reference to the view bounds, but that's
   a separate, unfixed concern (different draw path, not covered by this
   change) and remains open. Added
@@ -4532,7 +4538,7 @@ next implementation work rather than code to write.
   (bounds-check, draw the 1-4 pixels sized by depth) before moving it;
   extracted into a private `PlotStar(int i)` helper returning the
   computed screen position, cutting ~60 duplicated lines. Behaviour is
-  unchanged — same computation, same draw calls, same order. Verified
+  unchanged â€” same computation, same draw calls, same order. Verified
   with a full solution build, the full test suite, and by launching
   `EliteSharp` (ran cleanly through several seconds of frames, which
   exercise all three starfield draw paths, before being stopped).
@@ -4541,7 +4547,7 @@ next implementation work rather than code to write.
 
 - Deleted `src/elite/apps/EliteSharp.SDL/`, `src/elite/libs/EliteSharp/`,
   `src/elite/test/EliteSharp.Tests/`, and
-  `src/elite/perf/EliteSharp.Benchmarks/` — leftovers from earlier project
+  `src/elite/perf/EliteSharp.Benchmarks/` â€” leftovers from earlier project
   renames, each containing only `bin`/`obj` output, already gitignored
   (never tracked), and referenced by no project or solution entry.
 
@@ -4552,7 +4558,7 @@ next implementation work rather than code to write.
   block and fourteen `None Update="sfx\*.wav"` items pointing at a
   `Controls/` and a `sfx/` folder that no longer exist under
   `src/elite/libs/EliteSharpLib/`; removed both (confirmed neither path
-  exists). Left the ~280-line hand-maintained `Assets\*` item list as-is —
+  exists). Left the ~280-line hand-maintained `Assets\*` item list as-is â€”
   converting it to glob items is a separate, purely stylistic change with
   its own risk of altering per-extension `CopyToOutputDirectory` overrides
   (e.g. `.wav`/`.ogg` pairs under `Assets\SFX`/`Assets\Music` set
@@ -4583,11 +4589,11 @@ next implementation work rather than code to write.
 - The backlog's "document and harden the `SDLSound` loop-pitch threading
   contract" item described the old SDL2_mixer `Mix_RegisterEffect`
   resampler, where a managed callback running on the audio thread read a
-  pitch field the game thread wrote. The 2026-07-23 SDL2→SDL3 migration
+  pitch field the game thread wrote. The 2026-07-23 SDL2â†’SDL3 migration
   (see below) replaced that whole mechanism: `SDLSound.PlayLoop`
   ([SDLSound.cs](src/useful/libs/SharpKind.SDL/SDLSound.cs)) now calls
   `MIX_SetTrackFrequencyRatio` directly, a native SDL3_mixer API with no
-  managed callback and no field shared across threads — confirmed no
+  managed callback and no field shared across threads â€” confirmed no
   `Mix_RegisterEffect` usage remains anywhere in `src/`. Nothing left to
   document or harden, so the item is closed rather than actioned.
 
@@ -4605,7 +4611,7 @@ next implementation work rather than code to write.
 - Resolved the "how to record and monitor historical benchmark numbers"
   decision from the previous cleanup: added
   [.github/workflows/benchmarks.yml](.github/workflows/benchmarks.yml), a
-  `workflow_dispatch`-only job (manual trigger — shared runners are too
+  `workflow_dispatch`-only job (manual trigger â€” shared runners are too
   noisy to gate every push/PR on) that runs all three `*.Benchmarks`
   projects and records each benchmark class's results to the `gh-pages`
   branch via `benchmark-action/github-action-benchmark`, giving each class
@@ -4613,10 +4619,10 @@ next implementation work rather than code to write.
   `PlanetBenchmarks`, `SunBenchmarks`, `KeyboardBenchmarks`, and
   `SoftwareGraphicsBenchmarks` so BenchmarkDotNet emits the JSON report the
   action reads. Also fixed `EliteSharpLib.Benchmarks/Program.cs`, which ran
-  `PlanetBenchmarks` twice instead of running `SunBenchmarks` too — found
+  `PlanetBenchmarks` twice instead of running `SunBenchmarks` too â€” found
   while wiring this up; `SunBenchmarks` had never actually executed.
   One-time manual step still needed once this merges: enable GitHub Pages
-  (Settings → Pages → Source → `gh-pages` branch) after the workflow's
+  (Settings â†’ Pages â†’ Source â†’ `gh-pages` branch) after the workflow's
   first run creates the branch, to get a browsable dashboard. Built the
   full solution (all green); did not execute the new workflow itself,
   since it depends on the `gh-pages` branch/Pages state.
@@ -4630,8 +4636,8 @@ next implementation work rather than code to write.
 - Removed the committed BenchmarkDotNet report files under
   `src/elite/perf/EliteSharpLib.Benchmarks/reports/`,
   `src/useful/perf/SharpKind.Input.Benchmarks/reports/`, and
-  `src/useful/perf/SharpKind.Graphics.Benchmarks/reports/` — generated
-  artifacts per the architecture doc's solution-hygiene rule — and added
+  `src/useful/perf/SharpKind.Graphics.Benchmarks/reports/` â€” generated
+  artifacts per the architecture doc's solution-hygiene rule â€” and added
   `src/*/perf/*/reports/` to `.gitignore` so they don't get recommitted.
   How to record and monitor historical benchmark numbers over time (e.g. a
   CI job that posts results to a PR comment) remains an open decision, not
@@ -4644,7 +4650,7 @@ next implementation work rather than code to write.
   unconditionally, even though `BitmapHandle` (the only reader of the pin) is
   never touched by short-lived bitmaps such as the LRU text-glyph cache
   ([SoftwareGraphics.cs](src/useful/libs/SharpKind.Graphics/SoftwareGraphics.cs))
-  or the intermediates `FastBitmap.Resize` creates — only the screen
+  or the intermediates `FastBitmap.Resize` creates â€” only the screen
   framebuffer and SDL's depth-layer bitmap ever cross into native code.
   `BitmapHandle` now allocates the pinned `GCHandle` on first access instead
   of in the constructor, and `Dispose` only frees it if it was ever pinned,
@@ -4658,11 +4664,11 @@ next implementation work rather than code to write.
   post-setup call site (`EliteMain.Update`, `StuntCarRacerMain.Update`/`Draw`,
   `GameState.CurrentView`) to use the null-forgiving operator. `Current` is
   now `TScreen` and throws `InvalidOperationException` if read before `Set`
-  has been called at least once — both games already call `Set` during
+  has been called at least once â€” both games already call `Set` during
   construction/init, before their update loops run, so this only changes an
   unreachable silent-null path into a diagnosable exception.
   `ScreenManager.CurrentId` is unchanged (`default!` on an unset enum ID is
-  harmless — it's only ever compared, never dereferenced).
+  harmless â€” it's only ever compared, never dereferenced).
 
 ### Added (Test coverage badge on README, 2026-07-24)
 
@@ -4709,12 +4715,12 @@ next implementation work rather than code to write.
   `CalcMidpointColor`'s midpoint-displacement jitter from the shared
   game-wide `RNG`, so a planet's fine detail differed between visits to
   the same system depending on how much other game activity had advanced
-  the shared RNG in between — unlike the reference
+  the shared RNG in between â€” unlike the reference
   `generate_fractal_landscape(rnd_seed)` (`fesh0r/newkind`'s `threed.c`),
   which reseeds one stream for the whole landscape so revisiting a system
   always renders a byte-identical planet. Both the corner grid and the
   jitter now draw from the one seeded `RandomSource` local to each
-  `FractalPlanet`, which also made the `RNG` dependency unused — dropped
+  `FractalPlanet`, which also made the `RNG` dependency unused â€” dropped
   it from `FractalPlanet`'s constructor, `PlanetFactory.Create`, and the
   two call sites in `Space.cs`. Added
   `FractalPlanetTests.GenerateLandscapeIsDeterministicPerSeed`, which
@@ -4736,13 +4742,13 @@ next implementation work rather than code to write.
   `FractalPlanet.cs`) and S6640 (assembly-scoped in `SharpKind.SDL`, unsafe
   interop only) are verified false positives for this codebase, so
   they're now disabled via `.editorconfig` instead of scattered local
-  suppressions — a more honest opt-out. CA1034
+  suppressions â€” a more honest opt-out. CA1034
   (`SoftwareSoundTests.cs`) is confirmed unfixable (xUnit1000 requires a
   public test class, which then forces its constructor parameter type
   public too via CS0051) and stays as a justified local suppression.
   Documented the resulting triage policy in
   [architecture-principles.md](docs/architecture-principles.md). One suppression remains,
-  `ShipFactory.cs` (S3011, reflection into a non-public constructor) —
+  `ShipFactory.cs` (S3011, reflection into a non-public constructor) â€”
   left for the `ShipFactory.CreateShipFromName` dictionary-replacement
   item, which resolves it as a side effect.
 
@@ -4764,7 +4770,7 @@ next implementation work rather than code to write.
   read from disk, falling back to `new T()` in memory when no file existed;
   it never wrote that file back out. Both games only call `WriteConfig`
   from their Settings/Options screen, so on a fresh install
-  `%AppData%\TheSharpKind` stayed empty until the user opened Settings —
+  `%AppData%\TheSharpKind` stayed empty until the user opened Settings â€”
   nothing else confirmed the config path was writable or let a player find
   the file to hand-edit. `ReadConfig` now checks whether the file existed
   before reading, and if not, writes the resolved defaults immediately so a
@@ -4777,12 +4783,12 @@ next implementation work rather than code to write.
 ### Changed (Extract a shared BaseConfigSettings to deduplicate the two games' config types, 2026-07-23)
 
 - `ConfigSettings` (Elite) and `ScrConfigSettings` (SCR) had drifted into
-  duplicating the same three properties — `EffectsOn`, `GraphicsBackend`,
-  `MusicOn` — with identical defaults and comments. Added
+  duplicating the same three properties â€” `EffectsOn`, `GraphicsBackend`,
+  `MusicOn` â€” with identical defaults and comments. Added
   `BaseConfigSettings`
   ([BaseConfigSettings.cs](src/useful/libs/SharpKind.Abstraction/Config/BaseConfigSettings.cs))
-  to `SharpKind.Abstraction.Config` — the only assembly already referenced by
-  both game libraries that can also see the `GraphicsBackend` enum — and had
+  to `SharpKind.Abstraction.Config` â€” the only assembly already referenced by
+  both game libraries that can also see the `GraphicsBackend` enum â€” and had
   both settings types inherit from it instead. `ScrConfigSettings` had
   nothing game-specific left, so it collapsed to
   `internal sealed class ScrConfigSettings : BaseConfigSettings;`
@@ -4792,7 +4798,7 @@ next implementation work rather than code to write.
   ([EliteConfigSettings.cs](src/elite/libs/EliteSharpLib/Config/EliteConfigSettings.cs))
   to match the SCR naming and avoid confusion with the generic
   `SharpKind.Config.ConfigFile<T>` machinery it's used with. `ConfigFile<T>`
-  itself needed no changes — it was already generic. Verified both games'
+  itself needed no changes â€” it was already generic. Verified both games'
   libs, both test projects, and the config round-trip tests still pass.
 
 ### Fixed (SCR crash on Hardware GraphicsBackend: missing FontsTrueType manifest entry, 2026-07-23)
@@ -4803,7 +4809,7 @@ next implementation work rather than code to write.
   ([SDLGraphics.cs:375](src/useful/libs/SharpKind.SDL/SDLGraphics.cs)), reached
   via `TrackMenuScreen.Draw()`. `SDLGraphics` loads its `_fonts` dictionary
   from `IAssetLocator.FontTrueTypePaths`, which is populated from the
-  manifest's `FontsTrueType` section — but SCR's
+  manifest's `FontsTrueType` section â€” but SCR's
   [AssetManifest.json](src/scr/libs/StuntCarRacerSharpLib/Assets/AssetManifest.json)
   only ever had a `FontsBitmap` section (used by the `Software` backend), so
   under `Hardware` the font dictionary came back empty. Elite's manifest
@@ -4818,7 +4824,7 @@ next implementation work rather than code to write.
 
 ### Added (GraphicsBackend config switch between Software and SDL3_mixer-backed Hardware audio, 2026-07-23)
 
-- The in-progress SDL2→SDL3 migration had staged `SDLAbstraction.cs`/`SDLSound.cs`
+- The in-progress SDL2â†’SDL3 migration had staged `SDLAbstraction.cs`/`SDLSound.cs`
   ([SDLAbstraction.cs](src/useful/libs/SharpKind.SDL/SDLAbstraction.cs),
   [SDLSound.cs](src/useful/libs/SharpKind.SDL/SDLSound.cs)) for deletion: `SDLSound`
   was built entirely on the old `SDL2.SDL_mixer` API, which no longer compiles
@@ -4826,7 +4832,7 @@ next implementation work rather than code to write.
   `SDLAbstraction` only failed to compile because of that. Both games were left
   hardcoded to `SoftwareAbstraction`, with no way to opt into hardware-accelerated
   rendering at all. Restored `SDLAbstraction` unchanged and rewrote `SDLSound`
-  against SDL3_mixer's new `MIX_Track` API — an improvement over the old one, not
+  against SDL3_mixer's new `MIX_Track` API â€” an improvement over the old one, not
   just a port: SDL3_mixer exposes per-track pitch (`MIX_SetTrackFrequencyRatio`)
   and panning (`MIX_SetTrackStereo`) natively, so the old resample-via-effect-callback
   trick (and its single dedicated "pitched one-shot" channel) is gone; all 16
@@ -4836,11 +4842,11 @@ next implementation work rather than code to write.
   Added a `GraphicsBackend` enum (`SharpKind.Abstraction`,
   [GraphicsBackend.cs](src/useful/libs/SharpKind.Abstraction/GraphicsBackend.cs):
   `Software` or `Hardware`) and a matching `GraphicsBackend` property (default
-  `Software`) on both games' settings —
+  `Software`) on both games' settings â€”
   [EliteConfigSettings.cs](src/elite/libs/EliteSharpLib/Config/EliteConfigSettings.cs) and
   [ScrConfigSettings.cs](src/scr/libs/StuntCarRacerSharpLib/Config/ScrConfigSettings.cs).
   Since those settings types are internal (so `Program.Main` can't reference them
-  directly — the same reason `AddEliteConfig`/`AddScrConfig` exist) and
+  directly â€” the same reason `AddEliteConfig`/`AddScrConfig` exist) and
   `SharpKind.SDL` is deliberately not a dependency of either game-logic library,
   each library instead exposes a `ReadGraphicsBackend(userDataPath, loggerFactory)`
   helper
@@ -4886,7 +4892,7 @@ next implementation work rather than code to write.
   and this file. Left the internal class names as-is (`StuntCarRacerMain`,
   `StuntCarRacerServiceCollectionExtensions`, ...), matching how Elite
   keeps `EliteMain`/`EliteServiceCollectionExtensions` unprefixed inside
-  `EliteSharpLib` — only the project/assembly identifier gains the
+  `EliteSharpLib` â€” only the project/assembly identifier gains the
   suffix. Also left ptitSeb's reference-source mentions
   (`StuntCarRacer.cpp`) untouched since that's an external C++ file, not
   our code. Built the full solution, ran the complete test suite (all
@@ -4912,7 +4918,7 @@ next implementation work rather than code to write.
   mirroring Elite's, plus the missing `PublishProfileLinuxArm64` for Elite.
   Both apps' existing profiles published into the same repo-root
   `publish/<rid>/` folder, which would have let StuntCarRacerSharp's publish
-  overwrite EliteSharp's (or vice versa) once both ran in one job — renamed
+  overwrite EliteSharp's (or vice versa) once both ran in one job â€” renamed
   every `PublishDir` to `publish/<AppName>/<rid>/` and updated
   [build-and-package.yml](.github/workflows/build-and-package.yml)'s
   artifact-upload paths to match. Built the full solution, ran the
@@ -4927,7 +4933,7 @@ next implementation work rather than code to write.
   releases. Added `MinVer` (via [Directory.Build.props](Directory.Build.props),
   `MinVerTagPrefix` `v`, matching the already-decided `v1.0.0` first-tag
   scheme) so every project's version is now derived from the nearest `v*`
-  git tag plus commit height — tagging a commit *is* the release-versioning
+  git tag plus commit height â€” tagging a commit *is* the release-versioning
   step, with untagged builds getting a `0.0.0-alpha.0.<height>+<sha>`
   pre-release version. Updated
   [build-and-package.yml](.github/workflows/build-and-package.yml) to fetch
@@ -4972,7 +4978,7 @@ next implementation work rather than code to write.
   `EliteMainTests`' DI-composed construction/smoke test: drives the same DI
   graph `SDLProgram.Main` does (`AddEliteConfig` + `AddEliteMain`) with
   `FakeAbstraction` wrapping a real `SoftwareGraphics` (no SDL window) and
-  calls `EliteMain.Update`/`Draw` directly per tick — `EliteMain.Run` is
+  calls `EliteMain.Update`/`Draw` directly per tick â€” `EliteMain.Run` is
   unusable headlessly as-is, since it hands off to `GameHost.Run`'s
   real-time, wall-clock-waiting loop. Added an internal `EliteMain.State`
   property exposing `GameState` (which stays internal) for the harness to
@@ -4991,8 +4997,8 @@ next implementation work rather than code to write.
   (`UpdateGame`/`DrawGame`) and an abstract `State` property. Both games'
   `HeadlessGameHarness` classes now just build their own object graph
   (Elite's DI container vs SCR's direct constructor) and supply their own
-  `GameStateSummary` shape — genuinely different per game, so those stay
-  local — while `KeyScriptEvent`/`KeyScriptAction` and the harness
+  `GameStateSummary` shape â€” genuinely different per game, so those stay
+  local â€” while `KeyScriptEvent`/`KeyScriptAction` and the harness
   machinery are defined exactly once. Verified with a throwaway test that
   the Elite harness still renders a real frame (cockpit/HUD/scanner) before
   deleting it. Built the full solution and ran the complete test suite
@@ -5024,15 +5030,15 @@ next implementation work rather than code to write.
   reading spans of the original buffer directly (zero allocation, and it
   now applies the correct endian handling to width/height/bit-depth too,
   not just pixel colour as before). Replaced the `Debug.Assert` on the
-  "BM" signature — compiled out in Release, so a non-BMP file would
-  silently misparse instead of failing — with a thrown `UsefulException`,
+  "BM" signature â€” compiled out in Release, so a non-BMP file would
+  silently misparse instead of failing â€” with a thrown `UsefulException`,
   matching the existing bit-depth check. Built the full solution and ran
   the complete test suite (all green).
 
 ### Added (Reusable headless SCR game harness, 2026-07-22)
 
 - Verifying a change against the running game meant driving the real SDL
-  window with OS-level focus stealing and key injection — slow and flaky
+  window with OS-level focus stealing and key injection â€” slow and flaky
   for agent-driven sessions, and `VisualDumpTests` only exercises
   hand-composed scenes, not the whole game (screens, HUD, menu flow).
   Added `HeadlessGameHarness` to `StuntCarRacerSharpLib.Tests`
@@ -5042,10 +5048,10 @@ next implementation work rather than code to write.
   key-press sequence into a scripted `KeyScriptEvent` timeline (tap/hold/
   release at a given tick), and exposes a `GameStateSummary` (current
   screen, race started, player/opponent track piece, distance to
-  opponent) so most checks never need a rendered frame — `SaveFrame` is
+  opponent) so most checks never need a rendered frame â€” `SaveFrame` is
   there for the rare case that does (calling the shared `BitmapWriter`
   above). Added `HeadlessGameHarnessTests.cs` covering the initial menu
-  state, driving menu→race via a scripted timeline, and a frame dump
+  state, driving menuâ†’race via a scripted timeline, and a frame dump
   smoke test. Built the full solution and ran the complete test suite
   (all green); no production code changed, so no live smoke test was
   needed.
@@ -5064,7 +5070,7 @@ next implementation work rather than code to write.
   (mirroring SCR's), and gave the shared `FakeGraphics`
   ([FakeGraphics.cs](src/useful/test/SharpKind.Graphics.Fakes/FakeGraphics.cs))
   an optional width/height constructor (default 0, unchanged for existing
-  callers) — `Stars.CreateNewStar` derives its random ranges from
+  callers) â€” `Stars.CreateNewStar` derives its random ranges from
   `EliteDraw.Centre`, which comes from `IGraphics.ScreenWidth/Height`, and a
   0x0 fake screen produced a negative range that threw; `FakeAbstraction`
   now sizes it 512x512 to match Elite's real resolution. Built the full
@@ -5075,7 +5081,7 @@ next implementation work rather than code to write.
 
 - `Space` ([Space.cs](src/elite/libs/EliteSharpLib/Space.cs)) was the last
   class named by the "Elite's core game logic is largely untested" backlog
-  item — notably `LaunchPlayer`'s `LegalStatus |= _trade.IsCarryingContraband()`
+  item â€” notably `LaunchPlayer`'s `LegalStatus |= _trade.IsCarryingContraband()`
   line, where "the contraband bug lived here for years." Added
   `SpaceTests.cs` (26 tests) covering `LaunchPlayer` (contraband carried over
   into `LegalStatus`, clean without contraband, flight state + undocking),
@@ -5090,7 +5096,7 @@ next implementation work rather than code to write.
   game-over paths). Added `FakeView` to `EliteSharpLib.Fakes` (a no-op `IView`)
   so tests can register the `Docking`/`GameOver`/`Hyperspace` screens that
   `GameState.SetView` requires. `UpdateUniverse` (the per-frame object
-  update/render loop) is not covered here — it's exercised indirectly by the
+  update/render loop) is not covered here â€” it's exercised indirectly by the
   existing visual-dump/smoke tests rather than unit-level assertions. Built
   the full solution, ran the complete test suite (all green, 80 in
   `EliteSharpLib.Tests` including the 26 new tests).
@@ -5098,7 +5104,7 @@ next implementation work rather than code to write.
 ### Added (PlanetControllerTests covering the pure-logic galaxy/planet generation code, 2026-07-22)
 
 - `PlanetController` ([PlanetController.cs](src/elite/libs/EliteSharpLib/PlanetController.cs))
-  had no test coverage — part of the "Elite's core game logic is largely
+  had no test coverage â€” part of the "Elite's core game logic is largely
   untested" backlog item, which also named `SaveFile` round-trip coverage as
   a starting point; that round trip already exists in `SaveFileTests`
   (`SaveCommanderThenLoadCommanderRoundTrips`), as does coverage for `Combat`,
@@ -5120,7 +5126,7 @@ next implementation work rather than code to write.
 
 - `AssetLocator.Create()` ([AssetLocator.cs](src/useful/libs/SharpKind.Assets/AssetLocator.cs))
   opened `AssetManifest.json` via `File.Open(path, FileMode.Open)`, which
-  defaults to `FileAccess.ReadWrite`/`FileShare.None` — an exclusive lock for
+  defaults to `FileAccess.ReadWrite`/`FileShare.None` â€” an exclusive lock for
   a read-only operation. Two concurrent callers (e.g. two test classes each
   constructing their own `AssetLocator`/`SoftwareGraphics` in parallel xUnit
   collections) could race and throw `IOException` on the file, wrapped as
@@ -5147,7 +5153,7 @@ next implementation work rather than code to write.
 ### Fixed (Sanitize SaveFile.SaveCommander's filename and log its save failures, 2026-07-21)
 
 - `SaveFile.SaveCommander` ([SaveFile.cs](src/elite/libs/EliteSharpLib/Save/SaveFile.cs))
-  built the save path as `save.CommanderName + ".cmdr"` from raw user input —
+  built the save path as `save.CommanderName + ".cmdr"` from raw user input â€”
   invalid filename characters threw and path separators could escape the save
   directory. `PathFor` (shared by both `LoadCommander` and `SaveCommander`) now
   replaces any character in `Path.GetInvalidFileNameChars()` with `_` before
@@ -5164,7 +5170,7 @@ next implementation work rather than code to write.
 ### Fixed (SaveFile.LoadCommander no longer throws on a corrupt or hand-edited save, 2026-07-21)
 
 - `SaveFile.LoadCommander` ([SaveFile.cs](src/elite/libs/EliteSharpLib/Save/SaveFile.cs))
-  caught its own failures, reset `_lastSaved` to Jameson, then `throw;`ed —
+  caught its own failures, reset `_lastSaved` to Jameson, then `throw;`ed â€”
   contradicting its `bool`-return contract and `LoadCommanderView`'s
   "Error Loading Commander!" path, which never ran. Worse,
   `SaveStateToGameState` indexes `GalaxySeed[0..5]`, `CurrentCargo[i]`,
@@ -5184,14 +5190,14 @@ next implementation work rather than code to write.
   `EliteServiceCollectionExtensions.AddEliteMain` passes
   `ILoggerFactory.CreateLogger<SaveFile>()` through.
   `SaveCommander`'s two `Debug.WriteLine`/`Debug.Fail` catch blocks are
-  unchanged — tracked as a separate backlog item since they're a save,
+  unchanged â€” tracked as a separate backlog item since they're a save,
   not a load, and the fix there is a different shape (sanitizing the
   filename). Added `SaveFileTests.cs`
   ([SaveFileTests.cs](src/elite/test/EliteSharpLib.Tests/Save/SaveFileTests.cs))
   covering a missing save file, corrupt JSON, a truncated `galaxySeed`
   array, and a save/load round trip. Built the full solution, ran the
   complete test suite (all green, 39 in `EliteSharpLib.Tests` including
-  the 4 new ones), and smoke-tested the built Elite app — it starts and
+  the 4 new ones), and smoke-tested the built Elite app â€” it starts and
   constructs its full DI graph (including the changed `SaveFile`
   constructor) without error.
 
@@ -5206,7 +5212,7 @@ next implementation work rather than code to write.
   ([SDLProgram.cs](src/elite/apps/EliteSharp/SDLProgram.cs)) already wraps
   `elite.Run()` in a try/catch that logs Critical via Serilog and rethrows,
   and the whole game loop runs synchronously on that same thread
-  (`GameLoop.Run` → `GameHost.Run` → `EliteMain.Run`, no background thread),
+  (`GameLoop.Run` â†’ `GameHost.Run` â†’ `EliteMain.Run`, no background thread),
   so any exception now surfaces there with a full stack trace instead of
   vanishing.
 
@@ -5216,12 +5222,12 @@ next implementation work rather than code to write.
   ([Program.cs](src/useful/perf/SharpKind.Graphics.Benchmarks/Program.cs)) called
   `BenchmarkRunner.Run<T>()` directly, so `dotnet run -c Release` always ran
   all 23 benchmarks under the full `DefaultConfig` job (~10 minutes) with no
-  way to narrow it down — the friction that made the clip-region regression
+  way to narrow it down â€” the friction that made the clip-region regression
   above expensive to chase down. Switched to
   `BenchmarkSwitcher.FromAssembly(...).Run(args, config)`, which accepts
   `--filter`/`--job`/etc.; verified that plain `dotnet run -c Release` (no
   arguments) still runs every benchmark under the same `DefaultConfig` job
-  as before — `BenchmarkSwitcher` prompts interactively when given no
+  as before â€” `BenchmarkSwitcher` prompts interactively when given no
   arguments even with a single benchmark class in the assembly, so `Main`
   now substitutes `--filter *` in that case to keep today's default
   behaviour. Local iteration on a change can now run in seconds instead of
@@ -5229,13 +5235,13 @@ next implementation work rather than code to write.
   Also switched the job's toolchain to `InProcessNoEmitToolchain`: the
   default out-of-process toolchain generates and builds a throwaway project
   per run, and BenchmarkDotNet resolves it by scanning the whole repo tree
-  for a matching project *name* — which throws `NotSupportedException` the
+  for a matching project *name* â€” which throws `NotSupportedException` the
   moment more than one copy exists on disk, as happens when a Claude Code
   isolated-worktree agent's checkout sits nested under
   `.claude/worktrees/*` inside the same repo. Running in-process sidesteps
   the lookup entirely (and removes the per-run build step, on top of the
   `--filter`/`--job` speedup above), at the cost of slightly less isolation
-  between iterations than a separate process gives — an acceptable trade
+  between iterations than a separate process gives â€” an acceptable trade
   for a suite whose numbers are read as relative comparisons rather than
   absolute ones. `SharpKind.Input.Benchmarks` and `EliteSharpLib.Benchmarks`
   have the same hardcoded-`Main` pattern and would benefit from the same
@@ -5247,23 +5253,23 @@ next implementation work rather than code to write.
   ([SoftwareGraphics.cs](src/useful/libs/SharpKind.Graphics/SoftwareGraphics.cs))
   was an empty no-op, while Elite actively relies on clip regions
   (`EliteDraw.SetViewClipRegion`) to keep view drawing inside the border and
-  off the scanner area — in the software renderer this protection silently
+  off the scanner area â€” in the software renderer this protection silently
   did nothing. Added a clip rectangle (defaulting to the full screen) that
   both `DrawPixel` overloads test against, and routed
   `DrawRectangleFilledInt`/`DrawRectangleInt` (which wrote straight to the
   backing bitmap) through the clipped `DrawPixel` too, so every pixel-writing
   path is now covered. A same-toolchain A/B benchmark of the first pass
-  showed this cost real per-pixel throughput — the private `DrawPixel(int,
+  showed this cost real per-pixel throughput â€” the private `DrawPixel(int,
   int, uint)` had previously been a bare `_screen.SetPixel` passthrough with
   no checks at all, so `DrawLine`/`DrawCircleFilled`/`DrawRectangle*` (all of
   which funnel through it per pixel) roughly doubled. Added a
   `_clipIsFullScreen` flag, true whenever the clip covers the whole screen
-  (the default, and where most frames spend most of their time — e.g. Elite
+  (the default, and where most frames spend most of their time â€” e.g. Elite
   only narrows the clip for the 3D view); both `DrawPixel` overloads check it
   first and skip straight to the cheap unclipped path when it's set, only
   paying the four-field clip comparison while a narrower clip is actually
   active. Re-running the same A/B afterwards showed the regression cut from
-  ~100% down to ~10-25% (a few nanoseconds) on the affected benchmarks — the
+  ~100% down to ~10-25% (a few nanoseconds) on the affected benchmarks â€” the
   remaining cost being the one unavoidable guard branch. Added
   `SetClipRegionRestrictsPixelWritesToRegion`,
   `SetClipRegionRestrictsRectangleFilledToRegion` and
@@ -5294,7 +5300,7 @@ next implementation work rather than code to write.
   ([SoftwareGraphics.cs](src/useful/libs/SharpKind.Graphics/SoftwareGraphics.cs))
   wrapped the bitmap returned by `GenerateTextBitmap` in `using`, but that
   same bitmap is stored in `_textCache` and handed back again on the next
-  call with the same (font, colour, text) — so every cached bitmap was
+  call with the same (font, colour, text) â€” so every cached bitmap was
   disposed (its `GCHandle` freed) right after its first use, working today
   only because text drawing never reads `FastBitmap.BitmapHandle`. Removed
   the `using`s; cached bitmaps are now disposed only when
@@ -5312,8 +5318,8 @@ next implementation work rather than code to write.
   a `SharpKind.Fakes.FakeRandomSource` that returns fixed, test-set values so a
   test can force an exact branch (e.g. "the 1-in-256 roll succeeds")
   without hunting for a seed. `EliteSharpLib.RNG` keeps only what's
-  genuinely Elite-specific — `Seed`, `GenerateRandomNumber` (6502),
-  `GenMSXRandomNumber` (MSX) — composing a `RandomSource` for everything
+  genuinely Elite-specific â€” `Seed`, `GenerateRandomNumber` (6502),
+  `GenMSXRandomNumber` (MSX) â€” composing a `RandomSource` for everything
   else; its `RNG(Random random)` constructor (and every existing DI
   registration/consumer/test) is unchanged, plus a new `RNG(IRandomSource
   randomSource)` overload lets tests inject a `FakeRandomSource` directly.
@@ -5340,8 +5346,8 @@ next implementation work rather than code to write.
 
 - `RNG` ([RNG.cs](src/elite/libs/EliteSharpLib/RNG.cs)) was a static class
   whose `Random(...)` delegated every call to
-  `RandomNumberGenerator.GetInt32` — cryptographically secure but far
-  slower than needed in Elite's hot per-tick paths — and whose `Seed`
+  `RandomNumberGenerator.GetInt32` â€” cryptographically secure but far
+  slower than needed in Elite's hot per-tick paths â€” and whose `Seed`
   state was static mutable, making the 6502/MSX planet-description
   generators untestable and coupling every caller to global state. `RNG`
   is now an instance class constructed from an injected `System.Random`,
@@ -5361,7 +5367,7 @@ next implementation work rather than code to write.
 ### Changed (Remove two-phase construction from SDLSound/SoftwareGraphics, 2026-07-21)
 
 - `SDLSound` required a separate `Initialize(assetLocator)` call after
-  construction to load music/sfx — `SDLAbstraction`
+  construction to load music/sfx â€” `SDLAbstraction`
   ([SDLAbstraction.cs](src/useful/libs/SharpKind.SDL/SDLAbstraction.cs)) had
   silently skipped that call, so any code path through it would have thrown
   `KeyNotFoundException` the first time it tried to play a sound.
@@ -5378,7 +5384,7 @@ next implementation work rather than code to write.
   the dictionaries before calling it. `ShipFactory.Create`
   ([ShipFactory.cs](src/elite/libs/EliteSharpLib/Ships/ShipFactory.cs)) set
   its `_ships` field the same way via an object initializer on a
-  parameterless-constructed instance — private, so not the same
+  parameterless-constructed instance â€” private, so not the same
   half-built-instance risk, but the same pattern; it now takes the built
   dictionary through a private constructor instead. Built the full
   solution, ran the complete test suite (all green), and smoke-tested both
@@ -5389,7 +5395,7 @@ next implementation work rather than code to write.
 - `IKeyboard` ([IKeyboard.cs](src/useful/libs/SharpKind.Input/IKeyboard.cs)) mixed
   the producer API (`KeyDown`/`KeyUp`/settable `Close`, written by `SDLInput`
   as raw key events arrive) with the consumer API (`IsPressed`/`IsHeld`/
-  `LastPressed`/`ClearPressed`/`Poll`/readable `Close`, polled by games) —
+  `LastPressed`/`ClearPressed`/`Poll`/readable `Close`, polled by games) â€”
   game code holding an `IKeyboard` had no way to be stopped from also
   injecting key events. Split the producer side into a new
   `IKeyboardSink` ([IKeyboardSink.cs](src/useful/libs/SharpKind.Input/IKeyboardSink.cs));
@@ -5425,7 +5431,7 @@ next implementation work rather than code to write.
   `Combat` are converted: `Space`'s three "Failed to create Planet/Sun"
   `WriteLine`s ([Space.cs](src/elite/libs/EliteSharpLib/Space.cs)) and one
   each in `ConstrictorMissionView`, `EscapeCapsuleView`, `Intro1View`,
-  `Intro2View` — all legitimate runtime conditions (universe full) — now
+  `Intro2View` â€” all legitimate runtime conditions (universe full) â€” now
   log a Warning via the existing `LogMessages.FailedToCreateShip`, same
   as the `GameOverView`/`Combat` exemplars. `Intro2View`'s parade-ship
   failure now logs the specific ship's name instead of a fixed
@@ -5433,11 +5439,11 @@ next implementation work rather than code to write.
   optional `ILogger<T>` (defaulting to `NullLogger<T>.Instance`) through
   their constructors, and `EliteServiceCollectionExtensions` resolves
   `ILoggerFactory` to pass each one through. This closes out the
-  EliteSharpLib logging backlog item — every operational `Debug.*` call
+  EliteSharpLib logging backlog item â€” every operational `Debug.*` call
   in the library is now converted. Built the full solution, ran the
   complete test suite (all green), and smoke-tested the built Elite app
   (starts, logs "Starting Elite - The Sharp Kind", and constructs its
-  full DI graph — including every changed class — without error).
+  full DI graph â€” including every changed class â€” without error).
 
 ### Added (Combat's Debug.Fail calls converted to logging/exceptions, 2026-07-21)
 
@@ -5446,10 +5452,10 @@ next implementation work rather than code to write.
   none of which survive a Release build. `Combat` now takes an optional
   `ILogger<Combat>` (defaulting to `NullLogger<Combat>.Instance`,
   following the `GameOverView` exemplar), and the 16 "Failed to create
-  &lt;ship&gt;" cases — all legitimate runtime conditions (universe full)
-  — log a Warning via the existing `LogMessages.FailedToCreateShip`.
+  &lt;ship&gt;" cases â€” all legitimate runtime conditions (universe full)
+  â€” log a Warning via the existing `LogMessages.FailedToCreateShip`.
   "Incorrect loot type" was a programming-error case (an unreachable
-  `ShipType` branch), so it now throws `EliteException` instead —
+  `ShipType` branch), so it now throws `EliteException` instead â€”
   `LaunchLoot`'s if/else-if chain became a switch expression to keep the
   analyzer happy with the added throw arm.
   `EliteServiceCollectionExtensions.AddEliteMain` now resolves
@@ -5460,7 +5466,7 @@ next implementation work rather than code to write.
 
 ### Added (EliteSharpLib logging infrastructure + exemplar, 2026-07-21)
 
-- `EliteSharpLib` had no way to log at all — every operational failure in
+- `EliteSharpLib` had no way to log at all â€” every operational failure in
   the library went to `Debug.WriteLine`/`Debug.Fail`, which vanish in
   Release builds. Added a library-internal `LogMessages`
   `[LoggerMessage]` partial (`EliteSharpLib/LogMessages.cs`), following
@@ -5476,7 +5482,7 @@ next implementation work rather than code to write.
   ...")` calls): it now takes an optional `ILogger<GameOverView>`
   constructor parameter, defaulting to `NullLogger<GameOverView>.Instance`
   for tests/fakes, and logs both "failed to create ship" cases as a
-  Warning (legitimate runtime condition — universe full — not a
+  Warning (legitimate runtime condition â€” universe full â€” not a
   programming error) via `LogMessages.FailedToCreateShip`.
   `EliteServiceCollectionExtensions.AddEliteMain` now resolves
   `ILoggerFactory` and passes `CreateLogger<GameOverView>()` through.
@@ -5492,15 +5498,15 @@ next implementation work rather than code to write.
 
 - `ConfigFile<T>`'s read/write failures went to `Debug.WriteLine` only,
   so nothing appeared in the Serilog file/console sinks the apps
-  actually use — a purposefully-broken config (e.g. an invalid enum
+  actually use â€” a purposefully-broken config (e.g. an invalid enum
   string) produced no trace in the log file at all, only in an attached
   debugger's Output window. `ConfigFile<T>` now takes an optional
   `ILogger<ConfigFile<T>>` (constructor overload, defaulting to
-  `NullLogger<ConfigFile<T>>.Instance` — same pattern the backlog's
+  `NullLogger<ConfigFile<T>>.Instance` â€” same pattern the backlog's
   library-logging item describes for `ILogger<T>` adoption) and a new
   library-internal `LogMessages` `[LoggerMessage]` partial
   (`SharpKind/Config/LogMessages.cs`) logs:
-  - a Warning "Failed to read config file '{path}'; using defaults." —
+  - a Warning "Failed to read config file '{path}'; using defaults." â€”
     always visible at the apps' default Information level, no exception
     attached (so no stack-trace noise by default);
   - a separate Debug-level message carrying the actual exception, so the
@@ -5509,7 +5515,7 @@ next implementation work rather than code to write.
   - a Warning when the config fails validation (no exception, nothing
     was thrown);
   - an Error (with exception) on `WriteConfig` failure, alongside the
-    existing `Debug.Fail` dev-time assertion (left as-is — orthogonal to
+    existing `Debug.Fail` dev-time assertion (left as-is â€” orthogonal to
     logging).
 
   `AddEliteConfig`/`AddScrConfig` now resolve `ILoggerFactory` from the
@@ -5526,7 +5532,7 @@ next implementation work rather than code to write.
   `[WRN] Failed to read config file '...'; using defaults.` with no
   stack trace; with `ELITE_LOG_LEVEL=Debug` the full exception chain
   (down to `ConfigurationBinder.Bind`) appears too. Added
-  `SharpKind.Tests` coverage (`RecordingLogger<T>` fake — Moq's generic
+  `SharpKind.Tests` coverage (`RecordingLogger<T>` fake â€” Moq's generic
   `ILogger.Log<TState>` verification is awkward, a fake is simpler)
   asserting the Warning+Debug split on read failure and the
   no-exception Warning on validation failure.
@@ -5536,7 +5542,7 @@ next implementation work rather than code to write.
 - Both apps' Serilog file sink used a `logs` path relative to the
   process's current working directory, so where log files actually
   landed depended on how the app was launched (repo root via `dotnet
-  run`, or next to the exe when run directly) — inconsistent with the
+  run`, or next to the exe when run directly) â€” inconsistent with the
   config files, which are already rooted at a fixed
   `%AppData%\TheSharpKind`. `SDLProgram.Main` in both apps now computes
   `userDataPath` first and points the file sink at
@@ -5556,7 +5562,7 @@ next implementation work rather than code to write.
 - Elite's `ConfigFile`/`IConfigWriter` and SCR's `ScrConfigFile` were
   near-identical (JSON read/write via `Microsoft.Extensions.Configuration`,
   same defaults-on-failure behaviour, same catch clauses) except for their
-  settings type and filename — a DRY violation now that both games have
+  settings type and filename â€” a DRY violation now that both games have
   one. Replaced both with a single generic `SharpKind.Config.ConfigFile<T>`
   (`where T : new()`), implementing a new generic `IConfigWriter<T>`, with
   the filename passed to the constructor and an optional
@@ -5564,7 +5570,7 @@ next implementation work rather than code to write.
   `Fps > 0`/enum-range checks; SCR has none). `EliteSharpLib`'s
   `ConfigSettings` and `StuntCarRacerSharpLib`'s `ScrConfigSettings` stay put
   (they're genuinely game-specific), now bound as `ConfigFile<ConfigSettings>`
-  / `ConfigFile<ScrConfigSettings>` respectively — `AddEliteConfig`/
+  / `ConfigFile<ScrConfigSettings>` respectively â€” `AddEliteConfig`/
   `AddScrConfig` and `SettingsView` (now `IConfigWriter<ConfigSettings>`)
   updated accordingly. `Microsoft.Extensions.Configuration`/`.Binder`/
   `.Json` package references moved from `EliteSharpLib.csproj`/
@@ -5575,7 +5581,7 @@ next implementation work rather than code to write.
   `SharpKind.Maths.Extensions` triggered CA1724 (type name conflicts with
   the newly-referenced `Microsoft.Extensions` namespace) under this
   repo's warnings-as-errors build. Renamed it to `MathsExtensions` (pure
-  rename — it's an extension-method container, so no call site needed
+  rename â€” it's an extension-method container, so no call site needed
   updating) to unblock the build; unrelated to the config unification
   itself but a direct consequence of it.
 
@@ -5595,7 +5601,7 @@ next implementation work rather than code to write.
   `IConfiguration.Bind`, but `Microsoft.Extensions.Configuration.Binder`
   wraps type-conversion failures (e.g. a hand-edited `elitesharp.cfg`
   with a non-boolean string for `ShipWireframe`) in
-  `InvalidOperationException`, not `FormatException` — so a corrupt or
+  `InvalidOperationException`, not `FormatException` â€” so a corrupt or
   hand-edited config file crashed the whole game with an unhandled
   exception instead of falling back to defaults as intended. Both catch
   clauses now also match `InvalidOperationException`. Also tightened
@@ -5621,7 +5627,7 @@ next implementation work rather than code to write.
   project. Elite's config filename (`elitesharp.cfg`) and commander
   saves (`.cmdr`) already avoided any collision by name, so it needed no
   change; SCR's config filename gained a `sharp` suffix
-  (`stuntcarracer.cfg` → `stuntcarracersharp.cfg`) to stay unambiguous
+  (`stuntcarracer.cfg` â†’ `stuntcarracersharp.cfg`) to stay unambiguous
   now it sits next to Elite's files in the same folder. Docs
   (`elite-readme.md`, `scr-readme.md`) updated to match and cross-link
   each other's Configuration section, now that the folder is shared.
@@ -5635,7 +5641,7 @@ next implementation work rather than code to write.
   at a user-data path, and a public
   `StuntCarRacerServiceCollectionExtensions.AddScrConfig(userDataPath)`
   (mirroring `AddEliteConfig`) registers it in DI and exposes the result
-  as `SharpKind.Audio.AudioOptions` — the type `StuntCarRacerMain` already
+  as `SharpKind.Audio.AudioOptions` â€” the type `StuntCarRacerMain` already
   took at its `AudioController` construction site. `StuntCarRacerMain`
   gained a new public constructor overload accepting `AudioOptions` (the
   existing no-option constructors now default to `new()`, unchanged
@@ -5657,19 +5663,19 @@ next implementation work rather than code to write.
 
 ### Changed (Colour handling unified on FastColor, 2026-07-20)
 
-- Phase 3 of unifying colour handling across Elite and SCR: `uint` →
-  `FastColor` across the shared colour contract — `IGraphics` (and both
+- Phase 3 of unifying colour handling across Elite and SCR: `uint` â†’
+  `FastColor` across the shared colour contract â€” `IGraphics` (and both
   implementations, `SoftwareGraphics`/`SDLGraphics`), `IPolygonRenderer`
   and its three strategies (`ZBufferRenderer`/`PainterRenderer`/
   `WireframeRenderer`), `IPaletteCollection`/`Palette`/`PaletteReader`
   (`SharpKind.Assets.Palettes`), `Face.Color` (`SharpKind.Assets.Models`), and
   SCR's `WorldPolygon.Colour`/`CarPalette`. Only the declared surfaces
-  changed — internal call sites across Elite's ~110 `uint`-typed colour
+  changed â€” internal call sites across Elite's ~110 `uint`-typed colour
   locals/fields (Views, Planets, Suns, Ships) and SCR's `ScrPalette`/
-  `TrackRenderer` kept compiling unchanged via the implicit `uint`↔
+  `TrackRenderer` kept compiling unchanged via the implicit `uint`â†”
   `FastColor` conversions added earlier the same day (see below), keeping
   the diff to 27 files. The exceptions needing edits were Moq test
-  matchers (`It.IsAny<uint>()` → `It.IsAny<FastColor>()`), since Moq
+  matchers (`It.IsAny<uint>()` â†’ `It.IsAny<FastColor>()`), since Moq
   checks the literal parameter type rather than tolerating implicit
   conversions.
 
@@ -5683,7 +5689,7 @@ next implementation work rather than code to write.
 - Phase 2 of the colour-handling unification: `ScrPalette`'s hardcoded
   42-entry `uint[]` replaced with a JSON asset
   (`StuntCarRacerSharpLib/Assets/Palette/palette.json`) loaded through
-  `SharpKind.Assets.Palettes.PaletteReader`/`IPaletteCollection` — the same
+  `SharpKind.Assets.Palettes.PaletteReader`/`IPaletteCollection` â€” the same
   mechanism `EliteDraw` already used for its named palette. `Colour(int)`
   stays static with a lazily-loaded backing store and keeps addressing
   colours positionally (`Track.ScrBaseColour + offset`, matching the
@@ -5700,8 +5706,8 @@ next implementation work rather than code to write.
   `SharpKind.Assets` (which sits below `SharpKind.Graphics` in the dependency
   graph and owns `IPaletteCollection`/`Face.Color`) can reference it in a
   later phase without a circular project reference. No call-site changes
-  needed elsewhere — `SharpKind.Graphics`/`SharpKind.SDL` already see it via
-  C#'s enclosing-namespace lookup. Added implicit `uint`↔`FastColor`
+  needed elsewhere â€” `SharpKind.Graphics`/`SharpKind.SDL` already see it via
+  C#'s enclosing-namespace lookup. Added implicit `uint`â†”`FastColor`
   conversions so existing ARGB literals and `uint`-typed fields kept
   compiling as call sites migrated to `FastColor` over the subsequent
   phases above.
@@ -5717,7 +5723,7 @@ next implementation work rather than code to write.
   load; a new `CarPalette` resolves car.obj's five materials to
   track-palette colours since `Track.ScrBaseColour` is presently a fixed
   offset. Also fixed `.gitignore`'s blanket `*.obj` rule, which was
-  silently excluding the new `car.obj` — only Elite's ship-model path was
+  silently excluding the new `car.obj` â€” only Elite's ship-model path was
   carved out as a genuine-OBJ exception; added SCR's models path
   alongside it.
 
@@ -5726,18 +5732,18 @@ next implementation work rather than code to write.
 - `IShipRenderer`, `ShipRenderMode`, `PolygonData`, `WireframeRenderer`,
   `PainterRenderer` and `ZBufferRenderer` moved from
   `EliteSharpLib.Graphics` to `SharpKind.Graphics.Rendering`
-  (`src/useful/libs/SharpKind.Graphics/Rendering/`) — after today's earlier
+  (`src/useful/libs/SharpKind.Graphics/Rendering/`) â€” after today's earlier
   work stripped their last Elite dependencies (`GameState`, the
   `ShipWireframe` check), none of the six referenced anything
   Elite-specific anymore; they only depend on `IGraphics`,
   `IAssetLocator` and `PaletteReader`, all already public in `SharpKind.*`.
-  Renamed the two type names that said "ship": `IShipRenderer` →
-  `IPolygonRenderer`, `ShipRenderMode` → `PolygonRenderMode`
-  (`SubmitFace`/`faceColor` → `Submit`/`color` too, and
-  `PolygonData.FaceColor` → `Color`); the three renderer classes
+  Renamed the two type names that said "ship": `IShipRenderer` â†’
+  `IPolygonRenderer`, `ShipRenderMode` â†’ `PolygonRenderMode`
+  (`SubmitFace`/`faceColor` â†’ `Submit`/`color` too, and
+  `PolygonData.FaceColor` â†’ `Color`); the three renderer classes
   (`WireframeRenderer`/`PainterRenderer`/`ZBufferRenderer`) didn't
   mention ships in their names already, so those stayed as-is. Elite's
-  `ConfigSettings.ShipRenderMode` *property* keeps its name — that's
+  `ConfigSettings.ShipRenderMode` *property* keeps its name â€” that's
   Elite's own config key, just typed by the now-shared enum.
   `IShipRenderer`/the three renderer classes were `internal`; became
   `public` since Elite now consumes them from a different assembly
@@ -5748,21 +5754,21 @@ next implementation work rather than code to write.
   the types were `internal` to `EliteSharpLib`.
 
   Checked `StuntCarRacerSharpLib` for anything that duplicates this
-  chain/depth-sort logic and could reuse it: no — `TrackRenderer`/
+  chain/depth-sort logic and could reuse it: no â€” `TrackRenderer`/
   `OpponentRenderer` submit `WorldPolygon`s straight to
   `Graphics.DrawPolygonFilledDepth` with no buffering step, so there's
   nothing to swap over, though `ZBufferRenderer` is the closer relative
   if SCR ever wants the explicit start/submit/end lifecycle. Also
   checked the rest of this session's changes (`AudioOptions`,
   `ConfigSettings`/`ConfigFile`) for the same "no longer game-specific"
-  smell — `AudioOptions` was already correctly in `SharpKind.Audio`;
+  smell â€” `AudioOptions` was already correctly in `SharpKind.Audio`;
   `ConfigSettings`/`ConfigFile` hold genuinely Elite-only fields
   (`PlanetStyle`, `SunStyle`, the `elitesharp.cfg` filename) and stay put.
 
 ### Added (Selectable ship render mode, 2026-07-20)
 
 - Last of the ship-rendering-strategy items: `ZBufferRenderer` and
-  `PainterRenderer` are now purely filled renderers — the `ShipWireframe`
+  `PainterRenderer` are now purely filled renderers â€” the `ShipWireframe`
   branch (and the `GameState`/`IAssetLocator` dependencies it needed for
   the white outline colour) is gone from both, so `ZBufferRenderer`'s
   constructor is just `(IGraphics)` now and `PainterRenderer`'s
@@ -5771,7 +5777,7 @@ next implementation work rather than code to write.
   result, it draws each submitted face immediately in `SubmitFace`
   rather than buffering a depth-sort chain at all. A new
   `ConfigSettings.ShipRenderMode` (`ShipRenderMode.Painter`/`ZBuffer`,
-  defaulting `ZBuffer` — the current behaviour) selects between the two
+  defaulting `ZBuffer` â€” the current behaviour) selects between the two
   filled strategies; `EliteServiceCollectionExtensions`'s `IShipRenderer`
   registration now picks `WireframeRenderer`, `PainterRenderer`, or
   `ZBufferRenderer` based on `ShipWireframe`/`ShipRenderMode` at
@@ -5783,14 +5789,14 @@ next implementation work rather than code to write.
   branch, already fully implement `IShipRenderer` as pure filled
   renderers, so a forwarding decorator would have added a class with no
   behaviour of its own. Also skipped a `SettingsView` toggle for the new
-  setting — `ShipWireframe` itself has no in-game UI today either, so the
+  setting â€” `ShipWireframe` itself has no in-game UI today either, so the
   config file remains the only way to switch (still satisfies "toggle
   without code changes").
 
   Added `VisualDumpTests.PainterAndZBufferRenderIdenticallyForNonDecalGeometry`,
   rendering a decal-free `Asteroid` model through both filled strategies
   and asserting pixel-for-pixel equality (passes exactly, no tolerance
-  needed) — confirms the split didn't change either algorithm's actual
+  needed) â€” confirms the split didn't change either algorithm's actual
   behaviour. Also visually spot-checked `WireframeRenderer`'s output
   (a clean white ship outline, as expected).
 
@@ -5799,14 +5805,14 @@ next implementation work rather than code to write.
 - Third of the ship-rendering-strategy items: `ShipRenderer` (the
   combined depth-sort/fill/wireframe behaviour extracted from `EliteDraw`
   earlier today) renamed to `ZBufferRenderer`, matching the
-  `PainterRenderer` sibling added alongside it — no behaviour change,
+  `PainterRenderer` sibling added alongside it â€” no behaviour change,
   same registration in `EliteServiceCollectionExtensions.AddEliteMain`
   and the same direct construction in `PlanetBenchmarks`,
   `SunBenchmarks` and `VisualDumpTests`. The backlog item also asked to
   carry `ShipBase`'s face-root decal-inheritance logic
   (`FindFaceRoots`/`FaceMeanZ`) into this class; that logic stayed in
   `ShipBase` instead, deliberately deviating from the item's literal
-  text — it computes the `z` value every `IShipRenderer.SubmitFace` call
+  text â€” it computes the `z` value every `IShipRenderer.SubmitFace` call
   receives regardless of which strategy is active (`PainterRenderer`
   depends on the exact same computation), so moving it into
   `ZBufferRenderer` specifically would make `ShipBase` need to know which
@@ -5820,22 +5826,22 @@ next implementation work rather than code to write.
 
 - Second of the ship-rendering-strategy items: a new
   `PainterRenderer : IShipRenderer` (`Graphics/PainterRenderer.cs`)
-  restores the pre-2026-07-14-spike behaviour — a plain
+  restores the pre-2026-07-14-spike behaviour â€” a plain
   (non-depth-tested) `Graphics.DrawPolygonFilled` fill in back-to-front
   `_polyChain` order, instead of `ShipRenderer`'s per-pixel z-buffer test
-  (`Graphics.DrawPolygonFilledDepth`) — as its own selectable
+  (`Graphics.DrawPolygonFilledDepth`) â€” as its own selectable
   implementation, without touching `ShipBase`'s face-transform code.
   Deliberately duplicates `ShipRenderer`'s chain-management code rather
   than factoring out a shared base class now, since the z-buffer item
   (still open) may reshape `ShipRenderer` further; `PainterRenderer` also
   skips the per-vertex `Depths` array entirely since the painter's fill
-  never reads it. Not yet registered in the DI container — `ShipRenderer`
+  never reads it. Not yet registered in the DI container â€” `ShipRenderer`
   stays the sole active implementation until the wireframe/filled item
   wires up config-driven selection between them. Verified with a
   throwaway test rendering the same interpenetrating-hulls scene as
   `VisualDumpTests`; both single-ship and intersecting-hull frames looked
   correct on visual inspection (not a pixel diff against the z-buffer
-  path — that comparison is the wireframe/filled item's job).
+  path â€” that comparison is the wireframe/filled item's job).
 
 ### Added (Ship-rendering strategy abstraction, 2026-07-20)
 
@@ -5844,7 +5850,7 @@ next implementation work rather than code to write.
   `Graphics/IShipRenderer.cs`) isolates the depth-sort/fill algorithm
   from `EliteDraw`, which previously hardcoded the back-to-front
   `_polyChain` chain and the `ShipWireframe` render-mode branch directly
-  in `DrawPolygonFilled`/`RenderStart`/`RenderEnd` — the same fields the
+  in `DrawPolygonFilled`/`RenderStart`/`RenderEnd` â€” the same fields the
   2026-07-14 z-buffer spike edited in place rather than toggled. Today's
   exact combined behaviour (chain, z-buffer fill, wireframe branch) moved
   unmodified into a new `ShipRenderer : IShipRenderer`
@@ -5853,7 +5859,7 @@ next implementation work rather than code to write.
   `EliteDraw`'s constructor takes an injected `IShipRenderer` and its
   three methods just delegate to it now. Registered as a singleton in
   `EliteServiceCollectionExtensions.AddEliteMain`, resolved before
-  `EliteDraw`. This is pure extraction, not a split — the actual
+  `EliteDraw`. This is pure extraction, not a split â€” the actual
   painter's/z-buffer/wireframe/filled separation is the three remaining
   backlog items. `PlanetBenchmarks`, `SunBenchmarks` and
   `VisualDumpTests` construct `EliteDraw` directly (not via DI) and
@@ -5873,7 +5879,7 @@ next implementation work rather than code to write.
   now builds the options from the already-resolved `GameState.Config`
   rather than a second `ConfigFile.ReadConfig()` call. SCR
   (`StuntCarRacerMain`) has no settings infrastructure at all yet, so it
-  passes a plain default `AudioOptions` at its construction site — same
+  passes a plain default `AudioOptions` at its construction site â€” same
   always-on behaviour as before, just explicit instead of hardcoded
   inside `AudioController`. Added `PlayEffectDoesNothingWhenEffectsAreOff`
   and `PlayMusicAndStopMusicDoNothingWhenMusicIsOff` to
@@ -5890,7 +5896,7 @@ next implementation work rather than code to write.
   services. `AddEliteMain`'s `EliteMain` factory now populates the
   `ScreenManager<Screen, IView>` singleton (`views.Add(Screen.X, ...)` for
   all 25 screens) by resolving each view from the container before
-  constructing `EliteMain` — this has to happen there rather than inside
+  constructing `EliteMain` â€” this has to happen there rather than inside
   `AddEliteViews` itself, since IServiceCollection registration is lazy
   and population needs actual built instances. `EliteMain`'s constructor
   shrinks accordingly: `Trade`, `PlanetController`, `IShipFactory`,
@@ -5910,7 +5916,7 @@ next implementation work rather than code to write.
   constructor just receives them. Since every one of these types is
   `internal` to `EliteSharpLib`, the container can't auto-wire them by
   reflection (that only sees public constructors), so each is registered via
-  an explicit factory delegate rather than a bare `AddSingleton<T>()` — this
+  an explicit factory delegate rather than a bare `AddSingleton<T>()` â€” this
   is deliberately verbose over hiding it behind a bigger, riskier
   internal-to-public accessibility change. The `AudioController` `SfxSample`
   cooldown table (`// TODO: improve this`) moved into a private
@@ -5918,7 +5924,7 @@ next implementation work rather than code to write.
   `EliteDraw`'s `_colorText = _draw.Palette["White"]` read and `SaveFile`'s
   `ConfigFile.BaseDirectory` path both stay exactly where they were,
   now sourced from the injected `IEliteDraw`/`ConfigFile`.
-  `EliteMain` still builds the ~25 views itself — that's the next backlog
+  `EliteMain` still builds the ~25 views itself â€” that's the next backlog
   item.
 
 ### Added (Elite composition root, 2026-07-20)
@@ -5940,7 +5946,7 @@ next implementation work rather than code to write.
   can still build `SaveFile`'s path from it), and is `internal` rather
   than `public` since only the in-assembly registrar factory calls it
   now. `EliteMain`'s constructor otherwise keeps building the rest of the
-  domain graph as before — that's the separate "move Elite's domain
+  domain graph as before â€” that's the separate "move Elite's domain
   services into the container" item.
 
 ### Added (SCR composition root, 2026-07-20)
@@ -5955,7 +5961,7 @@ next implementation work rather than code to write.
   and `StuntCarRacerMain` is registered as itself and as `IGame`. `Main`
   resolves the concrete `StuntCarRacerMain` (not `IGame`, which has no
   `Run`) and calls `.Run()`. This is the first of the composition-root
-  items — Elite's `Program.Main` mirrors the pattern next.
+  items â€” Elite's `Program.Main` mirrors the pattern next.
 
 ### Added (SCR per-effect sound volume/pitch/pan, 2026-07-20)
 
@@ -6020,8 +6026,8 @@ next implementation work rather than code to write.
   only runs every `FrameGap`-th tick (12.5Hz), instead of the original
   `FramesWheelsEngine`'s full 50Hz rate. Split `SetWheelRotationSpeed`
   into a physics-rate speed calculation (unchanged) and a new
-  `AdvanceWheelAngles`, now called from `CarPhysics.ApplyEngineRevs` —
-  already the 50Hz hook, called every tick from `RaceScreen.Update` —
+  `AdvanceWheelAngles`, now called from `CarPhysics.ApplyEngineRevs` â€”
+  already the 50Hz hook, called every tick from `RaceScreen.Update` â€”
   keeping the original's right-wheel-reads-left-angle quirk. Covered by
   a new `CarPhysicsTests.WheelAnglesAdvanceOnEveryEngineRevsTickNotJustPhysicsFrames`
   test that drives `ApplyEngineRevs` alone (no physics frames) and
@@ -6033,9 +6039,9 @@ next implementation work rather than code to write.
   matching the Amiga original's `damage.line`/`car.is.wrecked` (the HUD
   crack previously just capped out with no effect). The C# port already
   carried the rest of the Amiga's (and ptitSeb's dormant, never-triggered)
-  wreck plumbing — `_wreckWheelHeightReduction`, the wheel-height
+  wreck plumbing â€” `_wreckWheelHeightReduction`, the wheel-height
   subtraction, the `!Wrecked`-gated engine power/boost cuts, and the
-  scrape-sound gate — so the only change is setting that field once the
+  scrape-sound gate â€” so the only change is setting that field once the
   damage threshold is crossed; those existing paths do the rest. The race
   flow is otherwise unchanged (the opponent still finishes and the race is
   lost). Covered by new `CarPhysicsTests` (`FullDamageWrecksTheCar`,
@@ -6056,7 +6062,7 @@ next implementation work rather than code to write.
   tests `b < 0` on an unsigned value, which never fires), and the draw
   bridge's `SetSpeedValue` writes still take precedence via a per-piece
   override (the Amiga modified its precomputed table; ptitSeb's own
-  writes go unread since nothing reads the table any more — a
+  writes go unread since nothing reads the table any more â€” a
   regression not copied). Covered by new `SpeedValue` unit tests
   (deterministic standard-league values, RNG-stream stability while on
   a piece, draw-bridge override precedence) and smoke-tested live.
@@ -6064,9 +6070,9 @@ next implementation work rather than code to write.
 ### Audited (SCR ptitSeb parity, 2026-07-19)
 
 - Ran a full feature-by-feature comparison of the C# port against
-  `ptitSeb/stuntcarremake` (see the backlog's "Resolved (2026-07-19) —
+  `ptitSeb/stuntcarremake` (see the backlog's "Resolved (2026-07-19) â€”
   ptitSeb parity audit" note for the findings). One backlog item was
-  found already complete and removed: **opponent name announcement** —
+  found already complete and removed: **opponent name announcement** â€”
   `StuntCarRacerMain.DrawHud` has shown "Opponent: <name>" for the
   first four seconds of a race since the atlas HUD work (commit
   2a476b4); the remaining gaps were re-verified and tightened into
@@ -6080,13 +6086,13 @@ next implementation work rather than code to write.
 - Elite's ships now render through the shared software z-buffer
   (`DrawPolygonFilledDepth`, the path Stunt Car Racer already used)
   instead of pure painter overdraw, fixing the long-standing "bits of
-  hidden surfaces show through" artefact — with the max-Z face sort
+  hidden surfaces show through" artefact â€” with the max-Z face sort
   (checked against The New Kind's `threed.c`: `zavg` = MAX is
   authentic, not a porting bug), far-side decals and detail lines beat
   near hull faces that wrap toward the tail. Each face now rasterizes
   with one flat per-pixel depth: the mean Z of its "root" face's
   transformed points. `ShipBase` computes face roots once per instance
-  from the model geometry — decal faces (cockpit windows, engine
+  from the model geometry â€” decal faces (cockpit windows, engine
   plates) and 2-point detail lines lie exactly (distance 0.000) in the
   plane of an earlier larger face and inherit that face's key, so they
   tie exactly and the chain's later-submission tie order draws them on
@@ -6159,18 +6165,18 @@ next implementation work rather than code to write.
   along with the `NAudio`/`NAudio.Vorbis`/`MeltySynth` package references in
   `SharpKind.Audio.csproj` and `EliteSharpLib.csproj`.
 
-### Fixed (2026-07-11 architecture review — all Must items, plus one Should)
+### Fixed (2026-07-11 architecture review â€” all Must items, plus one Should)
 
 - Cross-platform audio: `SoftwareAbstraction` now uses the SDL_mixer-backed
   `SDLSound` instead of NAudio's Windows-only `WaveOutEvent`, fixing startup
   on Linux/ARM64. Follow-ups fixed in the same pass: mixer channel count
-  raised 2 → 16 with channel 0 reserved for the engine loop (overlapping
+  raised 2 â†’ 16 with channel 0 reserved for the engine loop (overlapping
   effects no longer crash with "No free channels available"), a dropped
   one-shot effect is no longer treated as fatal, and pitch-shifted looping
   was implemented in `SDLSound` via a `Mix_RegisterEffect` resampler
   (mirroring `PitchedLoopSampleProvider`'s algorithm) so SCR's engine sound
   works on all platforms.
-- `SDLInput` no longer force-quits on Escape — quit policy belongs to each
+- `SDLInput` no longer force-quits on Escape â€” quit policy belongs to each
   game, and Elite's ESC = launch escape capsule works again. Window close
   (`SDL_QUIT`) still exits.
 - Elite contraband calculation counted Slaves twice and Narcotics never;
@@ -6182,7 +6188,7 @@ next implementation work rather than code to write.
   and double-freed music; now `Mix_FreeMusic` for music, `Mix_FreeChunk`
   for effects, once each.
 - `SoftwareGraphics` rectangle drawing clamped Y against the screen *width*
-  and overshot by one pixel — out-of-bounds crash / wrong-row artifacts on
+  and overshot by one pixel â€” out-of-bounds crash / wrong-row artifacts on
   non-square screens (SCR is 640x400). Regression tests added.
 - `FastBitmap.Resize` read one row/column past the source bitmap when
   growing. Tests added.
@@ -6195,13 +6201,13 @@ next implementation work rather than code to write.
 - Consolidated all planning docs (`issues.md`, `release-plan.md`,
   `scr-conversion-plan.md`) into a single TODO list at
   `docs/review-findings.md`; folded `config.md` into the Elite readme;
-  renamed `docs/readme.md` → `docs/elite-readme.md` and
-  `docs/images/screenshot.png` → `elite-screenshot.png`.
+  renamed `docs/readme.md` â†’ `docs/elite-readme.md` and
+  `docs/images/screenshot.png` â†’ `elite-screenshot.png`.
 - Business-application practices section in `docs/architecture-principles.md`
   (composition root/DI, logging, configuration, error handling, lifetimes,
   testability seams).
 
-## Stunt Car Racer conversion — progress to date
+## Stunt Car Racer conversion â€” progress to date
 
 Summarised from the retired `scr-conversion-plan.md` "Done" list. Remaining
 conversion work now lives in the [backlog](docs/backlog-roadmap.md).
@@ -6232,8 +6238,8 @@ conversion work now lives in the [backlog](docs/backlog-roadmap.md).
   `ScreenManager<TId, TScreen>`, `AudioController`/`SfxSample`).
 - Floating-track and spurious-triangle rendering bugs fixed with
   regression coverage; road-line textures regenerated from the palette and
-  textured onto the road ±11 segments around the player.
+  textured onto the road Â±11 segments around the player.
 - Control scheme rewritten to match ptitSeb (independent
   accelerate/brake/boost), fixing two pre-existing shared keyboard bugs on
   the way (wrong SDL Right-Arrow mapping; one-shot `IsPressed` breaking
-  continuous controls — added non-consuming `IKeyboard.IsHeld`).
+  continuous controls â€” added non-consuming `IKeyboard.IsHeld`).

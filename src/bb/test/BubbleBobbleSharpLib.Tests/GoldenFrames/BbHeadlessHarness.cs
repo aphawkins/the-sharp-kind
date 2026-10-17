@@ -19,9 +19,9 @@ internal sealed class BbHeadlessHarness : HeadlessGameHarnessBase<int>
     private const string Rendition = "BubbleBobbleSharp.Renditions.EightBit";
 
     public BbHeadlessHarness(int level, int randomSeed)
-        : base(320, 256, AssetLocator.CreateFrom(RenditionFolder(), Rendition))
+        : base(320, 200, AssetLocator.CreateFrom(RenditionFolder(), Rendition))
     {
-        FakeAbstraction abstraction = new(Graphics, new(320, 256));
+        FakeAbstraction abstraction = new(Graphics, new(320, 200));
         Keyboard = (FakeKeyboard)abstraction.Keyboard;
 
         string assets = Path.Combine(RenditionFolder(), "Assets", "Levels");
