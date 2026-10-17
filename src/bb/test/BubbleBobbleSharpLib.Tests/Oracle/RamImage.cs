@@ -14,21 +14,21 @@ internal static class RamImage
     internal const int EnemyCount = 0x4A;
     internal const int ClimbNext = 0x86B0;
 
-    private static readonly (int Address, Func<ObjectTable, Span<byte>> Field)[] s_object =
+    private static readonly (int Address, ObjectField Field)[] s_object =
     [
-        (0x00CA, o => o.Type),
-        (0x00DC, o => o.Column),
-        (0x00EE, o => o.Row),
-        (0xA9B2, o => o.State),
-        (0xA9C4, o => o.SubX),
-        (0xA9D6, o => o.SubY),
-        (0xA9E8, o => o.Behaviour),
-        (0xA9FA, o => o.Flags),
-        (0xAA0C, o => o.X),
-        (0xAA1E, o => o.Y),
-        (0xAA30, o => o.Variant),
-        (0xAA42, o => o.EnemyType),
-        (0x0193, o => o.Direction),
+        (0x00CA, static slot => ref slot.Type),
+        (0x00DC, static slot => ref slot.Column),
+        (0x00EE, static slot => ref slot.Row),
+        (0xA9B2, static slot => ref slot.State),
+        (0xA9C4, static slot => ref slot.SubX),
+        (0xA9D6, static slot => ref slot.SubY),
+        (0xA9E8, static slot => ref slot.Behaviour),
+        (0xA9FA, static slot => ref slot.Flags),
+        (0xAA0C, static slot => ref slot.X),
+        (0xAA1E, static slot => ref slot.Y),
+        (0xAA30, static slot => ref slot.Variant),
+        (0xAA42, static slot => ref slot.EnemyType),
+        (0x0193, static slot => ref slot.Direction),
     ];
 
     private static readonly (int Address, Func<EntityTable, Span<byte>> Field)[] s_entity =
@@ -61,9 +61,12 @@ internal static class RamImage
 
     internal static void Load(ReadOnlySpan<byte> ram, ObjectTable objects)
     {
-        foreach ((int address, Func<ObjectTable, Span<byte>> field) in s_object)
+        foreach ((int address, ObjectField field) in s_object)
         {
-            ram.Slice(address, ObjectTable.Capacity).CopyTo(field(objects));
+            for (int slot = 0; slot < ObjectTable.Capacity; slot++)
+            {
+                field(objects.Slot(slot)) = ram[address + slot];
+            }
         }
     }
 
@@ -106,9 +109,12 @@ internal static class RamImage
     {
         List<byte> bytes = [];
 
-        foreach ((_, Func<ObjectTable, Span<byte>> field) in s_object)
+        foreach ((_, ObjectField field) in s_object)
         {
-            bytes.AddRange(field(objects));
+            for (int slot = 0; slot < ObjectTable.Capacity; slot++)
+            {
+                bytes.Add(field(objects.Slot(slot)));
+            }
         }
 
         return Convert.ToHexString([.. bytes]);

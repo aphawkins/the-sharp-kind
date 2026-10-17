@@ -156,7 +156,7 @@ public sealed class ObjectView8BitGoldenTests
         pop.Counter = (byte)(@case.Counter - 1);
         pop.Update();
 
-        return new(pop.Drawn, objects.Column, objects.Row, pop.DrawnSubY, LevelColours);
+        return new(pop.Drawn, objects.Column.ToArray(), objects.Row.ToArray(), pop.DrawnSubY, LevelColours);
     }
 
     private static char Index(IPaletteCollection palette, uint argb)

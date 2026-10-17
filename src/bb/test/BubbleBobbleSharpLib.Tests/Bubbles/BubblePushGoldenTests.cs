@@ -152,14 +152,14 @@ public sealed class BubblePushGoldenTests
             entities.Frame[player] = b[Frames + player];
         }
 
-        b.AsSpan(Types, ObjectTable.Capacity).CopyTo(objects.Type);
-        b.AsSpan(Columns, ObjectTable.Capacity).CopyTo(objects.Column);
-        b.AsSpan(Rows, ObjectTable.Capacity).CopyTo(objects.Row);
-        b.AsSpan(ObjectStates, ObjectTable.Capacity).CopyTo(objects.State);
-        b.AsSpan(SubXs, ObjectTable.Capacity).CopyTo(objects.SubX);
-        b.AsSpan(SubYs, ObjectTable.Capacity).CopyTo(objects.SubY);
-        b.AsSpan(Xs, ObjectTable.Capacity).CopyTo(objects.X);
-        b.AsSpan(Ys, ObjectTable.Capacity).CopyTo(objects.Y);
+        objects.Type.Load(b.AsSpan(Types, ObjectTable.Capacity));
+        objects.Column.Load(b.AsSpan(Columns, ObjectTable.Capacity));
+        objects.Row.Load(b.AsSpan(Rows, ObjectTable.Capacity));
+        objects.State.Load(b.AsSpan(ObjectStates, ObjectTable.Capacity));
+        objects.SubX.Load(b.AsSpan(SubXs, ObjectTable.Capacity));
+        objects.SubY.Load(b.AsSpan(SubYs, ObjectTable.Capacity));
+        objects.X.Load(b.AsSpan(Xs, ObjectTable.Capacity));
+        objects.Y.Load(b.AsSpan(Ys, ObjectTable.Capacity));
     }
 
     private static byte[] Save(EntityTable entities, ObjectTable objects)

@@ -74,13 +74,13 @@ public sealed class LevelHurryGoldenTests
         Assert.Equal(after[Seed], rig.Items.FoodBase);
         Assert.Equal(Convert.ToHexString(after.AsSpan(Flashes, 6)), Convert.ToHexString(rig.Entities.FlashTimer[2..]));
         Assert.Equal(Convert.ToHexString(after.AsSpan(Enemies, 6)), Convert.ToHexString(rig.Entities.State[2..]));
-        Assert.Equal(Convert.ToHexString(after.AsSpan(Types, Objects)), Convert.ToHexString(rig.Objects.Type));
-        Assert.Equal(Convert.ToHexString(after.AsSpan(Columns, Objects)), Convert.ToHexString(rig.Objects.Column));
-        Assert.Equal(Convert.ToHexString(after.AsSpan(Rows, Objects)), Convert.ToHexString(rig.Objects.Row));
-        Assert.Equal(Convert.ToHexString(after.AsSpan(SubX, Objects)), Convert.ToHexString(rig.Objects.SubX));
-        Assert.Equal(Convert.ToHexString(after.AsSpan(SubY, Objects)), Convert.ToHexString(rig.Objects.SubY));
-        Assert.Equal(Convert.ToHexString(after.AsSpan(Variants, Objects)), Convert.ToHexString(rig.Objects.Variant));
-        Assert.Equal(Convert.ToHexString(after.AsSpan(EnemyTypes, Objects)), Convert.ToHexString(rig.Objects.EnemyType));
+        Assert.Equal(Convert.ToHexString(after.AsSpan(Types, Objects)), Convert.ToHexString(rig.Objects.Type.ToArray()));
+        Assert.Equal(Convert.ToHexString(after.AsSpan(Columns, Objects)), Convert.ToHexString(rig.Objects.Column.ToArray()));
+        Assert.Equal(Convert.ToHexString(after.AsSpan(Rows, Objects)), Convert.ToHexString(rig.Objects.Row.ToArray()));
+        Assert.Equal(Convert.ToHexString(after.AsSpan(SubX, Objects)), Convert.ToHexString(rig.Objects.SubX.ToArray()));
+        Assert.Equal(Convert.ToHexString(after.AsSpan(SubY, Objects)), Convert.ToHexString(rig.Objects.SubY.ToArray()));
+        Assert.Equal(Convert.ToHexString(after.AsSpan(Variants, Objects)), Convert.ToHexString(rig.Objects.Variant.ToArray()));
+        Assert.Equal(Convert.ToHexString(after.AsSpan(EnemyTypes, Objects)), Convert.ToHexString(rig.Objects.EnemyType.ToArray()));
         Assert.Equal(after[RandomAt], rig.Random.Low);
         Assert.Equal(after[RandomAt + 1], rig.Random.High);
 
@@ -114,13 +114,13 @@ public sealed class LevelHurryGoldenTests
         b.AsSpan(Players, PlayerTable.Capacity).CopyTo(rig.Entities.State);
         b.AsSpan(Enemies, 6).CopyTo(rig.Entities.State[2..]);
         b.AsSpan(Flashes, 6).CopyTo(rig.Entities.FlashTimer[2..]);
-        b.AsSpan(Types, Objects).CopyTo(rig.Objects.Type);
-        b.AsSpan(Columns, Objects).CopyTo(rig.Objects.Column);
-        b.AsSpan(Rows, Objects).CopyTo(rig.Objects.Row);
-        b.AsSpan(SubX, Objects).CopyTo(rig.Objects.SubX);
-        b.AsSpan(SubY, Objects).CopyTo(rig.Objects.SubY);
-        b.AsSpan(Variants, Objects).CopyTo(rig.Objects.Variant);
-        b.AsSpan(EnemyTypes, Objects).CopyTo(rig.Objects.EnemyType);
+        rig.Objects.Type.Load(b.AsSpan(Types, Objects));
+        rig.Objects.Column.Load(b.AsSpan(Columns, Objects));
+        rig.Objects.Row.Load(b.AsSpan(Rows, Objects));
+        rig.Objects.SubX.Load(b.AsSpan(SubX, Objects));
+        rig.Objects.SubY.Load(b.AsSpan(SubY, Objects));
+        rig.Objects.Variant.Load(b.AsSpan(Variants, Objects));
+        rig.Objects.EnemyType.Load(b.AsSpan(EnemyTypes, Objects));
         rig.Entities.EnemyCount = 3;
     }
 

@@ -128,9 +128,9 @@ public sealed class LevelClearGoldenTests
             Items.Timer[1] = b[SpecialTimer];
             Clear.BonusType = b[Bonus];
 
-            b.AsSpan(Types, ObjectTable.Capacity).CopyTo(Objects.Type);
-            b.AsSpan(Saved, ObjectTable.Capacity).CopyTo(Objects.EnemyType);
-            b.AsSpan(Behaviours, ObjectTable.Capacity).CopyTo(Objects.Behaviour);
+            Objects.Type.Load(b.AsSpan(Types, ObjectTable.Capacity));
+            Objects.EnemyType.Load(b.AsSpan(Saved, ObjectTable.Capacity));
+            Objects.Behaviour.Load(b.AsSpan(Behaviours, ObjectTable.Capacity));
         }
 
         internal LevelTimer Timer { get; } = new();

@@ -10,60 +10,62 @@ internal sealed class ObjectTable
 
     internal const byte FreeType = 0xFF;
 
-    private readonly byte[] _type = new byte[Capacity];
-    private readonly byte[] _x = new byte[Capacity];
-    private readonly byte[] _y = new byte[Capacity];
-    private readonly byte[] _subX = new byte[Capacity];
-    private readonly byte[] _subY = new byte[Capacity];
-    private readonly byte[] _column = new byte[Capacity];
-    private readonly byte[] _row = new byte[Capacity];
-    private readonly byte[] _flags = new byte[Capacity];
-    private readonly byte[] _behaviour = new byte[Capacity];
-    private readonly byte[] _state = new byte[Capacity];
-    private readonly byte[] _variant = new byte[Capacity];
-    private readonly byte[] _enemyType = new byte[Capacity];
-    private readonly byte[] _direction = new byte[Capacity];
+    private readonly ObjectSlot[] _slots = new ObjectSlot[Capacity];
 
-    internal ObjectTable() => Reset();
+    internal ObjectTable()
+    {
+        for (int slot = 0; slot < Capacity; slot++)
+        {
+            _slots[slot] = new();
+        }
 
-    internal Span<byte> Type => _type;
+        Reset();
+    }
 
-    internal Span<byte> X => _x;
+    internal ObjectColumn Type => new(_slots, static slot => ref slot.Type);
 
-    internal Span<byte> Y => _y;
+    internal ObjectColumn X => new(_slots, static slot => ref slot.X);
 
-    internal Span<byte> SubX => _subX;
+    internal ObjectColumn Y => new(_slots, static slot => ref slot.Y);
 
-    internal Span<byte> SubY => _subY;
+    internal ObjectColumn SubX => new(_slots, static slot => ref slot.SubX);
 
-    internal Span<byte> Column => _column;
+    internal ObjectColumn SubY => new(_slots, static slot => ref slot.SubY);
 
-    internal Span<byte> Row => _row;
+    internal ObjectColumn Column => new(_slots, static slot => ref slot.Column);
 
-    internal Span<byte> Flags => _flags;
+    internal ObjectColumn Row => new(_slots, static slot => ref slot.Row);
 
-    internal Span<byte> Behaviour => _behaviour;
+    internal ObjectColumn Flags => new(_slots, static slot => ref slot.Flags);
 
-    internal Span<byte> State => _state;
+    internal ObjectColumn Behaviour => new(_slots, static slot => ref slot.Behaviour);
 
-    internal Span<byte> Variant => _variant;
+    internal ObjectColumn State => new(_slots, static slot => ref slot.State);
 
-    internal Span<byte> EnemyType => _enemyType;
+    internal ObjectColumn Variant => new(_slots, static slot => ref slot.Variant);
 
-    internal Span<byte> Direction => _direction;
+    internal ObjectColumn EnemyType => new(_slots, static slot => ref slot.EnemyType);
+
+    internal ObjectColumn Direction => new(_slots, static slot => ref slot.Direction);
+
+    // One slot as a whole, for code that works on a single object.
+    internal ObjectSlot Slot(int slot) => _slots[slot];
 
     internal void Reset()
     {
-        _type.AsSpan().Fill(FreeType);
-        _column.AsSpan().Clear();
-        _row.AsSpan().Clear();
+        for (int slot = 0; slot < Capacity; slot++)
+        {
+            _slots[slot].Type = FreeType;
+            _slots[slot].Column = 0;
+            _slots[slot].Row = 0;
+        }
     }
 
     internal int FindFree()
     {
         for (int slot = Capacity - 1; slot >= 0; slot--)
         {
-            if ((_type[slot] & 0x80) != 0)
+            if ((_slots[slot].Type & 0x80) != 0)
             {
                 return slot;
             }

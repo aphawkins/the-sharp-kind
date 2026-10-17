@@ -134,11 +134,11 @@ public sealed class LevelClearTests
         Rig rig = new();
         rig.Entities.EnemyCount = 0;
         byte[] types = [0x04, 0x38, 0x41, 0x42, 0x44, 0x46, 0x4A, 0xFF, 0x3A, 0x00];
-        types.CopyTo(rig.Objects.Type);
+        rig.Objects.Type.Load(types);
 
         rig.Clear.Update();
 
-        Assert.Equal([0x3A, 0x3A, 0x3A, 0x3A, 0x44, 0x46, 0x4A, 0xFF, 0x3A, 0x3A], rig.Objects.Type[..types.Length].ToArray());
+        Assert.Equal([0x3A, 0x3A, 0x3A, 0x3A, 0x44, 0x46, 0x4A, 0xFF, 0x3A, 0x3A], rig.Objects.Type.ToArray()[..types.Length]);
         Assert.Equal(0x04, rig.Objects.EnemyType[0]);
         Assert.Equal(0x3A, rig.Objects.EnemyType[8]);
         Assert.Equal(0, rig.Objects.EnemyType[4]);
@@ -152,11 +152,11 @@ public sealed class LevelClearTests
         Rig rig = new();
         rig.Entities.EnemyCount = 0;
         rig.Clear.BonusType = 9;
-        new byte[] { 0x04, 0x38, 0x41, 0x42, 0x10 }.CopyTo(rig.Objects.Type);
+        rig.Objects.Type.Load([0x04, 0x38, 0x41, 0x42, 0x10]);
 
         rig.Clear.Update();
 
-        Assert.Equal([0x4C, 0x4C, 0x4C, 0x3A, 0x3A], rig.Objects.Type[..5].ToArray());
+        Assert.Equal([0x4C, 0x4C, 0x4C, 0x3A, 0x3A], rig.Objects.Type.ToArray()[..5]);
         Assert.Equal(LevelItems.FoodColour(9), rig.Objects.Behaviour[0]);
         Assert.Equal(LevelItems.FoodColour(9), rig.Objects.Behaviour[2]);
     }

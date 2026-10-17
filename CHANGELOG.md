@@ -7,6 +7,12 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Changed (Bubble Bobble's entity records 1/3, 2026-10-17)
+
+- **`ObjectTable` holds an array of `ObjectSlot` objects, not thirteen byte arrays.** `objects.X[slot]` still works,
+  through `ObjectColumn`, a ref-indexer view over one field of every slot; `Slot(i)` gives a whole slot. The few test
+  sites that copied spans into a column use `Load`. No behaviour change: all 18,265 tests pass.
+
 ### Changed (Bubble Bobble's resolution, 2026-10-17)
 
 - **Bubble Bobble renders at the C64's own 320x200.** The 56-line banner no longer sits above every screen; it is the title
