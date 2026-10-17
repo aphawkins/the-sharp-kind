@@ -16,6 +16,8 @@ namespace BubbleBobbleSharpLib;
 internal sealed class GameLoop
 {
     private const int FramesPerPass = 2;
+    private const int TicksPerCycle = 3;
+    private const int IrqOnlyPhase = 2;
 
     private const byte FirstCounter = 0x01;
 
@@ -53,6 +55,7 @@ internal sealed class GameLoop
     private byte _subflg;
     private int _overPasses;
     private byte _counter;
+    private int _phase;
     private int _extendAwards;
     private int _respawns;
     private int _bonusRounds;
@@ -194,6 +197,9 @@ internal sealed class GameLoop
 
     // $0A6A: the level's clock has run out on a cleared level, and the game goes on to the next.
     internal bool IsComplete => End.Complete != 0;
+
+    // $F1AC. Made on first use: the constructor is as coupled as the analyser lets it be.
+    private ExtraLives ExtraLives => field ??= new(PlayerTable, Scores);
 
     // The next song the game has asked for ($F477's music_start), or none. The song of a level's start is the first the
     // game asks for: $08E7 for the first level, and $05C5 for the others when the level's tune is not already playing.
@@ -337,6 +343,29 @@ internal sealed class GameLoop
         return playfield.WithHurry(Hurry);
     }
 
+    // One tick of the host's clock, which is two IRQ frames. The main loop takes three frames a pass (measured in VICE, level 1,
+    // 260 passes), so the passes come two ticks in three and the third tick is the IRQ alone: the players and enemies keep
+    // $1CBD's 25 a second while what the main loop counts runs at the 16.7 a second it has on the C64. Rooms, waits and the
+    // game over have loops of their own and take every tick as a pass.
+    internal void Tick(ReadOnlySpan<byte> ports)
+    {
+        if (IsOver || Room.Active || SuperRoom.Active || _hold is not null || _map is not SolidMap map)
+        {
+            Pass(ports);
+            return;
+        }
+
+        _phase = (_phase + 1) % TicksPerCycle;
+
+        if (_phase == IrqOnlyPhase)
+        {
+            Irq(ports, map);
+            return;
+        }
+
+        Pass(ports);
+    }
+
     internal void Pass(ReadOnlySpan<byte> ports)
     {
         SolidMap map = _map ?? throw new InvalidOperationException("Start a level before the first pass.");
@@ -440,6 +469,12 @@ internal sealed class GameLoop
     // The pass from where it is to go on from: its start, or after a routine that waited.
     private void Run(ReadOnlySpan<byte> ports, SolidMap map, Resume from)
     {
+        if (from == Resume.Start)
+        {
+            // $0A10: a score that has passed a mark earns a life, before the pass's first update.
+            ExtraLives.Update();
+        }
+
         if (from == Resume.Start && Check())
         {
             return;
@@ -558,6 +593,13 @@ internal sealed class GameLoop
         NoteLives();
         _join.Update(ports);
 
+        Irq(ports, map);
+        _death.Update();
+    }
+
+    // What the IRQ does in the two frames of a tick: the level's clock, the water, and the enemies and players ($1CBD).
+    private void Irq(ReadOnlySpan<byte> ports, SolidMap map)
+    {
         for (int frame = 0; frame < FramesPerPass; frame++)
         {
             if (Timer.Advance())
@@ -580,7 +622,6 @@ internal sealed class GameLoop
             Boss.Move();
         }
 
-        _death.Update();
         _counter += 2;
     }
 

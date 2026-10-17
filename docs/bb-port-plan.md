@@ -183,12 +183,14 @@ Each item ends with how it is proved.
         `LevelItems.Setup` (level 100's are `BossFight`'s).
       - A pass (`$0A07`): `$1578`, `$0A28`, `$E90E` pop, `$0CF2`, `$13BE`,
         `$2CB7`; `$06C6` every 25 passes; then `$1CBD`, enemies then players.
-      - **The game runs at 25 passes a second.** The main loop waits two
-        50 Hz frames and the IRQ runs `$1CBD` on alternate frames, so
-        `TickRate` is now 25. At 50 the app ran the players at double speed.
+      - **The game ticks 25 times a second.** The IRQ runs `$1CBD` on
+        alternate frames, so `TickRate` is 25; at 50 the app ran the players
+        at double speed. The main loop's pass is three frames, not two: see
+        section 6.
       - `BubbleCollision`'s `$AB81` read runs on into `$AB89` for enemy
         states 8 and 9, which play reaches; those image bytes are now in its
-        table. Beyond `$AB89` it still throws.
+        table. Nothing reaches beyond `$AB92`: the class is a state of 1 to
+        9 or what `RiseCounter` kept of one (reasoned in `BubbleCollision`).
       - Gaps, named in `GameLoop`: `$0BED`, `$0AAB`, `$32C1`, the level timer
         and level completion. **Taking a special item whose effect is not
         translated throws and stops the app** (item 6), by the loud-gap rule.
@@ -197,7 +199,7 @@ Each item ends with how it is proved.
       scripted stick, and the only thing allowed to stop a run early is a
       named untranslated routine. In the app, level 1 plays through a key
       script to a clean exit.
-- [ ] **2. Draw what moves.** Found so far, and split into steps:
+- [x] **2. Draw what moves.** Found so far, and split into steps:
       - [x] **2a. The render pass's own state changes.** `BubblePop` now also
         has `$7BD4` (a blown bubble, `$16`, becomes `$00`) and `$3CB2` (a
         caught enemy's hardware sprite, slot 2 onwards, follows its bubble
@@ -386,12 +388,20 @@ Each item ends with how it is proved.
         pixels from the screenshot at the next `$E90E`.
         `ItemView8BitGoldenTests` matches them pixel for pixel. The
         characters at `$4210` equal block `$26` of the export byte for byte.
-        Not captured: the special item, and the `$18` flash.
+        The special item and the `$18` flash are in
+        `Views/Captures/items-special-level-1.txt` (an intervention: `$53`
+        written with bit 7 clear), matched by `SpecialItemView8BitGoldenTests`.
 
       Verify: golden frames compared pixel for pixel with VICE screenshots
       (bytes at `$0A4B`, picture at the `$E90E` after next, raster line 50 as
       row 0), for a bubble in each shift, each pop frame, a caught enemy,
-      each enemy class and the food.
+      each enemy class and the food. **Done (2026-10-17).** The pop frames
+      (`$3C`, `$3E`, `$40` at every shift), every bubble type `$00`-`$14` at
+      every `$A9C4`, and `$A9C4` 3 with `$A9D6` 4 and 6, are in
+      `Views/Captures/pops-level-1.txt` (89 cases; an intervention writing
+      a slot at `$E90E`, by `capture_objects.py`), all matching in
+      `ObjectView8BitGoldenTests`; five more were covered by an enemy
+      sprite and left out.
 - [ ] **3. Players and enemies meet.** Split into steps once read. The plan
       had `$0AAB` as the death; it is not. `$0AAB` walks the eighteen object
       slots and pushes bubbles. A player dies at `$1D32`, the tail of `$1CBD`.
@@ -487,8 +497,7 @@ Each item ends with how it is proved.
           writes) matches byte for byte in `PlayerJoinGoldenTests`, except
           the three calls where junk left the credits negative with the jump
           in place, which the game never does. `$AC`-`$AF` are held
-          (`ExtraLifeStep`, `ExtraLifeByte`) for `$F1AC`, which the port does
-          not have (see below). The screen is not compared: the C64 blanks
+          (`ExtraLifeStep`, `ExtraLifeByte`) for `$F1AC` (`ExtraLives`). The screen is not compared: the C64 blanks
           the joiner's lives row for one pass.
         - [x] **Game over for one player, `$04F0`/`$7BE8`.**
           `PlayerRespawn` ends a player whose lives go negative: `Round`
@@ -515,8 +524,11 @@ Each item ends with how it is proved.
           `$1CBD`) is the loop running nothing after the game over.
         - State `$18`: `$28FA`, set only by `$34D3` (the bonus-round entry).
           It moves to step 6.
-        - `$F1AC` (extra lives from the score, `$0A10`) is untranslated and
-          not on any step. `PlayerJoin` writes its state.
+        - `$F1AC` (extra lives from the score, `$0A10`): `ExtraLives`, at the
+          start of a pass. A life at 30,000, 100,000, 400,000 and on up the
+          table at `$05B9`. The sound it asks for (`$F887`, preset 3) is
+          not made, and the calls from the bonus rooms' loops (`$31A5`)
+          are not made either. Proved by hand in `ExtraLivesTests`.
 
       Verify: a VICE capture of a respawn, a join and a game over (all done).
 - [x] **4. Level flow.** Split into steps, each a work item in
@@ -790,21 +802,31 @@ Each item ends with how it is proved.
 
 ## 6. Open questions
 
-- **The main loop runs a pass every three IRQ frames in VICE (level 1, 260
-  passes, always 3), not two.** The port runs a pass at 25 a second and
-  `LevelTimer` two frames a pass, so the clock keeps wall time; but the
-  routines that count in main-loop passes (`$13BE`'s `$A9FA`, the bubble
-  timers, anything that counts passes rather than seconds) would then run a
-  half faster than the C64's. The IRQ's own work (`$1CBD`, the players) is
-  at 25 a second. Check which counters matter before step 4d's playthrough.
-- `hud-font.tga` and `digit-font.tga` are not exported. The HUD does not use
-  them; what does is unknown until something draws them.
-- Under the ceiling, the port moves a bubble between Y `$45` and `$47`; a
-  capture summary said "parked at `$47`". A per-frame read of `$AA1E` for
-  slot 17 settles it.
-- Whether a jump can end in a fall with no floor under it (`$87F0` leaving
-  `$FF` mid-arc) is untested. Level 1 has no gap wide enough.
-- The static screen was never compared with VICE screenshots (levels 1, 30
-  and 100). Item 2's frames cover this.
-- `$A783` (the `$23B8` arm that makes type `$44` bubbles) and `$37C7` (the
-  `$23DE` arm) belong to effects not yet translated.
+None open. Settled, with where it is proved:
+
+- **The main loop runs a pass every three IRQ frames in VICE** (level 1, 260
+  passes, always 3), not two: the wait at `$0A5A` counts two frames from
+  `$0A1F`, and the work from the wait's end to the next `$0A1F` takes about
+  one more. `$1CBD` (the players and enemies) and the level clock are the
+  IRQ's and keep 25 ticks a second, so `GameLoop.Tick` runs the main-loop
+  pass on two ticks in three and only `Irq` on the third. What the main
+  loop counts (`$13BE`'s `$A9FA`, the bubble timers, the AI) now runs at
+  16.7 a second. Heavier levels may take a fourth frame; only level 1 was
+  measured. `GameLoop.Pass` is still one full pass, for the rooms, the
+  waits and the tests.
+- `hud-font.tga` and `digit-font.tga` are exported and drawn: the HUD font
+  is the ROUND and READY!! text (`SidebarView8Bit`), the digit font the
+  level number.
+- Under the ceiling a bubble does go between Y `$45` and `$47`, a pass at a
+  time, as the port does (`BubbleCeilingOracleTests`); the capture summary's
+  "parked at `$47`" was wrong.
+- A jump that ends with no floor under it (`$87F0` leaving `$FF` at the end
+  of the fall) matches the game turn by turn (`PlayerJumpGapOracleTests`;
+  an intervention puts the player over open cells on level 1, which has no
+  gap to jump across).
+- The static screen: levels 1, 30 and 100 show the same characters and
+  multicolour registers as the game (`StaticScreenOracleTests`, read off the
+  emulator's RAM rather than VICE screenshots; the walls and the level's
+  number are the sidebar's).
+- `$A783` and `$37C7` are translated (`PlayerTable.Shots`, `BossBlow`);
+  see step 6, items 6 and 34.

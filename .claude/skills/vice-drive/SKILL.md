@@ -428,3 +428,23 @@ whole run.
   after `set_checkpoint`. Proved on 2026-09-26 bracketing one player slot's
   turn in `$1CBD`: `$1CDB` to `$1D24`, both with `X < 2`, stopped only for
   slots 0 and 1.
+
+### Writing a slot and reading the frame - 2026-10-17
+
+Found capturing `Views/Captures/pops-level-1.txt` and `items-special-level-1.txt`; the scripts are `capture_objects.py` and
+`capture_items.py` beside `monitor.py`.
+
+- **`mon.display()`** is command `0x84`: 504x312 colour numbers. VICE's reply is four bytes shorter than its own length field
+  says (the bottom border's last pixels); it is padded.
+- **Arm `$E90E` and `$0A4B` once, as plain checkpoints, and take whichever stop comes.** A temporary one armed from a stop
+  inside `$E90E` hit a pass late, so the bytes read were one AI step on from what had been written. `$0A4B` is the next
+  instruction after `jsr $E90E`; with both armed they hit in the same pass.
+- **Everything kept in `mon._stops` before a resume is stale.** Every command sends a STOPPED of its own at wherever the machine
+  is. Resume, then take only what arrived after.
+- **An intervention at an `$E90E` stop is drawn by that `$E90E`**, and the type is stepped on by it: a pop frame `$40` reads
+  `$38` at `$0A4B`. Record the type written.
+- **Top up the lives (`$045A`) at each case,** or the idle player dies and the game is at the title screen in a minute or two.
+- **Colour RAM is not double buffered and the VIC reads it live.** `$1844` writes it a frame into the pass, so the frame on show
+  at a stop was drawn in the colour the stop before read. This only shows for a colour that changes (the `$18` item's flash).
+- **A hardware sprite over a case's box** (an enemy walking past) spoils it: `capture_objects.py` reads `$D000`-`$D02E` at both
+  stops and leaves such a case out.

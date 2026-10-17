@@ -253,7 +253,7 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
             return;
         }
 
-        Loop.Pass(_input.Read());
+        Loop.Tick(_input.Read());
         KeepHighScore();
 
         // $0A6A: a cleared level whose clock has run out scrolls on to the next.

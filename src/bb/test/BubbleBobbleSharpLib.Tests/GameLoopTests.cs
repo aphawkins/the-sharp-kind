@@ -94,6 +94,26 @@ public sealed class GameLoopTests
         Assert.All(loop.Objects.Type.ToArray(), t => Assert.Equal(ObjectTable.FreeType, t));
     }
 
+    // The main loop takes three frames a pass in VICE and the IRQ runs on every second one, so of three ticks two are
+    // passes: `$13BE` takes one off every slot's clock (`$A9FA`) in each pass, and the IRQ's players and enemies move in all three.
+    [Fact]
+    public void TwoTicksInThreeAreMainLoopPasses()
+    {
+        const byte Clock = 0x80;
+        const int Ticks = 30;
+
+        GameLoop loop = Start(1, seed: 1);
+        loop.Objects.Flags.Fill(Clock);
+        byte counter = loop.Objects.Flags[0];
+
+        for (int tick = 0; tick < Ticks; tick++)
+        {
+            loop.Tick([Idle, Idle]);
+        }
+
+        Assert.Equal(Ticks / 3 * 2, counter - loop.Objects.Flags[0]);
+    }
+
     // $05F5 readies all eight slots, not just the players: no jump, no fall, on the ground, out of a
     // bubble, with no leap, no climb and no flash for an enemy.
     [Fact]

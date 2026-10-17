@@ -7,6 +7,26 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Fixed (Bubble Bobble's Must Have backlog, 2026-10-17)
+
+- **The main loop's pace.** In VICE the main loop takes three 50 Hz frames a pass, not two, so what it counts (the bubble
+  timers, the enemy AI, `$13BE`'s per-slot clock) ran half again too fast. `GameLoop.Tick` now runs a full pass on two
+  ticks in three and only the IRQ's work (`Irq`: the clock, the water, `$1CBD`'s enemies and players) on the third.
+  `GameLoop.Pass` is unchanged for the rooms, the waits and the tests. The golden frames were regenerated for it.
+- **Extra lives from the score.** `$F1AC` is translated (`ExtraLives`): a life at 30,000, 100,000, 400,000 and on up the
+  table at `$05B9`. Its sound is not made.
+
+### Changed (Bubble Bobble's open questions closed, 2026-10-17)
+
+- The ceiling bubble (it rocks between Y `$45` and `$47`, as the game does: `BubbleCeilingOracleTests`), the jump that ends
+  with no floor (`PlayerJumpGapOracleTests`) and the static screen of levels 1, 30 and 100 (`StaticScreenOracleTests`) are
+  proved against the real game run on the emulator. `BubbleCollision`'s table is argued complete, `$A783` and `$37C7` and
+  the two font sheets were found already done, and their work items are gone.
+- **Step 2's golden sprite frames are done.** Captured from VICE with an intervention at `$E90E`
+  (`capture_objects.py`, `capture_items.py` in the `vice-drive` skill): 89 bubble cases (every pop frame, every bubble type at
+  every shift, `$A9C4` 3 with `$A9D6` 4 and 6) and the special item and the `$18` flash. All match pixel for pixel
+  (`ObjectView8BitGoldenTests`, `SpecialItemView8BitGoldenTests`), so the port plan's step 2 is ticked.
+
 ### Changed (Bubble Bobble's step 10 closed, 2026-10-14)
 
 - **Bubble Bobble has joined the repo.** Every part of step 10 of the port plan had landed (the 56-line banner at 320x256,

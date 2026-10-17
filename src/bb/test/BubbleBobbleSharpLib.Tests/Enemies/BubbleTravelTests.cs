@@ -80,19 +80,25 @@ public sealed class BubbleTravelTests
         Assert.Equal(0x7C, path[DriftEnds][0]);
     }
 
-    // Frames 157 to 195. It rises to $47 and then goes up and down between $45 and $47. Row 4 of the
-    // map pushes up and row 3 pushes down, so this is what the code does. The capture's own
-    // summary reads it as parked at $47, and nothing has settled whether the real game also
-    // moves between the two values.
+    // Frames 157 to 195. It rises to $45 and then goes down and up between $47 and $45. Row 4 of the
+    // map pushes up and row 3 pushes down. The capture's own summary read it as parked at $47; the real
+    // game, read a pass at a time (BubbleCeilingOracleTests), moves between the two as well.
     [Fact]
     public void SettlesUnderTheCeiling()
     {
         byte[][] path = Replay(Pops - 1);
+        int first = Array.FindIndex(path, step => step[1] == 0x45);
 
         for (int pass = DriftEnds + 3; pass < Pops; pass++)
         {
             Assert.Equal(0x7C, path[pass][0]);
             Assert.InRange(path[pass][1], 0x45, 0x47);
+        }
+
+        // Until the wobble, which holds it a pass longer.
+        for (int pass = first + 1; pass < Pops - 0x11; pass++)
+        {
+            Assert.Equal(pass % 2 == first % 2 ? 0x45 : 0x47, path[pass][1]);
         }
     }
 

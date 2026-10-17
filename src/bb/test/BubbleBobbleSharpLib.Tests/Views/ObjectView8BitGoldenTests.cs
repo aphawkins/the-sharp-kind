@@ -47,6 +47,7 @@ public sealed class ObjectView8BitGoldenTests
     private const int CellHeight = 16;
     private const string Bubbles = "objects-level-1.txt";
     private const string Shots = "shots-level-1.txt";
+    private const string Pops = "pops-level-1.txt";
 
     private static readonly string s_rendition = Path.Combine(
         AppContext.BaseDirectory, "Renditions", "BubbleBobbleSharp.Renditions.EightBit");
@@ -60,6 +61,26 @@ public sealed class ObjectView8BitGoldenTests
         Assert.Equal([0, 1, 2, 3], cases.Select(c => (int)c.SubX).Distinct().Order());
         Assert.Equal([0, 2, 4, 6], cases.Select(c => (int)c.SubY).Distinct().Order());
         Assert.Contains(cases, c => c.Type == 0x40);
+    }
+
+    // An intervention, read on 2026-10-17 with `capture_objects.py`: at each case's $E90E a free slot was written with the type and
+    // shifts under test (and the lives topped up), far from the enemies. Five of 94 cases were left out because a hardware sprite
+    // covered the box. Every case's drawn type is the one written; by $0A4B a pop frame has stepped on.
+    [Fact]
+    public void ThePopCaptureCoversEveryPopFrameAndEveryBubbleTypeAtEveryShift()
+    {
+        List<Case> cases = Cases(Pops);
+
+        Assert.Equal(89, cases.Count);
+        Assert.Equal([0x3C, 0x3E, 0x40], cases.Where(c => c.Type >= 0x3C).Select(c => (int)c.Type).Distinct().Order());
+        Assert.All(
+            cases.Where(c => c.Type >= 0x3C).GroupBy(c => c.SubX),
+            g => Assert.Equal([0, 2, 4, 6], g.Select(c => (int)c.SubY).Distinct().Order()));
+        Assert.Equal(
+            [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20],
+            cases.Where(c => c.Type <= 0x14).Select(c => (int)c.Type).Distinct().Order());
+        Assert.Contains(cases, c => c.Type == 0x04 && c.SubX == 3 && c.SubY == 4);
+        Assert.Contains(cases, c => c.Type == 0x04 && c.SubX == 3 && c.SubY == 6);
     }
 
     [Fact]
@@ -79,6 +100,7 @@ public sealed class ObjectView8BitGoldenTests
     [Theory]
     [InlineData(Bubbles)]
     [InlineData(Shots)]
+    [InlineData(Pops)]
     public void DrawsEachObjectPixelForPixelAsTheC64Does(string capture)
     {
         foreach (Case @case in Cases(capture))

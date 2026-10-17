@@ -22,6 +22,10 @@ internal sealed class BubbleCollision
 
     private const byte CapturedFlags = 0xA0;
 
+    // $AB81-$AB92, read at $10BD with the class the enemy had. The 6502 would read on into $AB93's loader text for a class
+    // above 17, and none gets there: the class is a state of 1 to 9, or, for an enemy released from a bubble ($0A) or
+    // tumbling in a bonus round ($16, $17), what it was kept in RiseCounter, which only ever holds such a state
+    // (`BonusRound.Start` keeps states below $0B only, `EntityTimers` hands back a bubble's own class, `FoodDrop` rolls 1 to 8).
     private static readonly byte[] s_caughtFrames =
     [
         0x02, 0x00, 0x0B, 0x0B, 0x0B, 0x07, 0x0B, 0x07,

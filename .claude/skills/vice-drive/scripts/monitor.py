@@ -37,12 +37,14 @@ CMD_CHECKPOINT_GET = 0x11
 CMD_CHECKPOINT_SET = 0x12
 CMD_CHECKPOINT_DELETE = 0x13
 CMD_CONDITION_SET = 0x22
+CMD_DISPLAY_GET = 0x84
 CMD_EXIT = 0xAA
 
 RESP_MEM_GET = 0x01
 RESP_MEM_SET = 0x02
 RESP_CHECKPOINT = 0x11
 RESP_CHECKPOINT_DELETE = 0x13
+RESP_DISPLAY_GET = 0x84
 RESP_STOPPED = 0x62
 RESP_RESUMED = 0x63
 
@@ -194,6 +196,24 @@ class Monitor:
         """
         text = expression.encode("ascii")
         self.request(CMD_CONDITION_SET, struct.pack("<IB", number, len(text)) + text)
+
+    def display(self):
+        """The whole frame as C64 colour numbers, row by row: (width, height, bytes).
+
+        Command 0x84, body `01 00` (VIC borders, 8 bit indexed). HALTS the machine like any command. Mask every byte with
+        0x0F. Do not ask the text monitor for a screenshot while the binary one holds the machine - it breaks this stream.
+        The picture's first line is raster line 50 and its column 0 is at x 136 (SKILL.md, "Comparing pixels").
+        """
+        payload = self.request(CMD_DISPLAY_GET, bytes([1, 0]), want=RESP_DISPLAY_GET)
+        info = struct.unpack("<I", payload[:4])[0]
+        width, height = struct.unpack("<HH", payload[4:8])
+        (blen,) = struct.unpack("<I", payload[4 + info:8 + info])
+        pixels = payload[8 + info:]
+        # VICE's reply is four bytes shorter than its own length field says: the last four pixels of the bottom border.
+        if blen != width * height or not blen - 8 <= len(pixels) <= blen:
+            raise MonitorError(f"display reply is {len(pixels)} bytes for {width}x{height}")
+        pixels = pixels + bytes(blen - len(pixels))
+        return width, height, pixels
 
     def delete_checkpoint(self, number):
         self.request(CMD_CHECKPOINT_DELETE, struct.pack("<I", number),
