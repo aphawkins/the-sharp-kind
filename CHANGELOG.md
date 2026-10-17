@@ -7,6 +7,12 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Changed (Bubble Bobble's entity records 2/3, 2026-10-17)
+
+- **`EntityTable` holds an array of `EntitySlot` objects, like `ObjectTable`.** The column view is now the generic
+  `SlotColumn<TSlot>`, with `Slice` so `entities.State[2..]` still works. `EntityTable.Sprites` builds the sprite model,
+  so `BubbleBobbleMain` does not touch the columns. `ClimbNext` stays a `bool[]`. All 18,265 tests pass.
+
 ### Changed (Bubble Bobble's entity records 1/3, 2026-10-17)
 
 - **`ObjectTable` holds an array of `ObjectSlot` objects, not thirteen byte arrays.** `objects.X[slot]` still works,

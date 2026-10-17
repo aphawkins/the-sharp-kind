@@ -22,31 +22,31 @@ internal sealed class ObjectTable
         Reset();
     }
 
-    internal ObjectColumn Type => new(_slots, static slot => ref slot.Type);
+    internal SlotColumn<ObjectSlot> Type => new(_slots, static slot => ref slot.Type);
 
-    internal ObjectColumn X => new(_slots, static slot => ref slot.X);
+    internal SlotColumn<ObjectSlot> X => new(_slots, static slot => ref slot.X);
 
-    internal ObjectColumn Y => new(_slots, static slot => ref slot.Y);
+    internal SlotColumn<ObjectSlot> Y => new(_slots, static slot => ref slot.Y);
 
-    internal ObjectColumn SubX => new(_slots, static slot => ref slot.SubX);
+    internal SlotColumn<ObjectSlot> SubX => new(_slots, static slot => ref slot.SubX);
 
-    internal ObjectColumn SubY => new(_slots, static slot => ref slot.SubY);
+    internal SlotColumn<ObjectSlot> SubY => new(_slots, static slot => ref slot.SubY);
 
-    internal ObjectColumn Column => new(_slots, static slot => ref slot.Column);
+    internal SlotColumn<ObjectSlot> Column => new(_slots, static slot => ref slot.Column);
 
-    internal ObjectColumn Row => new(_slots, static slot => ref slot.Row);
+    internal SlotColumn<ObjectSlot> Row => new(_slots, static slot => ref slot.Row);
 
-    internal ObjectColumn Flags => new(_slots, static slot => ref slot.Flags);
+    internal SlotColumn<ObjectSlot> Flags => new(_slots, static slot => ref slot.Flags);
 
-    internal ObjectColumn Behaviour => new(_slots, static slot => ref slot.Behaviour);
+    internal SlotColumn<ObjectSlot> Behaviour => new(_slots, static slot => ref slot.Behaviour);
 
-    internal ObjectColumn State => new(_slots, static slot => ref slot.State);
+    internal SlotColumn<ObjectSlot> State => new(_slots, static slot => ref slot.State);
 
-    internal ObjectColumn Variant => new(_slots, static slot => ref slot.Variant);
+    internal SlotColumn<ObjectSlot> Variant => new(_slots, static slot => ref slot.Variant);
 
-    internal ObjectColumn EnemyType => new(_slots, static slot => ref slot.EnemyType);
+    internal SlotColumn<ObjectSlot> EnemyType => new(_slots, static slot => ref slot.EnemyType);
 
-    internal ObjectColumn Direction => new(_slots, static slot => ref slot.Direction);
+    internal SlotColumn<ObjectSlot> Direction => new(_slots, static slot => ref slot.Direction);
 
     // One slot as a whole, for code that works on a single object.
     internal ObjectSlot Slot(int slot) => _slots[slot];

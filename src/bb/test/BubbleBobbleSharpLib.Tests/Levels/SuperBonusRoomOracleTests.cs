@@ -275,11 +275,11 @@ public sealed class SuperBonusRoomOracleTests
         LevelItems items = new(entities, scores, new ItemEffects(new PlayerTable(), entities), new(new ScriptedRandomSource([])));
         SuperBonusRoom room = new(entities, scores, timer, items, new LevelFlow(timer), () => { });
 
-        byte[] xs = [.. entities.X];
-        byte[] ys = [.. entities.Y];
+        byte[] xs = [.. entities.X.ToArray()];
+        byte[] ys = [.. entities.Y.ToArray()];
         room.Begin();
-        xs.CopyTo(entities.X);
-        ys.CopyTo(entities.Y);
+        entities.X.Load(xs);
+        entities.Y.Load(ys);
         room.Restore(before.AsSpan(Xs, Items), before.AsSpan(Ys, Items), before[Count], before[0x31], before[0x32]);
 
         if (from == Turn)

@@ -78,16 +78,16 @@ public sealed class PlayerDyingGoldenTests
 
     private static void Load(byte[] b, EntityTable entities)
     {
-        b.AsSpan(States, EntityTable.Capacity).CopyTo(entities.State);
-        b.AsSpan(Xs, EntityTable.Capacity).CopyTo(entities.X);
-        b.AsSpan(Ys, EntityTable.Capacity).CopyTo(entities.Y);
-        Array(b, 0).CopyTo(entities.Frame);
-        Array(b, 1).CopyTo(entities.AnimationTimer);
-        Array(b, 2).CopyTo(entities.HoldTimer);
-        Array(b, 3).CopyTo(entities.LeapFlag);
-        Array(b, 4).CopyTo(entities.FlashTimer);
-        Array(b, 5).CopyTo(entities.RiseCounter);
-        Array(b, 6).CopyTo(entities.GroundState);
+        entities.State.Load(b.AsSpan(States, EntityTable.Capacity));
+        entities.X.Load(b.AsSpan(Xs, EntityTable.Capacity));
+        entities.Y.Load(b.AsSpan(Ys, EntityTable.Capacity));
+        entities.Frame.Load(Array(b, 0));
+        entities.AnimationTimer.Load(Array(b, 1));
+        entities.HoldTimer.Load(Array(b, 2));
+        entities.LeapFlag.Load(Array(b, 3));
+        entities.FlashTimer.Load(Array(b, 4));
+        entities.RiseCounter.Load(Array(b, 5));
+        entities.GroundState.Load(Array(b, 6));
     }
 
     private static byte[] Save(EntityTable entities)

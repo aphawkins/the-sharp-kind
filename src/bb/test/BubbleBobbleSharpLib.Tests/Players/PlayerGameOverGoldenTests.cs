@@ -119,9 +119,9 @@ public sealed class PlayerGameOverGoldenTests
 
             b.AsSpan(Round, PlayerTable.Capacity).CopyTo(Players.Round);
             b.AsSpan(Lives, PlayerTable.Capacity).CopyTo(Players.Lives);
-            b.AsSpan(States, PlayerTable.Capacity).CopyTo(Entities.State);
-            b.AsSpan(Xs, PlayerTable.Capacity).CopyTo(Entities.X);
-            b.AsSpan(Ys, PlayerTable.Capacity).CopyTo(Entities.Y);
+            Entities.State.Load(b.AsSpan(States, PlayerTable.Capacity));
+            Entities.X.Load(b.AsSpan(Xs, PlayerTable.Capacity));
+            Entities.Y.Load(b.AsSpan(Ys, PlayerTable.Capacity));
             Items.Undying = b[Undying];
             Entities.EnemyCount = b[EnemyCount];
         }

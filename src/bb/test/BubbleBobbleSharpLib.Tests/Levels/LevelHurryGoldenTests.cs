@@ -72,8 +72,8 @@ public sealed class LevelHurryGoldenTests
         Assert.Equal(after[Seconds], rig.Timer.Seconds);
         Assert.Equal(after[Hurry], rig.Timer.Hurry);
         Assert.Equal(after[Seed], rig.Items.FoodBase);
-        Assert.Equal(Convert.ToHexString(after.AsSpan(Flashes, 6)), Convert.ToHexString(rig.Entities.FlashTimer[2..]));
-        Assert.Equal(Convert.ToHexString(after.AsSpan(Enemies, 6)), Convert.ToHexString(rig.Entities.State[2..]));
+        Assert.Equal(Convert.ToHexString(after.AsSpan(Flashes, 6)), Convert.ToHexString(rig.Entities.FlashTimer[2..].ToArray()));
+        Assert.Equal(Convert.ToHexString(after.AsSpan(Enemies, 6)), Convert.ToHexString(rig.Entities.State[2..].ToArray()));
         Assert.Equal(Convert.ToHexString(after.AsSpan(Types, Objects)), Convert.ToHexString(rig.Objects.Type.ToArray()));
         Assert.Equal(Convert.ToHexString(after.AsSpan(Columns, Objects)), Convert.ToHexString(rig.Objects.Column.ToArray()));
         Assert.Equal(Convert.ToHexString(after.AsSpan(Rows, Objects)), Convert.ToHexString(rig.Objects.Row.ToArray()));
@@ -111,9 +111,9 @@ public sealed class LevelHurryGoldenTests
         rig.Items.FoodBase = b[Seed];
         rig.Random.Low = b[RandomAt];
         rig.Random.High = b[RandomAt + 1];
-        b.AsSpan(Players, PlayerTable.Capacity).CopyTo(rig.Entities.State);
-        b.AsSpan(Enemies, 6).CopyTo(rig.Entities.State[2..]);
-        b.AsSpan(Flashes, 6).CopyTo(rig.Entities.FlashTimer[2..]);
+        rig.Entities.State.Load(b.AsSpan(Players, PlayerTable.Capacity));
+        rig.Entities.State[2..].Load(b.AsSpan(Enemies, 6));
+        rig.Entities.FlashTimer[2..].Load(b.AsSpan(Flashes, 6));
         rig.Objects.Type.Load(b.AsSpan(Types, Objects));
         rig.Objects.Column.Load(b.AsSpan(Columns, Objects));
         rig.Objects.Row.Load(b.AsSpan(Rows, Objects));

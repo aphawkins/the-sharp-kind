@@ -51,7 +51,7 @@ public sealed class WorldEffectsTests
     {
         Rig rig = new();
         rig.Entities.EnemyCount = 3;
-        new byte[] { 0x02, 0x0A, 0x0D, 0x0B, 0x00, 0x05 }.CopyTo(rig.Entities.State[2..]);
+        rig.Entities.State[2..].Load([0x02, 0x0A, 0x0D, 0x0B, 0x00, 0x05]);
 
         rig.World.Apply(11, 0);
 

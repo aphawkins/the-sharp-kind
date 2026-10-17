@@ -53,17 +53,17 @@ public sealed class LevelEndGoldenTests
         EndRig rig = new();
         rig.Timer.Seconds = 0;
         rig.Timer.Hurry = 0xFF;
-        before.AsSpan(States, PlayerTable.Capacity).CopyTo(rig.Entities.State);
-        before.AsSpan(Colours, PlayerTable.Capacity).CopyTo(rig.Entities.Colour);
-        before.AsSpan(Flashes, PlayerTable.Capacity).CopyTo(rig.Entities.FlashTimer);
+        rig.Entities.State.Load(before.AsSpan(States, PlayerTable.Capacity));
+        rig.Entities.Colour.Load(before.AsSpan(Colours, PlayerTable.Capacity));
+        rig.Entities.FlashTimer.Load(before.AsSpan(Flashes, PlayerTable.Capacity));
         before.AsSpan(Saved, PlayerTable.Capacity).CopyTo(rig.End.SavedFlash);
 
         rig.End.Update();
 
         Assert.Equal(after[Complete], rig.End.Complete);
-        Assert.Equal(Convert.ToHexString(after.AsSpan(States, 2)), Convert.ToHexString(rig.Entities.State[..2]));
-        Assert.Equal(Convert.ToHexString(after.AsSpan(Colours, 2)), Convert.ToHexString(rig.Entities.Colour[..2]));
-        Assert.Equal(Convert.ToHexString(after.AsSpan(Flashes, 2)), Convert.ToHexString(rig.Entities.FlashTimer[..2]));
+        Assert.Equal(Convert.ToHexString(after.AsSpan(States, 2)), Convert.ToHexString(rig.Entities.State[..2].ToArray()));
+        Assert.Equal(Convert.ToHexString(after.AsSpan(Colours, 2)), Convert.ToHexString(rig.Entities.Colour[..2].ToArray()));
+        Assert.Equal(Convert.ToHexString(after.AsSpan(Flashes, 2)), Convert.ToHexString(rig.Entities.FlashTimer[..2].ToArray()));
     }
 
     [Fact]

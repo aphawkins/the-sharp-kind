@@ -33,8 +33,12 @@ internal sealed class BubbleGlide
     {
         ArgumentNullException.ThrowIfNull(entities);
 
-        entities.X[..Players].CopyTo(_x);
-        entities.Y[..Players].CopyTo(_y);
+        for (int player = 0; player < Players; player++)
+        {
+            _x[player] = entities.X[player];
+            _y[player] = entities.Y[player];
+        }
+
         _framesBefore = framesBefore;
     }
 

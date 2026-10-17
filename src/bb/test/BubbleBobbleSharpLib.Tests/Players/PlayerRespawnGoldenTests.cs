@@ -135,13 +135,16 @@ public sealed class PlayerRespawnGoldenTests
             Items = new(Entities, new Scores(), new(Players, Entities), new(new FakeRandomSource()));
             Respawn = new(Entities, Players, Items, Timer);
 
-            b.AsSpan(States, EntityTable.Capacity).CopyTo(Entities.State);
-            b.AsSpan(Xs, EntityTable.Capacity).CopyTo(Entities.X);
-            b.AsSpan(Ys, EntityTable.Capacity).CopyTo(Entities.Y);
+            Entities.State.Load(b.AsSpan(States, EntityTable.Capacity));
+            Entities.X.Load(b.AsSpan(Xs, EntityTable.Capacity));
+            Entities.Y.Load(b.AsSpan(Ys, EntityTable.Capacity));
 
             for (int i = 0; i < EntityArrays.Length; i++)
             {
-                b.AsSpan(Arrays + (i * EntityTable.Capacity), EntityTable.Capacity).CopyTo(EntityArrays[i]());
+                for (int slot = 0; slot < EntityTable.Capacity; slot++)
+                {
+                    EntityArrays[i](Entities.Slot(slot)) = b[Arrays + (i * EntityTable.Capacity) + slot];
+                }
             }
 
             for (int i = 0; i < PlayerArrays.Length; i++)
@@ -167,10 +170,12 @@ public sealed class PlayerRespawnGoldenTests
         internal PlayerRespawn Respawn { get; }
 
         // $8520, $8548, $8610, $8688, $86D8, $8728, $87A0, $87C8, $87F0.
-        private SpanGetter[] EntityArrays => [
-            () => Entities.Frame, () => Entities.Colour, () => Entities.AnimationTimer, () => Entities.TurnInterval,
-            () => Entities.LeapFlag, () => Entities.FlashTimer, () => Entities.RiseCounter, () => Entities.FallCounter,
-            () => Entities.GroundState,
+        private static SlotField<EntitySlot>[] EntityArrays => [
+            static slot => ref slot.Frame, static slot => ref slot.Colour, static slot => ref slot.AnimationTimer,
+            static slot => ref slot.TurnInterval,
+            static slot => ref slot.LeapFlag, static slot => ref slot.FlashTimer, static slot => ref slot.RiseCounter,
+            static slot => ref slot.FallCounter,
+            static slot => ref slot.GroundState,
         ];
 
         // $045A, $A77B, $A77D, $A77F, $A781, $61, $63, $65: two bytes each, one a player.
@@ -188,7 +193,10 @@ public sealed class PlayerRespawnGoldenTests
 
             for (int i = 0; i < EntityArrays.Length; i++)
             {
-                EntityArrays[i]().CopyTo(b.AsSpan(Arrays + (i * EntityTable.Capacity)));
+                for (int slot = 0; slot < EntityTable.Capacity; slot++)
+                {
+                    b[Arrays + (i * EntityTable.Capacity) + slot] = EntityArrays[i](Entities.Slot(slot));
+                }
             }
 
             for (int i = 0; i < PlayerArrays.Length; i++)

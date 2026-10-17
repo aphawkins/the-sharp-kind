@@ -72,7 +72,7 @@ internal sealed class LevelScroll
     {
         ArgumentNullException.ThrowIfNull(entities);
 
-        return BubbleGlide.Bubbles(entities, entities.X, entities.Y, BubbleFrame);
+        return BubbleGlide.Bubbles(entities, entities.X.ToArray(), entities.Y.ToArray(), BubbleFrame);
     }
 
     internal void Pass() => Rows = Math.Min(Rows + RowsPerPass, Steps);

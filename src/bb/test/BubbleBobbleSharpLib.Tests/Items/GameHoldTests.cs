@@ -123,7 +123,7 @@ public sealed class GameHoldTests
         while (loop.Objects.Type[0] != 0x2E && passes < 100)
         {
             Assert.Equal(1, loop.Timer.Hurry);
-            Assert.Equal(Convert.ToHexString(before), Convert.ToHexString(loop.Entities.X));
+            Assert.Equal(Convert.ToHexString(before), Convert.ToHexString(loop.Entities.X.ToArray()));
             loop.Pass([Idle, Idle]);
             passes++;
         }

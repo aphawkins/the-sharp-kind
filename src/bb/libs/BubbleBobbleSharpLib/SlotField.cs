@@ -2,6 +2,6 @@
 // 'rebb64' - github.com/zaidka/rebb64.
 // Bubble Bobble (C) Taito 1986. C64 conversion by Software Creations 1987.
 
-namespace BubbleBobbleSharpLib.Bubbles;
+namespace BubbleBobbleSharpLib;
 
-internal delegate ref byte ObjectField(ObjectSlot slot);
+internal delegate ref byte SlotField<in TSlot>(TSlot slot);

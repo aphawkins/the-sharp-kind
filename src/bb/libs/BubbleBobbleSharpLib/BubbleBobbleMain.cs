@@ -463,22 +463,11 @@ public sealed class BubbleBobbleMain : IGame, IGameApp
         return _shownEffects;
     }
 
-    private SpriteModel Sprites() => new(
-        Loop.Entities.State,
-        Loop.Entities.X,
-        Loop.Entities.Y,
-        Loop.Entities.Frame,
-        Loop.Entities.SpriteBase,
-        Loop.Entities.Colour,
-        Loop.Entities.FlashTimer,
-        Loop.Entities.SpriteEnable)
-    {
-        FoodArt = Loop.FoodArt(),
-        BonusStage = Loop.Clear.SuperBonus is { Showing: true } ? Loop.Clear.BonusStage : -1,
-        Boss = Loop.Boss is { Active: true, Shown: true } boss ? new(boss.X, boss.Y, boss.Frame, boss.Colour) : null,
-        Pictures = Loop.Show.On ? Loop.Show.Pictures.ToArray() : [],
-        Expanded = Loop.Entities.SpriteExpand,
-    };
+    private SpriteModel Sprites() => Loop.Entities.Sprites(
+        Loop.FoodArt(),
+        Loop.Clear.SuperBonus is { Showing: true } ? Loop.Clear.BonusStage : -1,
+        Loop.Boss is { Active: true, Shown: true } boss ? new(boss.X, boss.Y, boss.Frame, boss.Colour) : null,
+        Loop.Show.On ? Loop.Show.Pictures.ToArray() : []);
 
     private HudModel Hud() => new(
         Loop.Scores.Bytes[..HudModel.ScoreBytes],

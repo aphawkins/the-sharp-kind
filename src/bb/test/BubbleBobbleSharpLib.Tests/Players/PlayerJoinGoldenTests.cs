@@ -112,7 +112,7 @@ public sealed class PlayerJoinGoldenTests
             Players.Credits = b[Ab];
             b.AsSpan(Ab + 1, PlayerTable.Capacity).CopyTo(Players.ExtraLifeStep);
             b.AsSpan(Ab + 3, PlayerTable.Capacity).CopyTo(Players.ExtraLifeByte);
-            b.AsSpan(States, PlayerTable.Capacity).CopyTo(Entities.State);
+            Entities.State.Load(b.AsSpan(States, PlayerTable.Capacity));
         }
 
         internal EntityTable Entities { get; } = new();

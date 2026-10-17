@@ -93,7 +93,7 @@ public sealed class LevelTimerRestartGoldenTests
             Timer.Frames = b[Frames];
             Timer.Hurry = b[Hurry];
 
-            b.AsSpan(States, PlayerTable.Capacity).CopyTo(Entities.State);
+            Entities.State.Load(b.AsSpan(States, PlayerTable.Capacity));
             b.AsSpan(Lives, PlayerTable.Capacity).CopyTo(Players.Lives);
         }
 

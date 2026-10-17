@@ -14,7 +14,7 @@ internal static class RamImage
     internal const int EnemyCount = 0x4A;
     internal const int ClimbNext = 0x86B0;
 
-    private static readonly (int Address, ObjectField Field)[] s_object =
+    private static readonly (int Address, SlotField<ObjectSlot> Field)[] s_object =
     [
         (0x00CA, static slot => ref slot.Type),
         (0x00DC, static slot => ref slot.Column),
@@ -31,37 +31,37 @@ internal static class RamImage
         (0x0193, static slot => ref slot.Direction),
     ];
 
-    private static readonly (int Address, Func<EntityTable, Span<byte>> Field)[] s_entity =
+    private static readonly (int Address, SlotField<EntitySlot> Field)[] s_entity =
     [
-        (0x00B2, e => e.State),
-        (0x00BA, e => e.X),
-        (0x00C2, e => e.Y),
-        (0x8520, e => e.Frame),
-        (0x8548, e => e.Colour),
-        (0x8598, e => e.SpriteBase),
-        (0x85C0, e => e.Mode),
-        (0x85E8, e => e.Heading),
-        (0x8610, e => e.AnimationTimer),
-        (0x8638, e => e.HoldTimer),
-        (0x8660, e => e.TurnTimer),
-        (0x8688, e => e.TurnInterval),
-        (0x86D8, e => e.LeapFlag),
-        (0x8700, e => e.ClimbFlag),
-        (0x8728, e => e.FlashTimer),
-        (0x8750, e => e.FrameCount),
-        (0x8778, e => e.FrameMask),
-        (0x87A0, e => e.RiseCounter),
-        (0x87C8, e => e.FallCounter),
-        (0x87F0, e => e.GroundState),
-        (0x8818, e => e.BubbleTimer),
-        (0x8840, e => e.LeftFlag),
-        (0x8868, e => e.RightFlag),
-        (0x8890, e => e.AttackTimer),
+        (0x00B2, static slot => ref slot.State),
+        (0x00BA, static slot => ref slot.X),
+        (0x00C2, static slot => ref slot.Y),
+        (0x8520, static slot => ref slot.Frame),
+        (0x8548, static slot => ref slot.Colour),
+        (0x8598, static slot => ref slot.SpriteBase),
+        (0x85C0, static slot => ref slot.Mode),
+        (0x85E8, static slot => ref slot.Heading),
+        (0x8610, static slot => ref slot.AnimationTimer),
+        (0x8638, static slot => ref slot.HoldTimer),
+        (0x8660, static slot => ref slot.TurnTimer),
+        (0x8688, static slot => ref slot.TurnInterval),
+        (0x86D8, static slot => ref slot.LeapFlag),
+        (0x8700, static slot => ref slot.ClimbFlag),
+        (0x8728, static slot => ref slot.FlashTimer),
+        (0x8750, static slot => ref slot.FrameCount),
+        (0x8778, static slot => ref slot.FrameMask),
+        (0x87A0, static slot => ref slot.RiseCounter),
+        (0x87C8, static slot => ref slot.FallCounter),
+        (0x87F0, static slot => ref slot.GroundState),
+        (0x8818, static slot => ref slot.BubbleTimer),
+        (0x8840, static slot => ref slot.LeftFlag),
+        (0x8868, static slot => ref slot.RightFlag),
+        (0x8890, static slot => ref slot.AttackTimer),
     ];
 
     internal static void Load(ReadOnlySpan<byte> ram, ObjectTable objects)
     {
-        foreach ((int address, ObjectField field) in s_object)
+        foreach ((int address, SlotField<ObjectSlot> field) in s_object)
         {
             for (int slot = 0; slot < ObjectTable.Capacity; slot++)
             {
@@ -72,9 +72,12 @@ internal static class RamImage
 
     internal static void Load(ReadOnlySpan<byte> ram, EntityTable entities)
     {
-        foreach ((int address, Func<EntityTable, Span<byte>> field) in s_entity)
+        foreach ((int address, SlotField<EntitySlot> field) in s_entity)
         {
-            ram.Slice(address, EntityTable.Capacity).CopyTo(field(entities));
+            for (int slot = 0; slot < EntityTable.Capacity; slot++)
+            {
+                field(entities.Slot(slot)) = ram[address + slot];
+            }
         }
 
         for (int slot = 0; slot < EntityTable.Capacity; slot++)
@@ -109,7 +112,7 @@ internal static class RamImage
     {
         List<byte> bytes = [];
 
-        foreach ((_, ObjectField field) in s_object)
+        foreach ((_, SlotField<ObjectSlot> field) in s_object)
         {
             for (int slot = 0; slot < ObjectTable.Capacity; slot++)
             {
@@ -137,9 +140,12 @@ internal static class RamImage
     {
         List<byte> bytes = [];
 
-        foreach ((_, Func<EntityTable, Span<byte>> field) in s_entity)
+        foreach ((_, SlotField<EntitySlot> field) in s_entity)
         {
-            bytes.AddRange(field(entities));
+            for (int slot = 0; slot < EntityTable.Capacity; slot++)
+            {
+                bytes.Add(field(entities.Slot(slot)));
+            }
         }
 
         bytes.Add(entities.EnemyCount);
