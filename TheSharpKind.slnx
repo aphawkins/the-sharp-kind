@@ -19,6 +19,12 @@
     <File Path="docs/scr-readme.md" />
     <File Path="docs/toc.yml" />
   </Folder>
+  <Folder Name="/docs/cryptography/">
+    <File Path="docs/cryptography/dante-inferno-xxvi.txt" />
+    <File Path="docs/cryptography/singh-cipher-challenge.md" />
+    <File Path="docs/cryptography/singh-corrected-ciphers.txt" />
+    <File Path="docs/cryptography/singh-how-we-cracked-the-code-book-ciphers.txt" />
+  </Folder>
   <Folder Name="/docs/images/">
     <File Path="docs/images/bb-screenshot-8-bit.png" />
     <File Path="docs/images/coverage-badge.svg" />
