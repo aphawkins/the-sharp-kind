@@ -44,14 +44,14 @@ one task = one subagent run.
     - Verdict-first summary: done / blocked / needs decision.
     - The diff. Any assumptions made. No raw logs.
 
-## 3. Delegate — route by the KIND of work
+## 3. Delegate - route by the KIND of work
 - Writing implementation code            -> tier-implementer
 - Writing boilerplate tests, mocks, fixtures (authoring only) -> tier-scaffolder
 - Executing smoke tests, verification runs, build/test passes -> tier-runner
   (test tenant only; never production, never real data)
 Hand each subagent ONLY its spec. Expect a summary + diff/verdict back, never
 raw output. Do NOT let execution or verification work fall to the built-in
-general-purpose agent — it runs on the session model and defeats the routing.
+general-purpose agent - it runs on the session model and defeats the routing.
 
 ## 4. Review
 When an implementation returns, hand the diff to the tier-reviewer subagent for

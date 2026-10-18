@@ -1,7 +1,7 @@
 # Stunt Car Racer: split the sprite atlas into one image per sprite
 
-[StuntCarRacerSharpLib] `Assets/Images/atlas.bmp` is 1024x1024 at 32bpp — a 4 MB
-binary from ptitSeb's remake — addressed by fifteen hard-coded `AtlasRect`
+[StuntCarRacerSharpLib] `Assets/Images/atlas.bmp` is 1024x1024 at 32bpp - a 4 MB
+binary from ptitSeb's remake - addressed by fifteen hard-coded `AtlasRect`
 constants in `Rendering/HudRenderer.cs` (`s_hole`, `s_cockpitTop`,
 `s_engineFlames0`, ...). Those are a second source of truth: move a sprite and
 nothing fails until it renders wrong.

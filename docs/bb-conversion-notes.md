@@ -20,7 +20,7 @@ the plan and the proofs.
   to the plain facing frame and the timer to `$FF`. Otherwise the frame is
   `facing + $ACC4[timer]`, and the bubble is made at timer `$04` (`$231B`).
   So fire and bubble are three frames apart.
-- `$2321`–`$23E9`, the spawn. `$232A` works the cell out from the pixel
+- `$2321`-`$23E9`, the spawn. `$232A` works the cell out from the pixel
   position again, not from `$1E6C`'s cell. `$2341`: a player above the
   playfield borrows, and `$2349` abandons the spawn, leaving the four bytes
   already written in a slot that is still free. `$2352` writes type `$16`
@@ -29,7 +29,7 @@ the plan and the proofs.
 - `$2385`: facing right (frame `$09`) moves the bubble a column right,
   because the mouth is at the sprite's far end; direction `$00`, else `$80`.
   `$2399`: a player off the ground (`$87A0` positive) and low in the cell
-  (`FineY` ≥ 4) blows into the row below.
+  (`FineY` >= 4) blows into the row below.
 - `$23D7`: the blow ring's ten points.
 - `$0A28` (`game-loop.s`) clears the reload, once a frame before the entity
   update, so a reload is a frame shorter than its eight.
@@ -46,7 +46,7 @@ draw. These change a slot:
 | Type | Vector | What it does |
 |---|---|---|
 | `$16` | `$7BD4` | A bubble just blown becomes `$00` before it is drawn. |
-| `$18`–`$22` | `$3CB2` | A caught enemy: its own hardware sprite (slot 2 on) moves onto the bubble, with the frame `$1090` kept in `$AA42`. |
+| `$18`-`$22` | `$3CB2` | A caught enemy: its own hardware sprite (slot 2 on) moves onto the bubble, with the frame `$1090` kept in `$AA42`. |
 | `$34` | `$3D2D` | A touched bubble (`$0D02`). Every bubble within `$18` pixels pops with it, for the same player; then `$3D77`. |
 | `$3A` | `$3D77` | A bubble whose time ran out (`$13BE`). |
 | `$3C`, `$3E`, `$40`, `$38`, `$36` | `$3CD3`, `$3CDB`, `$3CDF`, `$3DA9`, `$7BDB` | The pop's frames, one a pass. `$36` empties the slot. |
@@ -58,8 +58,8 @@ draw. These change a slot:
   `$1090` kept, and counts it in the player's chain. `$3D91` turns the
   enemy's sprite back on, whichever way `$142E`'s flicker left it. Any other
   bubble goes to `$3DB0`.
-- `$3DB0`: ten points if a player popped it, a hundred for types `$06`–`$0B`
-  (`$3DB6`–`$3DC0`), a letter of EXTEND for `$0C`–`$15` (`$3DD5`, `$3DD9`),
+- `$3DB0`: ten points if a player popped it, a hundred for types `$06`-`$0B`
+  (`$3DB6`-`$3DC0`), a letter of EXTEND for `$0C`-`$15` (`$3DD5`, `$3DD9`),
   then pop frame `$3C`.
 - `$3DDD`: one bit per letter (`$AB53` on into `$AB55`), in twos from `$0C`:
   E, X, T, N and D. The fourth bit is the second E, so only `$0C` reaches it,
@@ -76,12 +76,12 @@ from the type at the start of the step:
 
 | Types | Vector | Cell |
 |---|---|---|
-| `$00`–`$14` | `$E779` | `type × 2 + $A9C4` (0–43) |
+| `$00`-`$14` | `$E779` | `type x 2 + $A9C4` (0-43) |
 | `$34`, `$3A`, `$3C` / `$3E`, `$40` | `$3CE5` | 44 + (0 or 4) + `$A9C4` |
 | `$28` | `$3EFD` | 58 + `$A9C4`, from `$A826`/`$A82A` |
-| `$2A` | `$E752` | 56 + `$A9C4`: `$AA54` entries 56–57 |
+| `$2A` | `$E752` | 56 + `$A9C4`: `$AA54` entries 56-57 |
 | `$2C` | `$3ED4` | 62 + `$A9C4`, from `$AB5B`/`$AB5F` |
-| `$2E`, `$30` (the Baron) | `$E767` | 52 + `$E765[slot]` + bit 1 of `$597F`: `$AA54` entries 48–51 |
+| `$2E`, `$30` (the Baron) | `$E767` | 52 + `$E765[slot]` + bit 1 of `$597F`: `$AA54` entries 48-51 |
 | `$32` | `$3E77` | 66 |
 
 `DrawnSubY` is OLDTXT: `$A9D6`, but zero for a shot, whose vector clears it.
@@ -94,28 +94,28 @@ past its table would read the next table, so it throws.
 reference calls it player-enemy collision; it is not. It walks the eighteen
 object slots, player 2 first, then player 1, slot 17 down.
 
-- A player in state 1 (`$0AB0`) with frame 0–3 nudges an object on their
-  right four pixels right; frame 4–7, one on their left four pixels left
+- A player in state 1 (`$0AB0`) with frame 0-3 nudges an object on their
+  right four pixels right; frame 4-7, one on their left four pixels left
   (`$0AB7`, `$0ABD`). Only state-0 objects below type `$24` move (`$0ACB`,
   `$0B5D`). The box is one-sided in X and absolute in Y (`$0AD6`, `$0B68`,
   `$0AE7`/`$0B79`).
-- `$0ADA`–`$0AE7`: the absolute difference; a borrow leaves the carry clear
+- `$0ADA`-`$0AE7`: the absolute difference; a borrow leaves the carry clear
   for the `adc #$01`.
 - Left arm: `$0AF2`'s `sbc #$03` takes four (carry clear from the `bcc`);
   `$0AFA`'s `sbc #$02` runs with the carry the X subtraction left.
-  `$0B24`–`$0B39` read the cell's column down three rows (the first only when
+  `$0B24`-`$0B39` read the cell's column down three rows (the first only when
   `SubY` is not zero; one past a forty-byte row is the next row). In a wall,
   `$0B3B` goes back a column and snaps to the grid: `sbc #$14` sets the carry
   `adc #$07` adds, which sets the carry `adc #$14` adds.
 - **The left arm loses the player.** `$0B08` parks the player in `$3C` and
-  loads the row into Y. A row outside `$04`–`$1C` branches (`$0B0E`, `$0B12`)
+  loads the row into Y. A row outside `$04`-`$1C` branches (`$0B0E`, `$0B12`)
   to the loop's `dex`, not `$0B51`, so the rest of the walk, and the `dey`
   that picks the next player, run with the row as the player index. `Peek`
   maps every `$B2,y`, `$BA,y`, `$C2,y`, `$CA,y`, `$DC,y`, `$EE,y` and
   `$8520,y` read to its table; any other read throws.
-- Right arm (`$0B56`–`$0BEA`): `$0B83`'s carry is clear from the `bcc`;
+- Right arm (`$0B56`-`$0BEA`): `$0B83`'s carry is clear from the `bcc`;
   `$0B8B`'s `adc #$02` takes the X addition's carry. It clamps the row
-  (`$0BA0`–`$0BAC`). `$0BD4` goes back a column and snaps; `and` keeps the
+  (`$0BA0`-`$0BAC`). `$0BD4` goes back a column and snaps; `and` keeps the
   carry `sbc #$1C` left.
 - An object's row is four more than `SolidMap`'s.
 
@@ -143,7 +143,7 @@ eight-pixel shot a bubble opens with is the dispatcher's, at `$0F98`.
 ### ObjectTable
 
 The eighteen slots `$CA` indexes: bubbles, items, shots and caught enemies.
-`EntityTable` is the other table, eight slots at `$85xx`–`$88xx`.
+`EntityTable` is the other table, eight slots at `$85xx`-`$88xx`.
 
 | Field | Address | Notes |
 |---|---|---|
@@ -164,7 +164,7 @@ The eighteen slots `$CA` indexes: bubbles, items, shots and caught enemies.
 
 ### Baron
 
-`$1473`–`$1577` (`player-sprites.s`): Baron Von Blubba, who comes for a
+`$1473`-`$1577` (`player-sprites.s`): Baron Von Blubba, who comes for a
 player who takes too long.
 
 - **Not the routine the reference names.** `special-enemies.s` heads `$10D3`
@@ -178,7 +178,7 @@ player who takes too long.
   `$1473` reads `$B2`, `$BA` and `$C2` with the object slot as the index.
 - He moves one cell a pass, a run along one axis then the other, through
   walls, and pauses `$1E` passes between pairs of runs (`$14C6`).
-- `$14A7`: a run over starts the next, and the pause. `$14B0`–`$14C8`:
+- `$14A7`: a run over starts the next, and the pause. `$14B0`-`$14C8`:
   `$AA30`'s low four bits count the runs, never to a multiple of sixteen, and
   its top bit flips each time; `$AA42` takes the result as the new run.
   `$14F7`: bit 7 picks the axis, the low seven bits count it.
@@ -188,7 +188,7 @@ player who takes too long.
 - `$152B`: catches either player, the second first; the first caught is the
   only one. The caller changes `$152B`'s two compares to `$18` and `$0E`, so
   a player in state `$18`, or any live state below `$0E`, can be caught
-  (`$1496`–`$14A2`). The box is `$10` pixels each way (`$1558`, `$1568`),
+  (`$1496`-`$14A2`). The box is `$10` pixels each way (`$1558`, `$1568`),
   from the cell's corner (`$18`, `$15`); the `asl`s leave bit 5 in the carry
   for the `adc`.
 - `$1479`: the Baron goes (type `$3A`) when his player dies (`$0E`,
@@ -206,11 +206,11 @@ enemy, and the capture. The dispatcher calls it down each arm of `$0F98`,
 after the eight-pixel step and before any terrain probe.
 
 - `$105B` walks `$B4`, `$BC`, `$C4` with Y from 5 down: `EntityTable` slots
-  2–7. The last enemy first, and the first in range wins (`$1090` ends in an
+  2-7. The last enemy first, and the first in range wins (`$1090` ends in an
   `rts`).
-- `$105D`/`$1060`/`$1064`: an empty enemy, or one in `$0B`–`$15`, is passed
+- `$105D`/`$1060`/`$1064`: an empty enemy, or one in `$0B`-`$15`, is passed
   over. `$1077`, `$1088`: a square box of `$10` pixels.
-- `$1091`/`$1093`: type becomes `$18` + enemy × 2.
+- `$1091`/`$1093`: type becomes `$18` + enemy x 2.
 - `$1098`: only an enemy at `$0A`, or `$16` and above, has its three
   counters reset, and then the byte stored to `$AA30` at `$10B1` is its rise
   counter, not its state: `cmp` leaves A as `$1095`'s `lda $B4,y` on the
@@ -251,7 +251,7 @@ after the eight-pixel step and before any terrain probe.
   in `$EF15`; state 6 with `$BD`, so a turn also flips the frame
   (`lda $8520,x` / `eor #$04` / `sta`).
 - State 6 faces first and moves on the next pass (`$EEDF`, `$EF1E`: frames
-  0–3 right, 4 on left, from `$1E6F`'s copy). Its frame steps through
+  0-3 right, 4 on left, from `$1E6F`'s copy). Its frame steps through
   `$EB0F`, not `$EFEA`.
 - `$EFEA`: every second pass, four frames; reached whatever the halves did.
   `$1E87` calls it alone for a thing not free to move.
@@ -271,8 +271,8 @@ dispatcher at `$0F48` is `EnemyDispatcher`.
 
 - `$0CF4`'s `cmp #$24`: types `$24` up get no AI; `$0D4E` routes them by
   value. Below `$34` the type indexes a jump table, and `$0D52`'s `sbc #$23`
-  runs with the carry clear (`$0D50`'s `bcs` fell through), so `$24`–`$33`
-  index it as 0–15. Low and high bytes are interleaved one apart, so only the
+  runs with the carry clear (`$0D50`'s `bcs` fell through), so `$24`-`$33`
+  index it as 0-15. Low and high bytes are interleaved one apart, so only the
   even types reach a whole address: `$2E`/`$30` reach `$1473` (the Baron);
   the other six are not translated. `$0D56` gates the table on `$67`, which
   nothing translated writes. At `$34` up, `$44` reaches `$10D3` and `$4C`
@@ -280,18 +280,18 @@ dispatcher at `$0F48` is `EnemyDispatcher`.
 - `$0CFF`: a slot with an AI state goes to `$0F48`.
 - `$0D02` (`Caught`): player 2 first; the first within range wins, and the
   loop takes `$0D4A`. Players in state `$0E` or `$0F` are not caught
-  (`$0D0A`, `$0D0E`). The box (`$0D04`–`$0D34`) is `$10` pixels, an absolute
+  (`$0D0A`, `$0D0E`). The box (`$0D04`-`$0D34`) is `$10` pixels, an absolute
   difference in one byte per axis; `$0D14` nudges the player's X two pixels
   right first, in X only. `$0D33` stores the player to `$0193`, the old type,
   and type `$34` (`$0D3F`). `$0193` also holds a blow's facing (`$2352`),
   and `$0F98` tests its top bit, so a caught slot reads as facing right.
 - `$0D44`, `$0D48`: no catch falls into `$0D86`.
 - `$0D86` (`Wander`): one draw; at `$EA` or above (`$0D8B`) straight to the
-  map. Otherwise `$0D8F`–`$0DFE` look for a neighbour (slot 17 down, not
+  map. Otherwise `$0D8F`-`$0DFE` look for a neighbour (slot 17 down, not
   itself, no AI state, not special, `$10` pixels, no nudge: `$0DAE`,
   `$0DBF`). Only a neighbour makes it move at random; a lone thing falls into
   `$0E00`. The draw is still made.
-- `$0DC2`–`$0DFA` (`RandomDirection`): a draw picks the axis, another the
+- `$0DC2`-`$0DFA` (`RandomDirection`): a draw picks the axis, another the
   way, unless near an edge (`$0DCB`, `$0DD4`, `$0DE6`, `$0DEE`: within 4 of
   the top, `$1C` rows, 2 or `$1C` columns), when it turns to the middle.
   `$0DE4`'s `ora #$01` makes a draw sideways; `$0DC9`'s `and #$02` vertical.
@@ -300,8 +300,8 @@ dispatcher at `$0F48` is `EnemyDispatcher`.
   level 1 always goes sideways, and deeper levels more often vertically. On
   level `$48` (`$F219`, `$F21D`) a fill loop has left `$02` in A.
 - `$0E00` (`MapDirection`): the current in the cell one row below and one
-  column right (`$0E1F`'s `ldy #$29`), the row clamped to `$04`–`$1C`
-  (`$0E02`, `$0E08`). `$AD1E` gives `$8500` for row four (`$0E0E`–`$0E1F`).
+  column right (`$0E1F`'s `ldy #$29`), the row clamped to `$04`-`$1C`
+  (`$0E02`, `$0E08`). `$AD1E` gives `$8500` for row four (`$0E0E`-`$0E1F`).
   Clamped at the bottom, it reads `$88E8`, which `$3A6C` fills with row 24.
 
 ### EnemyChase
@@ -337,19 +337,19 @@ eight-pixel half of movement; `EntityMover` is the two-pixel half.
   `$28`, `$51`. The move comes before the probes, so `$100B` puts it back.
 - `$0FB1`, `$0FE0`: `jsr $105B` (`BubbleCollision`). A capture types the
   slot `$18` or more, which `$0FB4`'s test reads as a reason to stop.
-- `$0FB8`–`$0FFE`: three probes, the first skipped on a cell boundary.
+- `$0FB8`-`$0FFE`: three probes, the first skipped on a cell boundary.
   `$7BFE` returns `$A9D6`, the vertical sub-position (not a direction).
   `$1001`: a clean move clears the state counter's top bit.
-- `$100B`: put back. `$100E`–`$1014` snap X to the grid: subtract `$14`,
+- `$100B`: put back. `$100E`-`$1014` snap X to the grid: subtract `$14`,
   `and #$F8`, `adc #$13` with the carry the subtraction left, so it adds
   twenty. A negative state becomes type `$34` (`$104E`). `$101C` tests
   player 2 only (`$BB`, `$C3`, no indexing), with the `$10` box (`$1030`,
   `$1040`); proximity decides only what goes to `$0193`. `$1052` zeroes
   `$A9C4` and the state counter.
 - **The row bias is four.** An entity's row is four more than `SolidMap`'s.
-  `$8500`–`$851F` is not tile data but the wrap permission and spawn tables;
+  `$8500`-`$851F` is not tile data but the wrap permission and spawn tables;
   tile rows start at `$8528` (`$AC01` entry five). The wrap block reads solid
-  and is `SolidMap`'s row 0, so `SolidMap` row = tile row + 1 = entity row −
+  and is `SolidMap`'s row 0, so `SolidMap` row = tile row + 1 = entity row -
   4. Level 1's platforms are on tile rows 8, 13, 18 in play and on `SolidMap`
   rows 9, 14, 19. `EntityMover`'s wrap at row `$1D` is one past the map.
 
@@ -359,7 +359,7 @@ eight-pixel half of movement; `EntityMover` is the two-pixel half.
 6502 runs one loop from 7 to 0, so enemies go before the players
 (`PlayerFrame`, slots 1 and 0) in the same frame.
 
-- Per enemy (`$1CDB`–`$1D21`), in order: `Mode` not negative
+- Per enemy (`$1CDB`-`$1D21`), in order: `Mode` not negative
   (`$1CDB`'s `lda $85C0,x`/`bpl`; a player's is `$FF`) is still dropping in:
   `$1CA0` moves it down two pixels (two `inc`, `$1CA9`) to the row in
   `AttackTimer`, and `$1E87` animates it. The `inc` pair is not a compare, so
@@ -368,7 +368,7 @@ eight-pixel half of movement; `EntityMover` is the two-pixel half.
   on frames with bit 1 of the counter clear (`$1D0A`), one and a half times
   as fast. `HoldTimer` not zero is the spawn delay: only `$1E87`. Otherwise
   `$1E6C` dispatches on the state through `$1E3A`.
-- `$1CE3`–`$1CF3` (`Target`): the player on the enemy's side of the slot
+- `$1CE3`-`$1CF3` (`Target`): the player on the enemy's side of the slot
   numbers if playing (`$1CEB`: state 1), else the other, unchecked.
 - `$17BE`, from `$09F7` at level start (`Enter`): each enemy's row is kept as
   the drop's target, it is put at row `$15` (`$17C8`), and `$16` frames
@@ -377,7 +377,7 @@ eight-pixel half of movement; `EntityMover` is the two-pixel half.
   every frame left: `$00` to `$EA`.
 - `$1E87` (`Idle`): state 4 by `$214A` and state 9 by `$EE4A` (the same
   toggle), state 5 by `$EFEA`, the rest by `$EB0F`.
-- `$1E6C` (`Dispatch`): the cell, then the state. States 2–9 are the eight
+- `$1E6C` (`Dispatch`): the cell, then the state. States 2-9 are the eight
   classes (walker, class 1, hopper, diagonal, facing diagonal, class 5,
   class 6, runner); `$0B`, `$0C`, `$11`, `$12` are a killed enemy on its way
   to food. `$E9FD` (`Shooter`): the shot first, then the walk unless a shot
@@ -387,13 +387,13 @@ eight-pixel half of movement; `EntityMover` is the two-pixel half.
 
 ### EnemyHopper
 
-`$1F2E`–`$214A` (`player-animation.s`): state 4, class 2, an enemy that only
+`$1F2E`-`$214A` (`player-animation.s`): state 4, class 2, an enemy that only
 hops. Filed with the players' animation, but it runs for enemy slots only.
 
 - `$1F31`: falling. `$1F41`/`$1F5B`: no ground (`$1F47`: the three cells
   under it) starts a fall; above row `$1F` (`$1F43`) it falls without
   looking.
-- On the ground it hops every frame. **Up** (`$1F61`–`$1FB0`) when `$EE62`
+- On the ground it hops every frame. **Up** (`$1F61`-`$1FB0`) when `$EE62`
   allows a climb and there is a platform: rise counter `$1F` (`$1FAB`), and
   the first sixteen frames are a wind-up that turns it every fourth
   (`$201E`). **Across** otherwise (`$1FD3`), rise counter `$0F` (`$1FEA`),
@@ -412,7 +412,7 @@ hops. Filed with the players' animation, but it runs for enemy slots only.
 - `$20B0` (`Land`): the spring counts back to 3, then the hop ends; a frame
   of 0 or 1 is set to 2 in its block.
 - `$20D7` (`Across`): two pixels (`$2107`, `$2146`); a wall
-  (`$20DC`–`$20FA`, the third cell only part way down a row) turns it and
+  (`$20DC`-`$20FA`, the third cell only part way down a row) turns it and
   flips the facing (`$213E`). Above row `$2D` walls are not looked at
   (`$20DE`, `$2115`), and there is no right limit.
 - **A falling hopper animates only as it lands.** `$EBB8` sets up the
@@ -424,7 +424,7 @@ hops. Filed with the players' animation, but it runs for enemy slots only.
 
 ### EnemyJump
 
-`$EBC4`–`$EC87` (`entity-system.s`): a walking enemy's jump.
+`$EBC4`-`$EC87` (`entity-system.s`): a walking enemy's jump.
 
 - **Up**: `$EBC4` clears both drift flags and sets the rise counter to `$1F`;
   `$EBD9` runs the first frame at once. Sixteen wind-up frames (`$EBFB`):
@@ -449,14 +449,14 @@ hops. Filed with the players' animation, but it runs for enemy slots only.
 
 Shared map reads.
 
-- `$EA20`–`$EA62`, `$1F66`–`$1FA1` (`PlatformAbove`): in the column above,
+- `$EA20`-`$EA62`, `$1F66`-`$1FA1` (`PlatformAbove`): in the column above,
   within four rows, a solid cell with an open one above it.
 - `$ECF7` (`Sidestep`): off a column boundary the thing moves without
   looking; on one, a wall beside it flips both walk bits of the heading.
 
 ### EnemyRunner
 
-`$1E9F`–`$1F2B` (`player-animation.s`): state 9, class 7, an enemy that runs
+`$1E9F`-`$1F2B` (`player-animation.s`): state 9, class 7, an enemy that runs
 four pixels a step and throws. Headed as the player's bubble shooting, but
 it runs for enemy slots only and throws type `$32`, not a bubble.
 
@@ -465,17 +465,17 @@ it runs for enemy slots only and throws type `$32`, not a bubble.
   turns it, and falls off a platform's end. `$1EF6` saves the heading first;
   `$1F1D` reads both bits from the copy, so a turn by the first does not stop
   the second.
-- `$1E9F`–`$1EF3` (`Throw`): the countdown, a draw below `$0C` (`$1EAC`),
+- `$1E9F`-`$1EF3` (`Throw`): the countdown, a draw below `$0C` (`$1EAC`),
   standing, no throw held, and above `$A8` (`$1EBC`). It takes the first
   free of sixteen object slots from the top (`$1EC0`), two along as for
   `EnemyShot`, and writes type `$32` to the type and enemy type (`$1ECC`), at
-  X + `$0C`, Y − `$05` (`$1EDB`, `$1EE6`). `$1EEE`: `$64` frames in
+  X + `$0C`, Y - `$05` (`$1EDB`, `$1EE6`). `$1EEE`: `$64` frames in
   `AttackTimer`, and the same in `BubbleTimer`. Nothing here counts
   `BubbleTimer` down, and a throw needs it negative.
 - `$1F03`, `$1F17`: no ground under it (three cells) starts a fall the same
   frame.
 - `$EB34` (`Descend`): the descent with `$EB94` turned into a `BIT`, so a
-  landing runs into `$EB97`, and `$EE4A` as the continuation. `$EB97`–`$EBAF`:
+  landing runs into `$EB97`, and `$EE4A` as the continuation. `$EB97`-`$EBAF`:
   landed, it heads at the player, keeping bit 2; the `cmp` is unsigned, so
   level is left.
 
@@ -489,10 +489,10 @@ class 0 does, and shoot.
   and the enemy does not walk. `$E9FD`'s test: not negative is booked. It
   needs no jump or fall (`$EDDC`), one chance in four (`$EDE9`), the player
   on its row or, one in thirty-two more (`$EE1F`), above it (`$EE15`), and
-  to face the player away from the edge (`$EDF1`–`$EE13`: `$F4`, `$34`). The
+  to face the player away from the edge (`$EDF1`-`$EE13`: `$F4`, `$34`). The
   subtraction there runs with `$E9EA`'s carry, so level in X takes either
   arm by that draw.
-- `$EE25`–`$EE46` (`Book`): the first free of sixteen slots from the top;
+- `$EE25`-`$EE46` (`Book`): the first free of sixteen slots from the top;
   type `$42`, flags `$09`, reload `$96` (`$EE31`, `$EE3D`, `$EE41`).
 - While booked, `BubbleTimer` (`$8818`) is the countdown and `RiseCounter`
   (`$87A0`) the slot. `$ED41`: nothing booked, the countdown restarts from
@@ -503,11 +503,11 @@ class 0 does, and shoot.
   slot. Otherwise the shot starts two columns out (`$ED64`, `$ED68`), from
   the corner (`$ED4C`, `$ED8A`, byte subtractions that wrap), with
   `SubX`/`SubY` zero.
-- `$EDA0`–`$EDC3` (`Load`): class 6 fires `$2A`; class 5 `$2C` and then
+- `$EDA0`-`$EDC3` (`Load`): class 6 fires `$2A`; class 5 `$2C` and then
   stands still, the slot in `AttackTimer` and `$2C` in `BubbleTimer`;
   others fire `$28` with `SubX` = direction & `$7F`.
 - **The object indexes are two along.** The 6502 indexes `$CC`, `$A9FC` and
-  the rest with 0–15, which are `$CA`, `$A9FA` two bytes along, so slots 0
+  the rest with 0-15, which are `$CA`, `$A9FA` two bytes along, so slots 0
   and 1 are never a shot.
 
 ### EnemySpawner
@@ -519,15 +519,15 @@ level's list, which `LevelStore` already does.
 - `$1E2E` (`Clear`): state, X and Y of the six slots (`ldx #$05`). The zero
   it returns in A is the count, the first slot and the first list byte.
   `$39D3`, `$39D6`: the players' hold timers from the same zero.
-- `$39E2`–`$3A63` (`Place`), one three-byte record. `$39F0`: the delay is read
+- `$39E2`-`$3A63` (`Place`), one three-byte record. `$39F0`: the delay is read
   with `and #$3F` and `asl`, dropping the flag bits. `$39FB`: **the state is
   the class plus two**, stored in `$B4`. `$3A03`/`$3A0B`: X and Y are the cell
-  × 8 plus `$14` and `$15`. `$39FF`: the carry out of the column is not
+  x 8 plus `$14` and `$15`. `$39FF`: the carry out of the column is not
   cleared, so a column of 30 or more would be a pixel lower (no level has
   one). `$3A0F`: the low three row bits one place up, and the move-left bit
   in bit 0. `$3A21`: facing left starts at its second block's first frame.
   `$3A3D`: one draw per enemy.
-- **Classes 6 and 7 read past each table.** `$3A2A`–`$3A47` index `$AB61`,
+- **Classes 6 and 7 read past each table.** `$3A2A`-`$3A47` index `$AB61`,
   `$AB69`, `$AB71`, `$AB79` (eight bytes each) by state, and states 8 and 9
   read the next table's first two bytes, to `$AB81`. 133 of the game's 572
   spawns are class 6 or 7.
@@ -550,9 +550,9 @@ state 2, class 0 (level 1's enemy); states 3, 7 and 8 reach it through
   the ground is not looked at; above row `$1F` (`$EA6D`) it falls without
   looking. `$EA78`: the three cells under it. `$EA8C`: out of `$FF` into a
   fall the same frame.
-- `$EA92`–`$EAF2` (`Leap`): on a row boundary with ground, not class 1
+- `$EA92`-`$EAF2` (`Leap`): on a row boundary with ground, not class 1
   (`$EA9C`), an open cell two rows down beside its feet and a solid one nine
-  columns on (`$50 ± 9`). Left leaps from a column boundary; right from six
+  columns on (`$50 +/- 9`). Left leaps from a column boundary; right from six
   pixels in (`$EAAA`), and `$EAB0`/`$EAC4`'s `adc #$08` runs with the carry
   set. Rise counter `$0F` (`$EAE1`, `$EAF4`).
 - **The leap reads past the level.** Near a wall the far column is off the
@@ -572,7 +572,7 @@ enemy held by its spawn delay walks on the spot.
 
 - `$EB0F`: every second call (`$EB16`) the frame steps; a whole cycle along,
   the count is taken off, so a left-facing thing stays in its second block.
-  `$EB0F`–`$EB1B`'s `cmp` is unsigned, so a counter past two resets.
+  `$EB0F`-`$EB1B`'s `cmp` is unsigned, so a counter past two resets.
 - `$EE4A`: the same counter, flipping bit 0 of the frame.
 
 ### EntityTimers
@@ -584,7 +584,7 @@ pass. The AI state counter, `$A9B2`, is not touched.
 
 - `$13C6`: a bubble (`$04`) out of clock becomes `$3A`, the pop (`$13CC`),
   keeping what it was.
-- `$13DA` (`Release`): a bubble with an enemy (`$18`–`$23`: `$13D7`,
+- `$13DA` (`Release`): a bubble with an enemy (`$18`-`$23`: `$13D7`,
   `$142E`) out of clock lets the enemy back into its slot (`$13DC`, the
   inverse of `$1091`) in state `$5ABF`, and becomes `$38` (`$1404`).
   `$13E8` sets the row's bottom bit and `$13EE` clears the column's: not
@@ -594,7 +594,7 @@ pass. The AI state counter, `$A9B2`, is not touched.
 - `$140B`: at `$24` up, only `$42` means anything, and frees the slot.
 - `$1413` (`Flicker`): below `$11` on even counts (`$1415`). `$1428`: a
   bubble wobbles, `$04` and `$48` in turn (EOR `$4C`, `$1425`; captured at
-  frames 195–215). `$142E`: a caught enemy toggles its `$D015` bit instead,
+  frames 195-215). `$142E`: a caught enemy toggles its `$D015` bit instead,
   from `$AB55` (`$04` for the first enemy to `$80` for the sixth).
 - `$1449` (`Pressure`): fewer than two slots at `$34` or above (`$144F`,
   `$1457`) pops free bubbles. `$145C` is a `jsr` to the next instruction, so
@@ -605,7 +605,7 @@ pass. The AI state counter, `$A9B2`, is not touched.
 
 ### EntityTable
 
-The arrays a player shares with every moving thing, from `$85xx`–`$88xx`.
+The arrays a player shares with every moving thing, from `$85xx`-`$88xx`.
 `sprites2-tables.s` lays that region out as forty-byte rows: thirty-two
 bytes of level tiles (`SolidMap`), then eight bytes that are these arrays.
 So each array is forty after the last. Eight slots (`$1CBD`: `ldx #$07`),
@@ -646,7 +646,7 @@ capture.
 
 `$1CBD` (`joystick-input.s`) reads both joystick ports first each frame and
 keeps the raw bytes, one per player. The movers shift the byte and branch on
-the carry, so the CIA bit layout is kept: 0 while pushed. Bits 5–7 (keyboard
+the carry, so the CIA bit layout is kept: 0 while pushed. Bits 5-7 (keyboard
 rows) read high. Player 1 is port 2 (`$DC00`), player 2 is port 1
 (`$DC01`). A held read, since the 6502 reads afresh every frame.
 
@@ -679,7 +679,7 @@ The two players' own bytes, one array per field, indexed by player.
 | `BlowFacing` | `$ACCB`, `$ACCC` | `$22E8` stores `$00`/`$02`; `$2301` doubles it. |
 | `ExtendLetters` | `$54`, `$55` | One bit per letter from `$AB53`; `$3DF9` sets them. |
 | `BlowReload`, `BlowState`, `BlowVariant`, `BlowType` | `$A77B`, `$A77D`, `$A77F`, `$A781` | What a blow makes: `$2364` copies the first to `Reload` and the rest to `$A9B2`, `$AA30`, `$AA42`. `$7F53` sets them; candies `$2DAB`, `$2DB2`, `$2DCD` change them. |
-| `DriftRing`, `WalkRing`, `BlowRing` | `$61`, `$63`, `$65` | While not zero, `$2483`, `$22B4` and `$23D7` score ten through `$7C21`. `$2F5F`–`$2F65` set them, `$7F53` clears them. |
+| `DriftRing`, `WalkRing`, `BlowRing` | `$61`, `$63`, `$65` | While not zero, `$2483`, `$22B4` and `$23D7` score ten through `$7C21`. `$2F5F`-`$2F65` set them, `$7F53` clears them. |
 
 ### PlayerDeath
 
@@ -687,13 +687,13 @@ The two players' own bytes, one array per field, indexed by player.
 kills them. Headed "player-to-player collision"; it is a player against the
 six enemies, after all eight slots have moved. Player 2 first.
 
-- A player in state 1 (`$1D36`) with an enemy (slots 2–7, `$1D49`) in state
+- A player in state 1 (`$1D36`) with an enemy (slots 2-7, `$1D49`) in state
   1 to `$0A` (`$1D4F`) within `$0C` pixels both ways (`$1D5E`, `$1D6D`) goes
   to `$0E` (`$1D6F`). Nothing else is written.
-- **The box is not centred.** `$1D3B`–`$1D48`: the `cmp #$01` leaves the
+- **The box is not centred.** `$1D3B`-`$1D48`: the `cmp #$01` leaves the
   carry set, so `adc #$01` adds two to X, and its carry goes into Y's
   `adc #$02`: X + 2 and Y + 2, or Y + 3 when X + 2 wraps.
-- `$1D53`–`$1D5E`: `sbc`, and on a borrow `eor #$FF`, `adc #$01` with the
+- `$1D53`-`$1D5E`: `sbc`, and on a borrow `eor #$FF`, `adc #$01` with the
   carry clear.
 - `$1D2A` skips it for `$1D84` while `$5AFF` is not zero (returns at once
   except on level 99). Only untranslated code sets `$5AFF`: the hurry-up at
@@ -729,7 +729,7 @@ Both halves of the arc come here (`$23FC`, `$243A`); a landing goes to
 - `$2483`: the drift ring's ten points, then the drift. A fall enters at
   `$248D`, having called `$E9B8` at `$2450`, so both have a fresh cell.
 - `$248D`: the left flag first and wins, then the right, then the animation.
-- `$2490`–`$24C4` (left), `$24C5`–`$24F9` (right): an edge (`$24`/`$25`,
+- `$2490`-`$24C4` (left), `$24C5`-`$24F9` (right): an edge (`$24`/`$25`,
   `$F4`) clears the flag, so the jump carries straight on. Above row `$2D`
   (`$24A0`, `$24D8`) nothing is looked at, nor for a player straddling a
   column. Probes `$28`/`$50` and `$2B`/`$53` (`$2494`, `$24CC`).
@@ -748,12 +748,12 @@ bare `rts`; the dead player waits for `$045C`.
 - `$28AD`: the first call finds `$86D8` not `$12`, sets it, and starts
   `$8610` at `$20` (`$28B6`). `$7F53` (`player_death_respawn`) clears it
   (`PlayerRespawn`); VICE shows every death starting from zero.
-- `$8610` counts down. `$1F` to `$00`: the spin, frame 0 or `$0C`–`$0E` from
-  bits 1 and 2 (`$28C4`–`$28CE`). A player caught mid-jump or mid-fall
-  drops three pixels a call (`$28D1`–`$28D9`), wrapping `$F5` to `$15`
-  (`$28DE`–`$28E4`); `$87A0`/`$87F0` are not updated, so a player caught in
+- `$8610` counts down. `$1F` to `$00`: the spin, frame 0 or `$0C`-`$0E` from
+  bits 1 and 2 (`$28C4`-`$28CE`). A player caught mid-jump or mid-fall
+  drops three pixels a call (`$28D1`-`$28D9`), wrapping `$F5` to `$15`
+  (`$28DE`-`$28E4`); `$87A0`/`$87F0` are not updated, so a player caught in
   the air falls through floors. `$28C3`'s `bmi` to `$28E9`: `$FF` to `$C8`,
-  lying still, frames `$0F`–`$12` (`$28EE`). At `$C8` (`$28F5`) the state
+  lying still, frames `$0F`-`$12` (`$28EE`). At `$C8` (`$28F5`) the state
   goes to `$0F`.
 
 ### PlayerRespawn
@@ -911,14 +911,14 @@ first, then player 1, in the same call.
 `$257C` (`entity-interaction.s`): a fall with no jump behind it, after
 walking off a ledge. Two pixels a frame (`$2580`), not the arc's `$ACCD`.
 
-- Like `$EB48`: the same probes (`$2597`, `$25AB`: `$51`–`$53` clear,
-  `$79`–`$7B` solid, from the starting cell) and the same `$F5`/`$15`
+- Like `$EB48`: the same probes (`$2597`, `$25AB`: `$51`-`$53` clear,
+  `$79`-`$7B` solid, from the starting cell) and the same `$F5`/`$15`
   equality wrap (`$2586`, `$258A`; the wrap is the whole frame). Unlike it:
   no floor above row `$26` (`$258C`; `$EB48` uses `$1F`), a landing squares
   X to an even column (`$25D1`, `$25D8`), and its own tail.
-- `$258C`–`$25BE` (`Landed`): only on a row boundary from `$2D` (`$2591`).
+- `$258C`-`$25BE` (`Landed`): only on a row boundary from `$2D` (`$2591`).
 - `$25BF` (`Land`): a `dec` back to `$FF`, and squared up by facing. The
-  frame sets differ from `$2519`'s: `$04`–`$07` and `$0A` up round down;
+  frame sets differ from `$2519`'s: `$04`-`$07` and `$0A` up round down;
   below `$04` and `$08`, `$09` round up.
 - `$25E2` falls into `$25F1` (`PlayerSteer`) every second frame, so a
   falling player can steer. There is no frame toggle here; the counter
@@ -934,7 +934,7 @@ through `$1E3A`. Only the two player slots are driven here.
 - States translated: 1 (`$2162`), `$0E` (`PlayerDying`, `$28A5`, from
   `$1D6F`) and `$0F` (`$28E8`, a bare `rts`; `$28F8`). Any other state
   throws.
-- `$1CDB`–`$1D21` (`Slot`): a zero state is an empty slot, skipped. `$85C0`
+- `$1CDB`-`$1D21` (`Slot`): a zero state is an empty slot, skipped. `$85C0`
   is `$FF` for a player, so `$1CA0`'s drop is never taken, and `$1CF7`'s
   `SESSION` test is for slots 2 up. **`$1D03` can run `$1E6C` twice**: a
   slot whose `$8728` is not zero gets an extra call on passes with bit 1 of
@@ -947,12 +947,12 @@ through `$1E3A`. Only the two player slots are driven here.
   the blow (`$2301`) with the timer as it is now. `$21BD`: a rise counter not
   `$FF` means an arc is running; the jump owns the frame. `$21C5`: off the
   ground without an arc falls. `$21CD`: on a row boundary, no floor under
-  (`$51`–`$53`) starts a fall the same frame (`$21E5`). `$21EB`: any stick
+  (`$51`-`$53`) starts a fall the same frame (`$21E5`). `$21EB`: any stick
   bit pushed walks (`$21EE`: `$1F` is idle).
-- `$21F3`–`$2209` (`Idle`): in a bubble the stick still reaches the movers.
+- `$21F3`-`$2209` (`Idle`): in a bubble the stick still reaches the movers.
   An idle player animates on a period of seven (`$21FB`), `$2159`'s toggle;
   `$2200`'s `cmp` is equality, so a counter past seven runs round.
-- Not translated: `$2171`–`$21BA`, the scan that catches an enemy while the
+- Not translated: `$2171`-`$21BA`, the scan that catches an enemy while the
   player pushes up (falls through to `$21BD` with nothing found), and
   `$21F1`'s `inc $B1`.
 
@@ -966,19 +966,19 @@ through `$1E3A`. Only the two player slots are driven here.
   counter running down, the fall with one running up. So a jump slows at the
   top and speeds up coming down.
 - `$23EA` is entered with the rise counter in A: rising while it has not run
-  out. `$21BD` only calls it with the counter 0–15; `$05C5` parks it at
+  out. `$21BD` only calls it with the counter 0-15; `$05C5` parks it at
   `$FF`. `$222B`, which sets it, is not translated here.
-- `$23EA`–`$2400` (`Rise`): `dec` then `tay`, so the delta is the one before
+- `$23EA`-`$2400` (`Rise`): `dec` then `tay`, so the delta is the one before
   the decrement. The playfield wraps at `$05` going up (`$F0` step).
   `$23FC` leaves for `$2483` (`PlayerDrift`), which calls `$E9B8` fresh.
-- `$2401`–`$243B` (`Fall`): the first frame tidies the sprite (`$2404`–
+- `$2401`-`$243B` (`Fall`): the first frame tidies the sprite (`$2404`-
   `$2422`: frames 2, 3, 6, 7 are masked down; four interleaved compares) and
   zeroes the counter. Then sixteen frames at most (`$2423`), which ends the
   arc like a landing, with the frame's starting cell. It wraps at `$F5`.
-- `$243C`–`$2482` (`Land`): not above row `$1F`; only on crossing into a new
+- `$243C`-`$2482` (`Land`): not above row `$1F`; only on crossing into a new
   row (the fine Y is the frame's starting one), snapped to eight pixels from
   `$2D` (`$2474`). `$2450` calls `$E9B8`, so the probes read the cell just
-  moved into: row `$29`–`$2B` clear (`$2453`), `$51`–`$53` solid (`$2460`).
+  moved into: row `$29`-`$2B` clear (`$2453`), `$51`-`$53` solid (`$2460`).
 - `$2480` leaves for `$2519` (`PlayerLanding`) with `$2450`'s cell; a landing
   does not drift. `$2453` and `$2470` leave for `$248D`, the drift.
 
@@ -988,13 +988,13 @@ through `$1E3A`. Only the two player slots are driven here.
 or `$2423` (the fall out of table). Headed "bubble reached top".
 
 - `$2519`: both arc counters back to `$FF`.
-- `$2524`–`$2540` (`Square`): X to an even column (`$2530`, `$2538`), by
-  facing: frames `$04`–`$09` round down, the rest up. `$2530`'s fall-through
+- `$2524`-`$2540` (`Square`): X to an even column (`$2530`, `$2538`), by
+  facing: frames `$04`-`$09` round down, the rest up. `$2530`'s fall-through
   into the round-up when it stored zero changes nothing and is not
   reproduced. With `$247E`'s Y snap, a landing tidies both axes.
 - `$2541`: the probes use the caller's cell, a pixel before the squaring:
-  row `$29`–`$2B` clear, `$51`–`$53` solid (`$2555`).
-- `$2569`–`$2571`: on `SUBFLG` `$5B` (level 92; the reference's comment says
+  row `$29`-`$2B` clear, `$51`-`$53` solid (`$2555`).
+- `$2569`-`$2571`: on `SUBFLG` `$5B` (level 92; the reference's comment says
   91), a player at Y `$DD` stays put.
 - `$2575`: nothing underneath starts a fall, and `$2578` leaves for `$EB3F`
   with the same cell.
@@ -1017,7 +1017,7 @@ store watchpoint on `$BA` with right held traps at `$22C2`, after `$22C0`'s
 - Not facing: turn (frame 4 left, 0 right), only while the bubble timer is
   negative. Some facing frames reach `$2294` first: the walk cycle steps
   every fourth frame by flipping bit 0 (`$2159`).
-- `$22A6`–`$22C2` (`Advance`): above row `$2D`, or off a column boundary, no
+- `$22A6`-`$22C2` (`Advance`): above row `$2D`, or off a column boundary, no
   wall check. `$22B4`: the walk ring's ten points on every step.
 - `$222B` (`Launch`): rise counter `$0F`, and the stick latched into the
   drift flags (`$FF`), left only from a left-facing frame and right only
@@ -1035,12 +1035,12 @@ a third a frame. Also reached from `$25E2` (`PlayerFall`).
   player blows and keeps steering. Left is asked first and wins; both its
   paths end in `rts`.
 - `$25FE` and `$263D` are the walk's movers rewritten: one pixel, not two.
-  `$2604`: left moves on `$04`–`$07` and `$0A` up, else turns. `$2641`: right
+  `$2604`: left moves on `$04`-`$07` and `$0A` up, else turns. `$2641`: right
   moves below `$04`, or on `$08`, `$09`. `$2613`, `$2650`: a turn, not while
   in a bubble.
 - `$2620`, `$265F`: the edges `$24` and `$F4` are equality tests, so only an
   exact arrival stops.
-- `$261E`–`$263C`, `$265D`–`$267A`: a fine Y of zero jumps past the height
+- `$261E`-`$263C`, `$265D`-`$267A`: a fine Y of zero jumps past the height
   test (`$262C`, `$266B`: `$2D`), so on a row boundary the wall check always
   runs.
 
@@ -1052,7 +1052,7 @@ An enemy after its bubble pops: it flies, falls, lands as food, and is taken
 or goes. It stays in its own slot of the eight, and each step is a `$1E3A`
 state, so `EnemyFrame` dispatches to it.
 
-- `$1A6F` (`Kill`, enemy 0–5, slot two along): state `$0B`, a random flight.
+- `$1A6F` (`Kill`, enemy 0-5, slot two along): state `$0B`, a random flight.
   An enemy in `$0A` keeps its class in `RiseCounter`; `$0D` keeps none
   (`$1A71`, `$1A7A`). `$1AA4`, `$1AAA`, `$1AAF`: bubble timer 7, food 9,
   colour `$0E`. `AttackTimer` (`$8890`) is which food, and the pop that calls
@@ -1063,18 +1063,18 @@ state, so `EnemyFrame` dispatches to it.
   in `RightFlag` counting down to the turn; going down it is the fall's
   length with bit 7 set, and `RightFlag` counts up to it. It turns or ends on
   one frame in four (`$2681`). `$26AA`: `bcc` and `beq`, so only a count past
-  the length ends it. `$26BF` (`Travel`): to a wall (`$F4`, `$24`: `$26CC`–
-  `$26E5`) and back, then up or down, wrapping `$15`/`$F5` (`$26F9`–
+  the length ends it. `$26BF` (`Travel`): to a wall (`$F4`, `$24`: `$26CC`-
+  `$26E5`) and back, then up or down, wrapping `$15`/`$F5` (`$26F9`-
   `$270F`). `$2713`: `Heading` is the frame counter; a quarter picks a frame.
 - State `$0C`, `$273D` (`Fall`): two pixels (`$2740`); on rows lining up with a
   platform (`$274C`, `$2750`: from `$1F`, grid `$2D`) it looks two rows down
   (`$51`, inside a platform: go on through) and three (`$79`, under: landed)
-  (`$2756`–`$277C`), from `$1E6C`'s cell.
+  (`$2756`-`$277C`), from `$1E6C`'s cell.
 - State `$11`, `$2921` (`Land`): becomes food. Only one slot a frame may,
   because it copies the food's picture into the slot's sprite; `$2922`, its
   own `lda #` operand, is the gate, and `$1CC7`'s `stx $2922` reopens it each
   frame. Life `$C8` (`$2931`, `$293A`); sprite base `$F2` (`$2946`:
-  `(sprite_data_7C40 + $40 − $4000) / 64`); food by `AttackTimer` from
+  `(sprite_data_7C40 + $40 - $4000) / 64`); food by `AttackTimer` from
   `$A790` (entry 0 is the byte before the table, `sprite_data_7C40 + $200`'s
   high byte); colour from `$A8E4`, low three bits.
 - State `$12`, `$29BB` (`Wait`): player 2 first, the first within `$10`
@@ -1152,7 +1152,7 @@ comments of rebb64's sources on these states are wrong in places.
 ### ItemEffects
 
 `$2D65` and `$2D88` (`special-item-effects.s`): the special item's effect.
-`$2D40` looks the handler up by type (0–34) and calls it with the player in
+`$2D40` looks the handler up by type (0-34) and calls it with the player in
 X; `$2D43`'s type is `$53` with bit 7 clear.
 
 - 3, `$2DAB`: reload 3, not 8. 4, `$2DB2`: `$8C` in `$A9B2` (further) and
@@ -1181,24 +1181,24 @@ pairs.
 | next milestone level | `$5B3F`, `$12` at game start |
 
 - `$2B31` (`Setup`, SUBFLG counting from zero): both hidden, with timers.
-  `$2B41`, `$2B78`: cells × 8, `$2C8C` adds `$14` and `$2D`, the Y add taking
+  `$2B41`, `$2B78`: cells x 8, `$2C8C` adds `$14` and `$2D`, the Y add taking
   the X add's carry. `$2BB0`: the food is `$58` + up to three; the `adc` takes
   `$E9EA`'s carry, untouched by `and`; `$2E` is the best (`$2BB7`, `$2BBB`).
   `$2C5B`: three to ten seconds before the food, one to sixteen before the
   special item. It copies each item's art (`$A892`, `$A8C1`) from
   `sprites_rom` and colour (`$A8E4`, `$A913`).
-- `$2BDB`–`$2C32` (`Special`): every ten levels (`$2BE7`–`$2BF8`) a player
+- `$2BDB`-`$2C32` (`Special`): every ten levels (`$2BE7`-`$2BF8`) a player
   who has not died gets item `$20`; at `$3A` the milestone jumps to `$4E`
   with item `$21`. Otherwise `$2BFC`: the level's own item, from the RNG
   seeded with the level and put back after, and one level in sixteen `$1E`
   or the next (`$2C1E`, `$2C20`), with `$2C24`.
 - `$06C6`: once a second from the IRQ, each timer down.
-- `$1578`–`$15C8`: a timer out flips bit 7: the item appears, reloaded with
+- `$1578`-`$15C8`: a timer out flips bit 7: the item appears, reloaded with
   eleven seconds (`$1580`), and next time it goes. Going ends the routine
   for the pass (`$158F`'s `rts`).
 - `$2CB7` (`Collect`): player 2 first, the special item before the food,
   only while shown (the compare takes bit 7). A player in state `$18`, or
-  live below `$0E`, or `$10` (`$2CC9`–`$2CD1`), within `$10` (`$2CFB`,
+  live below `$0E`, or `$10` (`$2CC9`-`$2CD1`), within `$10` (`$2CFB`,
   `$2CEB`) takes it (`$2CFF`), scores `$A936`/`$A965` (a byte higher from
   types `$0F` and `$18`: `$2D18`, `$2D25`), and the special effect runs. A
   taken item stays until `$1578`, so both can take it. `$2CB9`, `$2CBF`: a
@@ -1213,7 +1213,7 @@ lowest score byte: ten points. Drift (`$2483`, `$61`: a fall joins at
 
 ### Scores
 
-`$0400`–`$0405` and `$7C26`: two scores of three BCD bytes, most significant
+`$0400`-`$0405` and `$7C26`: two scores of three BCD bytes, most significant
 first. `$AB51`/`$AB52` give each player's last byte. `$7C26` adds A at byte
 Y in decimal mode and carries towards `$0400`; a carry out of `$0400` is
 lost. The 6510's decimal add corrects each nibble by six once past nine,
@@ -1228,8 +1228,8 @@ These classes, and `LevelZones` and `ZoneRect`, are public with setters
 because they are JSON serialisable.
 `Colours` is spelled `colors` in the file, so its name is pinned.
 `Bitmap` is 23 rows of 32 characters, `#` solid and `.` open, as
-`levels.txt` draws them. A `LevelPoint` is a tile in the 32×23 playfield.
-An `EnemySpawn`'s flags byte (`$0`–`$1F` in `levels.txt`) is exported
+`levels.txt` draws them. A `LevelPoint` is a tile in the 32x23 playfield.
+An `EnemySpawn`'s flags byte (`$0`-`$1F` in `levels.txt`) is exported
 already split; `Byte1Low` is the low three bits of the record's first byte,
 bit 0 meaning move right.
 
@@ -1302,7 +1302,7 @@ column.
   the three rows above (`$8488`, `$84B0`, `$84D8`, which start as `$80`) and
   row 24 over the three below (`$88E8`, `$8910`, `$8938`), once per level. So
   a wrap opening goes on through them. Further off the map reads solid and
-  direction 0. Columns 32–39 are the row tail (`IRowTails`); without tails
+  direction 0. Columns 32-39 are the row tail (`IRowTails`); without tails
   they read solid. The copies take the tail as it is now, not as it was at
   `$3A6C`; no probe known reaches them.
 - `Number` is 1 to 100, for `$2569`, which branches on the level; the
@@ -1311,7 +1311,7 @@ column.
   `$E1D1` (`FillRowDefaults`): every row first gets one direction across its
   width (`AND #$03`): rows 0 and 24 from `$8B03`/`$8B63`, which hold the
   `bubbleCurrent` nibble two bits at a time; other rows from the last of the
-  four bitmap bytes (columns 30–31) reread as a direction. Confirmed against
+  four bitmap bytes (columns 30-31) reread as a direction. Confirmed against
   a VICE capture of the transient buffer.
 - `$E2E9`: `wrap_openings`, four bits (top left, top right, bottom left,
   bottom right); a set bit opens that half-row's gap. `$E34E` builds each
@@ -1335,7 +1335,7 @@ reference's order.
   twice, and the IRQ calls `$1CBD` on every second frame, so 25 passes a
   second (`$09FD`), `$1CBD` once each, at the end of the pass. `$0A03` zeroes
   `$08`, so the pass's `$1CBD` frame is odd.
-- Level start (`$09DC`–`$0A05`): `$09CD` every sprite on; `$09DF`
+- Level start (`$09DC`-`$0A05`): `$09CD` every sprite on; `$09DF`
   `decompress_level_data`; `$392A` the level display and spawn; `$09E5`
   `$05C5`; `$09F1` `$2B31`; `$09F7` `$17BE`; `$09FD`, `$0A03`.
 - `$04BB`, `$05C5`: where a life starts, its facing and colour. `$0620`,
@@ -1343,11 +1343,11 @@ reference's order.
   and a walker's leap and climb off; `$8728`/`$8729`, the players' flash, are
   kept on the stack. `$0656`: the rings last a level. `$451E` copies `$47BD`
   into `$8598` once at boot: `$60` for both players.
-- A pass: `$0A07`–`$0A57`, `$06C6` once a second, then `$1CBD`: slots 7–2,
+- A pass: `$0A07`-`$0A57`, `$06C6` once a second, then `$1CBD`: slots 7-2,
   then 1 and 0, then `$1D32`.
 - `$0654`: a released enemy's state outside bonus rounds. `$098A`: a
   one-player game (only player 1 has not died). `$0942`, `$0944`: the first
-  level's food quality starts in `$0A`–`$28` (`$093F`–`$0946`). SUBFLG `$63`
+  level's food quality starts in `$0A`-`$28` (`$093F`-`$0946`). SUBFLG `$63`
   is the bonus level, whose items throw, so level 100 starts without them.
 - `$052A` (`PlayerJoin`) runs straight after `$045C`, with the ports. `$0A64` (`IsOver`) is judged after the pass, and holds 75 passes.
 - Gaps: `$0BED` (corner bubbles), `$32C1`
@@ -1408,7 +1408,7 @@ Layers, in the reference's drawing order:
 
 ### BbViewLayout
 
-The C64 screen is 40 × 25 cells of 8 × 8. The level is the leftmost 32
+The C64 screen is 40 x 25 cells of 8 x 8. The level is the leftmost 32
 columns, because `setup_level_screen` starts each row at the screen
 pointer's offset 0 and stops after 32; `draw_border` clears column 32. The
 eight columns right of it are the HUD, written straight into screen memory.
@@ -1430,7 +1430,7 @@ renditions of other tiers.
 
 ### ItemsModel
 
-`$1844` draws each shown item (`$52`/`$53`, bit 7 clear) as a 2 × 2 block at
+`$1844` draws each shown item (`$52`/`$53`, bit 7 clear) as a 2 x 2 block at
 its level cell, the art `$2B31` copied in, with one colour RAM byte
 (`$5F`/`$60`) on all four cells. A hidden item draws nothing: `$1578` has put
 the cell back.
@@ -1443,7 +1443,7 @@ because the AI loop moves the slots before a view runs. `Column` is `$DC`,
 
 ### PlayfieldModel
 
-The level as screen codes, 32 × 25, as `setup_level_screen` leaves them. The
+The level as screen codes, 32 x 25, as `setup_level_screen` leaves them. The
 C64's own codes, because the renderer's choices are made in them.
 `setup_level_screen` copies the level's tile (one of a hundred, counted from
 zero) into one charset slot. The colour byte is `levels.txt`'s: two nibbles,
@@ -1453,7 +1453,7 @@ each one of the sixteen colours the two-bit entries point at.
 
 One of 59 designs of four characters, or none. `setup_level_screen` copies
 32 bytes (four characters) into the four border slots; `draw_border` lays
-them as a 2 × 2 block down both edges. A level with no design repeats its
+them as a 2 x 2 block down both edges. A level with no design repeats its
 header tile in all four slots. The decoration is inside the level, so it is
 painted from the level's colour byte.
 
@@ -1467,7 +1467,7 @@ screen, so the position bytes are carried as they are.
 
 - A pointer names 64 bytes of the VIC bank at `$4000`. The game's sprites
   start at `$5800` (pointer `$60`), 97 of them. `$8598` is `$60` for the
-  players and `$73`–`$BB` for enemy classes.
+  players and `$73`-`$BB` for enemy classes.
 - `$182F` also stores the masked frame back to `$8520`; a model does not
   write state, so that is not reproduced.
 - `$1817`: a zero state skips the colour work, but position and pointer are
@@ -1490,12 +1490,12 @@ screen, so the position bytes are carried as they are.
 
 ### EightBitRendition
 
-The C64: 40 × 25 cells of 8 × 8, sixteen colours. Window scales up to four
-(1280 × 800).
+The C64: 40 x 25 cells of 8 x 8, sixteen colours. Window scales up to four
+(1280 x 800).
 
 ### HudView8Bit
 
-All characters from the font: digits are screen codes `$00`–`$09` (so the
+All characters from the font: digits are screen codes `$00`-`$09` (so the
 charset runs digits first and `BitmapFont` reads them as ASCII), the life
 marker is `$1D`, in the sheet's last cell (`LIFE_ICON` in the export).
 `update_sprite_animations` (`$E3A7`) writes the scores at `$50E9`, `$5201`,
@@ -1506,7 +1506,7 @@ then take. None has bit 3 set, so the HUD is hires.
 
 ### ItemView8Bit
 
-`$1844`'s 2 × 2 block from `item-chars.tga`. Entry 11 is the item's colour
+`$1844`'s 2 x 2 block from `item-chars.tga`. Entry 11 is the item's colour
 RAM byte, so each item has its own painted sheet; entry 00 is opaque,
 because the characters replace the cell. `$1934` draws the special item
 first, then the food.
@@ -1515,7 +1515,7 @@ first, then the food.
 
 A multicolour character is four two-bit entries a row: 00 background, 01
 and 10 the two background registers, 11 the cell's colour RAM nibble. The
-sheets are exported with the entry as colour 0–3, and repainted once a level
+sheets are exported with the entry as colour 0-3, and repainted once a level
 for the level's colour byte. `$E0CE` (`level-renderer.s`): the high nibble
 goes to `$1D` and the low to `$1F`, which the split-screen IRQ at `$072E`
 writes to the two background registers. `$09B8` (`game-loop.s`) fills colour
@@ -1532,8 +1532,8 @@ to 2, and nothing writes them again, so a copy is held per sprite colour.
 
 ### ObjectView8Bit
 
-A cell's left edge is `$DC × 8`; the art is already shifted by `$A9C4`
-inside it. The bottom is in character row `$EE − 2`, at line
+A cell's left edge is `$DC x 8`; the art is already shifted by `$A9C4`
+inside it. The bottom is in character row `$EE - 2`, at line
 `(OLDTXT + 7) & 7`, and the sixteen-row cell builds upwards. Each sheet pixel
 is two on screen.
 
@@ -1548,7 +1548,7 @@ drawn by nobody.
 
 ### SidebarView8Bit
 
-`draw_border`'s 2 × 2 block down the level's outer two columns each side,
+`draw_border`'s 2 x 2 block down the level's outer two columns each side,
 at double width; the sheets stay byte for byte rebb64's.
 `init_level_renderer` forces those columns solid, so the decoration is always
 over wall. `$E10C` walks twelve two-row blocks and then the top half once
@@ -1558,7 +1558,7 @@ none.
 
 ### SpriteView8Bit
 
-A C64 sprite is 24 × 21; multicolour, twelve entries a row, drawn at double
+A C64 sprite is 24 x 21; multicolour, twelve entries a row, drawn at double
 width. The sheet is the 97 sprites of `$5800` in one row, in memory order.
 `$1805` writes `$BA`/`$C2` straight into the registers, so the offset is the
 VIC-II's: `$18` and `$32` put a sprite at the screen's top-left. `PlayerCell`

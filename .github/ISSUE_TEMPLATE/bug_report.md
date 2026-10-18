@@ -13,7 +13,7 @@ Which game (Elite / Stunt Car Racer), OS and architecture (Windows x64, Ubuntu x
 A clear description of the wrong behaviour.
 
 **Expected behaviour**
-What you expected instead, and why — e.g. "the original BBC Micro game does X" (see [reference-sources.md](https://github.com/aphawkins/the-sharp-kind/blob/main/docs/reference-sources.md) if you're citing the original).
+What you expected instead, and why - e.g. "the original BBC Micro game does X" (see [reference-sources.md](https://github.com/aphawkins/the-sharp-kind/blob/main/docs/reference-sources.md) if you're citing the original).
 
 **Steps to reproduce**
 1. ...

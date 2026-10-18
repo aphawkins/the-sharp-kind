@@ -1,4 +1,4 @@
-# Backlog — The Sharp Kind
+# Backlog - The Sharp Kind
 
 Every open work item, in priority order. Each line links to a file in
 `work-items/` holding the detail.
@@ -11,13 +11,13 @@ Every open work item, in priority order. Each line links to a file in
   Stunt Car Racer. Work top to bottom.
 - **Never skip an item.** Take the first open item, and finish it before moving
   on:
-  - **[LARGE]** — too big for one session. Break it down into session-sized
+  - **[LARGE]** - too big for one session. Break it down into session-sized
     items (new work-item files, listed in its place) *before* anything below
     it starts.
-  - **[DECISION]** — needs a decision from the maintainer. Raise it and get the
+  - **[DECISION]** - needs a decision from the maintainer. Raise it and get the
     decision; don't pass over it to the next item. Record the outcome in
     [decisions.md](decisions.md) and update the work item.
-  - **Blocked by** another item — do the blocker first, then come back.
+  - **Blocked by** another item - do the blocker first, then come back.
 - **One concern per item**, small enough for a single focused session. Its file
   is self-contained: paths, problem, fix direction. Line numbers may have
   drifted; verify before editing.
@@ -59,11 +59,11 @@ Every open work item, in priority order. Each line links to a file in
 - [ ] [Clip space 1/6: viewport transform as its own stage](work-items/graphics-viewport-stage.md)
 - [ ] [Clip space 2/6: projection matrix and a w](work-items/graphics-projection-matrix.md)
 - [ ] [Clip space 3/6: clip against all six clip-space planes](work-items/graphics-clip-space-clipper.md)
-- [ ] [Clip space 6/6: normalised depth and guard band](work-items/graphics-depth-range-guard-band.md) — blocked by clip space 4/6 and 5/6
+- [ ] [Clip space 6/6: normalised depth and guard band](work-items/graphics-depth-range-guard-band.md) - blocked by clip space 4/6 and 5/6
 - [ ] [Remove per-frame allocations in the polygon renderers](work-items/graphics-renderer-allocations.md)
 - [ ] **[DECISION]** [Sub-pixel rasterisation precision](work-items/graphics-subpixel-precision.md)
 - [ ] [Resizable window with letterboxed scaling](work-items/sdl-resizable-letterbox.md)
-- [ ] **[LARGE]** [Resizeable window and native fullscreen for Modern](work-items/sdl-resizable-fullscreen.md) — blocked by the Modern rendition
+- [ ] **[LARGE]** [Resizeable window and native fullscreen for Modern](work-items/sdl-resizable-fullscreen.md) - blocked by the Modern rendition
 - [ ] **[DECISION]** [Is render resolution configurable independently of rendition?](work-items/render-resolution-decision.md)
 - [ ] [Spike: WASM build for Playwright visual testing](work-items/wasm-playwright-spike.md)
 - [ ] [SID: the 8580 model and CIA-timed tunes](work-items/sid-8580-and-cia-tunes.md)
@@ -98,7 +98,7 @@ Every open work item, in priority order. Each line links to a file in
 - [ ] [Float physics 3/4: CarPhysics](work-items/scr-float-car-physics.md)
 - [ ] [Float physics 4/4: OpponentPhysics](work-items/scr-float-opponent-physics.md)
 - [ ] [Clip space 5/6: move rendering onto the clip-space path](work-items/scr-clip-space-path.md)
-- [ ] [Widescreen (Modern tier only)](work-items/scr-widescreen.md) — blocked by the render-resolution decision
+- [ ] [Widescreen (Modern tier only)](work-items/scr-widescreen.md) - blocked by the render-resolution decision
 
 ## Won't
 

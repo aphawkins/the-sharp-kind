@@ -12,4 +12,4 @@ Two things resist and need deciding with the maintainer, not deleting:
 camera still yields a point, and `ShowsDetail`, which reads `Focus * radius / z`
 directly as a screen size.
 
-Verify with the golden-trace harness, and smoke-test — this is a game loop.
+Verify with the golden-trace harness, and smoke-test - this is a game loop.

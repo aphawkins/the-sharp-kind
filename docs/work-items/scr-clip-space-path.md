@@ -2,7 +2,7 @@
 
 [StuntCarRacerSharpLib] Part 5 of 6 of the clip-space run. After
 [graphics-clip-space-clipper.md](graphics-clip-space-clipper.md) and, strictly,
-[scr-float-trig.md](scr-float-trig.md) — until then the view transform is a
+[scr-float-trig.md](scr-float-trig.md) - until then the view transform is a
 fixed-point 3x3 with a `>> Track.LogPrecision` rescale.
 
 Move `Scene3D.TransformPoint`/`ProjectPoint` and `TrackRenderer`'s per-triangle

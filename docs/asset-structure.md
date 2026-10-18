@@ -1,4 +1,4 @@
-# Asset Structure — The Sharp Kind
+# Asset Structure - The Sharp Kind
 
 How game assets are laid out, resolved, decoded and validated. This began as
 the design note behind the multi-resolution tier decision in
@@ -12,8 +12,8 @@ rejected is worth having when it turns out to be the answer.
 ## Layout
 
 > **Superseded on 2026-08-03.** The layout below was category-first with a
-> tier subfolder, and the alternative described further down — a tree per
-> tier — was rejected. Elite now uses that alternative, because a tier became
+> tier subfolder, and the alternative described further down - a tree per
+> tier - was rejected. Elite now uses that alternative, because a tier became
 > a **rendition**: a plugin assembly that draws the game, found at startup, and
 > a plugin has to be able to bring its assets with it. What each section still
 > gets right is marked as it comes. Stunt Car Racer, which has one rendition
@@ -92,7 +92,7 @@ What tipped it is that a rendition is a plugin now. A stranger's rendition
 that could draw but had nothing to draw with would not be a rendition at all.
 
 Models joined the tier-varying categories on 2026-07-30. Geometry is
-resolution-independent, so they were tier-neutral at first — but a
+resolution-independent, so they were tier-neutral at first - but a
 model's colours are not geometry: `ModelReader` resolves each
 `usemtl <name>` straight through the active palette, and once the 8-bit
 palette stopped being a subset of the 16-bit one (see below), 13 of the
@@ -100,15 +100,15 @@ palette stopped being a subset of the 16-bit one (see below), 13 of the
 cannot name colours that only one tier has.
 
 Each tier's folder carries its own `palette.mtl`, regenerated from that
-tier's `palette.json`. The game never reads it — `ModelReader` resolves
-`usemtl` through the palette directly — but the `.obj` files declare
+tier's `palette.json`. The game never reads it - `ModelReader` resolves
+`usemtl` through the palette directly - but the `.obj` files declare
 `mtllib palette.mtl`, so without one per tier the models open with
 missing materials in external tools.
 
 The rejected alternative was tier-first (`Assets/EightBit/Images/...`,
 the whole tree duplicated per tier). It makes adding or removing a tier a
 single folder operation, but forces every `.obj` and `.ogg` to be
-triplicated or a `Shared/` pseudo-tier to be invented — which is the
+triplicated or a `Shared/` pseudo-tier to be invented - which is the
 category-first layout again, with an extra concept. **This is the call that
 was reversed on 2026-08-03; see the note at the top for why it no longer
 holds.**
@@ -161,14 +161,14 @@ Assets should not be restricted to one bitmap flavour. `SharpKind.Graphics`
 gains an `ImageReader.Read` that sniffs magic bytes and dispatches to a
 per-format decoder.
 
-* **BMP** — the existing `BitmapReader` becomes a real decoder rather
+* **BMP** - the existing `BitmapReader` becomes a real decoder rather
   than a reader of one specific export. Today it hard-rejects anything
   that is not 32bpp and assumes pixel data begins at a hardcoded offset
   of 150 bytes (`54 + 96`), which happens to be true of every file
   currently committed. It must instead read the header's real data
   offset and handle 1/4/8/24/32bpp, 4-byte row padding, and top-down
   (negative height) images.
-* **PNG** — hand-rolled on `System.IO.Compression.ZLibStream`: inflate,
+* **PNG** - hand-rolled on `System.IO.Compression.ZLibStream`: inflate,
   unfilter, then colour-type handling. No new dependency, and it stays
   pure managed so the Software backend and the headless tests keep
   working (per the architecture principle preferring framework
@@ -209,8 +209,8 @@ only use colours the palette names.
 | SixteenBit | no |
 
 The split follows the hardware each tier stands in for. 8-bit machines
-were **indexed-colour** — a pixel *was* a palette entry, and one palette
-served the whole display — so a bitmap colour the palette does not name
+were **indexed-colour** - a pixel *was* a palette entry, and one palette
+served the whole display - so a bitmap colour the palette does not name
 is a colour the machine could not have shown. 16-bit hardware is
 direct-colour, where `palette.json` is only a set of names the geometry
 draws with (`usemtl` in the models, `Palette["Gold"]` in the views) and
@@ -219,7 +219,7 @@ bitmaps are independent of it.
 This is a **subset** test, not equality: the palette may name colours no
 bitmap uses, which it must, since most named colours only ever reach the
 screen as filled geometry rather than as pixels in a file. The check
-excludes fully transparent pixels, for the same reason the cap does —
+excludes fully transparent pixels, for the same reason the cap does -
 they carry no colour.
 
 Applying it to 16-bit would fail immediately and for no good reason:
@@ -240,8 +240,8 @@ rather than how many or which are named:
 | EightBit | 8 | 256 |
 | SixteenBit | 4 | 16 |
 
-The 16-bit machines the tier stands in for drove a **12-bit DAC** — four
-bits each of red, green and blue, 4096 colours — so a channel there may
+The 16-bit machines the tier stands in for drove a **12-bit DAC** - four
+bits each of red, green and blue, 4096 colours - so a channel there may
 only hold one of sixteen levels. An n-bit channel widens to eight by
 **replication**: `0xE` becomes `0xEE`. Not by a left shift, which gives
 `0xE0` and tops out short of white.
@@ -250,14 +250,14 @@ The 8-bit tier is limited by its 16-entry palette instead, not by channel
 depth, so it keeps all eight bits and the rule is a no-op there.
 
 This is independent of the palette rule above. 16-bit is still
-direct-colour, so a bitmap need not use a colour the palette *names* — it
+direct-colour, so a bitmap need not use a colour the palette *names* - it
 just has to use one the tier could *produce*. Both the palette entries and
 every opaque bitmap pixel are checked.
 
 `AssetColourBudget.ChannelBits` gives the depth, `IsOnGrid` tests one
 colour and `NearestLevel` snaps one channel; `AssetColourBudget.OffGrid`
 records the strays per asset and `AssetSet.Load` throws with the asset and
-the colour named. Alpha is not a DAC channel and is not checked here — it
+the colour named. Alpha is not a DAC channel and is not checked here - it
 is covered by `PartialAlphaCount`.
 
 ### Baseline, and how the assets were brought inside it (2026-07-28)
@@ -276,7 +276,7 @@ Elite's budget), and SCR added `atlas.bmp`'s 2676 on top with almost no
 overlap. `atlas.bmp` also held all 2765 of the partial-alpha pixels.
 
 A bitmap font with 2431 distinct colours is not a 16-bit-era asset by
-any reading — those were effectively modern-tier assets occupying the
+any reading - those were effectively modern-tier assets occupying the
 16-bit slot, so the fix was to posterise them, not to soften the rule.
 Both files were quantised to the **12-bit RGB space real 16-bit hardware
 used** (keep each channel's high nibble and replicate it, so 0xFF stays
@@ -293,7 +293,7 @@ one 16-bit asset can contribute at 4096 by construction.
 Only `font2.bmp` and `atlas.bmp` were touched; every other asset was
 already well inside the budget and unchanged by quantisation. Because
 the rest of the set is not quantised, the union staying under 4096 is
-not structurally guaranteed — but at 145 and 349 the headroom is large.
+not structurally guaranteed - but at 145 and 349 the headroom is large.
 
 Note this quantisation applies to *authoring* the 16-bit assets. The
 validator itself still only counts distinct values, exactly as decided;
@@ -303,7 +303,7 @@ it does not require colours to sit in the 12-bit space.
 
 Assets are loaded and validated up front, never on demand.
 
-Images are already loaded eagerly, but in two separate places —
+Images are already loaded eagerly, but in two separate places -
 `SoftwareGraphics` decodes via `BitmapReader`, while `SDLGraphics`
 decodes via SDL. The SDL path therefore bypasses the managed reader
 entirely, and would bypass any validation added to it.
@@ -342,29 +342,29 @@ untenable, so the lists are replaced by a glob before any assets move:
 
 ## Sequencing
 
-Each step is independently verifiable, and steps 1–5 do not depend on
+Each step is independently verifiable, and steps 1-5 do not depend on
 the 8-bit art existing.
 
 **This plan is done, and is kept as the record of how it was built.** Step 3's
 `SystemTier` and tier resolution were later undone when tiers became
 renditions - see the notes above.
 
-1. Glob the asset lists in both game `.csproj` files → verify: build
+1. Glob the asset lists in both game `.csproj` files -> verify: build
    both games, asset output directory is unchanged.
 2. `ImageReader` with the reworked BMP decoder and the new PNG decoder
-   → verify: unit tests per bit depth, padding case and top-down case;
+   -> verify: unit tests per bit depth, padding case and top-down case;
    existing bitmaps still load identically.
 3. Move the existing images, bitmap fonts and palette into
    `SixteenBit/`; add `SystemTier` and tier resolution to
-   `AssetLocator`, defaulting to `SixteenBit` → verify: no behaviour
+   `AssetLocator`, defaulting to `SixteenBit` -> verify: no behaviour
    change, both games smoke-test identically.
 4. Eager `AssetSet` replacing the two backend-specific loads, with the
-   colour validator warn-only → verify: both backends render
+   colour validator warn-only -> verify: both backends render
    identically; the warning reports SCR at 5095.
 5. Posterise `font2.bmp` and `atlas.bmp` within budget; flip the
-   validator to hard-fail → verify: both games start; visual
+   validator to hard-fail -> verify: both games start; visual
    smoke-test for acceptable font and cockpit quality.
-6. Add the 8-bit bitmaps under `EightBit/` and declare the tier →
+6. Add the 8-bit bitmaps under `EightBit/` and declare the tier ->
    verify: the tier loads and passes the 16-colour cap.
 
 None of these steps require the resolution-tier rendering work in

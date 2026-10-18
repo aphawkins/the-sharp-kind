@@ -1,6 +1,6 @@
 # Decide whether render resolution is configurable independently of rendition
 
-[Apps] **[DECISION]** — maintainer to decide.
+[Apps] **[DECISION]** - maintainer to decide.
 
 Elite no longer hardcodes resolution: the rendition declares it, so the asset
 set and the resolution can never disagree. The open question is whether a launch

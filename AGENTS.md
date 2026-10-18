@@ -4,15 +4,15 @@ Behavioural guidelines to reduce common LLM coding mistakes. Merge with project-
 
 ## Tiered pipeline
 
-For non-trivial implementation work — anything spanning multiple files, or where
-getting the design wrong is costly — default to the tiered pipeline: investigate,
+For non-trivial implementation work - anything spanning multiple files, or where
+getting the design wrong is costly - default to the tiered pipeline: investigate,
 present a short plan, and STOP for sign-off before editing; then decompose into
 handoff specs, delegate implementation to tier-implementer and scaffolding to
 tier-scaffolder, and review the diff via tier-reviewer before folding it back.
 Announce when you enter this mode. Invoke it explicitly with `/tier <goal>`.
 
 For quick questions, single-line fixes, and debugging, skip the pipeline and
-answer directly — don't gate trivial work behind a plan.
+answer directly - don't gate trivial work behind a plan.
 
 Standing constraints for all code: unsafe states structurally unreachable;
 derive don't store; append-only ledger idioms where state history matters;
@@ -68,16 +68,16 @@ The test: Every changed line should trace directly to the user's request.
 **Define success criteria. Loop until verified.**
 
 Transform tasks into verifiable goals:
-- "Add validation" → "Write tests for invalid inputs, then make them pass"
-- "Fix the bug" → "Write a test that reproduces it, then make it pass"
-- "Refactor X" → "Ensure tests pass before and after"
+- "Add validation" -> "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" -> "Write a test that reproduces it, then make it pass"
+- "Refactor X" -> "Ensure tests pass before and after"
 - When possible, add unit tests for new functionality or bug fixes.
 
 For multi-step tasks, state a brief plan:
 ```
-1. [Step] → verify: [check]
-2. [Step] → verify: [check]
-3. [Step] → verify: [check]
+1. [Step] -> verify: [check]
+2. [Step] -> verify: [check]
+3. [Step] -> verify: [check]
 ```
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
@@ -94,7 +94,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ## 6. Agents
 
-Do not delegate work to subagents (the Agent/Task tool) — they consume tokens
+Do not delegate work to subagents (the Agent/Task tool) - they consume tokens
 at a high rate relative to the work done. Do the work directly in this
 session instead.
 

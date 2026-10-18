@@ -7,7 +7,7 @@ Split
 [PerspectiveProjector.cs](https://github.com/aphawkins/the-sharp-kind/blob/main/src/useful/libs/SharpKind.Graphics/PerspectiveProjector.cs)
 into the perspective divide (camera space to NDC) and a `Viewport` mapping NDC
 to pixels, keeping `Project` as the composition of the two. Both games keep
-calling `Project` and get the same pixels — a library change with library
+calling `Project` and get the same pixels - a library change with library
 tests, and what makes an NDC exist to clip against.
 
 **Preserve:** `Project` returns *pixels* (`Centre + Focus * x / z`) and every

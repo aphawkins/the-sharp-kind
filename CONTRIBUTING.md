@@ -35,4 +35,4 @@ rather than in every test method.
 - Follow existing code style
 - Be respectful in discussions
 
-This is a personal project, so contributions may be reviewed at the maintainer’s discretion.
+This is a personal project, so contributions may be reviewed at the maintainer's discretion.

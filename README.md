@@ -1,4 +1,4 @@
-ï»¿# The Sharp Kind
+# The Sharp Kind
 
 [![Build and Package](https://github.com/aphawkins/the-sharp-kind/actions/workflows/build-and-package.yml/badge.svg)](https://github.com/aphawkins/the-sharp-kind/actions/workflows/build-and-package.yml)
 ![Line coverage](docs/images/coverage-badge.svg)
@@ -44,17 +44,6 @@ Status: Playable, feature-complete - 8-bit version
 
 Status: Playable, preview.
 
-## Tools
-
-### [SharpKind.Cryptography](src/useful/apps/SharpKind.Cryptography.PowerShell/README.md)
-
-A PowerShell 7.6+ module that encrypts, decrypts and cracks classical ciphers, from Caesar to Enigma.
-
-```powershell
-Install-PSResource SharpKind.Cryptography
-'Attack at dawn' | Protect-CipherText -Cipher Caesar -Settings @{ RightShift = 3 }
-```
-
 ## Getting started
 
 Requires the [.NET SDK](https://dotnet.microsoft.com/download) (see `Directory.Build.props` for the target framework version).
@@ -69,14 +58,14 @@ dotnet run --project src/bb/apps/BubbleBobbleSharp
 # Stunt Car Racer
 dotnet run --project src/scr/apps/StuntCarRacerSharp
 
-# Control gallery â€” every shared UI control, for looking at
+# Control gallery - every shared UI control, for looking at
 dotnet run --project src/useful/apps/SharpKind.UI.Gallery
 ```
 
 All three games can also be run and debugged from an IDE:
 
-- **Visual Studio 2026** â€” open [TheSharpKind.slnx](TheSharpKind.slnx) and set `EliteSharp`, `BubbleBobbleSharp` or `StuntCarRacerSharp` as the startup project.
-- **VS Code** â€” open the repo root and pick the "Elite", "Bubble Bobble" or "Stunt Car Racer" launch configuration (`.vscode/launch.json`).
+- **Visual Studio 2026** - open [TheSharpKind.slnx](TheSharpKind.slnx) and set `EliteSharp`, `BubbleBobbleSharp` or `StuntCarRacerSharp` as the startup project.
+- **VS Code** - open the repo root and pick the "Elite", "Bubble Bobble" or "Stunt Car Racer" launch configuration (`.vscode/launch.json`).
 
 SDL3 and its native libraries come inside their NuGet packages (win-x64, linux-x64 and linux-arm64), so there is nothing else to install: `dotnet run` or `dotnet build` is enough.
 
@@ -138,18 +127,29 @@ Diagnostic opt-ins read at runtime rather than compiled in, so they work in a Re
 | `GAME_KEY_SCRIPT` | A path to a script file, or the script text itself if the value isn't an existing file | The script is replayed into the keyboard tick by tick, for reproducible input without OS-level key injection |
 | `GAME_FRAME_DUMP_DIR` | A directory path, created if it doesn't exist | Framebuffer BMPs are written there, and the F12 dump key is enabled |
 
+## Tools
+
+### [SharpKind.Cryptography](src/useful/apps/SharpKind.Cryptography.PowerShell/README.md)
+
+A PowerShell 7.6+ module that encrypts, decrypts and cracks classical ciphers, from Caesar to Enigma.
+
+```powershell
+Install-PSResource SharpKind.Cryptography
+'Attack at dawn' | Protect-CipherText -Cipher Caesar -Settings @{ RightShift = 3 }
+```
+
 ## Documentation
 
 - [Elite - The Sharp Kind](docs/elite-readme.md)
 - [Bubble Bobble - The Sharp Kind](docs/bb-readme.md)
 - [Stunt Car Racer - The Sharp Kind](docs/scr-readme.md)
 - [Architecture principles](docs/architecture-principles.md)
-- [Backlog](docs/backlog-roadmap.md) â€” every open work item, bugs first
+- [Backlog](docs/backlog-roadmap.md) - every open work item, bugs first
 - [Changelog](CHANGELOG.md)
-- [Release notes](docs/release-notes.md) â€” a concise, categorised summary of the changelog, split at v1.0.0
-- [Release process](docs/release-process.md) â€” how to cut a tagged release
+- [Release notes](docs/release-notes.md) - a concise, categorised summary of the changelog, split at v1.0.0
+- [Release process](docs/release-process.md) - how to cut a tagged release
 - [Contributing](CONTRIBUTING.md)
 
 ## Licence
 
-[MIT](LICENSE). Original game copyrights remain with their respective owners â€” see each game's readme for credits.
+[MIT](LICENSE). Original game copyrights remain with their respective owners - see each game's readme for credits.

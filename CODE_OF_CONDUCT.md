@@ -60,7 +60,7 @@ representative at an online or offline event.
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
 reported to the community leaders responsible for enforcement. Please do not
-raise a conduct concern in a public issue — instead, contact the maintainer
+raise a conduct concern in a public issue - instead, contact the maintainer
 directly via GitHub ([@aphawkins](https://github.com/aphawkins)).
 All complaints will be reviewed and investigated promptly and fairly.
 

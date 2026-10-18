@@ -1,4 +1,4 @@
-# Reference Sources — The Sharp Kind
+# Reference Sources - The Sharp Kind
 
 Both games are ports, and when a port's behaviour is in question the answer is
 in the source it was ported from. These are the checkouts to read, and which

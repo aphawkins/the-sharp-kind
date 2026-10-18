@@ -1,4 +1,4 @@
-﻿---
+---
 description: Launch and visually smoke-test EliteSharp (the SDL desktop app under src/elite/apps/EliteSharp) by driving its real OS window - inject key presses, capture screenshots. Use when asked to run, screenshot, or visually verify EliteSharp, or to confirm a change to it works in the real app.
 ---
 
@@ -6,7 +6,7 @@ EliteSharp is a native Win32/SDL desktop app - there is no browser or
 Electron surface, so it can't be driven with Playwright. Verifying it
 visually means capturing the real OS window. This skill drives it via
 the shared driver at `.claude/skills/sdl-drive/drive.ps1` (also used
-by `run-scr` for Stunt Car Racer — see that skill's SKILL.md and the
+by `run-scr` for Stunt Car Racer - see that skill's SKILL.md and the
 driver's own header comment for what it does and how; this file only
 covers what's Elite-specific).
 
@@ -18,7 +18,7 @@ dotnet build TheSharpKind.slnx -c Debug
 
 Exe path: `src/elite/apps/EliteSharp/bin/Debug/net10.0/EliteSharp.exe`.
 
-## Run — the reliable way (scripted, preferred)
+## Run - the reliable way (scripted, preferred)
 
 The app drives itself and dumps its own framebuffer. `GAME_KEY_SCRIPT`
 feeds tick-exact input straight into the game's keyboard sink and
@@ -71,12 +71,12 @@ a given configuration, not across different ones. The run stops as soon
 as every requested frame is written, or after `-TimeoutSeconds`
 (default 30).
 
-## Run — driving the live window (`-Steps`, legacy)
+## Run - driving the live window (`-Steps`, legacy)
 
 
 Use the PowerShell tool and invoke with the call operator `&`, **not**
 by prefixing `pwsh` (see Gotchas in `sdl-drive`'s SKILL-shared notes
-below — nested `pwsh.exe` breaks array binding):
+below - nested `pwsh.exe` breaks array binding):
 
 ```powershell
 & ".claude/skills/sdl-drive/drive.ps1" `
@@ -96,7 +96,7 @@ below — nested `pwsh.exe` breaks array binding):
 
 Screenshots land in `%TEMP%\sdl-app-shots\` (override with the
 `SCREENSHOT_DIR` env var or `-ScreenshotDir`). Then actually open each
-PNG with the Read tool — don't just check the process didn't crash, and
+PNG with the Read tool - don't just check the process didn't crash, and
 don't trust one that came with a foreground warning.
 
 ## Known screen flow (from EliteMain.cs / Views/*.cs)
@@ -110,11 +110,11 @@ Useful for building new `-Steps` sequences:
 - From docked, `F1` = launch/undock (goes to **Undocking** then
   **FrontView**), `F2`/`F3`/`F4` = Rear/Left/Right view (only work
   once undocked). Other `F`-keys switch to chart/status/options
-  screens (`EliteMain.HandleViewKeys`) — `F1` while docked instead
+  screens (`EliteMain.HandleViewKeys`) - `F1` while docked instead
   goes to **Undocking**, `F4` while docked goes to **EquipShip**.
 - The **mission briefings** are hours of play away in normal use. Set
   `ELITE_DEBUG_MISSIONS` (to any value) before launching and `key:Ctrl+M`
-  cycles all five — Constrictor brief, Constrictor debrief, the two
+  cycles all five - Constrictor brief, Constrictor debrief, the two
   Thargoid briefs, the Thargoid debrief. Each is a cheat that leaves the
   commander mid-mission, so use a fresh run per check
   ([docs/elite-readme.md](../../../docs/elite-readme.md#environment-variables)).
@@ -126,7 +126,7 @@ Useful for building new `-Steps` sequences:
 See `.claude/skills/sdl-drive/drive.ps1`'s header comment and
 `run-scr/SKILL.md`'s Gotchas for the shared ones (the `pwsh`-vs-`&`
 invocation trap, why `PostMessage` is used instead of
-`SendKeys`/`SendInput`, and the key-hold-duration timing issue) — they
+`SendKeys`/`SendInput`, and the key-hold-duration timing issue) - they
 apply here unchanged since both skills drive the same script.
 
 Both of the shared gotchas about *timing* and the one about a covered
@@ -138,18 +138,18 @@ rather than the screen, so nothing can cover it. Prefer it.
 Elite-specific: when `engine.backend` in
 `%APPDATA%\The Sharp Kind\elite.sharp` is `"Hardware"` (the
 maintainer's normal value is `"Software"`), give the app a longer
-settle before the first key and hold each key longer — `"wait:5000"`
+settle before the first key and hold each key longer - `"wait:5000"`
 after `launch`, and `key:N:400` instead of `key:N`. A `-KeyScript` run
 needs no such allowance: a tick is a tick whatever the backend is doing.
 
 Input itself is backend-independent: `SDLAbstraction` and
 `SoftwareAbstraction` build the same `SoftwareKeyboard(new SDLInput())`
 over the same `SDLWindow`, and a Hardware run was verified key-driveable
-end-to-end (Intro1 → FrontView, 4/4 runs). The risk is purely timing.
+end-to-end (Intro1 -> FrontView, 4/4 runs). The risk is purely timing.
 `SDLInput.Poll` drains the whole SDL queue per update, so if one loop
 iteration ever outlasts the key hold, that update sees `KeyDown` and
 `KeyUp` together and `SoftwareKeyboard.KeyUp` clears `_lastKeyPressed`
-before `Update` reads it — the press is silently swallowed and the
+before `Update` reads it - the press is silently swallowed and the
 screen just never advances. At 13.5 updates/sec that needs a stall of
 more than ~150ms, which a cold Hardware first launch (pipeline
 creation, JIT, disk) can produce even though the steady state is 60fps.

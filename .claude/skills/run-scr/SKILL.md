@@ -1,4 +1,4 @@
-﻿---
+---
 description: Launch and visually smoke-test StuntCarRacerSharp (the SDL desktop app under src/scr/apps/StuntCarRacerSharp) by driving its real OS window - inject key presses, capture screenshots. Use when asked to run, screenshot, or visually verify SCR/Stunt Car Racer, or to confirm a change to it works in the real app.
 ---
 
@@ -7,7 +7,7 @@ browser or Electron surface, so it can't be driven with Playwright.
 Verifying it visually means capturing the real OS window. This skill
 drives it via the shared driver at
 `.claude/skills/sdl-drive/drive.ps1` (also used by `run-elite` for
-Elite — the driver itself is fully game-agnostic; only the exe path,
+Elite - the driver itself is fully game-agnostic; only the exe path,
 key sequence, and screen flow below are SCR-specific).
 
 ## Build first
@@ -19,7 +19,7 @@ dotnet build TheSharpKind.slnx -c Debug
 Exe path:
 `src/scr/apps/StuntCarRacerSharp/bin/Debug/net10.0/StuntCarRacerSharp.exe`.
 
-## Run — the reliable way (scripted, preferred)
+## Run - the reliable way (scripted, preferred)
 
 The app drives itself and dumps its own framebuffer. `GAME_KEY_SCRIPT`
 feeds tick-exact input straight into the game's keyboard sink and
@@ -69,11 +69,11 @@ a given configuration, not across different ones. The run stops as soon
 as every requested frame is written, or after `-TimeoutSeconds`
 (default 30).
 
-## Run — driving the live window (`-Steps`, legacy)
+## Run - driving the live window (`-Steps`, legacy)
 
 
 Use the PowerShell tool and invoke with the call operator `&`, **not**
-by prefixing `pwsh` (see Gotchas — nested `pwsh.exe` breaks array
+by prefixing `pwsh` (see Gotchas - nested `pwsh.exe` breaks array
 binding):
 
 ```powershell
@@ -93,24 +93,24 @@ binding):
 
 Screenshots land in `%TEMP%\sdl-app-shots\` (override with the
 `SCREENSHOT_DIR` env var or `-ScreenshotDir`). Then actually open each
-PNG with the Read tool — don't just check the process didn't crash, and
+PNG with the Read tool - don't just check the process didn't crash, and
 don't trust one that came with a foreground warning.
 
-### Steps (shared driver — same for every skill that uses it)
+### Steps (shared driver - same for every skill that uses it)
 
 | step | what it does |
 |---|---|
 | `launch` | start the exe, wait for its window (throws after `-LaunchTimeoutMs`, default 15s), foreground it |
 | `screenshot:<name>` | capture the window to `<ScreenshotDir>/<name>.png` |
 | `key:<KeyName>` | press and release a key (150ms hold) |
-| `key:<KeyName>:<holdMs>` | press, hold for `<holdMs>`, then release — use this for SCR's driving keys (`Up`/`Down`/`Left`/`Right`/`Space`), which read as *held*, not *pressed* (see Gotchas) |
+| `key:<KeyName>:<holdMs>` | press, hold for `<holdMs>`, then release - use this for SCR's driving keys (`Up`/`Down`/`Left`/`Right`/`Space`), which read as *held*, not *pressed* (see Gotchas) |
 | `wait:<ms>` | sleep |
 | `quit` | stop the process |
 
 See `ConvertTo-VirtualKeyCode` in `../sdl-drive/drive.ps1` for
 supported key names (`F1`-`F12`, `A`-`Z`, `0`-`9`, `Space`, `Enter`,
 `Esc`/`Escape`, `Up`/`Down`/`Left`/`Right`); add more there if you need
-one — it's shared, so a name you add works for both games. Any step
+one - it's shared, so a name you add works for both games. Any step
 not given a `quit` is cleaned up automatically at the end of the
 script (with a warning), so a thrown error mid-sequence doesn't leave
 the process running.
@@ -118,8 +118,8 @@ the process running.
 ## Known screen flow (from Screens/*.cs, GameMode.cs)
 
 Useful for building new `-Steps` sequences. Four modes
-(`GameMode` enum): `TrackMenu` (0, the start screen) → `TrackPreview`
-(1) → `GameInProgress` (2, the race) → `GameOver` (3).
+(`GameMode` enum): `TrackMenu` (0, the start screen) -> `TrackPreview`
+(1) -> `GameInProgress` (2, the race) -> `GameOver` (3).
 
 - **TrackMenu** ([TrackMenuScreen.cs](../../../src/scr/libs/StuntCarRacerSharpLib/Screens/TrackMenuScreen.cs)):
   digits `1`-`8` pick a track (defaults to Little Ramp); `S` goes to
@@ -127,7 +127,7 @@ Useful for building new `-Steps` sequences. Four modes
 - **TrackPreview** ([TrackPreviewScreen.cs](../../../src/scr/libs/StuntCarRacerSharpLib/Screens/TrackPreviewScreen.cs)):
   `S` starts the race (**GameInProgress**), `M` back to **TrackMenu**.
 - **GameInProgress / race** ([RaceScreen.cs](../../../src/scr/libs/StuntCarRacerSharpLib/Screens/RaceScreen.cs)):
-  driving keys are read with `IsHeld`, not `IsPressed` — `Left`/`Right`
+  driving keys are read with `IsHeld`, not `IsPressed` - `Left`/`Right`
   = steer, `Up` = accelerate, `Down` = brake, `Space` = boost. `N`
   changes scenery. `M` abandons the race for **TrackMenu** (works while
   paused too); `P` pauses and `O` resumes; `Backspace` toggles the
@@ -143,12 +143,12 @@ These apply to `sdl-drive/drive.ps1` itself, so they're the same for
 
 - **Invoking as `pwsh drive.ps1 -Steps @(...)` from inside an
   already-running `pwsh` session spawns a *nested* `pwsh.exe` process,
-  and its CLI argument parsing silently breaks array binding** —
+  and its CLI argument parsing silently breaks array binding** -
   `-Steps` only picks up the first element, and later `-Steps` items
   shift into `-ScreenshotDir`/`-LaunchTimeoutMs` positionally,
   producing a confusing type-conversion error on `-LaunchTimeoutMs`
   (e.g. `Cannot convert value "wait:600" to type "System.Int32"`). Use
-  the call operator (`& "drive.ps1" -Steps @(...)`) instead — that
+  the call operator (`& "drive.ps1" -Steps @(...)`) instead - that
   runs the script in the *current* session, where PowerShell's real
   parameter binder handles the array correctly. Hit and confirmed
   while building this skill, not a theoretical concern.
@@ -158,11 +158,11 @@ These apply to `sdl-drive/drive.ps1` itself, so they're the same for
   (`GetForegroundWindow()` matched the target `hwnd` after
   `SetForegroundWindow` and even after a synthetic click on the
   window), but SDL's event pump never observed either kind of
-  injected input — screenshots kept showing the same frame,
+  injected input - screenshots kept showing the same frame,
   unchanged. Posting `WM_KEYDOWN`/`WM_KEYUP` directly to the window
   handle via `PostMessage` is the only method that produced an actual
   in-game screen transition. If you're tempted to "simplify" this to
-  `SendKeys` — don't, without re-verifying against a screenshot first.
+  `SendKeys` - don't, without re-verifying against a screenshot first.
 - **Hold the key down across a poll cycle.** Both games tick well
   under 100ms per frame, and `SoftwareKeyboard.KeyUp` resets the same
   "just-pressed" state that `IsPressed` reads, so a down+up pair that
@@ -170,22 +170,22 @@ These apply to `sdl-drive/drive.ps1` itself, so they're the same for
   `IsPressed` ever sees them. The driver's default 150ms hold covers
   this; SCR's driving controls use `IsHeld` instead (see above) and
   read correctly for as long as you hold the key via `key:<Name>:<ms>`.
-- **`-Steps` screenshots need the window on-screen and unobstructed** —
+- **`-Steps` screenshots need the window on-screen and unobstructed** -
   capture is a real `CopyFromScreen`, not an off-screen render. Don't
   minimize or cover the window between `launch` and `quit`. The driver
   re-foregrounds the window before every `screenshot` step and waits for
   `GetForegroundWindow` to agree (`SetForegroundWindow` often fails on
-  the first call — Windows' foreground lock refuses a process that
-  doesn't already own the foreground — and a window merely *behind*
+  the first call - Windows' foreground lock refuses a process that
+  doesn't already own the foreground - and a window merely *behind*
   another one silently captures that other window's pixels, which reads
   as "the app ignored my keys"). If it can't get there within two
   seconds it warns; **treat that warning as "these screenshots are not
-  the app"** — it has bitten real work, capturing an unrelated
+  the app"** - it has bitten real work, capturing an unrelated
   full-screen application and a browser window, and a diff against one
   of those is worse than no diff at all. `-KeyScript` has none of this
   exposure and is why it exists: use it for anything you intend to look
   at closely or compare.
-- **`PrintWindow` is not a fix for that** — it was tried, with and
+- **`PrintWindow` is not a fix for that** - it was tried, with and
   without `PW_RENDERFULLCONTENT`, and returns the window frame with a
   black client area, as it does for any compositor-presented window.
   The app dumping its own framebuffer is the way round it.

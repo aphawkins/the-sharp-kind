@@ -10,10 +10,10 @@ assignees: ''
 A clear description of the gap.
 
 **Why it matters**
-Who this helps and how — authenticity to the original, quality of life, developer experience, and so on.
+Who this helps and how - authenticity to the original, quality of life, developer experience, and so on.
 
 **Suggested approach**
-Optional — how you'd expect this to work, or a pointer to how the original game handled it.
+Optional - how you'd expect this to work, or a pointer to how the original game handled it.
 
 ---
 

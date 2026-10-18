@@ -13,4 +13,4 @@ so a browser-hosted build (`SharpKind.Wasm` + per-game `*.Wasm` app targeting
 Needs: a DOM keyboard adapter into `IKeyboardSink` (`SoftwareKeyboard` already
 consumes it), a per-tick canvas blit of the software framebuffer
 (`putImageData`), and asset loading via HTTP fetch or embedded resources. Only
-exercises the Software backend — complements the native driver.
+exercises the Software backend - complements the native driver.

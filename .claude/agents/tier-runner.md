@@ -21,5 +21,5 @@ Hard rules:
 Report back, verdict-first:
 - PASS / FAIL overall, then per-flow pass/fail.
 - For each failure: the flow, the expected vs actual, and the shortest repro.
-- No raw log dumps — extract the relevant lines only.
+- No raw log dumps - extract the relevant lines only.
 - UK spelling.

@@ -2,7 +2,7 @@
 
 [SharpKind.Graphics] `Submit` does `new Vector2[points.Length]` (plus
 `new float[...]` in the z-buffer path) for every polygon every frame, and
-`ShipBase.BuildFacePolygon` returns a fresh `Vector2[]` — undoing the care
+`ShipBase.BuildFacePolygon` returns a fresh `Vector2[]` - undoing the care
 `ShipBase` takes to pool `_pointList`/`_cameraList` and stackalloc its clip
 buffers. A persistent vertex/index buffer is the modern shape.
 

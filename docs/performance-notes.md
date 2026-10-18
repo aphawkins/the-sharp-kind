@@ -9,7 +9,7 @@ rather than re-profiling from nothing. Work items live in
 Profiled on an i5-14600K at 512x512 after a frame-rate drop was noticed while
 docking, as a Coriolis fills the view. Every item it produced has landed. The
 benchmarks are `StationBenchmarks`/`GraphicsPreset` (a Coriolis through the
-real pipeline — `RenderStart`, `DrawObject`, `RenderEnd`) and
+real pipeline - `RenderStart`, `DrawObject`, `RenderEnd`) and
 `DepthFillBenchmarks`/`QuantiserBenchmarks` (one full-screen depth-tested
 face, and the quantisers alone); re-run them to check any of this.
 
@@ -24,7 +24,7 @@ brackets, the same preset on 2026-09-06:
 | Gouraud/Nearest | 212 us (519)  | 1 468 us (4 028)  |       1.8x |
 | Gouraud/Ordered | 355 us (771)  | 2 624 us (6 397)  |       3.3x |
 
-On the defaults the worst frame spends 807 us on the station — 5 % of the
+On the defaults the worst frame spends 807 us on the station - 5 % of the
 budget.
 
 **Where the per-pixel time goes** (one full-screen face, 262 144 pixels,
@@ -54,5 +54,5 @@ face's sixteen dithered answers once and indexing per pixel costs **0.15 ns**.
   off-screen pixel is never visited: from Z=500 to Z=250 the station's
   unclipped area grows 4x while cost grows 1.8x. Agrees with the side-plane
   clipping entry in [work-items/wont-do.md](work-items/wont-do.md).
-- **`ClearDepth` costs 25 us per frame** — 0.15 % of a 60fps budget, so
+- **`ClearDepth` costs 25 us per frame** - 0.15 % of a 60fps budget, so
   deliberately not an item.

@@ -5,8 +5,8 @@
 [scr-clip-space-path.md](scr-clip-space-path.md).
 
 With both games in clip space, `z / w` is a normalised depth, so the z-buffer
-can store that instead of camera z — an `IPolygonRenderer` signature change,
-since `Submit`'s `depths` are camera-space today — and a guard band is a side
+can store that instead of camera z - an `IPolygonRenderer` signature change,
+since `Submit`'s `depths` are camera-space today - and a guard band is a side
 plane pushed outwards rather than a special case.
 
 Retire the `Math.Max`/`Min` span clamps in `DrawTriangleFilled` only if a
