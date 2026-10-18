@@ -76,50 +76,33 @@ public sealed class EnigmaRotors : IEnigmaRotors
     public IEnigmaRotor this[EnigmaRotorPosition position] => _rotors[position];
 
     /// <inheritdoc />
+    /// <remarks>
+    /// The fastest rotor steps on every key press. The middle rotor steps when the fastest rotor is on its notch, and
+    /// also when the middle rotor is on its own notch, which is the double step. The slowest rotor steps with the
+    /// middle rotor when the middle rotor is on its own notch.
+    /// </remarks>
     public void AdvanceRotors()
     {
-        Advance(EnigmaRotorPosition.Fastest);
+        bool middleOnNotch = IsOnNotch(EnigmaRotorPosition.Second);
+        bool fastestOnNotch = IsOnNotch(EnigmaRotorPosition.Fastest);
 
-        foreach (char notch in _rotors[EnigmaRotorPosition.Fastest].Notches)
-        {
-            if ((((_rotors[EnigmaRotorPosition.Fastest].CurrentSetting - 1 - 'A' + 26) % 26) + 'A') == notch)
-            {
-                StepMiddleRotor();
-            }
-
-            // Doublestep the middle rotor when the right rotor is 2 past a notch and the middle is on a notch
-            if ((((_rotors[EnigmaRotorPosition.Fastest].CurrentSetting - 2) % 'A') + 'A') == notch)
-            {
-                DoublestepMiddleRotor();
-                break;
-            }
-        }
-    }
-
-    private void Advance(EnigmaRotorPosition position)
-        => _rotors[position].CurrentSetting
-            = (char)(((_rotors[position].CurrentSetting + 1 - 'A' + 26) % 26) + 'A');
-
-    private void StepMiddleRotor()
-    {
-        Advance(EnigmaRotorPosition.Second);
-
-        if (_rotors[EnigmaRotorPosition.Second].Notches
-            .Contains((char)(_rotors[EnigmaRotorPosition.Second].CurrentSetting - 1), StringComparison.Ordinal))
+        if (middleOnNotch)
         {
             Advance(EnigmaRotorPosition.Third);
         }
-    }
 
-    private void DoublestepMiddleRotor()
-    {
-        if (!_rotors[EnigmaRotorPosition.Second].Notches
-            .Contains(_rotors[EnigmaRotorPosition.Second].CurrentSetting, StringComparison.Ordinal))
+        if (middleOnNotch || fastestOnNotch)
         {
-            return;
+            Advance(EnigmaRotorPosition.Second);
         }
 
-        Advance(EnigmaRotorPosition.Second);
-        Advance(EnigmaRotorPosition.Third);
+        Advance(EnigmaRotorPosition.Fastest);
     }
+
+    private bool IsOnNotch(EnigmaRotorPosition position)
+        => _rotors[position].Notches.Contains(_rotors[position].CurrentSetting, StringComparison.Ordinal);
+
+    private void Advance(EnigmaRotorPosition position)
+        => _rotors[position].CurrentSetting
+            = (char)(((_rotors[position].CurrentSetting + 1 - 'A') % 26) + 'A');
 }

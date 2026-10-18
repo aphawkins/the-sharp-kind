@@ -29,8 +29,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- The Singh ciphertexts, plaintexts and keys are shared with the cipher tests, not copied. -->
+    <!-- The Singh ciphertexts, plaintexts and keys, and the Enigma reference vectors, are shared with the cipher tests, not copied. -->
     <Compile Include="..\SharpKind.Security.Cryptography.Tests\SinghCiphertexts.cs" Link="SinghCiphertexts.cs" />
+    <Compile Include="..\SharpKind.Security.Cryptography.Tests\EnigmaFactory.cs" Link="EnigmaFactory.cs" />
+    <Compile Include="..\SharpKind.Security.Cryptography.Tests\EnigmaReferenceVectors.cs" Link="EnigmaReferenceVectors.cs" />
     <Compile Include="..\SharpKind.Security.Cryptography.Tests\SinghKeys.cs" Link="SinghKeys.cs" />
     <Compile Include="..\SharpKind.Security.Cryptography.Tests\SinghPlaintexts.cs" Link="SinghPlaintexts.cs" />
   </ItemGroup>

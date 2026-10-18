@@ -1,7 +1,5 @@
 // 'SharpKind Libraries' - Andy Hawkins 2023-2026.
 
-using System.Globalization;
-
 namespace SharpKind.Security.Cryptography.Tests;
 
 /// <summary>
@@ -155,31 +153,5 @@ internal static class SinghKeys
     /// </summary>
     /// <returns>The settings.</returns>
     internal static EnigmaSettings Stage8Enigma()
-    {
-        EnigmaRotorPosition[] positions = [EnigmaRotorPosition.Third, EnigmaRotorPosition.Second, EnigmaRotorPosition.Fastest];
-        string[] wheels = Stage8Wheels.Split(' ');
-        string[] rings = Stage8Rings.Split(' ');
-        string[] starts = Stage8MessageKey.Split(' ');
-        Dictionary<EnigmaRotorPosition, IEnigmaRotor> rotors = [];
-
-        for (int i = 0; i < positions.Length; i++)
-        {
-            rotors[positions[i]] = new EnigmaRotor()
-            {
-                RotorNumber = Enum.Parse<EnigmaRotorNumber>(wheels[i]),
-                RingPosition = int.Parse(rings[i], CultureInfo.InvariantCulture),
-                CurrentSetting = starts[i][0],
-            };
-        }
-
-        List<EnigmaPlugboardPair> plugs =
-            [.. Stage8Plugs.Split(' ').Select(static pair => new EnigmaPlugboardPair() { From = pair[0], To = pair[1] })];
-
-        return new EnigmaSettings()
-        {
-            Reflector = new EnigmaReflector() { ReflectorNumber = Enum.Parse<EnigmaReflectorNumber>(Stage8Reflector) },
-            Rotors = new EnigmaRotors() { Rotors = rotors },
-            Plugboard = new EnigmaPlugboard(plugs),
-        };
-    }
+        => EnigmaFactory.Settings(Stage8Reflector, Stage8Wheels, Stage8Rings, Stage8Plugs, Stage8MessageKey);
 }
