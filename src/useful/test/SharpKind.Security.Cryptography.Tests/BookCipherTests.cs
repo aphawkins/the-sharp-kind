@@ -56,6 +56,19 @@ public class BookCipherTests
         => Assert.Throws<ArgumentException>(nameof(keyText), () => new BookCipherSettings(keyText));
 
     [Fact]
+    public void GenerateSettingsKeepsTheKeyText()
+    {
+        // Both sides must already have the key text, so a random one is of no use.
+        BookCipherSettings settings = new(KeyText);
+        BookCipher cipher = new(settings);
+
+        cipher.GenerateSettings();
+
+        Assert.Same(settings, cipher.Settings);
+        Assert.Equal("1 2 3 3 5", cipher.Encrypt("HELLO"));
+    }
+
+    [Fact]
     public void Name()
     {
         BookCipher cipher = new(new BookCipherSettings(KeyText));

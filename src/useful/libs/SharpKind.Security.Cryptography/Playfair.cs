@@ -23,7 +23,7 @@ public sealed class Playfair(IPlayfairSettings settings) : ICipher
     /// <summary>
     /// Gets settings.
     /// </summary>
-    public IPlayfairSettings Settings { get; } = settings;
+    public IPlayfairSettings Settings { get; private set; } = settings;
 
     /// <inheritdoc />
     public string Encrypt(string plaintext)
@@ -44,6 +44,11 @@ public sealed class Playfair(IPlayfairSettings settings) : ICipher
             ? Crypt(letters, Size - 1)
             : throw new ArgumentException("Ciphertext must contain an even number of letters.", nameof(ciphertext));
     }
+
+    /// <summary>
+    /// Generates random settings: a grid of the letters in a random order.
+    /// </summary>
+    public void GenerateSettings() => Settings = PlayfairSettingsGenerator.Generate();
 
     /// <inheritdoc />
     public override string ToString() => CipherName;

@@ -1,6 +1,5 @@
 // 'SharpKind Libraries' - Andy Hawkins 2023-2026.
 
-using System.Security.Cryptography;
 using System.Text;
 
 namespace SharpKind.Security.Cryptography;
@@ -8,7 +7,7 @@ namespace SharpKind.Security.Cryptography;
 /// <summary>
 /// The MonoAlphabetic cipher.
 /// </summary>
-public class MonoAlphabeticSymmetric : SymmetricAlgorithm
+public sealed class MonoAlphabeticSymmetric : ClassicalSymmetricAlgorithm
 {
     /// <summary>
     /// States how many parts there are in the key.
@@ -18,30 +17,14 @@ public class MonoAlphabeticSymmetric : SymmetricAlgorithm
     /// <summary>
     /// The char that separates part of the key.
     /// </summary>
-    private const char KeySeperator = '|';
+    private const char KeySeparator = '|';
 
     /// <summary>
     /// The encoding used by this cipher.
     /// </summary>
     private static readonly Encoding s_encoding = new UnicodeEncoding(false, false);
 
-    private MonoAlphabetic _algorithm;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="MonoAlphabeticSymmetric"/> class.
-    /// </summary>
-    public MonoAlphabeticSymmetric()
-    {
-        Reset();
-        _algorithm = new MonoAlphabetic(new MonoAlphabeticSettings());
-    }
-
-    /// <inheritdoc />
-    public override byte[] IV
-    {
-        get => [];
-        set => _ = value;
-    }
+    private MonoAlphabetic _algorithm = new(new MonoAlphabeticSettings());
 
     /// <inheritdoc />
     public override byte[] Key
@@ -50,7 +33,7 @@ public class MonoAlphabeticSymmetric : SymmetricAlgorithm
         {
             // CharacterSet|Substitutions
             StringBuilder key = new(_algorithm.Settings.CharacterSet);
-            key.Append(KeySeperator)
+            key.Append(KeySeparator)
                 .Append(_algorithm.Settings.Substitutions);
 
             return s_encoding.GetBytes(key.ToString());
@@ -79,25 +62,7 @@ public class MonoAlphabeticSymmetric : SymmetricAlgorithm
     }
 
     /// <inheritdoc />
-    public override ICryptoTransform CreateDecryptor(byte[] rgbKey, byte[]? rgbIV)
-    {
-        Key = rgbKey;
-        IV = rgbIV ?? [];
-        return new ClassicalSymmetricTransform(_algorithm, CipherTransformMode.Decrypt);
-    }
-
-    /// <inheritdoc />
-    public override ICryptoTransform CreateEncryptor(byte[] rgbKey, byte[]? rgbIV)
-    {
-        Key = rgbKey;
-        IV = rgbIV ?? [];
-        return new ClassicalSymmetricTransform(_algorithm, CipherTransformMode.Encrypt);
-    }
-
-    /// <inheritdoc />
-    public override void GenerateIV()
-    {
-    }
+    private protected override ICipher Cipher => _algorithm;
 
     /// <inheritdoc />
     public override void GenerateKey()
@@ -105,9 +70,6 @@ public class MonoAlphabeticSymmetric : SymmetricAlgorithm
         _algorithm.GenerateSettings();
         KeyValue = Key;
     }
-
-    /// <inheritdoc />
-    public override string ToString() => _algorithm.CipherName;
 
     private static (string CharacterSet, string Substitutions) ParseKey(byte[] key)
     {
@@ -122,27 +84,10 @@ public class MonoAlphabeticSymmetric : SymmetricAlgorithm
 
         string keyString = s_encoding.GetString(key);
 
-        string[] parts = keyString.Split([KeySeperator], StringSplitOptions.None);
+        string[] parts = keyString.Split([KeySeparator], StringSplitOptions.None);
 
         return parts.Length != KeyParts
             ? throw new ArgumentException("Incorrect number of key parts.", nameof(key))
             : ((string CharacterSet, string Substitutions))(parts[0], parts[1]);
-    }
-
-    private void Reset()
-    {
-#pragma warning disable CA5358 // Do Not Use Unsafe Cipher Modes - this cipher is inherently unsafe
-        ModeValue = CipherMode.ECB;
-        PaddingValue = PaddingMode.None;
-        KeySizeValue = 16;
-        BlockSizeValue = 16;
-        FeedbackSizeValue = 16;
-        LegalBlockSizesValue = new KeySizes[1];
-        LegalBlockSizesValue[0] = new KeySizes(16, 16, 16);
-        LegalKeySizesValue = new KeySizes[1];
-        LegalKeySizesValue[0] = new KeySizes(0, int.MaxValue, 16);
-
-        KeyValue = [];
-        IVValue = [];
     }
 }

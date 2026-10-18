@@ -9,7 +9,10 @@ namespace SharpKind.Security.Cryptography;
 /// </summary>
 public sealed record PlayfairSettings : IPlayfairSettings
 {
-    private const string GridLetters = "ABCDEFGHIKLMNOPQRSTUVWXYZ";
+    /// <summary>
+    /// The letters of the grid, which has no J.
+    /// </summary>
+    internal const string GridLetters = "ABCDEFGHIKLMNOPQRSTUVWXYZ";
 
     /// <summary>
     /// Gets or sets the keyword that seeds the 5x5 grid.

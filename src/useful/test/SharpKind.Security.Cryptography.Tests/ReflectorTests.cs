@@ -62,6 +62,9 @@ public class ReflectorTests
             foreach (char c in cipher.Settings.CharacterSet)
             {
                 Assert.NotEqual(cipher.Settings.GetSubstitution(c), c);
+
+                // Each substitution is its own inverse.
+                Assert.Equal(c, cipher.Settings.GetSubstitution(cipher.Settings.GetSubstitution(c)));
             }
         }
     }

@@ -63,6 +63,18 @@ public class HomophonicSymmetricTests
     }
 
     [Fact]
+    public void GenerateKey()
+    {
+        using SymmetricAlgorithm cipher = new HomophonicSymmetric { Key = Encoding.Unicode.GetBytes(KeyString) };
+
+        cipher.GenerateKey();
+
+        Assert.NotEqual(Encoding.Unicode.GetBytes(KeyString), cipher.Key);
+        string ciphertext = CipherMethods.SymmetricTransform(cipher, CipherTransformMode.Encrypt, "HELLO, WORLD!");
+        Assert.Equal("HELLO, WORLD!", CipherMethods.SymmetricTransform(cipher, CipherTransformMode.Decrypt, ciphertext));
+    }
+
+    [Fact]
     public void Name()
     {
         using SymmetricAlgorithm cipher = new HomophonicSymmetric();

@@ -54,7 +54,7 @@ public sealed class MonoAlphabetic(IMonoAlphabeticSettings settings) : ICipher
     /// <summary>
     /// Generate random settings.
     /// </summary>
-    public void GenerateSettings() => Settings = MonoAlphabeticSettingsGenerator.Generate() with { };
+    public void GenerateSettings() => Settings = MonoAlphabeticSettingsGenerator.Generate();
 
     /// <inheritdoc />
     public override string ToString() => CipherName;

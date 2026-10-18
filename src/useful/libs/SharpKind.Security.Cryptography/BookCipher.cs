@@ -70,6 +70,15 @@ public sealed class BookCipher(IBookCipherSettings settings) : ICipher
     /// <inheritdoc />
     public override string ToString() => CipherName;
 
+    /// <inheritdoc />
+    /// <remarks>
+    /// The key is a text that both sides already have, such as a book, so a random one is of no use.
+    /// This keeps the current key text.
+    /// </remarks>
+    public void GenerateSettings()
+    {
+    }
+
     private string KeyLetters()
         => new([.. Settings.KeyText.Where(static c => Alphabet.IndexOf(c) >= 0).Select(char.ToUpperInvariant)]);
 }

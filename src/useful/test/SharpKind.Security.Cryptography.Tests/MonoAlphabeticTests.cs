@@ -58,6 +58,10 @@ public class MonoAlphabeticTests
         {
             cipher.GenerateSettings();
             Assert.NotEqual(cipher.Settings.CharacterSet, cipher.Settings.Substitutions);
+
+            // The substitutions are a permutation of the character set.
+            Assert.Equal(cipher.Settings.CharacterSet, new string([.. cipher.Settings.Substitutions.Order()]));
+
             char previous = 'A';
             bool isSequential = true;
             foreach (char c in cipher.Settings.CharacterSet)

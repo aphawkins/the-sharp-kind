@@ -12,7 +12,7 @@ namespace SharpKind.Security.Cryptography;
 public sealed class EnigmaSymmetric : SymmetricAlgorithm
 {
     /// <summary>
-    /// The seperator between values in a key field.
+    /// The separator between values in a key field.
     /// </summary>
     internal const char KeyDelimiter = ' ';
 
@@ -22,9 +22,9 @@ public sealed class EnigmaSymmetric : SymmetricAlgorithm
     private const int KeyParts = 4;
 
     /// <summary>
-    /// The seperator between key fields.
+    /// The separator between key fields.
     /// </summary>
-    private const char KeySeperator = '|';
+    private const char KeySeparator = '|';
 
     private Enigma _algorithm;
 
@@ -56,11 +56,11 @@ public sealed class EnigmaSymmetric : SymmetricAlgorithm
 
             // Reflector
             key.Append(_algorithm.Settings.Reflector.ReflectorNumber.ToString())
-                .Append(KeySeperator)
+                .Append(KeySeparator)
                 .Append(RotorOrderString(_algorithm.Settings.Rotors))
-                .Append(KeySeperator)
+                .Append(KeySeparator)
                 .Append(RotorRingString(_algorithm.Settings.Rotors))
-                .Append(KeySeperator)
+                .Append(KeySeparator)
                 .Append(PlugboardString(_algorithm.Settings.Plugboard));
 
             return Encoding.Unicode.GetBytes(key.ToString());
@@ -161,7 +161,7 @@ public sealed class EnigmaSymmetric : SymmetricAlgorithm
     private static EnigmaSettings GetSettingsKey(byte[] key)
     {
         string keyString = Encoding.Unicode.GetString(key);
-        string[] parts = keyString.Split([KeySeperator], StringSplitOptions.None);
+        string[] parts = keyString.Split([KeySeparator], StringSplitOptions.None);
 
         if (parts.Length != KeyParts)
         {
@@ -438,6 +438,7 @@ public sealed class EnigmaSymmetric : SymmetricAlgorithm
     {
 #pragma warning disable CA5358 // Do Not Use Unsafe Cipher Modes - this cipher is inherently unsafe
         ModeValue = CipherMode.ECB;
+#pragma warning restore CA5358
         PaddingValue = PaddingMode.None;
         KeySizeValue = 16;
         BlockSizeValue = 16 * 5;

@@ -77,6 +77,16 @@ public class PlayfairTests
         => Assert.Throws<ArgumentException>("Keyword", () => new PlayfairSettings() { Keyword = keyword });
 
     [Fact]
+    public void GenerateSettings()
+    {
+        Playfair cipher = new(new PlayfairSettings());
+        cipher.GenerateSettings();
+
+        Assert.Equal("ABCDEFGHIKLMNOPQRSTUVWXYZ", new string([.. cipher.Settings.Grid.Order()]));
+        Assert.Equal("HIDETHEGOLDINTHETREXESTUMP", cipher.Decrypt(cipher.Encrypt("Hide the gold in the tree stump")));
+    }
+
+    [Fact]
     public void Name()
     {
         Playfair cipher = new(new PlayfairSettings());

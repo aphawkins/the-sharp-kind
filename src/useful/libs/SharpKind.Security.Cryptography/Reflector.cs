@@ -54,7 +54,7 @@ public sealed class Reflector(IReflectorSettings settings) : ICipher
     /// <summary>
     /// Generate random settings.
     /// </summary>
-    public void GenerateSettings() => Settings = ReflectorSettingsGenerator.Generate() with { };
+    public void GenerateSettings() => Settings = ReflectorSettingsGenerator.Generate();
 
     /// <inheritdoc />
     public override string ToString() => CipherName;

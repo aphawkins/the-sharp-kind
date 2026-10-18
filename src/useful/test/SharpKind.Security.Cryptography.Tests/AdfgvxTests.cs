@@ -100,6 +100,19 @@ public class AdfgvxTests
         => Assert.Throws<ArgumentException>("keyword", () => new AdfgvxSettings("AB", "ABCD", string.Empty));
 
     [Fact]
+    public void GenerateSettings()
+    {
+        Adfgvx cipher = new(new AdfgvxSettings());
+        cipher.GenerateSettings();
+
+        Assert.Equal("ADFGVX", cipher.Settings.Labels);
+        Assert.Equal("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", new string([.. cipher.Settings.Square.Order()]));
+        Assert.Equal(3, cipher.Settings.Keyword.Length);
+        Assert.All(cipher.Settings.Keyword, static letter => Assert.InRange(letter, 'A', 'Z'));
+        Assert.Equal("ATTACKAT1200AM", cipher.Decrypt(cipher.Encrypt("Attack at 1200AM")));
+    }
+
+    [Fact]
     public void Name()
     {
         Adfgvx cipher = new(new AdfgvxSettings());

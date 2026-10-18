@@ -30,6 +30,11 @@ public sealed record HomophonicSettings : IHomophonicSettings
     {
         ArgumentNullException.ThrowIfNull(homophones);
 
+        // Copy, so that the caller cannot change the settings afterwards.
+        homophones = homophones.ToDictionary(
+            static pair => pair.Key,
+            static pair => (IReadOnlyList<string>)[.. pair.Value]);
+
         if (homophones.Count == 0)
         {
             throw new ArgumentException("There must be at least one plaintext character.", nameof(homophones));
@@ -71,4 +76,29 @@ public sealed record HomophonicSettings : IHomophonicSettings
 
     /// <inheritdoc />
     public IReadOnlyDictionary<char, IReadOnlyList<string>> Homophones { get; }
+
+    /// <inheritdoc />
+    public bool Equals(HomophonicSettings? other)
+        => other is not null
+            && Homophones.Count == other.Homophones.Count
+            && Homophones.All(pair => other.Homophones.TryGetValue(pair.Key, out IReadOnlyList<string>? symbols)
+                && pair.Value.SequenceEqual(symbols, StringComparer.Ordinal));
+
+    /// <inheritdoc />
+    public override int GetHashCode()
+    {
+        HashCode hash = default;
+
+        foreach ((char plain, IReadOnlyList<string> symbols) in Homophones.OrderBy(static pair => pair.Key))
+        {
+            hash.Add(plain);
+
+            foreach (string symbol in symbols)
+            {
+                hash.Add(symbol, StringComparer.Ordinal);
+            }
+        }
+
+        return hash.ToHashCode();
+    }
 }

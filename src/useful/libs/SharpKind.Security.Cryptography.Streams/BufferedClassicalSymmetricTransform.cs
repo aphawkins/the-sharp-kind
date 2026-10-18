@@ -13,12 +13,16 @@ internal sealed class BufferedClassicalSymmetricTransform : ICryptoTransform
 {
     private const int BlockSize = 2;  // 2 for Unicode, 1 for UTF8
     private readonly CipherTransformMode _transformMode;
-    private readonly Encoding _encoding = new UnicodeEncoding();
+    private readonly Encoding _encoding = new UnicodeEncoding(false, false);
     private readonly StringBuilder _buffer = new();
+
+    // Keeps the first half of a surrogate pair that is split across blocks.
+    private readonly Decoder _decoder;
 
     internal BufferedClassicalSymmetricTransform(ICipher cipher, CipherTransformMode transformMode)
     {
         _transformMode = transformMode;
+        _decoder = _encoding.GetDecoder();
         Cipher = cipher;
     }
 
@@ -47,7 +51,7 @@ internal sealed class BufferedClassicalSymmetricTransform : ICryptoTransform
             throw new ArgumentException("Input buffer not long enough.", nameof(inputBuffer));
         }
 
-        _ = _buffer.Append(_encoding.GetString(inputBuffer, inputOffset, inputCount));
+        Decode(inputBuffer, inputOffset, inputCount, flush: false);
 
         // Nothing is output until the final block.
         return 0;
@@ -57,10 +61,12 @@ internal sealed class BufferedClassicalSymmetricTransform : ICryptoTransform
     {
         ArgumentNullException.ThrowIfNull(inputBuffer);
 
-        if (inputCount > 0)
+        if (inputBuffer.Length < inputOffset + inputCount)
         {
-            _ = TransformBlock(inputBuffer, inputOffset, inputCount, [], 0);
+            throw new ArgumentException("Input buffer not long enough.", nameof(inputBuffer));
         }
+
+        Decode(inputBuffer, inputOffset, Math.Max(inputCount, 0), flush: true);
 
         string input = _buffer.ToString();
         _ = _buffer.Clear();
@@ -78,5 +84,12 @@ internal sealed class BufferedClassicalSymmetricTransform : ICryptoTransform
         };
 
         return _encoding.GetBytes(output);
+    }
+
+    private void Decode(byte[] inputBuffer, int inputOffset, int inputCount, bool flush)
+    {
+        char[] chars = new char[_decoder.GetCharCount(inputBuffer, inputOffset, inputCount, flush)];
+        _ = _decoder.GetChars(inputBuffer, inputOffset, inputCount, chars, 0, flush);
+        _ = _buffer.Append(chars);
     }
 }

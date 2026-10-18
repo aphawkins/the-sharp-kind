@@ -50,6 +50,19 @@ public class AdfgvxSymmetricTests
     }
 
     [Fact]
+    public void GenerateKey()
+    {
+        using SymmetricAlgorithm cipher = new AdfgvxSymmetric();
+        byte[] key = cipher.Key;
+
+        cipher.GenerateKey();
+
+        Assert.NotEqual(key, cipher.Key);
+        string ciphertext = CipherMethods.SymmetricTransform(cipher, CipherTransformMode.Encrypt, "ATTACK AT 1200AM");
+        Assert.Equal("ATTACKAT1200AM", CipherMethods.SymmetricTransform(cipher, CipherTransformMode.Decrypt, ciphertext));
+    }
+
+    [Fact]
     public void Name()
     {
         using SymmetricAlgorithm cipher = new AdfgvxSymmetric();

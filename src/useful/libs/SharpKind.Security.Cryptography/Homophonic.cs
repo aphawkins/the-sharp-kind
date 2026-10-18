@@ -21,7 +21,7 @@ public sealed class Homophonic(IHomophonicSettings settings) : ICipher
     /// <summary>
     /// Gets settings.
     /// </summary>
-    public IHomophonicSettings Settings { get; } = settings;
+    public IHomophonicSettings Settings { get; private set; } = settings;
 
     /// <inheritdoc />
     public string Encrypt(string plaintext)
@@ -89,6 +89,11 @@ public sealed class Homophonic(IHomophonicSettings settings) : ICipher
 
         return result.ToString();
     }
+
+    /// <summary>
+    /// Generates random settings by shuffling the homophones between the plaintext characters.
+    /// </summary>
+    public void GenerateSettings() => Settings = HomophonicSettingsGenerator.Generate(Settings);
 
     /// <inheritdoc />
     public override string ToString() => CipherName;

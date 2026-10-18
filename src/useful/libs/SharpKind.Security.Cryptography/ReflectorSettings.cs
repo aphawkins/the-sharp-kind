@@ -1,22 +1,38 @@
 // 'SharpKind Libraries' - Andy Hawkins 2023-2026.
 
+using System.Collections.ObjectModel;
+
 namespace SharpKind.Security.Cryptography;
 
 /// <summary>
 /// The Reflector algorithm settings.
 /// </summary>
+/// <remarks>
+/// Set <see cref="CharacterSet"/> before <see cref="Substitutions"/>, as the substitutions are checked against it.
+/// Both are copied when set and are read only.
+/// </remarks>
 public sealed record ReflectorSettings : IReflectorSettings
 {
-    private IList<char> _substitutions = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".ToCharArray();
+    private const string DefaultCharacterSet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    private IList<char> _substitutions = ReadOnly(DefaultCharacterSet);
+
+    private bool _substitutionsInitialised;
 
     /// <inheritdoc />
+    /// <exception cref="InvalidOperationException">The substitutions are already set.</exception>
     public IList<char> CharacterSet
     {
-        get => field ??= "ABCDEFGHIJKLMNOPQRSTUVWXYZ".ToCharArray();
+        get => field ??= ReadOnly(DefaultCharacterSet);
 
         init
         {
-            field = ParseCharacterSet(value);
+            if (_substitutionsInitialised)
+            {
+                throw new InvalidOperationException("Set the character set before the substitutions.");
+            }
+
+            field = ReadOnly(ParseCharacterSet(value));
             _substitutions = field;
         }
     }
@@ -36,7 +52,7 @@ public sealed record ReflectorSettings : IReflectorSettings
             }
             catch (Exception ex)
             {
-                throw new ArgumentException("Error parsing subsititutions", nameof(Substitutions), ex);
+                throw new ArgumentException("Error parsing substitutions", nameof(Substitutions), ex);
             }
 
             for (int i = 0; i < CharacterSet.Count; i++)
@@ -48,6 +64,8 @@ public sealed record ReflectorSettings : IReflectorSettings
             {
                 throw new ArgumentException("Not valid to substitute these letters.", nameof(Substitutions));
             }
+
+            _substitutionsInitialised = true;
         }
     }
 
@@ -111,29 +129,42 @@ public sealed record ReflectorSettings : IReflectorSettings
         char[] temp = [.. _substitutions];
         temp[fromIndex] = to;
         temp[toIndex] = from;
-        _substitutions = temp;
 
         if (fromSubs != from)
         {
-            temp = [.. _substitutions];
             temp[fromSubsIndex] = fromSubs;
-            _substitutions = temp;
         }
 
         if (toSubs != to)
         {
-            temp = [.. _substitutions];
             temp[toSubsIndex] = toSubs;
-            _substitutions = temp;
         }
+
+        _substitutions = Array.AsReadOnly(temp);
     }
 
     /// <summary>
     /// Gets the reverse substitution for a letter.
     /// </summary>
     /// <param name="letter">The letter to match.</param>
-    /// <returns>The letter that substiutes to this letter.</returns>
+    /// <returns>The letter that substitutes to this letter.</returns>
     public char Reflect(char letter) => GetSubstitution(letter);
+
+    /// <inheritdoc />
+    public bool Equals(ReflectorSettings? other)
+        => other is not null
+            && CharacterSet.SequenceEqual(other.CharacterSet)
+            && Substitutions.SequenceEqual(other.Substitutions);
+
+    /// <inheritdoc />
+    public override int GetHashCode()
+        => HashCode.Combine(new string([.. CharacterSet]), new string([.. Substitutions]));
+
+    private static ReadOnlyCollection<char> ReadOnly(IEnumerable<char> characters)
+    {
+        char[] copy = [.. characters];
+        return Array.AsReadOnly(copy);
+    }
 
     private static IList<char> ParseCharacterSet(IList<char> characterSet)
     {
@@ -156,8 +187,8 @@ public sealed record ReflectorSettings : IReflectorSettings
     }
 
     private static IList<char> ParseSubstitutions(IList<char> characterSet, IList<char> substitutions)
-        => substitutions.Count > characterSet.Count
-            ? throw new ArgumentException("Too many substitutions.", nameof(substitutions))
+        => substitutions.Count != characterSet.Count
+            ? throw new ArgumentException("Incorrect number of substitutions.", nameof(substitutions))
             : !substitutions.All(characterSet.Contains)
             ? throw new ArgumentException("Substitutions must be in the character set.", nameof(substitutions))
             : characterSet;

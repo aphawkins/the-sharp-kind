@@ -9,7 +9,8 @@ namespace SharpKind.Security.Cryptography;
 /// These are classical ciphers, which have no notion of case: enciphered letters are always
 /// returned in upper case, whatever the case of the input. Round tripping text through
 /// <see cref="Encrypt(string)"/> and <see cref="Decrypt(string)"/> therefore returns the
-/// original letters, but upper cased.
+/// original letters, but upper cased. Characters that a cipher does not encipher pass through
+/// unchanged, unless the cipher's own remarks say otherwise.
 /// </remarks>
 public interface ICipher
 {
@@ -31,4 +32,9 @@ public interface ICipher
     /// <param name="ciphertext">The text to decrypt.</param>
     /// <returns>The decrypted text.</returns>
     public string Decrypt(string ciphertext);
+
+    /// <summary>
+    /// Generates random settings.
+    /// </summary>
+    public void GenerateSettings();
 }

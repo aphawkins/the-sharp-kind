@@ -44,6 +44,6 @@ public interface IReflectorSettings
     /// Gets the reverse substitution for a letter.
     /// </summary>
     /// <param name="letter">The letter to match.</param>
-    /// <returns>The letter that substiutes to this letter.</returns>
+    /// <returns>The letter that substitutes to this letter.</returns>
     public char Reflect(char letter);
 }

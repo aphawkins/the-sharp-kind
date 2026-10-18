@@ -21,7 +21,7 @@ public sealed class Adfgvx(IAdfgvxSettings settings) : ICipher
     /// <summary>
     /// Gets settings.
     /// </summary>
-    public IAdfgvxSettings Settings { get; } = settings;
+    public IAdfgvxSettings Settings { get; private set; } = settings;
 
     /// <inheritdoc />
     public string Encrypt(string plaintext)
@@ -97,6 +97,11 @@ public sealed class Adfgvx(IAdfgvxSettings settings) : ICipher
 
         return result.ToString();
     }
+
+    /// <summary>
+    /// Generates random settings: a shuffled square and a random keyword of the same length, with the same labels.
+    /// </summary>
+    public void GenerateSettings() => Settings = AdfgvxSettingsGenerator.Generate(Settings);
 
     /// <inheritdoc />
     public override string ToString() => CipherName;

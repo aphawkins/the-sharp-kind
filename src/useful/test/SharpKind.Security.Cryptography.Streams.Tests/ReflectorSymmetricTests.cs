@@ -77,18 +77,35 @@ public class ReflectorSymmetricTests
         Assert.Equal([], cipher.IV);
     }
 
+    [Theory]
+    [InlineData("")] // No key
+    [InlineData("ABC")] // Incorrect number of parts
+    [InlineData("ABC|ABC|")] // Incorrect number of parts
+    [InlineData("ABC|AB")] // Too few subs
+    [InlineData("ABC|BCA")] // Subs non-reflective
+    public void KeyInvalid(string value)
+    {
+        byte[] key = Encoding.Unicode.GetBytes(value);
+        using ReflectorSymmetric cipher = new();
+        Assert.Throws<ArgumentException>(nameof(value), () => cipher.Key = key);
+    }
+
     [Fact]
     public void KeyGenerateCorrectness()
     {
         using ReflectorSymmetric cipher = new();
-        string keyString;
         for (int i = 0; i < 100; i++)
         {
             cipher.GenerateKey();
-            keyString = Encoding.Unicode.GetString(cipher.Key);
+            string[] parts = Encoding.Unicode.GetString(cipher.Key).Split('|');
 
-            // How to test for correctness?
-            Assert.NotNull(keyString);
+            // Every letter swaps with another, and the swap goes both ways.
+            for (int letter = 0; letter < parts[0].Length; letter++)
+            {
+                char substitution = parts[1][letter];
+                Assert.NotEqual(parts[0][letter], substitution);
+                Assert.Equal(parts[0][letter], parts[1][parts[0].IndexOf(substitution, StringComparison.Ordinal)]);
+            }
         }
     }
 

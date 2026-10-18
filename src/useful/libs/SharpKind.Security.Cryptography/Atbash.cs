@@ -24,5 +24,11 @@ public sealed class Atbash : ICipher
     }
 
     /// <inheritdoc />
+    /// <remarks>Atbash has no key, so this does nothing.</remarks>
+    public void GenerateSettings()
+    {
+    }
+
+    /// <inheritdoc />
     public override string ToString() => CipherName;
 }

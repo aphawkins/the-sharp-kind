@@ -57,6 +57,8 @@ public class CaesarSymmetricTests
     [Theory]
     [InlineData("")]
     [InlineData("Hello World")]
+    [InlineData(" 3")] // White space
+    [InlineData("3 ")] // White space
     public void KeyIncorrectFormat(string rightShift)
     {
         byte[] key = Encoding.Unicode.GetBytes(rightShift);

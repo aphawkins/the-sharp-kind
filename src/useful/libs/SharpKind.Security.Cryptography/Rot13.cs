@@ -26,4 +26,10 @@ public sealed class Rot13 : ICipher
 
     /// <inheritdoc />
     public override string ToString() => CipherName;
+
+    /// <inheritdoc />
+    /// <remarks>ROT13 always rotates by 13 and has no key, so this does nothing.</remarks>
+    public void GenerateSettings()
+    {
+    }
 }

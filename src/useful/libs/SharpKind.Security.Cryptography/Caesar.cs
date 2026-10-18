@@ -44,7 +44,7 @@ public sealed class Caesar(ICaesarSettings settings) : ICipher
     /// <summary>
     /// Generates random settings.
     /// </summary>
-    public void GenerateSettings() => Settings = CaesarSettingsGenerator.Generate() with { };
+    public void GenerateSettings() => Settings = CaesarSettingsGenerator.Generate();
 
     /// <inheritdoc />
     public override string ToString() => CipherName;

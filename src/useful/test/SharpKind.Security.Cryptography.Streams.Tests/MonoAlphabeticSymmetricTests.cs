@@ -106,14 +106,13 @@ public class MonoAlphabeticSymmetricTests
     public void KeyGenerateCorrectness()
     {
         using SymmetricAlgorithm cipher = new MonoAlphabeticSymmetric();
-        string keyString;
         for (int i = 0; i < 100; i++)
         {
             cipher.GenerateKey();
-            keyString = Encoding.Unicode.GetString(cipher.Key);
+            string[] parts = Encoding.Unicode.GetString(cipher.Key).Split('|');
 
-            // How to test for correctness?
-            Assert.NotNull(keyString);
+            // The substitutions are a permutation of the character set.
+            Assert.Equal(parts[0], new string([.. parts[1].Order()]));
         }
     }
 

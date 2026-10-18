@@ -85,7 +85,7 @@ public sealed class Enigma : ICipher
     /// </summary>
     public void GenerateSettings()
     {
-        Settings = EnigmaSettingsGenerator.Generate() with { };
+        Settings = EnigmaSettingsGenerator.Generate();
         _initialRotorSettings = CaptureRotorSettings(Settings);
     }
 

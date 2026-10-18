@@ -22,13 +22,17 @@ internal static class CryptoStreamHelper
     {
         using MemoryStream output = new();
 
+        // Encode the whole text first, so that a chunk can end between the two halves of a surrogate pair.
+        byte[] bytes = Encoding.Unicode.GetBytes(text);
+        int padding = paddingBefore * 2;
+
         using (CryptoStream crypto = new(output, transform, CryptoStreamMode.Write, leaveOpen: true))
         {
-            for (int i = 0; i < text.Length; i += chunkLength)
+            for (int i = 0; i < bytes.Length; i += chunkLength * 2)
             {
-                string chunk = string.Concat(new string('?', paddingBefore), text.AsSpan(i, Math.Min(chunkLength, text.Length - i)));
-                byte[] bytes = Encoding.Unicode.GetBytes(chunk);
-                crypto.Write(bytes, paddingBefore * 2, bytes.Length - (paddingBefore * 2));
+                int count = Math.Min(chunkLength * 2, bytes.Length - i);
+                byte[] buffer = [.. Encoding.Unicode.GetBytes(new string('?', paddingBefore)), .. bytes.AsSpan(i, count)];
+                crypto.Write(buffer, padding, count);
             }
         }
 

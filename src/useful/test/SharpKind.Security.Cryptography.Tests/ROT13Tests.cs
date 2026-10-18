@@ -32,6 +32,15 @@ public class ROT13Tests
     }
 
     [Fact]
+    public void GenerateSettingsChangesNothing()
+    {
+        // ROT13 always rotates by 13, so there is nothing to generate.
+        Rot13 cipher = new();
+        cipher.GenerateSettings();
+        Assert.Equal("NOP", cipher.Encrypt("ABC"));
+    }
+
+    [Fact]
     public void Name()
     {
         Rot13 cipher = new();

@@ -93,6 +93,36 @@ public class MonoAlphabeticSettingsTests
     }
 
     [Fact]
+    public void SubstitutionsBeforeCharacterSet()
+        => Assert.Throws<InvalidOperationException>(() => new MonoAlphabeticSettings()
+        {
+            Substitutions = "BACDEFGHIJKLMNOPQRSTUVWXYZ",
+            CharacterSet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+        });
+
+    [Fact]
+    public void EqualSettings()
+    {
+        MonoAlphabeticSettings initialised = new() { CharacterSet = "ABC", Substitutions = "BAC" };
+        MonoAlphabeticSettings substituted = new() { CharacterSet = "ABC" };
+        substituted.SetSubstitution('A', 'B');
+
+        Assert.Equal(initialised, substituted);
+        Assert.Equal(initialised.GetHashCode(), substituted.GetHashCode());
+        Assert.NotEqual(initialised, new MonoAlphabeticSettings() { CharacterSet = "ABC" });
+    }
+
+    [Theory]
+    [InlineData('­')] // Soft hyphen
+    [InlineData('‍')] // Zero width joiner
+    public void IgnorableCharactersHaveNoSubstitution(char letter)
+    {
+        MonoAlphabeticSettings settings = new() { Substitutions = "BADCFEHGJILKNMPORQTSVUXWZY" };
+        Assert.Equal(letter, settings.GetSubstitution(letter));
+        Assert.Equal(letter, settings.Reverse(letter));
+    }
+
+    [Fact]
     public void Reverse()
     {
         MonoAlphabeticSettings settings = new();

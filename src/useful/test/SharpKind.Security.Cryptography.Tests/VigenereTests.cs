@@ -82,6 +82,14 @@ public class VigenereTests
     }
 
     [Fact]
+    public void EmptyKeywordOnlyUpperCasesLetters()
+    {
+        Vigenere cipher = new(new VigenereSettings());
+        Assert.Equal("ABC é", cipher.Encrypt("abc é"));
+        Assert.Equal("ABC é", cipher.Decrypt("abc é"));
+    }
+
+    [Fact]
     public void Name()
     {
         Vigenere cipher = new(new VigenereSettings());

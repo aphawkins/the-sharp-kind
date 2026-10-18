@@ -32,6 +32,15 @@ public class AtbashTests
     }
 
     [Fact]
+    public void GenerateSettingsChangesNothing()
+    {
+        // Atbash has no key, so there is nothing to generate.
+        Atbash cipher = new();
+        cipher.GenerateSettings();
+        Assert.Equal("ZYX", cipher.Encrypt("ABC"));
+    }
+
+    [Fact]
     public void Name()
     {
         Atbash cipher = new();

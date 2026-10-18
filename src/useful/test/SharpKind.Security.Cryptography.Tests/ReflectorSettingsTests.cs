@@ -56,6 +56,54 @@ public class ReflectorSettingsTests
         Assert.Equal(substitutionCount, settings.SubstitutionCount);
     }
 
+    [Fact]
+    public void TooFewSubstitutions()
+        => Assert.Throws<ArgumentException>(
+            nameof(ReflectorSettings.Substitutions),
+            () => new ReflectorSettings() { CharacterSet = [.. "ABCD"], Substitutions = [.. "BA"] });
+
+    [Fact]
+    public void SubstitutionsBeforeCharacterSet()
+        => Assert.Throws<InvalidOperationException>(() => new ReflectorSettings()
+        {
+            Substitutions = [.. "BACDEFGHIJKLMNOPQRSTUVWXYZ"],
+            CharacterSet = [.. "ABCDEFGHIJKLMNOPQRSTUVWXYZ"],
+        });
+
+    [Fact]
+    public void EqualSettings()
+    {
+        ReflectorSettings initialised = new() { CharacterSet = [.. "ABC"], Substitutions = [.. "BAC"] };
+        ReflectorSettings substituted = new() { CharacterSet = [.. "ABC"] };
+        substituted.SetSubstitution('A', 'B');
+
+        Assert.Equal(initialised, substituted);
+        Assert.Equal(initialised.GetHashCode(), substituted.GetHashCode());
+        Assert.NotEqual(initialised, new ReflectorSettings() { CharacterSet = [.. "ABC"] });
+    }
+
+    [Fact]
+    public void SettingsAreCopied()
+    {
+        char[] characterSet = [.. "ABCD"];
+        char[] substitutions = [.. "BADC"];
+        ReflectorSettings settings = new() { CharacterSet = characterSet, Substitutions = substitutions };
+
+        characterSet[0] = 'Z';
+        substitutions[0] = 'Z';
+
+        Assert.Equal([.. "ABCD"], settings.CharacterSet);
+        Assert.Equal([.. "BADC"], settings.Substitutions);
+    }
+
+    [Fact]
+    public void SettingsAreReadOnly()
+    {
+        ReflectorSettings settings = new();
+        Assert.Throws<NotSupportedException>(() => settings.CharacterSet[0] = 'Z');
+        Assert.Throws<NotSupportedException>(() => settings.Substitutions[0] = 'Z');
+    }
+
     [Theory]
     [InlineData('Ø', 'A')]
     public void GetSubstitutionsInvalid(char from, char to)

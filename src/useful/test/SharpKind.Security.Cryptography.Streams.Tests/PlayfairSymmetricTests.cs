@@ -59,6 +59,18 @@ public class PlayfairSymmetricTests
     }
 
     [Fact]
+    public void GenerateKey()
+    {
+        using SymmetricAlgorithm cipher = new PlayfairSymmetric();
+
+        cipher.GenerateKey();
+
+        Assert.Equal(25, Encoding.Unicode.GetString(cipher.Key).Length);
+        string ciphertext = CipherMethods.SymmetricTransform(cipher, CipherTransformMode.Encrypt, "HIDE THE GOLD");
+        Assert.Equal("HIDETHEGOLDX", CipherMethods.SymmetricTransform(cipher, CipherTransformMode.Decrypt, ciphertext));
+    }
+
+    [Fact]
     public void Name()
     {
         using SymmetricAlgorithm cipher = new PlayfairSymmetric();

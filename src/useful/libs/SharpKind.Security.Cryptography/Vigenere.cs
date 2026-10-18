@@ -38,7 +38,7 @@ public sealed class Vigenere(IVigenereSettings settings) : ICipher
     /// <summary>
     /// Generates random settings.
     /// </summary>
-    public void GenerateSettings() => Settings = VigenereSettingsGenerator.Generate() with { };
+    public void GenerateSettings() => Settings = VigenereSettingsGenerator.Generate();
 
     /// <inheritdoc />
     public override string ToString() => CipherName;
@@ -92,6 +92,7 @@ public sealed class Vigenere(IVigenereSettings settings) : ICipher
     {
         string keyword = Settings.Keyword;
 
-        return string.IsNullOrEmpty(keyword) ? text.ToUpperInvariant() : Crypt(text, keyword, isEncrypting);
+        // An empty keyword shifts by nothing, which a keyword of "A" also does.
+        return Crypt(text, string.IsNullOrEmpty(keyword) ? "A" : keyword, isEncrypting);
     }
 }

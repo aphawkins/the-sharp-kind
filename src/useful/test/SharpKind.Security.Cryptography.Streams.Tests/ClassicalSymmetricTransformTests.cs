@@ -54,6 +54,36 @@ public class ClassicalSymmetricTransformTests
         Assert.Equal(Plaintext, CryptoStreamHelper.Transform(transform, ciphertext, 6));
     }
 
+    [Theory]
+    [MemberData(nameof(Ciphers))]
+    public void SurrogatePairSplitAcrossWrites(string name)
+    {
+        const string text = "A\U0001F600B";
+
+        using SymmetricAlgorithm cipher = Create(name);
+        string ciphertext = CipherMethods.SymmetricTransform(cipher, CipherTransformMode.Encrypt, text);
+        Assert.Equal("\U0001F600", ciphertext.Substring(1, 2));
+
+        // One character at a time writes each half of the pair on its own.
+        using ICryptoTransform transform = cipher.CreateDecryptor();
+        Assert.Equal(text, CryptoStreamHelper.Transform(transform, ciphertext, 1));
+    }
+
+    [Fact]
+    public void NulPassesThrough()
+    {
+        using SymmetricAlgorithm cipher = new AtbashSymmetric();
+        Assert.Equal("Z\0Y", CipherMethods.SymmetricTransform(cipher, CipherTransformMode.Encrypt, "A\0B"));
+    }
+
+    [Fact]
+    public void BufferedSurrogatePairSplitAcrossWrites()
+    {
+        using SymmetricAlgorithm cipher = new HomophonicSymmetric();
+        using ICryptoTransform transform = cipher.CreateEncryptor();
+        Assert.Equal("A\U0001F600B", CryptoStreamHelper.Transform(transform, "a\U0001F600b", 1));
+    }
+
     [Fact]
     public void CaesarWriteOfSeveralCharacters()
     {

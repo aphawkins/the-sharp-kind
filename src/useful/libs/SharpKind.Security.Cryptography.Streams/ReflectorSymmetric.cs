@@ -1,6 +1,5 @@
 // 'SharpKind Libraries' - Andy Hawkins 2023-2026.
 
-using System.Security.Cryptography;
 using System.Text;
 
 namespace SharpKind.Security.Cryptography;
@@ -8,7 +7,7 @@ namespace SharpKind.Security.Cryptography;
 /// <summary>
 /// A reflector MonoAlphabetic cipher. A character encrypts and decrypts back to the same character.
 /// </summary>
-public class ReflectorSymmetric : SymmetricAlgorithm
+public sealed class ReflectorSymmetric : ClassicalSymmetricAlgorithm
 {
     /// <summary>
     /// States how many parts there are in the key.
@@ -18,30 +17,14 @@ public class ReflectorSymmetric : SymmetricAlgorithm
     /// <summary>
     /// The char that separates part of the key.
     /// </summary>
-    private const char KeySeperator = '|';
+    private const char KeySeparator = '|';
 
     /// <summary>
     /// The encoding used by this cipher.
     /// </summary>
     private static readonly Encoding s_encoding = new UnicodeEncoding(false, false);
 
-    private Reflector _algorithm;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="ReflectorSymmetric"/> class.
-    /// </summary>
-    public ReflectorSymmetric()
-    {
-        Reset();
-        _algorithm = new Reflector(new ReflectorSettings());
-    }
-
-    /// <inheritdoc />
-    public override byte[] IV
-    {
-        get => [];
-        set => _ = value;
-    }
+    private Reflector _algorithm = new(new ReflectorSettings());
 
     /// <inheritdoc />
     public override byte[] Key
@@ -51,48 +34,29 @@ public class ReflectorSymmetric : SymmetricAlgorithm
             // CharacterSet|Substitutions
             StringBuilder key = new();
             key.Append([.. _algorithm.Settings.CharacterSet])
-                .Append(KeySeperator)
+                .Append(KeySeparator)
                 .Append([.. _algorithm.Settings.Substitutions]);
             return s_encoding.GetBytes(key.ToString());
         }
 
         set
         {
-            (IList<char> CharacterSet, IList<char> Substitutions) key;
             try
             {
-                key = ParseKey(value);
+                (IList<char> characterSet, IList<char> substitutions) = ParseKey(value);
+                _algorithm = new Reflector(new ReflectorSettings() { CharacterSet = characterSet, Substitutions = substitutions });
             }
             catch (ArgumentException ex)
             {
-                throw new ArgumentException("Argument exception.", nameof(Key), ex);
+                throw new ArgumentException("Argument exception.", nameof(value), ex);
             }
 
-            _algorithm = new Reflector(new ReflectorSettings() { CharacterSet = key.CharacterSet, Substitutions = key.Substitutions });
             base.Key = value;
         }
     }
 
     /// <inheritdoc />
-    public override ICryptoTransform CreateDecryptor(byte[] rgbKey, byte[]? rgbIV)
-    {
-        Key = rgbKey;
-        IV = rgbIV ?? [];
-        return new ClassicalSymmetricTransform(_algorithm, CipherTransformMode.Decrypt);
-    }
-
-    /// <inheritdoc />
-    public override ICryptoTransform CreateEncryptor(byte[] rgbKey, byte[]? rgbIV)
-    {
-        Key = rgbKey;
-        IV = rgbIV ?? [];
-        return new ClassicalSymmetricTransform(_algorithm, CipherTransformMode.Encrypt);
-    }
-
-    /// <inheritdoc />
-    public override void GenerateIV()
-    {
-    }
+    private protected override ICipher Cipher => _algorithm;
 
     /// <inheritdoc />
     public override void GenerateKey()
@@ -100,9 +64,6 @@ public class ReflectorSymmetric : SymmetricAlgorithm
         _algorithm.GenerateSettings();
         KeyValue = Key;
     }
-
-    /// <inheritdoc />
-    public override string ToString() => _algorithm.CipherName;
 
     private static (IList<char> CharacterSet, IList<char> Substitutions) ParseKey(byte[] key)
     {
@@ -115,29 +76,12 @@ public class ReflectorSymmetric : SymmetricAlgorithm
             throw new ArgumentException("Invalid format.", nameof(key));
         }
 
-        string keyString = Encoding.Unicode.GetString(key);
+        string keyString = s_encoding.GetString(key);
 
-        string[] parts = keyString.Split([KeySeperator], StringSplitOptions.None);
+        string[] parts = keyString.Split([KeySeparator], StringSplitOptions.None);
 
         return parts.Length != KeyParts
             ? throw new ArgumentException("Incorrect number of key parts.", nameof(key))
             : ((IList<char> CharacterSet, IList<char> Substitutions))(parts[0].ToCharArray(), parts[1].ToCharArray());
-    }
-
-    private void Reset()
-    {
-#pragma warning disable CA5358 // Do Not Use Unsafe Cipher Modes - this cipher is inherently unsafe
-        ModeValue = CipherMode.ECB;
-        PaddingValue = PaddingMode.None;
-        KeySizeValue = 16;
-        BlockSizeValue = 16;
-        FeedbackSizeValue = 16;
-        LegalBlockSizesValue = new KeySizes[1];
-        LegalBlockSizesValue[0] = new KeySizes(16, 16, 16);
-        LegalKeySizesValue = new KeySizes[1];
-        LegalKeySizesValue[0] = new KeySizes(0, int.MaxValue, 16);
-
-        KeyValue = [];
-        IVValue = [];
     }
 }

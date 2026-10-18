@@ -108,6 +108,44 @@ public class HomophonicTests
     }
 
     [Fact]
+    public void EqualSettings()
+    {
+        Assert.Equal(Settings, Settings);
+        Assert.Equal(Settings.GetHashCode(), Settings.GetHashCode());
+        Assert.NotEqual(Settings, new HomophonicSettings());
+    }
+
+    [Fact]
+    public void SettingsAreCopied()
+    {
+        Dictionary<char, IReadOnlyList<string>> homophones = new() { ['A'] = ["X"] };
+        HomophonicSettings settings = new(homophones);
+
+        homophones['B'] = ["Y"];
+
+        Assert.Single(settings.Homophones);
+    }
+
+    [Fact]
+    public void GenerateSettings()
+    {
+        Homophonic cipher = new(Settings);
+        cipher.GenerateSettings();
+
+        // The same symbols are shared out, and each character keeps its number of them.
+        Assert.Equal(
+            Settings.Homophones.Values.SelectMany(static symbols => symbols).Order(StringComparer.Ordinal),
+            cipher.Settings.Homophones.Values.SelectMany(static symbols => symbols).Order(StringComparer.Ordinal));
+
+        foreach ((char plain, IReadOnlyList<string> symbols) in Settings.Homophones)
+        {
+            Assert.Equal(symbols.Count, cipher.Settings.Homophones[plain].Count);
+        }
+
+        Assert.Equal("HELLO, WORLD!", cipher.Decrypt(cipher.Encrypt("Hello, World!")));
+    }
+
+    [Fact]
     public void Name()
     {
         Homophonic cipher = new(new HomophonicSettings());

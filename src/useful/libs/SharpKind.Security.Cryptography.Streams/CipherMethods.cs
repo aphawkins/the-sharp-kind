@@ -10,9 +10,20 @@ namespace SharpKind.Security.Cryptography;
 /// </summary>
 public static class CipherMethods
 {
+    private const int BufferLength = 4096;
+
+    /// <summary>
+    /// The encoding the transforms expect.
+    /// </summary>
+    private static readonly Encoding s_encoding = new UnicodeEncoding(false, false);
+
     /// <summary>
     /// Encrypts or decrypts a stream.
     /// </summary>
+    /// <remarks>
+    /// The input is read as UTF-16, unless it starts with a byte order mark for another encoding. The output is
+    /// UTF-16. Both streams are left open.
+    /// </remarks>
     /// <param name="cipher">The cipher to use.</param>
     /// <param name="transformMode">Defines the way in which the cipher will work.</param>
     /// <param name="input">The input stream.</param>
@@ -20,21 +31,25 @@ public static class CipherMethods
     public static void SymmetricTransform(SymmetricAlgorithm cipher, CipherTransformMode transformMode, Stream input, Stream output)
     {
         ArgumentNullException.ThrowIfNull(cipher);
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(output);
 
         using ICryptoTransform transformer = GetTransformer(cipher, transformMode);
-        using StreamReader reader = new(input, new UnicodeEncoding());
-        reader.Peek();
+        using StreamReader reader = new(input, s_encoding, detectEncodingFromByteOrderMarks: true, leaveOpen: true);
+        using CryptoStream crypto = new(output, transformer, CryptoStreamMode.Write, leaveOpen: true);
 
-        // Create a CryptoStream using the FileStream and the passed key and initialization vector (IV).
-        using CryptoStream crypto = new(output, transformer, CryptoStreamMode.Write);
-        byte[] bytes;
+        // The encoder keeps the first half of a surrogate pair that ends a read, so the pair is not split.
+        Encoder encoder = s_encoding.GetEncoder();
+        char[] chars = new char[BufferLength];
+        byte[] bytes = new byte[s_encoding.GetMaxByteCount(BufferLength)];
+        int read;
 
-        // The cipher is expecting Unicode
-        while (!reader.EndOfStream)
+        while ((read = reader.Read(chars, 0, chars.Length)) > 0)
         {
-            bytes = reader.CurrentEncoding.GetBytes([(char)reader.Read()]);
-            crypto.Write(bytes, 0, bytes.Length);
+            crypto.Write(bytes, 0, encoder.GetBytes(chars, 0, read, bytes, 0, flush: false));
         }
+
+        crypto.Write(bytes, 0, encoder.GetBytes(chars, 0, 0, bytes, 0, flush: true));
     }
 
     /// <summary>
@@ -44,26 +59,21 @@ public static class CipherMethods
     /// <param name="transformMode">Defines the way in which the cipher will work.</param>
     /// <param name="input">The input text.</param>
     /// <returns>The output text.</returns>
-    /// <exception cref="ArgumentNullException"> Thrown if <paramref name="cipher" /> is null.</exception>
-    /// <exception cref="NotImplementedException"> Thrown sometimes.</exception>
+    /// <exception cref="ArgumentNullException"> Thrown if <paramref name="cipher" /> or <paramref name="input"/> is null.</exception>
     public static string SymmetricTransform(SymmetricAlgorithm cipher, CipherTransformMode transformMode, string input)
     {
         ArgumentNullException.ThrowIfNull(cipher);
+        ArgumentNullException.ThrowIfNull(input);
 
-        Encoding encoding = new UnicodeEncoding();
-
-        using ICryptoTransform cryptoTransform = GetTransformer(cipher, transformMode);
-
-        // Encrypt the data.
-        using MemoryStream inputStream = new(encoding.GetBytes(input));
+        using ICryptoTransform transformer = GetTransformer(cipher, transformMode);
         using MemoryStream outputStream = new();
-        SymmetricTransform(cipher, transformMode, inputStream, outputStream);
 
-        // Remove padding on odd length bytes
-        byte[] encrypted = cryptoTransform.OutputBlockSize % 2 != 0 ? TrimArray(outputStream.ToArray()) : outputStream.ToArray();
-        char[] encryptedChars = encoding.GetChars(encrypted);
+        using (CryptoStream crypto = new(outputStream, transformer, CryptoStreamMode.Write, leaveOpen: true))
+        {
+            crypto.Write(s_encoding.GetBytes(input));
+        }
 
-        return new string(encryptedChars);
+        return s_encoding.GetString(outputStream.ToArray());
     }
 
     /// <summary>
@@ -82,26 +92,5 @@ public static class CipherMethods
 
         // Get an decryptor.
         return cipher.CreateDecryptor();
-    }
-
-    // Resize the dimensions of the array to a size that contains only valid bytes.
-    private static byte[] TrimArray(byte[] targetArray)
-    {
-        int i = 0;
-
-        foreach (byte b in targetArray)
-        {
-            if ($"{b}".Equals("0", StringComparison.OrdinalIgnoreCase))
-            {
-                break;
-            }
-
-            i++;
-        }
-
-        // Create a new array with the number of valid bytes.
-        byte[] returnedArray = new byte[i];
-        Array.Copy(targetArray, returnedArray, i);
-        return returnedArray;
     }
 }

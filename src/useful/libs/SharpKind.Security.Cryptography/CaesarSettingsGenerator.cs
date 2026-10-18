@@ -10,11 +10,5 @@ namespace SharpKind.Security.Cryptography;
 internal static class CaesarSettingsGenerator
 {
     public static CaesarSettings Generate()
-    {
-        byte[] randomNumber = new byte[1];
-        using RandomNumberGenerator rng = RandomNumberGenerator.Create();
-        rng.GetBytes(randomNumber);
-        int rightShift = randomNumber[0] % 26;
-        return new CaesarSettings() { RightShift = rightShift };
-    }
+        => new() { RightShift = RandomNumberGenerator.GetInt32(Alphabet.Length) };
 }

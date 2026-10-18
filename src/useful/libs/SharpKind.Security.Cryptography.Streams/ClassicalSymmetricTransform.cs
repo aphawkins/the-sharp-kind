@@ -5,15 +5,21 @@ using System.Text;
 
 namespace SharpKind.Security.Cryptography;
 
+/// <summary>
+/// Transforms one UTF-16 character at a time. A surrogate pair is held until both halves arrive,
+/// so that the cipher sees the whole character.
+/// </summary>
 internal sealed class ClassicalSymmetricTransform : ICryptoTransform
 {
-    private const int BlockSize = 2;  // 2 for Unicode, 1 for UTF8
+    private const int CharSize = 2;
     private readonly CipherTransformMode _transformMode;
-    private readonly Encoding _encoding = new UnicodeEncoding();
+    private readonly Encoding _encoding = new UnicodeEncoding(false, false);
+    private readonly Decoder _decoder;
 
     internal ClassicalSymmetricTransform(ICipher cipher, CipherTransformMode transformMode)
     {
         _transformMode = transformMode;
+        _decoder = _encoding.GetDecoder();
         Cipher = cipher;
     }
 
@@ -21,31 +27,18 @@ internal sealed class ClassicalSymmetricTransform : ICryptoTransform
 
     public bool CanTransformMultipleBlocks => false;
 
-    public int InputBlockSize => BlockSize;
-
-    public int OutputBlockSize => BlockSize;
-
-    public ICipher Cipher { get; }
+    public int InputBlockSize => CharSize;
 
     /// <summary>
-    /// Clean up any resources being used.
+    /// Gets the output block size, which is room for a surrogate pair.
     /// </summary>
-    /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
-    public static void Dispose(bool disposing)
-    {
-        if (disposing)
-        {
-            // free managed resources
-        }
+    public int OutputBlockSize => CharSize * 2;
 
-        // free native resources if there are any.
-    }
+    public ICipher Cipher { get; }
 
     /// <inheritdoc />
     public void Dispose()
     {
-        Dispose(true);
-        GC.SuppressFinalize(this);
     }
 
     /// <inheritdoc />
@@ -66,7 +59,7 @@ internal sealed class ClassicalSymmetricTransform : ICryptoTransform
             throw new ArgumentException("Input buffer not long enough.", nameof(inputBuffer));
         }
 
-        byte[] outputBytes = Transform(inputBuffer, inputOffset, inputCount);
+        byte[] outputBytes = Transform(inputBuffer, inputOffset, inputCount, flush: false);
 
         // The cipher drops some characters, such as the Enigma's digits.
         int count = Math.Min(outputBytes.Length, OutputBlockSize);
@@ -79,12 +72,21 @@ internal sealed class ClassicalSymmetricTransform : ICryptoTransform
     {
         ArgumentNullException.ThrowIfNull(inputBuffer);
 
-        return inputCount <= 0 ? [] : Transform(inputBuffer, inputOffset, inputCount);
+        return Transform(inputBuffer, inputOffset, Math.Max(inputCount, 0), flush: true);
     }
 
-    private byte[] Transform(byte[] inputBuffer, int inputOffset, int inputCount)
+    private byte[] Transform(byte[] inputBuffer, int inputOffset, int inputCount, bool flush)
     {
-        string inputString = _encoding.GetString(inputBuffer, inputOffset, inputCount);
+        char[] input = new char[_decoder.GetCharCount(inputBuffer, inputOffset, inputCount, flush)];
+        _ = _decoder.GetChars(inputBuffer, inputOffset, inputCount, input, 0, flush);
+
+        if (input.Length == 0)
+        {
+            // Half of a surrogate pair, which waits for the other half.
+            return [];
+        }
+
+        string inputString = new(input);
 
         string outputString = _transformMode switch
         {
@@ -93,6 +95,6 @@ internal sealed class ClassicalSymmetricTransform : ICryptoTransform
             _ => throw new CryptographicException($"Unsupported transform mode {_transformMode}."),
         };
 
-        return string.IsNullOrEmpty(outputString) || outputString == "\0" ? [] : _encoding.GetBytes(outputString);
+        return _encoding.GetBytes(outputString);
     }
 }
