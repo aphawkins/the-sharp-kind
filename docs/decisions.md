@@ -162,6 +162,8 @@ like is. Music on that tier is a presentation choice like any other.
 
 ## Resolved (2026-09-17) â€” the character grid belongs to the screen, not to the base view
 
+<a id="resolved-2026-09-17--the-character-grid-belongs-to-the-screen-not-to-the-base-view"></a>
+
 Supersedes the third bullet of
 [2026-07-31](#resolved-2026-07-31--viewlayout-is-the-viewport-and-8-bit-text-is-on-a-grid),
 which put `Row(n)`/`Column(n)` on `BaseView8Bit`. Everything else in that
@@ -859,6 +861,8 @@ Consequences:
 
 ## Resolved (2026-08-01) â€” the 16-bit tier is a 12-bit, 4096-colour machine
 
+<a id="resolved-2026-08-01--the-16-bit-tier-is-a-12-bit-4096-colour-machine"></a>
+
 The 2026-07-30 decision that renamed the 16-bit palette to web colours is
 **backed out**. A web colour name is only worth having if the value really
 is that colour, and the constraint that actually governs this tier is not
@@ -932,6 +936,8 @@ Consequences:
   against vector chrome, and inherits nothing from these two.
 
 ## Resolved (2026-07-31) â€” `ViewLayout` is the viewport, and 8-bit text is on a grid
+
+<a id="resolved-2026-07-31--viewlayout-is-the-viewport-and-8-bit-text-is-on-a-grid"></a>
 
 > Superseded in part by
 > [2026-09-17](#resolved-2026-09-17--the-character-grid-belongs-to-the-screen-not-to-the-base-view):
