@@ -56,7 +56,7 @@ public static class CaesarCryptanalysis
                 plainLetters[i] = (cipherLetters[i] - shift + EnglishLetters.Count) % EnglishLetters.Count;
             }
 
-            double score = Quadgrams.Score(plainLetters);
+            double score = Quadgrams.English.Score(plainLetters);
 
             if (score > bestScore)
             {
@@ -83,7 +83,7 @@ public static class CaesarCryptanalysis
             cipherFrequencies[letter] += 100.0 / cipherLetters.Length;
         }
 
-        IReadOnlyList<double> letterFrequencies = Quadgrams.LetterFrequencies;
+        IReadOnlyList<double> letterFrequencies = Quadgrams.English.LetterFrequencies;
         double bestDifference = double.MaxValue;
         int bestShift = 0;
 

@@ -149,9 +149,10 @@ internal static class SinghKeys
     };
 
     /// <summary>
-    /// Gets the stage 8 Enigma settings, built from the strings above.
+    /// Gets the stage 8 Enigma settings, as the strings above. They are not built into Enigma settings
+    /// here, so that the projects that link this file need not depend on Enigma.
     /// </summary>
     /// <returns>The settings.</returns>
-    internal static EnigmaSettings Stage8Enigma()
-        => EnigmaFactory.Settings(Stage8Reflector, Stage8Wheels, Stage8Rings, Stage8Plugs, Stage8MessageKey);
+    internal static (string Reflector, string Wheels, string Rings, string Plugs, string MessageKey) Stage8Enigma()
+        => (Stage8Reflector, Stage8Wheels, Stage8Rings, Stage8Plugs, Stage8MessageKey);
 }

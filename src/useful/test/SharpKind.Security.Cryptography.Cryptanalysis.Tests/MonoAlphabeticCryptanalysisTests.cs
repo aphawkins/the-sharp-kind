@@ -7,15 +7,6 @@ namespace SharpKind.Security.Cryptography.Cryptanalysis.Tests;
 
 public class MonoAlphabeticCryptanalysisTests
 {
-    [Fact]
-    public void CrackSinghStage1()
-    {
-        IMonoAlphabeticSettings settings = MonoAlphabeticCryptanalysis.Crack(SinghCiphertexts.Stage1);
-        MonoAlphabetic cipher = new(settings);
-
-        Assert.Equal(SinghPlaintexts.Stage1, cipher.Decrypt(SinghCiphertexts.Stage1));
-    }
-
     [Theory]
     [InlineData("")]
     [InlineData("!!! ...")]

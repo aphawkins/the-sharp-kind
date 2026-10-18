@@ -6,32 +6,59 @@ using System.IO.Compression;
 namespace SharpKind.Security.Cryptography.Cryptanalysis;
 
 /// <summary>
-/// English quadgram statistics, used to score how English a run of letters looks.
+/// Quadgram statistics for a language, used to score how much a run of letters looks like it.
 /// </summary>
 /// <remarks>
-/// The counts are from practicalcryptography.com. Each score is the base 10 log of the
+/// The English counts are from practicalcryptography.com. The Italian counts are from Manzoni's
+/// <i>I promessi sposi</i> (Project Gutenberg 45334), with the accents removed. Each score is the base 10 log of the
 /// quadgram's probability. A quadgram that never occurs scores as if it occurred 0.01 times.
 /// The letter frequencies are derived from the same counts, by the first letter of each quadgram.
 /// </remarks>
-internal static class Quadgrams
+internal sealed class Quadgrams
 {
     private const int Size = EnglishLetters.Count * EnglishLetters.Count * EnglishLetters.Count * EnglishLetters.Count;
 
-    private static readonly Lazy<(float[] Scores, double[] LetterFrequencies)> s_tables = new(Load);
+    private readonly Lazy<(float[] Scores, double[] LetterFrequencies)> _tables;
+
+    private Quadgrams(string resource) => _tables = new(() => Load(resource));
 
     /// <summary>
-    /// Gets the relative frequency, as a percentage, of each letter A-Z in English text.
+    /// Gets the English statistics.
     /// </summary>
-    internal static IReadOnlyList<double> LetterFrequencies => s_tables.Value.LetterFrequencies;
+    internal static Quadgrams English { get; } = new("english_quadgrams.txt.gz");
+
+    /// <summary>
+    /// Gets the Italian statistics.
+    /// </summary>
+    internal static Quadgrams Italian { get; } = new("italian_quadgrams.txt.gz");
+
+    /// <summary>
+    /// Gets the relative frequency, as a percentage, of each letter A-Z in the language.
+    /// </summary>
+    internal IReadOnlyList<double> LetterFrequencies => _tables.Value.LetterFrequencies;
+
+    /// <summary>
+    /// Gets the statistics for a language.
+    /// </summary>
+    /// <param name="language">The language.</param>
+    /// <returns>The statistics.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">The language has no statistics.</exception>
+    internal static Quadgrams For(Language language)
+        => language switch
+        {
+            Language.English => English,
+            Language.Italian => Italian,
+            _ => throw new ArgumentOutOfRangeException(nameof(language), language, "Unknown language."),
+        };
 
     /// <summary>
     /// Scores a run of letters.
     /// </summary>
     /// <param name="letters">The letters, each a zero based position in the alphabet.</param>
-    /// <returns>The sum of the log probabilities of every quadgram. Higher is more English.</returns>
-    internal static double Score(ReadOnlySpan<int> letters)
+    /// <returns>The sum of the log probabilities of every quadgram. Higher is more like the language.</returns>
+    internal double Score(ReadOnlySpan<int> letters)
     {
-        float[] scores = s_tables.Value.Scores;
+        float[] scores = _tables.Value.Scores;
         double score = 0;
 
         for (int i = 0; i + 3 < letters.Length; i++)
@@ -46,13 +73,13 @@ internal static class Quadgrams
         return score;
     }
 
-    private static (float[] Scores, double[] LetterFrequencies) Load()
+    private static (float[] Scores, double[] LetterFrequencies) Load(string name)
     {
         long[] counts = new long[Size];
         long[] letterCounts = new long[EnglishLetters.Count];
         long total = 0;
 
-        using (Stream resource = typeof(Quadgrams).Assembly.GetManifestResourceStream("english_quadgrams.txt.gz")
+        using (Stream resource = typeof(Quadgrams).Assembly.GetManifestResourceStream(name)
             ?? throw new InvalidOperationException("The quadgram resource is missing."))
         using (GZipStream gzip = new(resource, CompressionMode.Decompress))
         using (StreamReader reader = new(gzip))

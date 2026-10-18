@@ -26,7 +26,7 @@ edition has Swedish), so the English ciphertext here is the English edition's.
 |---|---|---|---|---|
 | 1 | Monoalphabetic substitution | English: Daniel 5, Belshazzar's feast | OTHELLO | Solved and cracked: `MonoAlphabetic`, `MonoAlphabeticCryptanalysis` |
 | 2 | Caesar shift (7) | Latin: Appius Claudius Caecus | NEUTRON | Solved and cracked: `Caesar`, `CaesarCryptanalysis` |
-| 3 | Homophonic substitution | Italian: Dante, Inferno XXVI | EQUATOR | Solved: `Homophonic` |
+| 3 | Homophonic substitution | Italian: Dante, Inferno XXVI | EQUATOR | Solved and cracked: `Homophonic`, `HomophonicCryptanalysis` |
 | 4 | Vigenere (keyword SCUBA) | French: Baudelaire, *L'Albatros* | TRAJAN | Solved: `Vigenere` |
 | 5 | Book cipher | Spanish | ILLIAD | Solved: `BookCipher` |
 | 6 | Playfair | English | MOLYBDENUM | Solved: `Playfair` |
@@ -47,14 +47,14 @@ stage 8 plaintexts are written without punctuation too. The stage 7 plaintext ke
 
 The book says it is a substitution cipher, and the word breaks are kept, so short common words give it away. The
 plaintext is the book of Daniel, chapter 5, in the King James wording, ending "The first codeword is Othello".
-`MonoAlphabeticCryptanalysisTests` cracks it with no key. `MonoAlphabeticCryptanalysis` hill-climbs over keys and
+`SinghCipherChallengeCryptanalysisTests` cracks it with no key. `MonoAlphabeticCryptanalysis` hill-climbs over keys and
 scores each decryption by English quadgram statistics (from practicalcryptography.com).
 
 ### Stage 2: Caesar shift
 
 Shift 7. The plaintext is *Faber est suae quisque fortunae* (every man is the maker of his own fortune), attributed
 to Appius Claudius Caecus, then *dictum arcanum est neutron*. The cryptanalysis test in
-`CaesarCryptanalysisTests` (`SharpKind.Security.Cryptography.Cryptanalysis.Tests`) finds the shift with no key, by
+`SinghCipherChallengeCryptanalysisTests` (`SharpKind.Security.Cryptography.Cryptanalysis.Tests`) finds the shift with no key, by
 scoring each shift's decryption by English quadgram statistics, and decrypts to the plaintext. Latin scores well
 enough against English quadgrams for the right shift to stand out.
 
@@ -104,6 +104,13 @@ The solvers lost hours assuming that the cipher was diabolical, with digrams and
 was to notice that M, G, C, Z, N and B each appear only on a few lines but are very frequent there, which showed
 that they were one letter, and the most common one, at about 10%. They then tried Italian, found the first words
 in a search engine, and named Dante.
+
+`SinghCipherChallengeCryptanalysisTests` cracks it with no key. `HomophonicCryptanalysis` takes the most frequent symbol as
+the word break, since it is almost never doubled, then hill-climbs over keys that give each other symbol a letter,
+several symbols allowed to share one. Each key is scored by Italian quadgram statistics, built from Manzoni's
+*I promessi sposi* (Project Gutenberg 45334) so that the plaintext is not in its own statistics. Quadgrams alone
+drive the climb to keys that make every symbol E, A or I, so the score also takes off the divergence of the letter
+frequencies from Italian. English quadgrams do not work: the climb finds English words in the Italian.
 
 `Homophonic` decrypts this exactly. It cannot reproduce Singh's ciphertext by encrypting, because it takes the
 homophones for A in turn, one for each use, where Singh used one for a whole run of lines.

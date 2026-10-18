@@ -117,6 +117,6 @@ public static class MonoAlphabeticCryptanalysis
             plainLetters[i] = key[cipherLetters[i]];
         }
 
-        return Quadgrams.Score(plainLetters);
+        return Quadgrams.English.Score(plainLetters);
     }
 }

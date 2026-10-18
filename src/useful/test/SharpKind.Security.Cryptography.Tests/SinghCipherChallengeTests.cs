@@ -115,7 +115,8 @@ public class SinghCipherChallengeTests
     {
         const string ciphertext = SinghCiphertexts.Stage8;
 
-        EnigmaSettings settings = SinghKeys.Stage8Enigma();
+        (string reflector, string wheels, string rings, string plugs, string messageKey) = SinghKeys.Stage8Enigma();
+        EnigmaSettings settings = EnigmaFactory.Settings(reflector, wheels, rings, plugs, messageKey);
         IEnigmaRotors rotors = settings.Rotors;
 
         const string plaintext = SinghPlaintexts.Stage8;

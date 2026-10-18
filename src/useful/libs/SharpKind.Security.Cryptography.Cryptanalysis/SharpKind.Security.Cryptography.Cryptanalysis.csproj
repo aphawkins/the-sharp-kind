@@ -2,12 +2,14 @@
 
   <PropertyGroup>
     <PackageId>SharpKind.Security.Cryptography.Cryptanalysis</PackageId>
-    <Description>Cryptanalysis of the SharpKind classical ciphers: Caesar by letter frequencies, and monoalphabetic substitution by an English quadgram hill climb.</Description>
+    <Description>Cryptanalysis of the SharpKind classical ciphers: Caesar by letter frequencies, monoalphabetic substitution by an English quadgram hill climb, and homophonic substitution by an English or Italian quadgram hill climb.</Description>
   </PropertyGroup>
 
   <ItemGroup>
     <!-- English quadgram counts from practicalcryptography.com, gzipped. -->
     <EmbeddedResource Include="english_quadgrams.txt.gz" LogicalName="english_quadgrams.txt.gz" />
+    <!-- Italian quadgram counts from Manzoni, I promessi sposi (Project Gutenberg 45334), gzipped. -->
+    <EmbeddedResource Include="italian_quadgrams.txt.gz" LogicalName="italian_quadgrams.txt.gz" />
   </ItemGroup>
 
   <ItemGroup>
