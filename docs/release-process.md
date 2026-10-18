@@ -9,10 +9,10 @@ else.
 
 - `main` is green — check the [Build and Package](https://github.com/aphawkins/the-sharp-kind/actions/workflows/build-and-package.yml)
   workflow, or run `dotnet test` locally.
-- Both games have been smoke-tested live if anything in `src/useful/` or
-  either game loop changed (see the backlog's "Definition of done").
-- [backlog-roadmap.md](backlog-roadmap.md) has no open **Must** items — both
-  games are expected to work before a tag goes out.
+- All three games have been smoke-tested live if anything in `src/useful/` or
+  a game loop changed (see the backlog's "Definition of done").
+- [backlog-roadmap.md](backlog-roadmap.md) has no open **Must** items — every
+  game is expected to work before a tag goes out.
 - Decide the version number (see [Choosing the version](#choosing-the-version)
   below) and finish [release-notes.md](release-notes.md): rename its
   top `## Unreleased` heading to the real version and today's date. The
@@ -24,11 +24,14 @@ else.
 ## 2. Tag and push
 
 ```bash
-git tag -a v1.1.0 -m "v1.1.0"
-git push origin v1.1.0
+git tag -a v2.0.0 -m "v2.0.0"
+git push origin v2.0.0
 ```
 
-Use an annotated tag (`-a`), not a lightweight one — `git tag v1.1.0` on its
+Use the full `MAJOR.MINOR.PATCH` (`v2.0.0`, not `v2.0`): MinVer ignores a tag
+that is not SemVer, and the build would fall back to a pre-release version.
+
+Use an annotated tag (`-a`), not a lightweight one — `git tag v2.0.0` on its
 own works with MinVer too, but an annotated tag carries a message and a date,
 which is what you want on something permanent. The tag name is the whole
 input: no file in the repo declares the version, so there is nothing else to
@@ -44,15 +47,21 @@ It runs unattended and, in order:
    onto every project in the solution.
 2. **Packs and publishes the `SharpKind.*` libraries to NuGet.org**, every
    packable project under `src/useful/libs/`, authenticating via Trusted
-   Publishing (OIDC) — no API key is stored in the repo. `EliteSharp` and
-   `StuntCarRacerSharp` are apps, not packages, and are never packed.
-3. **Publishes both games self-contained** for `win-x64`, `linux-x64` and
-   `linux-arm64` (six builds total), strips `.xml`/`.ico` files, and zips
+   Publishing (OIDC) — no API key is stored in the repo. `EliteSharp`,
+   `StuntCarRacerSharp` and `BubbleBobbleSharp` are apps, not packages, and
+   are never packed.
+3. **Publishes all three games self-contained** for `win-x64`, `linux-x64` and
+   `linux-arm64` (nine builds total), strips `.xml`/`.ico` files, and zips
    each `app-rid` combination as `<app>-<rid>-<tag>.zip`.
-4. **Creates the GitHub Release**, attaching the six zips, with
+4. **Builds the `SharpKind.Cryptography` PowerShell module** and zips it as
+   `SharpKind.Cryptography-<tag>.zip`.
+5. **Creates the GitHub Release**, attaching the ten zips, with
    `generate_release_notes: true` (GitHub's own auto-summary of commits/PRs
    since the last tag) plus a fixed line noting Stunt Car Racer is a preview
    build.
+6. **Publishes the PowerShell module to the PowerShell Gallery**, with the
+   `PSGALLERY_API_KEY` repository secret. Check that the secret is set and
+   not expired before you tag.
 
 ## 4. After the tag lands
 
@@ -63,12 +72,13 @@ copy. Once the workflow finishes:
 - Open the new [release](https://github.com/aphawkins/the-sharp-kind/releases)
   and replace (or prepend to) its description with the matching version
   section copied from [release-notes.md](release-notes.md).
-- Confirm all six zips are attached and the
+- Confirm all ten zips are attached and the
   [Release workflow run](https://github.com/aphawkins/the-sharp-kind/actions/workflows/release.yml)
   is green.
 - Confirm the new package versions show up on
   [NuGet.org](https://www.nuget.org/profiles/Hawky) (can take a few minutes
-  to index).
+  to index), and that the module shows up on the
+  [PowerShell Gallery](https://www.powershellgallery.com/packages/SharpKind.Cryptography).
 - Open a fresh `## Unreleased` section at the top of
   [release-notes.md](release-notes.md), above the version just dated. Do this
   even though there is nothing to put in it yet: without it the next fix has
@@ -94,15 +104,15 @@ copy. Once the workflow finishes:
   applies to them like any other public library, not just to the games.
 
 [release-notes.md](release-notes.md)'s `## Unreleased` section is the source of
-truth for what to weigh: read down its Features/Fixes for each of Elite,
-Stunt Car Racer and the engine before picking a number, rather than
+truth for what to weigh: read down its Features/Fixes for each game,
+the engine and the cryptography libraries before picking a number, rather than
 guessing from memory.
 
 ## If something goes wrong
 
 - **Tag pushed too early / wrong version**: delete it before anything
   downstream depends on it existing —
-  `git tag -d v1.1.0 && git push origin :refs/tags/v1.1.0` — fix
+  `git tag -d v2.0.0 && git push origin :refs/tags/v2.0.0` — fix
   `release-notes.md`, and re-tag.
 - **The workflow ran and published to NuGet.org before you noticed a
   problem**: don't delete or re-push the tag. NuGet.org refuses to accept

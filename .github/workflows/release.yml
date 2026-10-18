@@ -61,6 +61,15 @@ jobs:
       - name: Publish StuntCarRacerSharp linux-arm64
         run: dotnet publish ./src/scr/apps/StuntCarRacerSharp/StuntCarRacerSharp.csproj /p:PublishProfile=PublishProfileLinuxArm64
 
+      - name: Publish BubbleBobbleSharp win-x64
+        run: dotnet publish ./src/bb/apps/BubbleBobbleSharp/BubbleBobbleSharp.csproj /p:PublishProfile=PublishProfileWindows
+
+      - name: Publish BubbleBobbleSharp linux-x64
+        run: dotnet publish ./src/bb/apps/BubbleBobbleSharp/BubbleBobbleSharp.csproj /p:PublishProfile=PublishProfileLinux
+
+      - name: Publish BubbleBobbleSharp linux-arm64
+        run: dotnet publish ./src/bb/apps/BubbleBobbleSharp/BubbleBobbleSharp.csproj /p:PublishProfile=PublishProfileLinuxArm64
+
       - name: Delete superfluous files
         run: find ./publish \( -name "*.xml" -o -name "*.ico" \) -type f -delete
 
