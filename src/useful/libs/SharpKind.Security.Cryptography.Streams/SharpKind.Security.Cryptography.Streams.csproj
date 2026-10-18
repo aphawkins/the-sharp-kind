@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <PackageId>SharpKind.Security.Cryptography.Streams</PackageId>
-    <Description>SymmetricAlgorithm/Stream adapters over the SharpKind.Security.Cryptography classical ciphers, including whole-message adapters for Playfair, homophonic, ADFGVX-style and book ciphers.</Description>
+    <Description>SymmetricAlgorithm/Stream adapters over the SharpKind.Security.Cryptography classical ciphers, including whole-message adapters for Playfair, Vigenere, Beaufort, Autokey, Rail Fence, Columnar, homophonic, ADFGVX-style and book ciphers.</Description>
     <!-- The stream ciphers live in the same public namespace as the ciphers
          they wrap, which is the project name without the .Streams suffix. -->
     <RootNamespace>SharpKind.Security.Cryptography</RootNamespace>

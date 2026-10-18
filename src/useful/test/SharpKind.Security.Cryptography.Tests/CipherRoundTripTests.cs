@@ -17,6 +17,11 @@ public class CipherRoundTripTests
         "Vigenere",
         "MonoAlphabetic",
         "Reflector",
+        "Affine",
+        "Beaufort",
+        "Autokey",
+        "RailFence",
+        "Columnar",
     ];
 
     /// <summary>
@@ -34,6 +39,11 @@ public class CipherRoundTripTests
         { "ADFGVX", "HELLOWORLD" },
         { "Book", "HELLOWORLD" },
         { "Playfair", "HELXLOWORLDX" },
+        { "Affine", "HELLO WORLD" },
+        { "Beaufort", "HELLO WORLD" },
+        { "Autokey", "HELLO WORLD" },
+        { "RailFence", "HELLO WORLD" },
+        { "Columnar", "HELLO WORLD" },
     };
 
     [Theory]
@@ -93,6 +103,11 @@ public class CipherRoundTripTests
             "ADFGVX" => new Adfgvx(new AdfgvxSettings()),
             "Book" => new BookCipher(new BookCipherSettings("Hello, World!")),
             "Playfair" => new Playfair(new PlayfairSettings()),
+            "Affine" => new Affine(new AffineSettings() { Multiplier = 5, Shift = 8 }),
+            "Beaufort" => new Beaufort(new VigenereSettings() { Keyword = "LEMON" }),
+            "Autokey" => new Autokey(new VigenereSettings() { Keyword = "LEMON" }),
+            "RailFence" => new RailFence(new RailFenceSettings() { Rails = 3 }),
+            "Columnar" => new Columnar(new ColumnarSettings() { Keyword = "ZEBRAS" }),
             _ => throw new ArgumentException($"Unknown cipher '{cipherName}'.", nameof(cipherName)),
         };
 }
