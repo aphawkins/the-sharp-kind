@@ -1,0 +1,12 @@
+# editorconfig.org
+
+# inherits higher configs
+
+[*.cs]
+
+# CA1515: Consider making public types internal
+# Disabled for this project only: it is an xunit test assembly, whose test
+# classes and MemberData sources must be public. The entry point the test SDK
+# generates makes the assembly look like an application to the analyser, and
+# the diagnostic then lands on generated code with no source location.
+dotnet_diagnostic.CA1515.severity = none
