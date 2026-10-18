@@ -61,12 +61,30 @@ internal sealed class ClassicalSymmetricTransform : ICryptoTransform
 
         ArgumentNullException.ThrowIfNull(outputBuffer);
 
-        if (inputBuffer.Length < (inputOffset + inputCount))
+        if (inputOffset < 0 || inputBuffer.Length < (inputOffset + inputCount))
         {
             throw new ArgumentException("Input buffer not long enough.", nameof(inputBuffer));
         }
 
-        string inputString = new(_encoding.GetChars(inputBuffer));
+        byte[] outputBytes = Transform(inputBuffer, inputOffset, inputCount);
+
+        // The cipher drops some characters, such as the Enigma's digits.
+        int count = Math.Min(outputBytes.Length, OutputBlockSize);
+        Array.Copy(outputBytes, 0, outputBuffer, outputOffset, count);
+        return count;
+    }
+
+    /// <inheritdoc />
+    public byte[] TransformFinalBlock(byte[] inputBuffer, int inputOffset, int inputCount)
+    {
+        ArgumentNullException.ThrowIfNull(inputBuffer);
+
+        return inputCount <= 0 ? [] : Transform(inputBuffer, inputOffset, inputCount);
+    }
+
+    private byte[] Transform(byte[] inputBuffer, int inputOffset, int inputCount)
+    {
+        string inputString = _encoding.GetString(inputBuffer, inputOffset, inputCount);
 
         string outputString = _transformMode switch
         {
@@ -75,24 +93,6 @@ internal sealed class ClassicalSymmetricTransform : ICryptoTransform
             _ => throw new CryptographicException($"Unsupported transform mode {_transformMode}."),
         };
 
-        if (string.IsNullOrEmpty(outputString) || outputString == "\0")
-        {
-            return 0;
-        }
-
-        byte[] outputBytes = _encoding.GetBytes(outputString);
-        Array.Copy(outputBytes, 0, outputBuffer, 0, OutputBlockSize);
-        return inputCount;
-    }
-
-    public byte[] TransformFinalBlock(byte[] inputBuffer, int inputOffset, int inputCount)
-    {
-        if (inputBuffer[0] == 0)
-        {
-            return [];
-        }
-
-        byte[] outputBuffer = new byte[inputBuffer.Length];
-        return TransformBlock(inputBuffer, inputOffset, inputCount, outputBuffer, 0) > 0 ? outputBuffer : [];
+        return string.IsNullOrEmpty(outputString) || outputString == "\0" ? [] : _encoding.GetBytes(outputString);
     }
 }

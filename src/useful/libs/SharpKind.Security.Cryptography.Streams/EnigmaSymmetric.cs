@@ -29,12 +29,19 @@ public sealed class EnigmaSymmetric : SymmetricAlgorithm
     private Enigma _algorithm;
 
     /// <summary>
+    /// The rotor settings that a message starts from. <see cref="IV"/> follows the rotors as they step, so it is not
+    /// the start once a message has been processed.
+    /// </summary>
+    private byte[] _startIv = [];
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="EnigmaSymmetric"/> class.
     /// </summary>
     public EnigmaSymmetric()
     {
         _algorithm = new Enigma(new EnigmaSettings());
         Reset();
+        RememberStart();
     }
 
     /// <inheritdoc />
@@ -64,6 +71,7 @@ public sealed class EnigmaSymmetric : SymmetricAlgorithm
             try
             {
                 _algorithm = new Enigma(GetSettingsKey(value));
+                RememberStart();
             }
             catch (Exception ex)
             {
@@ -75,6 +83,9 @@ public sealed class EnigmaSymmetric : SymmetricAlgorithm
     }
 
     /// <inheritdoc />
+    /// <remarks>
+    /// Reading this gives the rotor settings as they are now, which change as text is processed.
+    /// </remarks>
     public override byte[] IV
     {
         // Example: G M Y
@@ -85,6 +96,7 @@ public sealed class EnigmaSymmetric : SymmetricAlgorithm
             try
             {
                 _algorithm = new Enigma(GetSettingsIv(_algorithm.Settings, value));
+                RememberStart();
             }
             catch (Exception ex)
             {
@@ -96,12 +108,26 @@ public sealed class EnigmaSymmetric : SymmetricAlgorithm
     }
 
     /// <inheritdoc />
+    /// <remarks>
+    /// Starts from the rotor settings the message started from, not the settings the last message left behind.
+    /// </remarks>
+    public override ICryptoTransform CreateDecryptor() => CreateDecryptor(Key, _startIv);
+
+    /// <inheritdoc />
     public override ICryptoTransform CreateDecryptor(byte[] rgbKey, byte[]? rgbIV)
     {
         Key = rgbKey;
         IV = rgbIV ?? [];
         return new ClassicalSymmetricTransform(_algorithm, CipherTransformMode.Decrypt);
     }
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// Starts from the rotor settings the message started from, not the settings the last message left behind.
+    /// </remarks>
+#pragma warning disable CA5401 // The IV is the rotor start, which the caller chooses.
+    public override ICryptoTransform CreateEncryptor() => CreateEncryptor(Key, _startIv);
+#pragma warning restore CA5401
 
     /// <inheritdoc />
     public override ICryptoTransform CreateEncryptor(byte[] rgbKey, byte[]? rgbIV)
@@ -117,6 +143,7 @@ public sealed class EnigmaSymmetric : SymmetricAlgorithm
         _algorithm.Settings.Rotors[EnigmaRotorPosition.Fastest].CurrentSetting = GetRandomRotorCurrentSetting();
         _algorithm.Settings.Rotors[EnigmaRotorPosition.Second].CurrentSetting = GetRandomRotorCurrentSetting();
         _algorithm.Settings.Rotors[EnigmaRotorPosition.Third].CurrentSetting = GetRandomRotorCurrentSetting();
+        RememberStart();
         IVValue = IV;
     }
 
@@ -124,6 +151,7 @@ public sealed class EnigmaSymmetric : SymmetricAlgorithm
     public override void GenerateKey()
     {
         _algorithm.GenerateSettings();
+        RememberStart();
         KeyValue = Key;
     }
 
@@ -403,6 +431,8 @@ public sealed class EnigmaSymmetric : SymmetricAlgorithm
     }
 
     private static char GetRandomRotorCurrentSetting() => "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[RandomNumberGenerator.GetInt32(0, 26)];
+
+    private void RememberStart() => _startIv = Encoding.Unicode.GetBytes(RotorSettingString(_algorithm.Settings.Rotors));
 
     private void Reset()
     {
