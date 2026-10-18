@@ -19,6 +19,14 @@ public class CaesarCryptanalysisTests
         Assert.Equal(26, allDecryptions.Count);
     }
 
+    [Fact]
+    public void CrackSinghStage2()
+    {
+        (int bestShift, IReadOnlyDictionary<int, string> allDecryptions) = CaesarCryptanalysis.Crack(SinghCiphertexts.Stage2);
+
+        Assert.Equal(SinghPlaintexts.Stage2, allDecryptions[bestShift]);
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData("!!! ...")]

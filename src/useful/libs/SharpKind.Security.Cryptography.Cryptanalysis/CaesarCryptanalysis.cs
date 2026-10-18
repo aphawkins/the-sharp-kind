@@ -8,43 +8,13 @@ namespace SharpKind.Security.Cryptography.Cryptanalysis;
 public static class CaesarCryptanalysis
 {
     /// <summary>
-    /// The relative frequency, as a percentage, of each letter A-Z in English text.
-    /// Taken from Robert Lewand, "Cryptological Mathematics" (2000).
-    /// </summary>
-    private static readonly double[] s_letterFrequencies
-        = [8.2,
-            1.5,
-            2.8,
-            4.3,
-            13.0,
-            2.2,
-            2.0,
-            6.1,
-            7.0,
-            0.15,
-            0.77,
-            4.0,
-            2.4,
-            6.7,
-            7.5,
-            1.9,
-            0.095,
-            6.0,
-            9.3,
-            9.1,
-            2.8,
-            0.98,
-            2.4,
-            0.15,
-            2.0,
-            0.074];
-
-    /// <summary>
     /// Calculates the optimal settings.
     /// </summary>
     /// <remarks>
-    /// The ciphertext is assumed to be English, as the letter frequencies it is scored against
-    /// are those of English text.
+    /// The ciphertext is assumed to be English. Each shift's decryption is scored by English
+    /// quadgram statistics. With fewer than four letters, English letter frequencies, derived from the same
+    /// statistics, are used instead.
+    /// Only letters are scored, so word breaks and punctuation do not matter.
     /// </remarks>
     /// <param name="ciphertext">The text to crack.</param>
     /// <returns>The best guess crack, along with the decryption for every possible shift.</returns>
@@ -67,33 +37,53 @@ public static class CaesarCryptanalysis
 
     private static int BestShift(string ciphertext)
     {
-        double[] cipherFrequencies = new double[EnglishLetters.Count];
-        int letterCount = 0;
+        int[] cipherLetters = [.. ciphertext.Select(EnglishLetters.IndexOf).Where(index => index >= 0)];
 
-        // Totals for each letter
-        foreach (char letter in ciphertext)
+        // Fewer than four letters hold no quadgram to score, so fall back to letter frequencies.
+        return cipherLetters.Length < 4 ? FrequencyShift(cipherLetters) : QuadgramShift(cipherLetters);
+    }
+
+    private static int QuadgramShift(int[] cipherLetters)
+    {
+        int[] plainLetters = new int[cipherLetters.Length];
+        double bestScore = double.MinValue;
+        int bestShift = 0;
+
+        for (int shift = 0; shift < EnglishLetters.Count; shift++)
         {
-            int index = EnglishLetters.IndexOf(letter);
-
-            if (index >= 0)
+            for (int i = 0; i < cipherLetters.Length; i++)
             {
-                cipherFrequencies[index]++;
-                letterCount++;
+                plainLetters[i] = (cipherLetters[i] - shift + EnglishLetters.Count) % EnglishLetters.Count;
+            }
+
+            double score = Quadgrams.Score(plainLetters);
+
+            if (score > bestScore)
+            {
+                bestScore = score;
+                bestShift = shift;
             }
         }
 
-        if (letterCount == 0)
+        return bestShift;
+    }
+
+    private static int FrequencyShift(int[] cipherLetters)
+    {
+        if (cipherLetters.Length == 0)
         {
             return 0;
         }
 
-        // Frequencies for each letter, as a percentage of the letters present rather than of the
-        // whole ciphertext, so that spacing and punctuation don't deflate every frequency.
-        for (int i = 0; i < EnglishLetters.Count; i++)
+        // Frequencies for each letter, as a percentage of the letters present.
+        double[] cipherFrequencies = new double[EnglishLetters.Count];
+
+        foreach (int letter in cipherLetters)
         {
-            cipherFrequencies[i] = 100.0 * cipherFrequencies[i] / letterCount;
+            cipherFrequencies[letter] += 100.0 / cipherLetters.Length;
         }
 
+        IReadOnlyList<double> letterFrequencies = Quadgrams.LetterFrequencies;
         double bestDifference = double.MaxValue;
         int bestShift = 0;
 
@@ -104,7 +94,7 @@ public static class CaesarCryptanalysis
 
             for (int i = 0; i < EnglishLetters.Count; i++)
             {
-                difference += Math.Abs(s_letterFrequencies[i] - cipherFrequencies[(i + shift) % EnglishLetters.Count]);
+                difference += Math.Abs(letterFrequencies[i] - cipherFrequencies[(i + shift) % EnglishLetters.Count]);
             }
 
             if (difference < bestDifference)

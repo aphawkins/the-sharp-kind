@@ -25,7 +25,7 @@ edition has Swedish), so the English ciphertext here is the English edition's.
 | Stage | Cipher | Plaintext | Codeword | Status here |
 |---|---|---|---|---|
 | 1 | Monoalphabetic substitution | English: Daniel 5, Belshazzar's feast | OTHELLO | Solved and cracked: `MonoAlphabetic`, `MonoAlphabeticCryptanalysis` |
-| 2 | Caesar shift (7) | Latin: Appius Claudius Caecus | NEUTRON | Solved: `Caesar` |
+| 2 | Caesar shift (7) | Latin: Appius Claudius Caecus | NEUTRON | Solved and cracked: `Caesar`, `CaesarCryptanalysis` |
 | 3 | Homophonic substitution | Italian: Dante, Inferno XXVI | EQUATOR | Solved: `Homophonic` |
 | 4 | Vigenere (keyword SCUBA) | French: Baudelaire, *L'Albatros* | TRAJAN | Solved: `Vigenere` |
 | 5 | Book cipher | Spanish | ILLIAD | Solved: `BookCipher` |
@@ -54,7 +54,9 @@ scores each decryption by English quadgram statistics (from practicalcryptograph
 
 Shift 7. The plaintext is *Faber est suae quisque fortunae* (every man is the maker of his own fortune), attributed
 to Appius Claudius Caecus, then *dictum arcanum est neutron*. The cryptanalysis test in
-`CaesarCryptanalysisTests` (`SharpKind.Security.Cryptography.Cryptanalysis.Tests`) finds the shift by letter frequencies.
+`CaesarCryptanalysisTests` (`SharpKind.Security.Cryptography.Cryptanalysis.Tests`) finds the shift with no key, by
+scoring each shift's decryption by English quadgram statistics, and decrypts to the plaintext. Latin scores well
+enough against English quadgrams for the right shift to stand out.
 
 ### Stage 3: homophonic substitution (Dante)
 
