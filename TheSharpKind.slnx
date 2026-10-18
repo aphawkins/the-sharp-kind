@@ -188,6 +188,7 @@
     <Project Path="src/useful/libs/SharpKind.Graphics/SharpKind.Graphics.csproj" />
     <Project Path="src/useful/libs/SharpKind.Input/SharpKind.Input.csproj" Id="06eb8143-9b04-4f33-ba8e-d1ec9357c9ea" />
     <Project Path="src/useful/libs/SharpKind.SDL/SharpKind.SDL.csproj" />
+    <Project Path="src/useful/libs/SharpKind.Security.Cryptography.Cryptanalysis/SharpKind.Security.Cryptography.Cryptanalysis.csproj" />
     <Project Path="src/useful/libs/SharpKind.Security.Cryptography.Streams/SharpKind.Security.Cryptography.Streams.csproj" />
     <Project Path="src/useful/libs/SharpKind.Security.Cryptography/SharpKind.Security.Cryptography.csproj" />
     <Project Path="src/useful/libs/SharpKind.UI/SharpKind.UI.csproj" />
@@ -208,6 +209,7 @@
     <Project Path="src/useful/test/SharpKind.Graphics.Tests/SharpKind.Graphics.Tests.csproj" />
     <Project Path="src/useful/test/SharpKind.Input.Tests/SharpKind.Input.Tests.csproj" Id="71806841-6acf-4385-9ca4-a722f492b109" />
     <Project Path="src/useful/test/SharpKind.SDL.Tests/SharpKind.SDL.Tests.csproj" />
+    <Project Path="src/useful/test/SharpKind.Security.Cryptography.Cryptanalysis.Tests/SharpKind.Security.Cryptography.Cryptanalysis.Tests.csproj" />
     <Project Path="src/useful/test/SharpKind.Security.Cryptography.Streams.Tests/SharpKind.Security.Cryptography.Streams.Tests.csproj" />
     <Project Path="src/useful/test/SharpKind.Security.Cryptography.Tests/SharpKind.Security.Cryptography.Tests.csproj" />
     <Project Path="src/useful/test/SharpKind.Tests/SharpKind.Tests.csproj" />

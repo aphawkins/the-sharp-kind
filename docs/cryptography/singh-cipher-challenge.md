@@ -24,7 +24,7 @@ edition has Swedish), so the English ciphertext here is the English edition's.
 
 | Stage | Cipher | Plaintext | Codeword | Status here |
 |---|---|---|---|---|
-| 1 | Monoalphabetic substitution | English: Daniel 5, Belshazzar's feast | OTHELLO | Solved: `MonoAlphabetic` |
+| 1 | Monoalphabetic substitution | English: Daniel 5, Belshazzar's feast | OTHELLO | Solved and cracked: `MonoAlphabetic`, `MonoAlphabeticCryptanalysis` |
 | 2 | Caesar shift (7) | Latin: Appius Claudius Caecus | NEUTRON | Solved: `Caesar` |
 | 3 | Homophonic substitution | Italian: Dante, Inferno XXVI | EQUATOR | Solved: `Homophonic` |
 | 4 | Vigenere (keyword SCUBA) | French: Baudelaire, *L'Albatros* | TRAJAN | Solved: `Vigenere` |
@@ -47,12 +47,14 @@ stage 8 plaintexts are written without punctuation too. The stage 7 plaintext ke
 
 The book says it is a substitution cipher, and the word breaks are kept, so short common words give it away. The
 plaintext is the book of Daniel, chapter 5, in the King James wording, ending "The first codeword is Othello".
+`MonoAlphabeticCryptanalysisTests` cracks it with no key. `MonoAlphabeticCryptanalysis` hill-climbs over keys and
+scores each decryption by English quadgram statistics (from practicalcryptography.com).
 
 ### Stage 2: Caesar shift
 
 Shift 7. The plaintext is *Faber est suae quisque fortunae* (every man is the maker of his own fortune), attributed
 to Appius Claudius Caecus, then *dictum arcanum est neutron*. The cryptanalysis test in
-`CaesarCryptanalysisTests` finds the shift by letter frequencies.
+`CaesarCryptanalysisTests` (`SharpKind.Security.Cryptography.Cryptanalysis.Tests`) finds the shift by letter frequencies.
 
 ### Stage 3: homophonic substitution (Dante)
 

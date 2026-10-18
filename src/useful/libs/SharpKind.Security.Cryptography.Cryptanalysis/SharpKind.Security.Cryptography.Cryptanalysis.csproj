@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>SharpKind.Security.Cryptography.Cryptanalysis</PackageId>
+    <Description>Cryptanalysis of the SharpKind classical ciphers: Caesar by letter frequencies, and monoalphabetic substitution by an English quadgram hill climb.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- English quadgram counts from practicalcryptography.com, gzipped. -->
+    <EmbeddedResource Include="english_quadgrams.txt.gz" LogicalName="english_quadgrams.txt.gz" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SharpKind.Security.Cryptography\SharpKind.Security.Cryptography.csproj" />
+  </ItemGroup>
+
+</Project>

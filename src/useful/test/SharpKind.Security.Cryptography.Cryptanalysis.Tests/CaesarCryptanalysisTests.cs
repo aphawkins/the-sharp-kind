@@ -1,8 +1,9 @@
 // 'SharpKind Libraries' - Andy Hawkins 2023-2026.
 
+using SharpKind.Security.Cryptography.Tests;
 using Xunit;
 
-namespace SharpKind.Security.Cryptography.Tests;
+namespace SharpKind.Security.Cryptography.Cryptanalysis.Tests;
 
 public class CaesarCryptanalysisTests
 {

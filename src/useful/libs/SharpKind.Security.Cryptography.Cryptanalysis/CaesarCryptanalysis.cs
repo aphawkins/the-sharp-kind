@@ -1,6 +1,6 @@
 // 'SharpKind Libraries' - Andy Hawkins 2023-2026.
 
-namespace SharpKind.Security.Cryptography;
+namespace SharpKind.Security.Cryptography.Cryptanalysis;
 
 /// <summary>
 /// The Caesar cipher cryptanalysis.
@@ -52,11 +52,11 @@ public static class CaesarCryptanalysis
     {
         ArgumentNullException.ThrowIfNull(ciphertext);
 
-        Dictionary<int, string> shifts = new(Alphabet.Length);
+        Dictionary<int, string> shifts = new(EnglishLetters.Count);
         CaesarSettings settings = new();
         Caesar cipher = new(settings);
 
-        for (int i = 0; i < Alphabet.Length; i++)
+        for (int i = 0; i < EnglishLetters.Count; i++)
         {
             settings.RightShift = i;
             shifts.Add(i, cipher.Decrypt(ciphertext));
@@ -67,13 +67,13 @@ public static class CaesarCryptanalysis
 
     private static int BestShift(string ciphertext)
     {
-        double[] cipherFrequencies = new double[Alphabet.Length];
+        double[] cipherFrequencies = new double[EnglishLetters.Count];
         int letterCount = 0;
 
         // Totals for each letter
         foreach (char letter in ciphertext)
         {
-            int index = Alphabet.IndexOf(letter);
+            int index = EnglishLetters.IndexOf(letter);
 
             if (index >= 0)
             {
@@ -89,7 +89,7 @@ public static class CaesarCryptanalysis
 
         // Frequencies for each letter, as a percentage of the letters present rather than of the
         // whole ciphertext, so that spacing and punctuation don't deflate every frequency.
-        for (int i = 0; i < Alphabet.Length; i++)
+        for (int i = 0; i < EnglishLetters.Count; i++)
         {
             cipherFrequencies[i] = 100.0 * cipherFrequencies[i] / letterCount;
         }
@@ -98,13 +98,13 @@ public static class CaesarCryptanalysis
         int bestShift = 0;
 
         // Test all the shifts to find the best difference
-        for (int shift = 0; shift < Alphabet.Length; shift++)
+        for (int shift = 0; shift < EnglishLetters.Count; shift++)
         {
             double difference = 0.0;
 
-            for (int i = 0; i < Alphabet.Length; i++)
+            for (int i = 0; i < EnglishLetters.Count; i++)
             {
-                difference += Math.Abs(s_letterFrequencies[i] - cipherFrequencies[(i + shift) % Alphabet.Length]);
+                difference += Math.Abs(s_letterFrequencies[i] - cipherFrequencies[(i + shift) % EnglishLetters.Count]);
             }
 
             if (difference < bestDifference)
