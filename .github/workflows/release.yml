@@ -76,6 +76,22 @@ jobs:
             done
           done
 
+      - name: Install PowerShell 7.6
+        # The libraries target .NET 10, which PowerShell 7.6 is the first to run on. The runner's
+        # own pwsh may be older, so install the global tool and put it first on the PATH.
+        run: |
+          dotnet tool install --global PowerShell --version '7.6.*'
+          echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+
+      - name: Build SharpKind.Cryptography module
+        # After the zip step above, which would otherwise take the module's lib folder for a runtime.
+        shell: pwsh
+        run: ./src/useful/apps/SharpKind.Cryptography.PowerShell/build.ps1
+
+      - name: Zip SharpKind.Cryptography module
+        # The zip holds the module folder, so it extracts straight into a PSModulePath folder.
+        run: (cd ./publish && zip -r "$GITHUB_WORKSPACE/dist/SharpKind.Cryptography-${{ github.ref_name }}.zip" SharpKind.Cryptography)
+
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
@@ -83,3 +99,9 @@ jobs:
           files: dist/*.zip
           body: |
             StuntCarRacerSharp builds are a **preview** release — see the open defects list in [docs/backlog-roadmap.md](https://github.com/${{ github.repository }}/blob/main/docs/backlog-roadmap.md).
+
+      - name: Publish SharpKind.Cryptography to the PowerShell Gallery
+        shell: pwsh
+        run: Publish-PSResource -Path ./publish/SharpKind.Cryptography -Repository PSGallery -ApiKey $env:PSGALLERY_API_KEY
+        env:
+          PSGALLERY_API_KEY: ${{ secrets.PSGALLERY_API_KEY }}

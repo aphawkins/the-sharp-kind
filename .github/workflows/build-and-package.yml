@@ -218,3 +218,51 @@ jobs:
         with:
           name: BubbleBobbleSharp-Linux-${{ steps.vars.outputs.version }}
           path: ./publish/BubbleBobbleSharp/linux-x64/*
+
+  powershell-module:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          # MinVer needs full history (and tags) to compute the version.
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install PowerShell 7.6
+        # The libraries target .NET 10, which PowerShell 7.6 is the first to run on. The runner's
+        # own pwsh may be older, so install the global tool and put it first on the PATH.
+        run: |
+          dotnet tool install --global PowerShell --version '7.6.*'
+          echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+
+      - name: Build SharpKind.Cryptography module
+        id: module
+        shell: pwsh
+        run: |
+          ./src/useful/apps/SharpKind.Cryptography.PowerShell/build.ps1
+          $manifest = Import-PowerShellDataFile ./publish/SharpKind.Cryptography/SharpKind.Cryptography.psd1
+          $prerelease = $manifest.PrivateData.PSData.Prerelease
+          "version=$($manifest.ModuleVersion)$($prerelease ? "-$prerelease" : '')" >> $env:GITHUB_OUTPUT
+
+      - name: Test SharpKind.Cryptography module
+        shell: pwsh
+        run: |
+          Install-Module Pester -MinimumVersion 5.5 -Force -Scope CurrentUser
+          $config = New-PesterConfiguration
+          $config.Run.Path = './src/useful/apps/SharpKind.Cryptography.PowerShell'
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+      - name: Upload SharpKind.Cryptography module
+        if: env.IS_MAIN == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: SharpKind.Cryptography-${{ steps.module.outputs.version }}
+          path: ./publish/SharpKind.Cryptography

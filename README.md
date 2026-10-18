@@ -44,6 +44,17 @@ Status: Playable, feature-complete - 8-bit version
 
 Status: Playable, preview.
 
+## Tools
+
+### [SharpKind.Cryptography](src/useful/apps/SharpKind.Cryptography.PowerShell/README.md)
+
+A PowerShell 7.6+ module that encrypts, decrypts and cracks classical ciphers, from Caesar to Enigma.
+
+```powershell
+Install-PSResource SharpKind.Cryptography
+'Attack at dawn' | Protect-CipherText -Cipher Caesar -Settings @{ RightShift = 3 }
+```
+
 ## Getting started
 
 Requires the [.NET SDK](https://dotnet.microsoft.com/download) (see `Directory.Build.props` for the target framework version).

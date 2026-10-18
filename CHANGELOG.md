@@ -7,6 +7,13 @@ Completed items from the [backlog](docs/backlog-roadmap.md) move here.
 
 ## [Unreleased]
 
+### Added (SharpKind.Cryptography PowerShell module, 2026-10-18)
+
+- **`SharpKind.Cryptography`, a PowerShell 7.6+ module over the cryptography libraries.** `Protect-CipherText` and
+  `Unprotect-CipherText` run all 16 ciphers, `New-CipherSettings` gets default or random settings, and
+  `Find-CipherKey` cracks Caesar, MonoAlphabetic and Homophonic. CI builds and tests it with Pester. A release attaches
+  it as a zip and publishes it to the PowerShell Gallery, which needs the `PSGALLERY_API_KEY` secret.
+
 ### Changed (Bubble Bobble's entity records 3/3, 2026-10-17)
 
 - **The column views are gone from the library.** Code reads `table.Slot(i).Field` (a ref property, so it assigns too) in
